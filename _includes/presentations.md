@@ -1,16 +1,14 @@
 
 ## 🎤 Oral Presentations
 
-
-
 ### 2024
 
 - Yukari Katsura, **Tomoya Mato**, Yu Takada, Eiji Koyama, Naoto Saito, Yoshihiro Sakamoto, Atsumi Tanaka, Dewi Yana, Erina Fujita, Fumiaki Hosono, Kaoru Kimura, Masaya Kumagai
-  **2D/3D Visualization Tool for Large-Scale Thermoelectric Materials Data in Starrydata**
+  **2D/3D visualization tools for the Starrydata’s large-scale thermoelectric materials data**
   The 21st Annual Meeting of the Thermoelectrics Society of Japan (TSJ2024), 2024
 
 - Yukari Katsura, **Tomoya Mato**, Eiji Koyama, Atsumi Tanaka, Dewi Yana, Erina Fujita, Fumiaki Hosono, Yu Takada, Kaoru Kimura, Masaya Kumagai
-  **Chemical Composition Distribution in Past Thermoelectric Materials Research on Starrydata**
+  **Chemical composition distributions of thermoelectric material research in Starrydata**
   The 85th Autumn Meeting of the Japan Society of Applied Physics, 2024
 
 - Yukari KATSURA, **Tomoya MATO**, Yu TAKADA, Erina FUJITA, Eiji Koyama, Atsumi Tanaka, Fumiaki Hosono, Satoshi Gunji, Dewi Yana, Masayuki Fujimoto, Naoto Saito, Ton Nu Thanh Phuong, Yoshihiro Sakamoto, Kaoru KIMURA, Koji TSUDA, Masaya Kumagai
@@ -18,11 +16,11 @@
   40th International and 20th European Thermoelectric Conference (ICT/ECT 2024), 2024
 
 - Yukari Katsura, **Tomoya Mato**, Masaya Kumagai, Koji Tsuda
-  **Machine Learning Potentials Using Large-Scale Experimental Data from Starrydata**
+  **Prospects of machine learning by using large-scale experimental data on Starrydata**
   The 71st Spring Meeting of the Japan Society of Applied Physics, 2024
 
 - **Tomoya Mato**, Yu Takada, Yukari Katsura, Masaya Kumagai
-  **Development of a Semi-Automated AI System for Large-Scale Literature Data Collection on Starrydata**
+  **Development of semi-automatic AI system for large-scale data curation in Starrydata**
   The 71st Spring Meeting of the Japan Society of Applied Physics, 2024
 
 ---
@@ -62,11 +60,11 @@
   Materials Research Meeting 2021, 2021
 
 - Yukari Katsura, Masaya Kumagai, **Tomoya Mato**, Yuki Ando, Atsumi Tanaka, Yoshihiro Sakamoto, Erina Fujita, Kaoru Kimura, Koji Tsuda
-  **Challenges and Innovations in Accumulating and Sharing Experimental Data from Published Papers**
+  **Innovations and tasks brought by storage and sharing of experimental data in literature**
   The 82nd Autumn Meeting of the Japan Society of Applied Physics, 2021 (Invited Talk)
 
 - Yukari Katsura, **Tomoya Mato**, Erina Fujita, Masaya Kumagai
-  **Development of a Property Concept Tree for Database Construction of Thermoelectric Materials**
+  **Development of the concept trees for the thermoelectric database**
   The 18th Annual Meeting of the Thermoelectrics Society of Japan, 2021
   [Conference Website](https://www.thermoelectrics.jp/conference.html)
 
