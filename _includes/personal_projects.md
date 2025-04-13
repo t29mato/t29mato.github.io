@@ -1,14 +1,14 @@
-# Personal Projects
+## 👦 Personal Projects
 
 A selection of software projects developed for personal interest and hobbies.
 
-## 2023
+### 2023
 
 - **[Peakaboo]((https://peakaboo.vercel.app/))** Interactive Map of Japan’s 100, 200, and 300 Famous Mountains.
   A web app for exploring and filtering Japan’s most iconic mountain ranges.
   [Repository](https://github.com/t29mato/peak-a-boo)
 
-## 2018
+### 2018
 
 - [**Breath-Hold Training App**](https://breath-hold-training.vercel.app/)
   A browser-based app to help practice and improve static apnea performance.
