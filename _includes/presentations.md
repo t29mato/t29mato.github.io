@@ -72,7 +72,6 @@
 - Yukari Katsura, **Tomoya Mato**, Erina Fujita, Masaya Kumagai
   **Development of the concept trees for the thermoelectric database**
   The 18th Annual Meeting of the Thermoelectrics Society of Japan, 2021
-  [Conference Website](https://www.thermoelectrics.jp/conference.html)
 
 ---
 
