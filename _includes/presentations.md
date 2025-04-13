@@ -3,7 +3,7 @@
 
 ### 2025
 
-- Tomoya Mato, Yu Takada, Masaya Kumagai, Yukari Katsura
+- **Tomoya Mato**, Yu Takada, Masaya Kumagai, Yukari Katsura
   **Development of Automatic Suggestion System of Sample Information Data from Literature by Large Language Models**
   The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
 
