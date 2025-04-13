@@ -1,0 +1,51 @@
+---
+layout: default
+---
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">
+      {%- if page.version -%}
+        <span class="post-version" itemprop="version" itemscope itemtype="http://schema.org/CreativeWork">
+          <span class="p-version h-card" itemprop="name">{{ page.version }}</span>
+        </span>
+      {%- endif -%}
+      {{ page.title | escape }}
+    </h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
+        {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+        {{ page.date | date: date_format }}
+      </time>
+      {%- if page.author -%}
+        • <span class="post-author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">{{ page.author }}</span>
+          </span>
+      {%- endif -%}
+    </p>
+  </header>
+
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2>Overview</h2>
+    <p>{{ page.description }}</p>
+    {{ content }}
+  </div>
+
+  {%- if page.committers -%}
+  <p class="post-committers">
+    <strong>Code contributors</strong>:
+    {%- for person in page.committers -%}
+      <span itemprop="contributor" itemscope itemtype="http://schema.org/Person">
+        <a href="{{ person.url }}" class="p-author h-card" itemprop="name" target="_blank">{{ person.name }}</a>{% unless forloop.last %}, {% endunless %}
+      </span>
+    {%- endfor -%}
+  </p>
+{%- endif -%}
+
+
+  {%- if site.disqus.shortname -%}
+    {%- include disqus_comments.html -%}
+  {%- endif -%}
+
+  <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
+</article>
