@@ -7,6 +7,14 @@
   **Development of Automatic Suggestion System of Sample Information Data from Literature by Large Language Models**
   The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
 
+- Yukari Katsura, **Tomoya Mato**, Yu Takada
+  **Overviewing the Past Studies of Inorganic Functional Materials by Principal Component Analysis of Chemical Composition Vectors**
+  The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
+
+- Yukari Katsura, Yu Takada, **Tomoya Mato**, Masaya Kumagai, Masakazu Akiyama
+  **Reconstruction of Inorganic Crystal Chemistry Based on Delaunay Tetrahedral Expressions of Crystal Structures**
+  The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
+
 ### 2024
 
 - Yukari Katsura, **Tomoya Mato**, Yu Takada, Eiji Koyama, Naoto Saito, Yoshihiro Sakamoto, Atsumi Tanaka, Dewi Yana, Erina Fujita, Fumiaki Hosono, Kaoru Kimura, Masaya Kumagai
