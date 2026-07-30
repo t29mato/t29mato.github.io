@@ -32,6 +32,7 @@ github_username:  t29mato
 
 # Build settings
 theme: minima
+timezone: Asia/Tokyo
 plugins:
   - jekyll-feed
 future: false

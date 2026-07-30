@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Rebuilding My zsh Environment: From p10k/peco to Starship and fzf"
-date: 2026-07-30
+date: 2026-07-31
 description: "A walkthrough of modernizing a mostly-empty .zshrc with Starship, fzf, zoxide, eza, bat, and zsh plugins — plus fixing mojibake icons by installing a Nerd Font and pointing Terminal.app at it."
 tags: [zsh, macos, terminal, dotfiles]
 ---
