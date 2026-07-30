@@ -10,7 +10,7 @@ A few years ago I was pulled into a headland current at Top Sante, a beach on th
 
 ## What happened
 
-Top Sante is where I originally learned to surf, entering the water between two of the T-shaped headlands built along this stretch of coast. This particular session was about two days before a typhoon; the forecast (checked on BCM) put the wave height around 1.5 m.
+Top Sante is where I originally learned to surf, entering the water between two of the T-shaped headlands built along this stretch of coast. I believe this was around August 2024, though I'm not fully certain of the date. This particular session was about two days before a typhoon; the forecast (checked on BCM) put the wave height around 1.5 m.
 
 I paddled out around 10am. At least 40 other surfers were already in the water, and I went in from the middle of the gap between the two headlands without checking the current beforehand.
 
