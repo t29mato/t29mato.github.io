@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kashima-nada / Top Sante — headland drift incident chart</title>
+<style>
+  :root{
+    --paper:#EFEAE0; --paper-2:#F7F4EE;
+    --ink:#1F2A2E; --ink-2:#4C5A5F; --ink-3:#7C8A8E;
+    --rule:#C9C1B2; --rule-2:#B0A692;
+    --sand:#E3D5B7; --dune:#CDBC96; --pine:#4C6350; --road:#B6B2A8;
+    --granite:#8C897F; --granite-2:#6C6A62; --tetra:#4E4C46;
+    --w1:#2C5E77; --w2:#376C85; --w3:#437B93; --w4:#5794A8; --w5:#75AEBE; --w6:#93C2CE;
+    --foam:#F4F8F7;
+    --flow:#0E7C93; --rip:#B8452C; --danger:#B8452C; --danger-bg:#F3DED8;
+    --me:#E9A21B; --crowd:#3C4C55;
+    --font-sans:"Inter","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    --font-num:ui-monospace,"SFMono-Regular","Menlo","Consolas","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .wrap{max-width:1020px;margin:0 auto;padding:34px 20px 72px}
+
+  .eyebrow{font-family:var(--font-num);font-size:11px;letter-spacing:.2em;color:var(--ink-3);text-transform:uppercase;margin:0 0 12px}
+  h1{font-size:33px;line-height:1.18;font-weight:600;margin:0;letter-spacing:-.02em}
+  h1 small{display:block;font-size:16.5px;font-weight:400;color:var(--ink-2);letter-spacing:0;line-height:1.62;margin-top:12px;max-width:64ch}
+  .strip{display:flex;flex-wrap:wrap;margin:24px 0 0;border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+  .strip div{flex:1 1 122px;padding:11px 14px 12px;border-right:1px solid var(--rule)}
+  .strip div:last-child{border-right:0}
+  .strip dt{font-size:10.5px;letter-spacing:.14em;color:var(--ink-3);margin:0 0 2px;font-family:var(--font-num);text-transform:uppercase}
+  .strip dd{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+  .strip dd span{font-weight:400;font-size:12.5px;color:var(--ink-2)}
+
+  .stage{position:relative;margin:26px 0 0;background:var(--w1);border:1px solid var(--ink);overflow:hidden}
+  svg#chart{display:block;width:100%;height:auto}
+  .hud{position:absolute;left:0;right:0;bottom:0;padding:12px 15px 14px;
+    background:linear-gradient(to top,rgba(16,26,30,.9),rgba(16,26,30,.55) 62%,rgba(16,26,30,0));color:#F2EFE7;pointer-events:none}
+  .hud-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:3px}
+  .chno{font-family:var(--font-num);font-size:11px;letter-spacing:.16em;color:#9FBCC4}
+  .chttl{font-size:16.5px;font-weight:600}
+  .chsub{font-size:13.5px;line-height:1.6;color:#E4E0D6;max-width:82ch}
+  .badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+  .badge{background:rgba(16,26,30,.82);color:#F2EFE7;font-family:var(--font-num);font-size:11px;letter-spacing:.06em;padding:4px 8px;border-left:2px solid #9FBCC4}
+  .badge.warn{border-left-color:#E4785C;color:#FFD9CD}
+  .pips{display:flex;gap:3px;align-items:center}
+  .pip{width:11px;height:5px;background:rgba(255,255,255,.24)}
+  .pip.on{background:#E4785C}
+
+  .ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 14px;border-bottom:1px solid var(--rule)}
+  button{font-family:inherit;font-size:14px;color:var(--ink);background:var(--paper-2);border:1px solid var(--rule-2);padding:7px 13px;cursor:pointer;line-height:1.2}
+  button:hover{background:#fff;border-color:var(--ink-2)}
+  button:active{transform:translateY(1px)}
+  button:focus-visible{outline:2px solid var(--flow);outline-offset:2px}
+  button.pri{background:var(--ink);color:var(--paper-2);border-color:var(--ink);min-width:104px}
+  input[type=range]{flex:1 1 200px;min-width:150px;accent-color:var(--flow);height:22px}
+  .spd{display:flex;border:1px solid var(--rule-2)}
+  .spd button{border:0;border-left:1px solid var(--rule-2);padding:7px 10px;font-family:var(--font-num);font-size:12px}
+  .spd button:first-child{border-left:0}
+  .spd button[aria-pressed=true]{background:var(--ink);color:var(--paper-2)}
+  .tclock{font-family:var(--font-num);font-size:12.5px;color:var(--ink-2);min-width:92px;text-align:right}
+  .toggles{display:flex;flex-wrap:wrap;gap:15px;padding:11px 0 0;font-size:13px;color:var(--ink-2)}
+  .toggles label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+
+  .rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));margin:16px 0 0;border:1px solid var(--rule-2);border-right:0}
+  .rail button{border:0;border-right:1px solid var(--rule);background:transparent;text-align:left;padding:8px 9px 9px;font-size:11.5px;line-height:1.35;color:var(--ink-2)}
+  .rail button b{display:block;font-family:var(--font-num);font-size:10px;letter-spacing:.12em;color:var(--ink-3);font-weight:400;margin-bottom:1px}
+  .rail button[aria-current=true]{background:var(--ink);color:var(--paper-2)}
+  .rail button[aria-current=true] b{color:#9FBCC4}
+
+  h2{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:52px 0 4px;padding-top:22px;border-top:2px solid var(--ink)}
+  h2 .n{font-family:var(--font-num);font-size:11px;letter-spacing:.2em;color:var(--ink-3);display:block;font-weight:400;margin-bottom:7px;text-transform:uppercase}
+  h3{font-size:16px;font-weight:600;margin:26px 0 4px}
+  p{margin:.5em 0 1em}
+  .lede{font-size:16px;color:var(--ink-2);max-width:72ch}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:18px 0 0}
+  .cards>div{background:var(--paper-2);padding:15px 16px 17px}
+  .cards h4{margin:0 0 5px;font-size:14.5px;font-weight:600;line-height:1.4}
+  .cards p{margin:0;font-size:13.5px;line-height:1.7;color:var(--ink-2)}
+  .cards .k{font-family:var(--font-num);font-size:10.5px;letter-spacing:.14em;color:var(--ink-3);display:block;margin-bottom:7px}
+
+  ol.check{list-style:none;counter-reset:c;padding:0;margin:16px 0 0}
+  ol.check>li{counter-increment:c;position:relative;padding:14px 0 15px 46px;border-top:1px solid var(--rule)}
+  ol.check>li:before{content:counter(c,decimal-leading-zero);position:absolute;left:0;top:16px;font-family:var(--font-num);font-size:11.5px;letter-spacing:.08em;color:var(--danger)}
+  ol.check b{display:block;font-size:15.5px;margin-bottom:2px}
+  ol.check span{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.72}
+
+  .speedbars{margin:18px 0 0;border:1px solid var(--rule-2);background:var(--paper-2);padding:16px}
+  .sb{display:grid;grid-template-columns:186px 1fr 92px;gap:10px;align-items:center;margin:0 0 9px;font-size:13.5px}
+  .sb:last-child{margin-bottom:0}
+  .sb .bar{height:12px;background:#DED7C8;position:relative}
+  .sb .bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+  .sb .v{font-family:var(--font-num);font-size:12px;color:var(--ink-2);text-align:right}
+  .sb .lab{color:var(--ink-2)}
+
+  .note{margin:30px 0 0;padding:15px 17px;background:var(--danger-bg);border-left:3px solid var(--danger);font-size:13.5px;line-height:1.75}
+  footer{margin:54px 0 0;padding-top:18px;border-top:1px solid var(--rule-2);font-size:12.5px;color:var(--ink-3);line-height:1.8}
+  footer a{color:var(--ink-2)}
+
+  @media (max-width:640px){
+    h1{font-size:25px} h2{font-size:19px}
+    .tclock{min-width:0;text-align:left}
+    .chttl{font-size:15px} .chsub{font-size:12.5px}
+    .sb{grid-template-columns:120px 1fr 76px;font-size:12.5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="eyebrow">Kashima-nada coast · Hokota (former Taiyo) · between headlands · incident reconstruction</p>
+<h1>Top Sante. Ten minutes, four hundred metres sideways.
+  <small>I paddled out from dead centre between two headlands, never got past the bar, and ended up ten metres off the trunk of the one to the north. This is that morning, drawn on the Ibaraki Prefecture headland design figures.</small>
+</h1>
+
+<div class="strip">
+  <div><dt>Spot</dt><dd>Top Sante<span> / Hokota</span></dd></div>
+  <div><dt>Timing</dt><dd>T–2 days<span> / typhoon swell</span></dd></div>
+  <div><dt>Forecast</dt><dd>1.5 m<span> / BCM</span></dd></div>
+  <div><dt>Entry</dt><dd>10:00<span> / mid-gap</span></dd></div>
+  <div><dt>In water</dt><dd>~40<span> / already out</span></dd></div>
+  <div><dt>Longshore</dt><dd>Northward<span> / ~0.7 m/s</span></dd></div>
+</div>
+
+<div class="stage">
+  <p class="sr" id="a11y">Plan-view chart of a one-kilometre beach cell between two T-shaped headlands. North is to the left. The track shows a surfer carried north from mid-gap to within ten metres of the north headland trunk, escaping seaward on the rip, around the seaward face of the hammerhead, and then three hundred metres along the far side before turning in.</p>
+  <svg id="chart" viewBox="-400 0 1500 500" role="img" aria-describedby="a11y" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <rect x="-1100" y="-400" width="3200" height="500" fill="var(--w1)"/>
+    <rect x="-1100" y="100" width="3200" height="40" fill="var(--w2)"/>
+    <rect x="-1100" y="140" width="3200" height="38" fill="var(--w3)"/>
+    <rect x="-1100" y="178" width="3200" height="34" fill="var(--w4)"/>
+    <rect x="-1100" y="212" width="3200" height="28" fill="var(--w5)"/>
+    <rect x="-1100" y="240" width="3200" height="66" fill="var(--w6)"/>
+    <g stroke="#8FC0CD" stroke-width="0.8" stroke-dasharray="9 8" opacity=".45" fill="none">
+      <line x1="-1100" y1="140" x2="2100" y2="140"/><line x1="-1100" y1="178" x2="2100" y2="178"/><line x1="-1100" y1="212" x2="2100" y2="212"/>
+    </g>
+    <g fill="#CFE4EA" font-size="8" font-family="var(--font-num)" opacity=".9">
+      <text x="-392" y="137" data-fs="8">6 m</text><text x="-392" y="175" data-fs="8">4 m</text><text x="-392" y="209" data-fs="8">2 m</text>
+    </g>
+
+    <rect id="impact" x="-1100" y="203" width="3200" height="25" fill="var(--foam)" opacity=".14"/>
+    <g id="waves" fill="none"></g>
+    <g id="foam" fill="none"></g>
+
+    <path id="land" fill="var(--sand)"/>
+    <path id="swash" fill="none" stroke="var(--foam)" stroke-width="3" opacity=".9"/>
+    <rect x="-1100" y="300" width="3200" height="3" fill="var(--granite-2)"/>
+    <rect x="-1100" y="303" width="3200" height="29" fill="var(--dune)"/>
+    <rect x="-1100" y="332" width="3200" height="30" fill="var(--pine)"/>
+    <rect x="-1100" y="362" width="3200" height="12" fill="var(--road)"/>
+    <rect x="-1100" y="374" width="3200" height="200" fill="#DCD3BE"/>
+    <g id="pines" fill="#3D5342"></g>
+    <text x="500" y="392" fill="var(--ink-2)" font-size="11" text-anchor="middle" data-fs="11">Top Sante · car park</text>
+    <text x="500" y="317" fill="#8A7A56" font-size="9.5" text-anchor="middle" data-fs="9.5">dune</text>
+
+    <g id="heads"></g>
+    <g id="flow" fill="none"></g>
+    <g id="ghost" opacity="0"></g>
+    <g id="crowd"></g>
+    <path id="trail" fill="none" stroke="var(--me)" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>
+    <g id="friends" opacity="0"></g>
+    <g id="me">
+      <circle id="meHalo" cx="500" cy="286" r="13" fill="none" stroke="var(--me)" stroke-width="1.4" opacity=".55"/>
+      <circle id="meDot" cx="500" cy="286" r="6" fill="var(--me)" stroke="#2A2118" stroke-width="1.6"/>
+    </g>
+    <g id="anno"></g>
+
+    <g id="labels">
+      <text x="0" y="322" fill="#5E5847" font-size="10.5" text-anchor="middle" data-fs="10.5">Headland N</text>
+      <text x="1000" y="322" fill="#5E5847" font-size="10.5" text-anchor="middle" data-fs="10.5">Headland S</text>
+      <text x="-392" y="256" fill="#DDECF0" font-size="10.5" data-fs="10.5">&#8592; North · Oarai</text>
+      <text x="1092" y="256" fill="#DDECF0" font-size="10.5" text-anchor="end" data-fs="10.5">South · Kashima Port &#8594;</text>
+      <text x="-392" y="60" fill="#DDECF0" font-size="10.5" data-fs="10.5">&#8593; Offshore (ESE)</text>
+      <g stroke="#EFF6F7" stroke-width="1.4">
+        <line x1="600" y1="466" x2="700" y2="466"/><line x1="600" y1="462" x2="600" y2="470"/><line x1="700" y1="462" x2="700" y2="470"/>
+      </g>
+      <text x="650" y="459" fill="#5E5847" font-size="10" text-anchor="middle" data-fs="10">100 m</text>
+    </g>
+  </svg>
+
+  <div class="badges">
+    <div class="badge" id="bClock">09:50</div>
+    <div class="badge warn" id="bDist">&#8212;</div>
+    <div class="badge"><div class="pips" id="pips" aria-label="Exposure"></div></div>
+  </div>
+  <div class="hud">
+    <div class="hud-top"><span class="chno" id="chNo"></span><span class="chttl" id="chTtl"></span></div>
+    <div class="chsub" id="chSub"></div>
+  </div>
+</div>
+
+<div class="ctl">
+  <button class="pri" id="play">&#9654; Play</button>
+  <button id="prev">&#9664; Back</button>
+  <button id="next">Next &#9654;</button>
+  <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Timeline">
+  <span class="tclock" id="tpos"></span>
+  <span class="spd" role="group" aria-label="Playback speed">
+    <button data-s="0.5" aria-pressed="false">0.5x</button>
+    <button data-s="1" aria-pressed="true">1x</button>
+    <button data-s="2" aria-pressed="false">2x</button>
+  </span>
+</div>
+<div class="toggles">
+  <label><input type="checkbox" id="tFlow" checked> Currents</label>
+  <label><input type="checkbox" id="tWave" checked> Swell and whitewater</label>
+  <label><input type="checkbox" id="tCrowd" checked> The pack (~40)</label>
+  <label><input type="checkbox" id="tAnno" checked> Distance callouts</label>
+</div>
+
+<div class="rail" id="rail"></div>
+
+<h2><span class="n">Mechanism</span>What the water was actually doing</h2>
+<p class="lede">None of this was a skill problem. Put a south swell on this coast two days before a typhoon and the geometry does the rest. Most of the explanation is already printed in the prefecture's own pamphlet.</p>
+<div class="cards">
+  <div><span class="k">01 · Swell</span><h4>South swell means a northward river</h4>
+    <p>Kashima-nada is dominated by southerly waves in summer and northerly in winter. When the swell arrives at an angle from the south, sand and water both move north. The unbroken northward set I felt inshore was this coast behaving exactly as designed for.</p></div>
+  <div><span class="k">02 · Spacing</span><h4>Headlands every 1 km, 150 m long</h4>
+    <p>The scheme places a 150 m headland every kilometre; 34 are built. Entering at mid-gap leaves 500 m of water on each side. At 0.7 m/s, 500 m is twelve minutes — and I was in there for ten before I looked up.</p></div>
+  <div><span class="k">03 · Rip</span><h4>The seaward drain is a documented feature</h4>
+    <p>The prefecture's dye tests show flow running seaward along a groin, and a circulation cell forming behind a widened head. The rip I gambled on at the end was not a hunch. It is in the design literature — and it also explains why the far side of the head drained seaward too.</p></div>
+  <div><span class="k">04 · Blocks</span><h4>The armour is on the seaward face only</h4>
+    <p>Wave-dissipating blocks are placed on the ocean side and deliberately kept out of sight from land. From the beach a headland reads as a stone pier. From the water, past the tip, it is a wall with 1.5 m detonating on it without a pause.</p></div>
+</div>
+
+<h2><span class="n">Before you paddle</span>The five minutes that would have prevented this</h2>
+<p class="lede">What a friend who surfs at a much higher level told me afterwards amounts to one instruction: measure the water before you get in it. No equipment. You watch people from the sand.</p>
+<ol class="check">
+  <li><b>Watch movement before you watch waves</b><span>Sit down for five minutes and ignore the sets. Look for foam, weed and discoloured streaks tracking one way. That direction and speed is the longshore current, and it decides everything else.</span></li>
+  <li><b>Check whether the pack is holding position</b><span>Are they sitting on the peak, or paddling continuously to stay near it? Constant paddling with no ground gained means the current already matches a cruising paddle. That was visible from the beach that morning and I did not look.</span></li>
+  <li><b>Pick two fixed marks and time thirty seconds</b><span>Use a headland, a stairway, a building. Follow one person for thirty seconds. Twenty metres of travel is roughly 0.7 m/s. That number is the line between going and not going.</span></li>
+  <li><b>Enter up-current, never down-current</b><span>Paddling out on the down-current side of a gap means starting from the end you would be pushed into. With a northward set, enter to the south and keep the north headland as far away as possible.</span></li>
+  <li><b>Assume both sides of a headland drain seaward</b><span>I found this out the hard way. The far side of the head was pulling out too, so getting around the structure did not mean I could go straight in. Plan on having to travel a few hundred metres away from the structure before the water lets you back.</span></li>
+  <li><b>Say it out loud</b><span>Three of us surfed that spot and all three, separately, thought we were going to die. Three observations shared on the sand would probably have meant nobody paddled out.</span></li>
+</ol>
+
+<h2><span class="n">Once it starts</span>What worked, and what nearly finished it</h2>
+<h3>The two mistakes</h3>
+<p>Paddling straight into the current. Fifteen seconds heading south cost me ten metres northward, and a large fraction of the arms I would need later. Then trying to escape shoreward: near a headland the longshore flow is strongest inshore and the structure is closest, so going in made everything worse at once. The instinct to reach the beach is exactly the instinct that puts you into the blocks.</p>
+<h3>The order that worked</h3>
+<p>Take the seaward drain and get distance from the armour. Round the head well outside the block line where the flow is smoother. Then — and this is the part I did not expect — keep going away from the headland along the far side until the offshore pull dies off, several hundred metres if that is what it takes, and only then turn in. Counter-intuitively, on this geometry the water gets safer the further out and the further from the structure you go.</p>
+<h3>The floor</h3>
+<p>Keep the board: it is your flotation and the only thing that makes you visible. Stop paddling and breathe when you are not gaining anything; recovering your arms is worth more than ten metres. Wave one arm and keep it up. Never grab the blocks — they look climbable and they are a set of gaps with 1.5 m of water moving through them. And when you get out, tell whoever is still in the water how fast it is running.</p>
+
+<h2><span class="n">Speed</span>Why nothing felt like it was working</h2>
+<p class="lede">The sensation of paddling hard and going nowhere has a number attached to it.</p>
+<div class="speedbars">
+  <div class="sb"><span class="lab">Longshore set that morning</span><span class="bar"><i style="width:47%;background:var(--rip)"></i></span><span class="v">~0.7 m/s</span></div>
+  <div class="sb"><span class="lab">Rip beside the headland</span><span class="bar"><i style="width:100%;background:var(--rip)"></i></span><span class="v">~1.5 m/s</span></div>
+  <div class="sb"><span class="lab">Cruising paddle</span><span class="bar"><i style="width:60%;background:var(--flow)"></i></span><span class="v">~0.9 m/s</span></div>
+  <div class="sb"><span class="lab">Sprint paddle (about a minute)</span><span class="bar"><i style="width:87%;background:var(--flow)"></i></span><span class="v">~1.3 m/s</span></div>
+  <div class="sb"><span class="lab">Walking pace, for scale</span><span class="bar"><i style="width:80%;background:#8C897F"></i></span><span class="v">~1.2 m/s</span></div>
+</div>
+<p>Against 0.7 m/s, an all-out sprint nets 0.6 m/s — and it does not last a minute. In the rip core, no human beats the water. So the only workable plan is to stop trying to win and start choosing which way to be carried.</p>
+
+<div class="note">
+  <b>About this drawing.</b> Headland form and dimensions (150 m long, roughly 100 m across the hammerhead, wave-dissipating blocks on the seaward face only, 1 km spacing, 30 m target beach width, gently arced shoreline between heads) are drawn from the Ibaraki Prefecture pamphlet, as is the seasonal wave direction and the circulation behind the head. It is a schematic built from those figures, not a copy of the aerial photographs in the document. Positions, distances and durations are one person's recollection, not survey data. Wave celerity in the animation is computed from local depth in real time, so the swell moves at roughly the speed it actually moves; the story clock is compressed. The 30 m &rarr; 20 m &rarr; 10 m approach paired with "about fifteen seconds" each implies bursts of 1.5 m/s or more locally. Either way the conclusion is unchanged: it was not a speed a person can paddle against.
+</div>
+
+<footer>
+  Source: Ibaraki Prefecture, Public Works Department, River Division — "Protecting the sands of Kashima-nada: the Kashima-nada headland project" (June 2017).
+  <a href="https://www.pref.ibaraki.jp/doboku/kasen/coast/documents/headland_pamphlet.pdf">headland_pamphlet.pdf</a><br>
+  A personal incident record made for reconstruction and warning. Judgements about rescue, weather and sea state must come from current local information and your own observation.
+</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var SV=document.getElementById('chart'), NS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var ASPECT=3.0;
+
+  /* ---------- geometry : X alongshore (north = left, -X) , Y = shoreward ---------- */
+  var HL=[0,1000], SEAWALL=300;
+  var TA={x:-66,y:130,w:132,h:66};   /* tetrapod apron: seaward face + both ends */
+  var CB={x:-50,y:146,w:100,h:50};   /* hammerhead crossbar */
+  var GR={x:-25,y:196,w:50,h:112};   /* trunk / groin, submerged base */
+
+  function shoreY(x){
+    var c=500+1000*Math.round((x-500)/1000), t=(x-c)/500;
+    if(t>1)t=1; if(t<-1)t=-1;
+    return 270-25*t*t;
+  }
+  function distRect(px,py,x,y,w,h){
+    var dx=Math.max(x-px,0,px-(x+w)), dy=Math.max(y-py,0,py-(y+h));
+    return Math.hypot(dx,dy);
+  }
+  function clearance(px,py){
+    var best={d:1e9,what:'headland'};
+    for(var i=0;i<HL.length;i++){
+      var cx=HL[i], d;
+      d=distRect(px,py,cx+TA.x,TA.y,TA.w,TA.h); if(d<best.d) best={d:d,what:'tetrapods'};
+      d=distRect(px,py,cx+CB.x,CB.y,CB.w,CB.h); if(d<best.d) best={d:d,what:'head'};
+      d=distRect(px,py,cx+GR.x,GR.y,GR.w,GR.h); if(d<best.d) best={d:d,what:'trunk'};
+    }
+    return best;
+  }
+  function nearestPoint(px,py){
+    var best=[px,py], bd=1e9;
+    for(var i=0;i<HL.length;i++){
+      var cx=HL[i];
+      [[cx+TA.x,TA.y,TA.w,TA.h],[cx+CB.x,CB.y,CB.w,CB.h],[cx+GR.x,GR.y,GR.w,GR.h]].forEach(function(r){
+        var qx=Math.min(Math.max(px,r[0]),r[0]+r[2]), qy=Math.min(Math.max(py,r[1]),r[1]+r[3]);
+        var d=Math.hypot(px-qx,py-qy);
+        if(d>0.5&&d<bd){bd=d;best=[qx,qy];}
+      });
+    }
+    return best;
+  }
+
+  /* depth profile -> wave celerity */
+  var DTAB=[[40,12],[110,8],[140,6],[158,5],[178,4],[195,3],[212,2],[225,1.4],[240,0.7],[262,0.12]];
+  function depth(y){
+    if(y<=DTAB[0][0]) return DTAB[0][1];
+    for(var i=0;i<DTAB.length-1;i++){
+      if(y<=DTAB[i+1][0]){
+        var a=DTAB[i],b=DTAB[i+1];
+        return a[1]+(b[1]-a[1])*((y-a[0])/(b[0]-a[0]));
+      }
+    }
+    return 0.1;
+  }
+  function celerity(y){ return Math.sqrt(9.8*Math.max(0.32,depth(y))); }
+  var C_DEEP=celerity(40);
+
+  /* ---------- static scene ---------- */
+  (function(){
+    var p='M -1100 620 L 2100 620 L 2100 '+shoreY(2100).toFixed(1);
+    for(var x=2100;x>=-1100;x-=20) p+=' L '+x+' '+shoreY(x).toFixed(1);
+    document.getElementById('land').setAttribute('d',p+' Z');
+    var s='M -1100 '+shoreY(-1100).toFixed(1);
+    for(var x2=-1080;x2<=2100;x2+=20) s+=' L '+x2+' '+shoreY(x2).toFixed(1);
+    document.getElementById('swash').setAttribute('d',s);
+    var pg=document.getElementById('pines');
+    for(var i=0;i<250;i++) pg.appendChild(el('circle',{cx:-1100+i*13+((i*37)%9),cy:336+((i*53)%20),r:4+((i*29)%4),opacity:.75}));
+  })();
+
+  (function(){
+    var g=document.getElementById('heads');
+    HL.forEach(function(cx){
+      /* tetrapod apron */
+      g.appendChild(el('rect',{x:cx+TA.x,y:TA.y,width:TA.w,height:TA.h,rx:18,fill:'#5A5851',opacity:'.55'}));
+      /* trunk base + crossbar (T shape, rounded corners, slightly convex seaward face) */
+      g.appendChild(el('rect',{x:cx+GR.x,y:GR.y,width:GR.w,height:GR.h,fill:'var(--granite)',opacity:'.68'}));
+      g.appendChild(el('path',{fill:'var(--granite)',opacity:'.82',d:
+        'M '+(cx-50)+' 196 L '+(cx-50)+' 166 Q '+(cx-50)+' 149 '+(cx-33)+' 149 '+
+        'Q '+cx+' 143 '+(cx+33)+' 149 Q '+(cx+50)+' 149 '+(cx+50)+' 166 L '+(cx+50)+' 196 Z'}));
+      /* tetrapod blocks on the seaward face and around both ends */
+      var blocks=[];
+      for(var x=cx-64;x<=cx+64;x+=7.4) for(var y=132;y<=146;y+=7.2) blocks.push([x,y]);
+      for(var e=0;e<2;e++) for(var x2=(e?cx+52:cx-64);x2<=(e?cx+64:cx-52);x2+=7.4) for(var y2=150;y2<=192;y2+=7.2) blocks.push([x2,y2]);
+      blocks.forEach(function(b,i){
+        var jx=b[0]+((i*13)%5)-2, jy=b[1]+((i*7)%5)-2;
+        g.appendChild(el('rect',{x:jx-2.9,y:jy-2.9,width:5.8,height:5.8,rx:1.2,fill:'var(--tetra)',opacity:'.94',
+          transform:'rotate('+((i*29)%90)+' '+jx.toFixed(1)+' '+jy.toFixed(1)+')'}));
+      });
+      /* crest, above water */
+      g.appendChild(el('rect',{x:cx-7,y:196,width:14,height:SEAWALL+4-196,fill:'var(--granite-2)'}));
+      g.appendChild(el('rect',{x:cx-40,y:158,width:80,height:38,rx:10,fill:'var(--granite-2)'}));
+      g.appendChild(el('rect',{x:cx-40,y:158,width:80,height:38,rx:10,fill:'none',stroke:'#A19D91',"stroke-width":1}));
+      /* permanent break on the blocks */
+      var fg=el('g',{"class":'tfoam',fill:'var(--foam)',opacity:'.85'});
+      for(var f=cx-68;f<=cx+68;f+=11) fg.appendChild(el('circle',{cx:f,cy:127+((f*3)%4),r:5.4+((f*5)%3)}));
+      for(var f2=134;f2<=196;f2+=11){
+        fg.appendChild(el('circle',{cx:cx-69,cy:f2,r:5+((f2*3)%3)}));
+        fg.appendChild(el('circle',{cx:cx+69,cy:f2,r:5+((f2*5)%3)}));
+      }
+      g.appendChild(fg);
+    });
+  })();
+
+  /* ---------- swell : real-time celerity, shoaling and refraction ---------- */
+  var NW=6, crests=[], waveEls=[], foamEls=[];
+  (function(){
+    var wg=document.getElementById('waves'), fg=document.getElementById('foam');
+    var seed=[52,104,152,192,222,248];
+    for(var i=0;i<NW;i++){
+      crests.push({y:seed[i]});
+      waveEls.push(wg.appendChild(el('path',{stroke:'#BFDCE4',"stroke-width":1.6,opacity:'.62',"stroke-linecap":'round'})));
+      foamEls.push(fg.appendChild(el('path',{stroke:'var(--foam)',"stroke-width":6,opacity:'.9',"stroke-linecap":'round'})));
+    }
+  })();
+  function stepWaves(dt){
+    for(var i=0;i<NW;i++){
+      crests[i].y+=celerity(crests[i].y)*dt;
+      if(crests[i].y>292) crests[i].y=46;
+    }
+  }
+  function drawWaves(){
+    for(var i=0;i<NW;i++){
+      var cy=crests[i].y, k=0.055*(celerity(cy)/C_DEEP);
+      var diff=12*Math.min(1,Math.max(0,(cy-140)/60));
+      var d='',fd='',open=false,cnt=0,sum=0;
+      for(var x=-1120;x<=2120;x+=40){
+        var y=cy+k*(x-350)
+              +diff*(Math.exp(-Math.pow(x/150,2))+Math.exp(-Math.pow((x-1000)/150,2)))
+              +2.4*Math.sin(x/130+cy*0.03);
+        d+=(x===-1120?'M':'L')+x+' '+y.toFixed(1);
+        var sh=shoreY(x);
+        if(y>=205&&y<=sh+2){ fd+=(open?'L':'M')+x+' '+y.toFixed(1); open=true; cnt++; sum+=(y-205)/Math.max(6,sh-205); }
+        else open=false;
+      }
+      waveEls[i].setAttribute('d',d);
+      waveEls[i].setAttribute('stroke-width',(1.2+1.8*Math.min(1,Math.max(0,(cy-120)/85))).toFixed(2));
+      waveEls[i].setAttribute('opacity',(0.62-0.4*Math.min(1,Math.max(0,(cy-205)/45))).toFixed(2));
+      foamEls[i].setAttribute('d',fd||'M0 0');
+      var age=cnt?sum/cnt:0;
+      foamEls[i].setAttribute('stroke-width',(8.5-5.5*age).toFixed(2));
+      foamEls[i].setAttribute('opacity',(0.95-0.45*age).toFixed(2));
+    }
+  }
+
+  /* ---------- currents ---------- */
+  var flowPaths=[];
+  (function(){
+    var g=document.getElementById('flow');
+    function add(d,w,col,op,dash){
+      var p=el('path',{d:d,stroke:col,"stroke-width":w,opacity:op,"stroke-dasharray":dash,"stroke-linecap":'round',"marker-end":'url(#ar)'});
+      g.appendChild(p); flowPaths.push(p); return p;
+    }
+    /* longshore drift, right (south) to left (north) */
+    [200,214,230,246,260].forEach(function(y,i){
+      var d='M 1180 '+y;
+      for(var x=1120;x>=-420;x-=60) d+=' L '+x+' '+(y+4*Math.sin(x/210+i)).toFixed(1);
+      add(d,2,'var(--flow)',.72,'13 15');
+    });
+    /* feeder + rip beside the north headland, around the hammerhead, out the far side */
+    add('M 52 264 C 44 244, 44 224, 56 210 C 68 198, 82 190, 88 174 '+
+        'C 92 156, 88 138, 74 126 C 50 112, 10 108, -30 111 '+
+        'C -58 115, -80 128, -90 150 C -98 170, -102 190, -106 208',3.1,'var(--rip)',.95,'15 12');
+    /* the far side drains seaward too */
+    add('M -58 256 C -70 238, -80 220, -90 200 C -100 180, -108 160, -114 142',2.5,'var(--rip)',.8,'12 12');
+    /* mirror at the south headland */
+    add('M 948 264 C 940 244, 940 224, 952 210 C 964 198, 978 190, 984 174 C 988 158, 986 144, 976 132',2.2,'var(--rip)',.5,'12 13');
+    /* circulation cell in the lee of the crossbar */
+    add('M 44 236 C 20 226, -12 222, -30 210 C -42 200, -34 192, -18 195 C 2 199, 24 214, 40 228',1.9,'var(--flow)',.6,'10 12');
+  })();
+
+  /* ---------- the pack ---------- */
+  var CROWD=[], crowdEls=[];
+  (function(){
+    var g=document.getElementById('crowd'), gh=document.getElementById('ghost');
+    for(var i=0;i<40;i++){
+      var x=140+((i*167)%740), y=186+((i*97)%13);
+      CROWD.push({x:x,y:y,ph:(i*37)%100});
+      crowdEls.push(g.appendChild(el('circle',{cx:x,cy:y,r:3.4,fill:'var(--crowd)',opacity:'.78',stroke:'#DCE7EA',"stroke-width":.9})));
+      if(i%9===0){
+        gh.appendChild(el('circle',{cx:x+40,cy:y,r:3,fill:'none',stroke:'#F2EFE7',"stroke-width":1,"stroke-dasharray":'2 2'}));
+        gh.appendChild(el('line',{x1:x+34,y1:y,x2:x+9,y2:y,stroke:'#F2EFE7',"stroke-width":1.2,"marker-end":'url(#ar)',opacity:'.9'}));
+      }
+    }
+    var t=gh.appendChild(el('text',{x:430,y:174,fill:'#F2EFE7',"font-size":11.5,"text-anchor":'middle',"data-fs":11.5}));
+    t.textContent='position ten minutes earlier \u2192 now. everyone is going north.';
+  })();
+  function driftAt(t){
+    if(t<13) return 3.4*t;
+    if(t<27) return 44+26*(t-13);
+    return 408+6*(t-27);
+  }
+
+  /* ---------- story ---------- */
+  var CH=[
+    {d:8, cl:'09:50', dg:1, t:'Ten minutes on the sand',
+     s:'Two days out from a typhoon. BCM had it at 1.5 m. Just before ten, forty-odd people already in the water. The only thing I checked was that other people were out there. I never looked at the current once, and everything I needed to know was visible from where I was standing.',
+     p:[[500,286],[500,286]]},
+    {d:5, cl:'10:00', dg:1, t:'Straight out from dead centre',
+     s:'Mid-gap, 500 m of open water to the headland on either side. It looked like the safest place on the beach, which is exactly why I chose it.',
+     p:[[500,276],[498,266],[495,256]]},
+    {d:14, cl:'10:00 \u2192 10:10', dg:2, t:'Ten minutes, no ground gained',
+     s:'The pack was sitting about as far out as the hammerhead, roughly 150 m off the sand. I got to within about 15 m of them and never closed it \u2014 the bar between us was breaking without a pause, set after set, no lull to sneak through. Zero metres seaward. Four hundred metres north.',
+     p:[[495,256],[470,238],[430,222],[380,212],[320,208],[250,207],[170,207],[94,207]]},
+    {d:6, cl:'10:10', dg:3, t:'Look up: 30 m off the blocks',
+     s:'The tetrapods that had been half a kilometre away were suddenly right there. Inshore of the pack the northward set had been running the entire time, unbroken, and I had been sitting in it for ten minutes.',
+     p:[[94,207],[92,207]]},
+    {d:7, cl:'10:10', dg:4, t:'Fifteen seconds south \u2014 now 20 m',
+     s:'I turned and paddled away from the headland. Fifteen seconds. It did not feel like progress, so I looked back: 20 m. I had paddled south and lost ten metres north.',
+     p:[[92,207],[88,207],[83,208]]},
+    {d:8, cl:'10:11', dg:5, t:'Fifteen seconds in \u2014 10 m off the trunk',
+     s:'New plan: get to the beach. Fifteen seconds shoreward, and the trunk of the headland was 10 m away. Full panic. 1.5 m detonating on those blocks continuously. If it took me there was nothing to do about it. That is the point where I accepted I was going to die.',
+     p:[[83,208],[68,218],[52,230],[35,240]]},
+    {d:6, cl:'10:11', dg:5, t:'Last option: turn seaward',
+     s:'I knew the water beside a head always drains out. But the waves were still breaking shoreward, so it might just push me back onto the rocks. There was nothing else left to try, so I turned around and paddled out again.',
+     p:[[35,240],[44,230],[56,218],[70,206],[80,192]]},
+    {d:6, cl:'10:12', dg:4, t:'Out in seconds',
+     s:'The current did in under a minute what I had failed to do in ten. Straight out, no resistance, to the corner on the seaward side of the head.',
+     p:[[80,192],[86,174],[88,155],[86,140]]},
+    {d:10, cl:'10:12 \u2192 10:13', dg:5, t:'Carried around the hammerhead',
+     s:'No time to think about what next. The northward flow took me along the seaward face to the far end. 1.5 m breaking the whole way. If one had caught me, the soup would have put me into the blocks regardless of what the current was doing. A wall of stone right there, and me unable to move myself anywhere. That was the moment it felt finished.',
+     p:[[86,140],[80,124],[60,114],[30,110],[0,109],[-30,111],[-58,118],[-78,132],[-86,152]]},
+    {d:9, cl:'10:13 \u2192 10:14', dg:3, t:'The far side drains too',
+     s:'I came out the north side and could not go straight in. Beside the blocks on that side the water was also running seaward \u2014 same mechanism, mirrored. So instead of turning for the beach I kept working away from the headland, roughly 300 m toward the middle of the next cell, until the offshore pull let go.',
+     p:[[-86,152],[-108,166],[-145,180],[-200,190],[-250,198],[-285,204]]},
+    {d:8, cl:'10:14 \u2192 10:15', dg:2, t:'Then, and only then, in',
+     s:'Out there the water finally let me choose a direction. I paddled in like I meant it and stood up on the sand.',
+     p:[[-285,204],[-292,222],[-298,240],[-302,256],[-305,268]]},
+    {d:10, cl:'10:15', dg:2, t:'Three of us, same morning, same spot',
+     s:'Both friends I was surfing with had gone through the same thing, one at a time, and both had decided they were going to die. It was not one person making one mistake. It was the day. Which is why the fix is on the beach, before anyone gets in.',
+     p:[[-305,268],[-305,268]]}
+  ];
+  var T=0, TS=[];
+  CH.forEach(function(c){ TS.push(T); T+=c.d; });
+  var TOTAL=T;
+
+  var CAM=[[0,350,250,1500],[6,350,250,1500],[11,430,250,900],[15,420,236,880],[25,180,222,520],
+    [29,120,214,400],[35,110,212,360],[42,95,216,340],[50,78,228,330],[56,80,214,340],
+    [62,74,186,350],[68,40,150,400],[78,-40,146,420],[86,-190,186,520],[92,-282,230,420],
+    [TOTAL,350,250,1500]];
+  function ease(u){return u*u*(3-2*u);}
+  function lerp(a,b,u){return a+(b-a)*u;}
+  function camAt(t){
+    for(var i=0;i<CAM.length-1;i++) if(t<=CAM[i+1][0]){
+      var a=CAM[i],b=CAM[i+1],u=ease((t-a[0])/Math.max(.001,b[0]-a[0]));
+      return [lerp(a[1],b[1],u),lerp(a[2],b[2],u),lerp(a[3],b[3],u)];
+    }
+    var l=CAM[CAM.length-1]; return [l[1],l[2],l[3]];
+  }
+  function chIndex(t){ for(var i=CH.length-1;i>=0;i--) if(t>=TS[i]) return i; return 0; }
+  function posAt(t){
+    var i=chIndex(t), c=CH[i], u=Math.min(1,(t-TS[i])/c.d), p=c.p;
+    if(p.length<2) return p[0].slice();
+    var f=u*(p.length-1), k=Math.min(p.length-2,Math.floor(f)), r=ease(f-k);
+    return [lerp(p[k][0],p[k+1][0],r), lerp(p[k][1],p[k+1][1],r)];
+  }
+  function trailUpTo(t){
+    var pts=[];
+    for(var i=1;i<CH.length;i++){
+      var c=CH[i];
+      if(t>=TS[i]+c.d){ for(var j=0;j<c.p.length;j++) pts.push(c.p[j]); }
+      else if(t>TS[i]){
+        var f=((t-TS[i])/c.d)*(c.p.length-1), k=Math.floor(f);
+        for(var j2=0;j2<=k;j2++) pts.push(c.p[j2]);
+        pts.push(posAt(t)); break;
+      } else break;
+    }
+    return pts.length? 'M'+pts.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1);}).join('L') : '';
+  }
+
+  (function(){
+    var g=document.getElementById('friends'), full=[];
+    for(var i=1;i<CH.length-1;i++) full=full.concat(CH[i].p);
+    [[22,7,'#DCC46A'],[-26,-6,'#C68CB4']].forEach(function(o){
+      var d='M'+full.map(function(p,i){
+        var w=Math.sin(i/full.length*Math.PI);
+        return (p[0]+o[0]*w).toFixed(1)+' '+(p[1]+o[1]*w).toFixed(1);
+      }).join('L');
+      g.appendChild(el('path',{d:d,fill:'none',stroke:o[2],"stroke-width":2,"stroke-dasharray":'7 6',opacity:'.85'}));
+    });
+    var t=g.appendChild(el('text',{x:300,y:170,fill:'#F2EFE7',"font-size":11.5,"text-anchor":'middle',"data-fs":11.5}));
+    t.textContent='both friends took the same route, one at a time';
+  })();
+
+  /* ---------- refs ---------- */
+  var meDot=document.getElementById('meDot'), meHalo=document.getElementById('meHalo'),
+      trail=document.getElementById('trail'), anno=document.getElementById('anno'),
+      ghost=document.getElementById('ghost'), friends=document.getElementById('friends'),
+      crowdG=document.getElementById('crowd'), flowG=document.getElementById('flow'),
+      wavesG=document.getElementById('waves'), foamG=document.getElementById('foam'),
+      impact=document.getElementById('impact'),
+      chNo=document.getElementById('chNo'), chTtl=document.getElementById('chTtl'), chSub=document.getElementById('chSub'),
+      bClock=document.getElementById('bClock'), bDist=document.getElementById('bDist'),
+      pips=document.getElementById('pips'), scrub=document.getElementById('scrub'), tpos=document.getElementById('tpos'),
+      playBtn=document.getElementById('play'), rail=document.getElementById('rail'),
+      cbFlow=document.getElementById('tFlow'), cbWave=document.getElementById('tWave'),
+      cbCrowd=document.getElementById('tCrowd'), cbAnno=document.getElementById('tAnno');
+
+  for(var i=0;i<5;i++){ var sp=document.createElement('span'); sp.className='pip'; pips.appendChild(sp); }
+  var pipEls=pips.querySelectorAll('.pip');
+  var statTexts=[].slice.call(SV.querySelectorAll('text'));
+
+  CH.forEach(function(c,i){
+    var b=document.createElement('button');
+    b.innerHTML='<b>'+String(i+1).padStart(2,'0')+'</b>'+c.t;
+    b.onclick=function(){ pause(); seek(TS[i]); };
+    rail.appendChild(b);
+  });
+  var railBtns=[].slice.call(rail.querySelectorAll('button'));
+
+  /* ---------- render ---------- */
+  var t=0, playing=false, speed=1, lastCh=-1, wall=0;
+  function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0'); }
+
+  function render(){
+    var c=camAt(t), w=c[2], h=w/ASPECT, U=w/980;
+    SV.setAttribute('viewBox',(c[0]-w/2).toFixed(1)+' '+(c[1]-h/2).toFixed(1)+' '+w.toFixed(1)+' '+h.toFixed(1));
+    statTexts.forEach(function(x){ x.setAttribute('font-size',(parseFloat(x.getAttribute('data-fs')||11)*U).toFixed(2)); });
+
+    var p=posAt(t), i=chIndex(t);
+    meDot.setAttribute('cx',p[0]); meDot.setAttribute('cy',p[1]);
+    meDot.setAttribute('r',(7*U).toFixed(2)); meDot.setAttribute('stroke-width',(1.7*U).toFixed(2));
+    meHalo.setAttribute('cx',p[0]); meHalo.setAttribute('cy',p[1]);
+    meHalo.setAttribute('r',((13+5*Math.abs(Math.sin(wall*2.2)))*U).toFixed(2));
+    meHalo.setAttribute('stroke-width',(1.4*U).toFixed(2));
+    trail.setAttribute('d',trailUpTo(t));
+    trail.setAttribute('stroke-width',(2.6*U).toFixed(2));
+
+    var D=driftAt(t);
+    for(var k=0;k<CROWD.length;k++){
+      var cx=CROWD[k].x-D; while(cx<100) cx+=700;
+      crowdEls[k].setAttribute('cx',cx.toFixed(1));
+      crowdEls[k].setAttribute('cy',(CROWD[k].y+1.4*Math.sin(wall*1.1+CROWD[k].ph)).toFixed(1));
+      crowdEls[k].setAttribute('r',(3.4*U).toFixed(2));
+      crowdEls[k].setAttribute('stroke-width',(0.9*U).toFixed(2));
+    }
+    ghost.setAttribute('opacity', i===0? (0.3+0.7*Math.min(1,t/2.2)).toFixed(2) : Math.max(0,1-(t-TS[1])*1.6).toFixed(2));
+    friends.setAttribute('opacity', i===CH.length-1? Math.min(1,(t-TS[i])/2.2).toFixed(2) : 0);
+
+    for(var f=0;f<flowPaths.length;f++){
+      flowPaths[f].setAttribute('stroke-dashoffset',(-wall*(f<5?15:26)).toFixed(1));
+      flowPaths[f].setAttribute('stroke-width',((f<5?2:f===5?3.1:2.2)*U).toFixed(2));
+    }
+    drawWaves();
+    document.querySelectorAll('.tfoam').forEach(function(g){
+      g.setAttribute('opacity',(0.6+0.3*Math.abs(Math.sin(wall*1.4))).toFixed(2));
+    });
+
+    anno.textContent='';
+    var cl=clearance(p[0],p[1]), showD=(i>=2&&i<=10);
+    if(showD&&cbAnno.checked&&cl.d<220){
+      var np=nearestPoint(p[0],p[1]);
+      anno.appendChild(el('line',{x1:p[0],y1:p[1],x2:np[0],y2:np[1],stroke:'#FFDCCF',
+        "stroke-width":(1.5*U).toFixed(2),"stroke-dasharray":(4*U).toFixed(1)+' '+(4*U).toFixed(1),opacity:'.95'}));
+      var tx=el('text',{x:((p[0]+np[0])/2).toFixed(1),y:((p[1]+np[1])/2-7*U).toFixed(1),fill:'#FFE7DC',
+        "font-size":(13*U).toFixed(2),"text-anchor":'middle',"font-family":'var(--font-num)'});
+      tx.textContent=Math.round(cl.d)+' m';
+      anno.appendChild(tx);
+    }
+    if(i===0&&cbAnno.checked){
+      [[0,66],[1000,-66]].forEach(function(a){
+        anno.appendChild(el('line',{x1:500,y1:196,x2:a[0]+a[1],y2:196,stroke:'#F2EFE7',
+          "stroke-width":(1.3*U).toFixed(2),"stroke-dasharray":(5*U).toFixed(1)+' '+(5*U).toFixed(1),
+          opacity:'.8',"marker-end":'url(#ar)'}));
+      });
+      var lt=el('text',{x:500,y:190,fill:'#F2EFE7',"font-size":(11.5*U).toFixed(2),"text-anchor":'middle',"font-family":'var(--font-num)'});
+      lt.textContent='500 m \u2014 mid-gap \u2014 500 m'; anno.appendChild(lt);
+    }
+    if(i===2&&cbAnno.checked){
+      anno.appendChild(el('line',{x1:p[0]-14,y1:192,x2:p[0]-14,y2:207,stroke:'#FFE7DC',
+        "stroke-width":(1.4*U).toFixed(2),opacity:'.9',"marker-end":'url(#ar)',"marker-start":'url(#ar)'}));
+      var bt=el('text',{x:(p[0]-20).toFixed(1),y:'201',fill:'#FFE7DC',"font-size":(11.5*U).toFixed(2),
+        "text-anchor":'end',"font-family":'var(--font-num)'});
+      bt.textContent='15 m \u2014 never closed it'; anno.appendChild(bt);
+      var it=el('text',{x:(p[0]+90).toFixed(1),y:'222',fill:'#FFFFFF',"font-size":(11*U).toFixed(2),
+        "text-anchor":'start',"font-family":'var(--font-num)',opacity:'.85'});
+      it.textContent='bar breaking without a pause'; anno.appendChild(it);
+    }
+    bDist.textContent = showD? (Math.round(cl.d)+' m to '+cl.what) : '\u2014';
+    bDist.style.display = showD? '' : 'none';
+
+    if(i!==lastCh){
+      lastCh=i;
+      chNo.textContent='CH '+String(i+1).padStart(2,'0')+' / '+CH.length;
+      chTtl.textContent=CH[i].t; chSub.textContent=CH[i].s; bClock.textContent=CH[i].cl;
+      for(var q=0;q<5;q++) pipEls[q].classList.toggle('on',q<CH[i].dg);
+      railBtns.forEach(function(b,n){ b.setAttribute('aria-current',n===i?'true':'false'); });
+    }
+    scrub.value=Math.round(t/TOTAL*1000);
+    tpos.textContent=fmt(t)+' / '+fmt(TOTAL);
+  }
+
+  var prev=null;
+  function loop(ts){
+    if(prev==null) prev=ts;
+    var dt=Math.min(.06,(ts-prev)/1000); prev=ts;
+    wall+=dt; stepWaves(dt);
+    if(playing){ t+=dt*speed; if(t>=TOTAL){ t=TOTAL; pause(); } }
+    render();
+    requestAnimationFrame(loop);
+  }
+  function play(){ if(t>=TOTAL) t=0; playing=true; playBtn.innerHTML='&#10073;&#10073; Pause'; }
+  function pause(){ playing=false; playBtn.innerHTML='&#9654; Play'; }
+  function seek(v){ t=Math.max(0,Math.min(TOTAL,v)); lastCh=-1; render(); }
+
+  playBtn.onclick=function(){ playing?pause():play(); };
+  document.getElementById('prev').onclick=function(){ var i=chIndex(t); seek((t-TS[i]<0.6&&i>0)?TS[i-1]:TS[i]); };
+  document.getElementById('next').onclick=function(){ var i=chIndex(t); seek(i<CH.length-1?TS[i+1]:TOTAL); };
+  scrub.oninput=function(){ pause(); seek(this.value/1000*TOTAL); };
+  [].slice.call(document.querySelectorAll('.spd button')).forEach(function(b){
+    b.onclick=function(){
+      speed=parseFloat(b.getAttribute('data-s'));
+      [].slice.call(document.querySelectorAll('.spd button')).forEach(function(o){ o.setAttribute('aria-pressed',o===b?'true':'false'); });
+    };
+  });
+  cbFlow.onchange=function(){ flowG.style.display=this.checked?'':'none'; };
+  cbWave.onchange=function(){
+    var v=this.checked?'':'none';
+    wavesG.style.display=foamG.style.display=impact.style.display=v;
+    document.querySelectorAll('.tfoam').forEach(function(g){ g.style.display=v; });
+  };
+  cbCrowd.onchange=function(){ crowdG.style.display=ghost.style.display=this.checked?'':'none'; };
+  document.addEventListener('keydown',function(e){
+    if(e.target.tagName==='INPUT') return;
+    if(e.code==='Space'){ e.preventDefault(); playing?pause():play(); }
+    if(e.code==='ArrowRight'){ e.preventDefault(); pause(); seek(t+2); }
+    if(e.code==='ArrowLeft'){ e.preventDefault(); pause(); seek(t-2); }
+  });
+
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

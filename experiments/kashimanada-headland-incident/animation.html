@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kashima-nada headland incident — animated reenactment</title>
+<style>
+:root{--ink:#2c2a26;--sub:#6a6660;--card:#ffffff;--line:#ddd6c6;--accent:#d85a30}
+*{box-sizing:border-box}
+body{margin:0;background:#f3efe6;color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",Roboto,"Hiragino Sans",sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 16px 48px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:26px;margin:0 0 4px}
+.sub{color:var(--sub);font-size:14px;margin:0 0 18px}
+svg{display:block;width:100%;height:auto;border-radius:12px}
+.cap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-top:14px;min-height:128px}
+.cap h2{font-size:16px;font-weight:600;margin:0 0 4px}
+.cap p{margin:0;font-size:14.5px;color:var(--sub)}
+.bar{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{font:14px inherit;color:var(--ink);background:var(--card);border:1px solid #c9c3b4;border-radius:8px;padding:6px 14px;cursor:pointer}
+button:hover{background:#faf7ef}
+button:active{transform:scale(0.98)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#cnt{font-size:13px;color:var(--sub);min-width:88px}
+#seek{flex:1;min-width:160px;height:14px;display:flex;align-items:center;cursor:pointer}
+#track{width:100%;height:5px;background:#d9d2c0;border-radius:3px}
+#prog{height:5px;width:0%;background:var(--accent);border-radius:3px}
+.note{font-size:12.5px;color:var(--sub);margin-top:18px}
+.svgtxt{font-size:12px;fill:#eaf4fb}
+.dktxt{font-size:12px;fill:#6b5f44}
+.dist{font-size:13px;font-weight:600;fill:#fff;paint-order:stroke;stroke:#0c4468;stroke-width:3px}
+@media (prefers-reduced-motion: reduce){ }
+</style>
+</head>
+<body>
+<main>
+<h1>The day the current nearly took me</h1>
+<p class="sub">Kashima-nada, between two headlands &middot; north is to the left &middot; viewed from above the beach, looking out to sea</p>
+
+<svg viewBox="0 0 680 460" role="img" aria-label="Animated reenactment: a surfer drifts north at the level of the tetrapod head, escapes offshore via the rip current, is swept around the head, and reaches the beach further north.">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="680" height="36" fill="#c9dfec"/>
+<rect x="0" y="36" width="680" height="112" fill="#10486a"/>
+<rect x="0" y="148" width="680" height="110" fill="#155a80"/>
+<rect x="0" y="258" width="680" height="150" fill="#1b6b98"/>
+<text x="16" y="24" class="svgtxt" style="fill:#33566b;font-weight:600">&#8592; N (north)</text>
+<text x="664" y="24" text-anchor="end" class="svgtxt" style="fill:#33566b">S (south) &#8594;</text>
+<text x="664" y="52" text-anchor="end" class="svgtxt" opacity="0.85">headlands &#8776; 1 km apart &middot; jetty &#8776; 150 m</text>
+<g id="foamg"></g>
+<path d="M118,198 Q230,190 340,198 Q460,206 562,196 L562,218 Q340,232 118,224 Z" fill="#ffffff" opacity="0.3"/>
+<path d="M115,338 Q200,324 340,336 Q480,348 566,334 L566,354 Q340,380 115,354 Z" fill="#ffffff" opacity="0.38"/>
+<path d="M0,460 L0,364 L108,368 Q340,412 592,368 L680,364 L680,460 Z" fill="#e6d5a0"/>
+<path d="M0,366 L108,370 Q340,412 592,370 L680,366" fill="none" stroke="#c9b686" stroke-width="7"/>
+<circle id="hf0" cx="100" cy="188" r="34" fill="#fff" opacity="0.3"/>
+<circle id="hf1" cx="580" cy="188" r="34" fill="#fff" opacity="0.3"/>
+<g>
+<rect x="92" y="192" width="16" height="186" fill="#97928a" stroke="#6c675f" stroke-width="0.5"/>
+<circle cx="100" cy="190" r="19" fill="#97928a" stroke="#6c675f" stroke-width="0.5"/>
+<g fill="#7a756d" stroke="#55524c" stroke-width="0.5">
+<rect x="70" y="184" width="9" height="9" transform="rotate(15 74 188)"/><rect x="74" y="171" width="9" height="9" transform="rotate(40 78 175)"/><rect x="84" y="161" width="9" height="9" transform="rotate(-20 88 165)"/><rect x="96" y="157" width="9" height="9" transform="rotate(10 100 161)"/><rect x="108" y="161" width="9" height="9" transform="rotate(35 112 165)"/><rect x="117" y="171" width="9" height="9" transform="rotate(-15 121 175)"/><rect x="121" y="184" width="9" height="9" transform="rotate(20 125 188)"/><rect x="86" y="172" width="8" height="8" transform="rotate(50 90 176)"/><rect x="104" y="170" width="8" height="8" transform="rotate(-35 108 174)"/>
+</g></g>
+<g id="tetraL" fill="#7a756d" stroke="#55524c" stroke-width="0.5"></g>
+<g>
+<rect x="572" y="192" width="16" height="186" fill="#97928a" stroke="#6c675f" stroke-width="0.5"/>
+<circle cx="580" cy="190" r="19" fill="#97928a" stroke="#6c675f" stroke-width="0.5"/>
+<g fill="#7a756d" stroke="#55524c" stroke-width="0.5">
+<rect x="550" y="184" width="9" height="9" transform="rotate(15 554 188)"/><rect x="554" y="171" width="9" height="9" transform="rotate(40 558 175)"/><rect x="564" y="161" width="9" height="9" transform="rotate(-20 568 165)"/><rect x="576" y="157" width="9" height="9" transform="rotate(10 580 161)"/><rect x="588" y="161" width="9" height="9" transform="rotate(35 592 165)"/><rect x="597" y="171" width="9" height="9" transform="rotate(-15 601 175)"/><rect x="601" y="184" width="9" height="9" transform="rotate(20 605 188)"/>
+</g></g>
+<g id="tetraR" fill="#7a756d" stroke="#55524c" stroke-width="0.5"></g>
+<text x="100" y="398" text-anchor="middle" class="dktxt">North headland</text>
+<text x="580" y="398" text-anchor="middle" class="dktxt">South headland</text>
+<g fill="#f4efe4" stroke="#3a5d78" stroke-width="0.8">
+<circle cx="235" cy="178" r="3"/><circle cx="265" cy="186" r="3"/><circle cx="298" cy="168" r="3"/><circle cx="332" cy="182" r="3"/><circle cx="362" cy="160" r="3"/><circle cx="396" cy="180" r="3"/><circle cx="428" cy="168" r="3"/><circle cx="458" cy="184" r="3"/><circle cx="305" cy="148" r="3"/><circle cx="372" cy="146" r="3"/><circle cx="340" cy="174" r="3"/><circle cx="415" cy="150" r="3"/><circle cx="255" cy="158" r="3"/><circle cx="445" cy="152" r="3"/><circle cx="285" cy="188" r="3"/>
+</g>
+<g id="g-drift" style="display:none" stroke="#ffffff" opacity="0.9">
+<line x1="445" y1="246" x2="385" y2="246" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="335" y1="258" x2="275" y2="258" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="232" y1="242" x2="172" y2="242" stroke-width="2" marker-end="url(#arrow)"/>
+</g>
+<g id="g-rip" style="display:none" stroke="#9fe1cb" opacity="0.95">
+<line x1="127" y1="332" x2="127" y2="278" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="127" y1="258" x2="127" y2="210" stroke-width="2.5" marker-end="url(#arrow)"/>
+</g>
+<g id="g-north" style="display:none" stroke="#ffffff" opacity="0.95">
+<line x1="210" y1="112" x2="150" y2="112" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="120" y1="100" x2="60" y2="100" stroke-width="2.5" marker-end="url(#arrow)"/>
+</g>
+<g id="g-out" style="display:none" stroke="#9fe1cb" opacity="0.95">
+<line x1="58" y1="212" x2="58" y2="166" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="72" y1="222" x2="72" y2="176" stroke-width="2.5" marker-end="url(#arrow)"/>
+</g>
+<g id="g-ghosts" style="display:none">
+<polyline points="250,238 166,226 137,286 128,206 100,128 54,156 46,192 20,226 14,380" fill="none" stroke="#e8e4d8" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.75"/>
+<circle cx="200" cy="231" r="4" fill="#d3d1c7" stroke="#5f5e5a" stroke-width="0.8"/>
+<circle cx="100" cy="128" r="4" fill="#d3d1c7" stroke="#5f5e5a" stroke-width="0.8"/>
+<text x="212" y="226" class="dist">Friend 1</text>
+<text x="113" y="124" class="dist">Friend 2</text>
+</g>
+<g id="g-lesson" style="display:none">
+<circle cx="340" cy="424" r="4.5" fill="#4a4238"/>
+<rect x="336" y="429" width="8" height="14" rx="3" fill="#4a4238"/>
+<line x1="338" y1="424" x2="256" y2="182" stroke="#4a4238" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
+<line x1="340" y1="422" x2="333" y2="190" stroke="#4a4238" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
+<line x1="342" y1="424" x2="426" y2="172" stroke="#4a4238" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
+<line x1="248" y1="170" x2="220" y2="170" stroke="#fff" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="326" y1="178" x2="298" y2="178" stroke="#fff" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="420" y1="160" x2="392" y2="160" stroke="#fff" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="340" y="456" text-anchor="middle" class="dktxt" style="font-weight:600">Watch from the beach first: is the lineup drifting?</text>
+</g>
+<g id="g-dist" style="display:none">
+<line id="dline" x1="0" y1="0" x2="0" y2="0" stroke="#ffd27a" stroke-width="1.5" stroke-dasharray="3 4"/>
+<text id="dlab" x="0" y="0" class="dist">30 m</text>
+</g>
+<polyline id="trail" points="" fill="none" stroke="#ffb59e" stroke-width="1.5" stroke-dasharray="2 4" opacity="0.9"/>
+<circle id="ring" r="10" fill="none" stroke="#e24b4a" stroke-width="2" style="display:none"/>
+<g id="surfer">
+<line x1="-7" y1="0" x2="7" y2="0" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+<circle r="5" fill="#d85a30" stroke="#fff" stroke-width="1.5"/>
+</g>
+</svg>
+
+<div class="cap">
+<h2 id="cap-t"></h2>
+<p id="cap-x"></p>
+</div>
+
+<div class="bar">
+<button id="bPrev" aria-label="Previous scene">&#9664; Prev</button>
+<button id="bPlay" aria-label="Play or pause">Pause</button>
+<button id="bNext" aria-label="Next scene">Next &#9654;</button>
+<button id="bRe" aria-label="Restart">&#8635; Restart</button>
+<span id="cnt"></span>
+<div id="seek" role="slider" aria-label="Seek" tabindex="0"><div id="track"><div id="prog"></div></div></div>
+</div>
+
+<p class="note">Headland geometry based on the Ibaraki Prefecture Kashima-nada headland pamphlet: 150 m jetties with semicircular heads, wave-dissipating tetrapod blocks on the offshore side, spaced roughly 1 km apart. Rip currents run permanently along the headlands.</p>
+</main>
+
+<script>
+const S=[
+{d:5000,t:"Paddling in from the middle",x:"10:00 AM, two days before a typhoon. The BCM forecast called for waves around 1.5 m. About 40 surfers were already sitting out at the level of the tetrapod head, or a little beyond it, so I entered from the center of the beach without checking the current at all.",p:[[340,402],[340,308]],sh:[]},
+{d:7000,t:"Fighting the whitewater, and drifting",x:"The breaking waves were relentless. A wall of whitewater kept me pinned about 15 m inshore of the lineup for roughly 10 minutes, with the waves always breaking between me and the other surfers. And in that whitewater zone, a steady current I hadn't noticed was carrying me straight toward the tetrapods.",p:[[340,308],[328,270],[302,250],[260,238],[205,232]],sh:["drift"]},
+{d:5000,t:"30 m from the tetrapods",x:"Then I looked up. The tetrapod line of the north headland was only about 30 m away at my level, just inshore of the head.",p:[[205,232],[182,228],[166,226]],sh:["drift","dist"],dt:[126,224],dl:"~30 m"},
+{d:6000,t:"Paddling south gains nothing",x:"I paddled hard to the south for about 15 seconds. It didn't feel like I was moving. When I looked back, the tetrapods were 20 m away. The current was faster than I could paddle.",p:[[166,226],[174,230],[168,225],[153,224]],sh:["drift","dist"],dt:[124,222],dl:"20 m"},
+{d:6500,t:"10 m from the headland",x:"Plan B: get back to the beach. I paddled shoreward for another 15 seconds and found myself just 10 m from the headland, where 1.5 m waves were constantly detonating on the tetrapods. Full panic. I honestly thought I could die here.",p:[[153,224],[147,252],[137,286]],sh:["drift","dist","ring"],dt:[118,284],dl:"10 m"},
+{d:6500,t:"Last hope: the rip current",x:"I knew a permanent rip runs seaward along the headland. The waves were breaking shoreward, so I might just get pushed back, or get swallowed onto the blocks while trying. With no other option, I paddled straight out. The rip shot me offshore in seconds.",p:[[137,286],[131,248],[128,206],[136,168]],sh:["rip"]},
+{d:7500,t:"Swept around the head",x:"I came out off the southeast side of the head, and before I could think, a strong north current swept me straight past it. Sets were still breaking on the tetrapods beside me. One wall of whitewater and the soup would throw me onto the blocks, current or no current. Facing that mass of concrete, unable to move freely, I thought it was over.",p:[[136,168],[126,142],[100,128],[72,138],[54,156]],sh:["north","ring"]},
+{d:4000,t:"Past the north side",x:"By pure luck, no wave caught me. I slipped past to the far (north) side of the tetrapods.",p:[[54,156],[48,174],[46,192]],sh:["north"]},
+{d:6000,t:"Outward flow on this side too",x:"I tried to head straight in, but here as well, the water near the tetrapods pulled outward, away from the beach. Instead of fighting it, I let myself move further toward the middle of the next beach section, clear of the headland's pull.",p:[[46,192],[38,202],[27,212],[20,226]],sh:["out"]},
+{d:5500,t:"Sprint to the beach",x:"Once clear of the outward flow, I paddled for my life toward shore and finally crawled up onto the sand, well north of the headland.",p:[[20,226],[16,300],[14,360],[14,390]],sh:[]},
+{d:6500,t:"It wasn't just me",x:"Afterward, the two friends I'd entered with told me they had each been through exactly the same thing, one by one. Both had thought they were going to die. It was a genuinely dangerous day.",p:[[14,390],[14,390]],sh:["ghosts"]},
+{d:12000,t:"The lesson",x:"A pro-level surfer friend later told me I should have warned others that the current was fast, and taught me this: before paddling out, watch from the beach. Are surfers drifting down the line? Are they paddling constantly just to hold position? Read the current's speed from shore first, then decide where and whether to enter, and warn the people around you when it's strong.",p:[[14,390],[14,390]],sh:["lesson","drift"],hide:1}
+];
+const $=id=>document.getElementById(id);
+const total=S.reduce((a,s)=>a+s.d,0);
+let idx=0,elapsed=0,done=false,last=null,trail=[],lastTp=null;
+let playing=!window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const foamG=$("foamg");const foams=[];
+for(let i=0;i<5;i++){const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d","M-20,0 q42,5 85,0 t85,0 t85,0 t85,0 t85,0 t85,0 t85,0 t85,0");p.setAttribute("fill","none");p.setAttribute("stroke","#fff");p.setAttribute("stroke-width","2");foamG.appendChild(p);foams.push(p);}
+const ns="http://www.w3.org/2000/svg";const tAngles=[15,-25,35,-10,25,-40,10,45];
+function addTetras(gid,cols){const g=$(gid);let k=0;cols.forEach(cx=>{for(let y=202;y<=352;y+=20){const yy=y+(k%2?9:0);const r=document.createElementNS(ns,"rect");r.setAttribute("x",cx);r.setAttribute("y",yy);r.setAttribute("width","9");r.setAttribute("height","9");r.setAttribute("transform","rotate("+tAngles[k%8]+" "+(cx+4.5)+" "+(yy+4.5)+")");g.appendChild(r);k++;}});}
+addTetras("tetraL",[79,111]);addTetras("tetraR",[559,591]);
+function interp(p,u){if(p.length<2)return p[0];const L=[];let tot=0;for(let i=1;i<p.length;i++){const l=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);L.push(l);tot+=l;}let target=u*tot;for(let i=0;i<L.length;i++){if(target<=L[i]||i===L.length-1){const f=L[i]?Math.min(1,target/L[i]):1;return[p[i][0]+(p[i+1][0]-p[i][0])*f,p[i][1]+(p[i+1][1]-p[i][1])*f];}target-=L[i];}return p[p.length-1];}
+function ease(u){return u*u*(3-2*u);}
+function trailUpTo(i){const pts=[];for(let k=0;k<i&&k<=9;k++)S[k].p.forEach(pt=>pts.push(pt));return pts;}
+function setScene(i,keepElapsed){idx=i;if(!keepElapsed)elapsed=0;done=false;const s=S[i];
+$("cap-t").textContent=(i+1)+". "+s.t;$("cap-x").textContent=s.x;$("cnt").textContent="Scene "+(i+1)+" / "+S.length;
+["drift","rip","north","out","ghosts","lesson"].forEach(k=>{$("g-"+k).style.display=s.sh.includes(k)?"":"none";});
+$("g-dist").style.display=s.sh.includes("dist")?"":"none";
+$("ring").style.display=s.sh.includes("ring")?"":"none";
+$("surfer").style.display=s.hide?"none":"";
+trail=s.hide?[]:trailUpTo(i);
+$("trail").setAttribute("points",trail.map(p=>p.join(",")).join(" "));
+lastTp=trail.length?trail[trail.length-1]:null;
+place(...interp(s.p,ease(Math.min(1,elapsed/s.d))));}
+function place(x,y){$("surfer").setAttribute("transform","translate("+x+","+y+")");$("ring").setAttribute("cx",x);$("ring").setAttribute("cy",y);
+const s=S[idx];if(s.sh.includes("dist")){const d=$("dline");d.setAttribute("x1",x);d.setAttribute("y1",y);d.setAttribute("x2",s.dt[0]);d.setAttribute("y2",s.dt[1]);const l=$("dlab");l.setAttribute("x",(x+s.dt[0])/2+10);l.setAttribute("y",(y+s.dt[1])/2-8);l.textContent=s.dl;}}
+function setPlayLabel(){$("bPlay").textContent=done?"Replay":(playing?"Pause":"Play");}
+function updateProg(){let cum=0;for(let k=0;k<idx;k++)cum+=S[k].d;$("prog").style.width=Math.min(100,(cum+elapsed)/total*100).toFixed(1)+"%";}
+function frame(ts){if(last==null)last=ts;const dt=Math.min(50,ts-last);last=ts;
+foams.forEach((f,i)=>{const y=52+((ts*0.028+i*62)%296);let op=0.32;if(y<80)op=0.32*(y-52)/28;if(y>320)op=0.32*(1-(y-320)/28);f.setAttribute("transform","translate(0,"+y+")");f.setAttribute("opacity",Math.max(0,op).toFixed(2));});
+const boost=(idx>=3&&idx<=8)?1.7:1;
+$("hf0").setAttribute("opacity",Math.max(0.12,0.26*boost+0.1*Math.sin(ts/280)).toFixed(2));
+$("hf1").setAttribute("opacity",Math.max(0.12,0.26+0.1*Math.sin(ts/300)).toFixed(2));
+if($("ring").style.display!=="none"){const r=11+5*Math.sin(ts/180);$("ring").setAttribute("r",r.toFixed(1));$("ring").setAttribute("opacity",(0.55+0.35*Math.sin(ts/180)).toFixed(2));}
+if(playing&&!done){elapsed+=dt;const s=S[idx];const u=Math.min(1,elapsed/s.d);const pos=interp(s.p,ease(u));place(pos[0],pos[1]);
+if(!s.hide&&idx<=9){if(!lastTp||Math.hypot(pos[0]-lastTp[0],pos[1]-lastTp[1])>4){trail.push([Math.round(pos[0]),Math.round(pos[1])]);lastTp=pos;$("trail").setAttribute("points",trail.map(p=>p.join(",")).join(" "));}}
+updateProg();
+if(u>=1){if(idx<S.length-1){setScene(idx+1);}else{done=true;playing=false;setPlayLabel();}}}
+requestAnimationFrame(frame);}
+function seekTo(frac){let t=Math.max(0,Math.min(0.999,frac))*total;let i=0;while(i<S.length-1&&t>=S[i].d){t-=S[i].d;i++;}
+elapsed=t;setScene(i,true);updateProg();setPlayLabel();}
+$("seek").addEventListener("click",e=>{const r=$("track").getBoundingClientRect();seekTo((e.clientX-r.left)/r.width);});
+$("seek").addEventListener("keydown",e=>{let cum=0;for(let k=0;k<idx;k++)cum+=S[k].d;const cur=(cum+elapsed)/total;
+if(e.key==="ArrowRight"){seekTo(cur+0.03);e.preventDefault();}if(e.key==="ArrowLeft"){seekTo(cur-0.03);e.preventDefault();}});
+$("bPlay").onclick=()=>{if(done){setScene(0);done=false;playing=true;}else{playing=!playing;}setPlayLabel();};
+$("bNext").onclick=()=>{if(idx<S.length-1){setScene(idx+1);updateProg();}};
+$("bPrev").onclick=()=>{if(idx>0){setScene(idx-1);updateProg();}};
+$("bRe").onclick=()=>{setScene(0);playing=true;done=false;setPlayLabel();updateProg();};
+setScene(0);setPlayLabel();updateProg();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
