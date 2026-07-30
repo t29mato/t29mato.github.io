@@ -38,3 +38,7 @@ This repository (`t29mato.github.io`) is a personal portfolio/blog site built wi
 ## Other notes
 
 - The top page (`index.md`) is composed of `_includes/*.md` files (projects, publications, presentations, etc.). This portfolio section is independent from blog posts (`_posts`), so adding an article does not require touching these include files.
+- The full post list is at `/blog/` (`blog.md`, `layout: home`), which auto-lists everything in `_posts`.
+- GitHub Pages treats any markdown file as a Jekyll page by default (`jekyll-optional-front-matter`), and minima's header nav lists every page that has a title — so a repo-root `.md` file with a heading (like this one) will otherwise get built into a live page and show up in the nav. Because of this:
+  - `_config.yml` has an explicit `header_pages:` list (currently just `blog.md`). Don't rely on the "show every page with a title" default — add new nav entries to this list deliberately.
+  - `_config.yml` `exclude:` lists repo-root files that are for tooling/humans only, not site content (currently `AGENTS.md`). Add any future non-site markdown file here too.

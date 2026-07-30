@@ -37,6 +37,13 @@ plugins:
   - jekyll-feed
 future: false
 
+# Explicit nav links. Without this, minima falls back to listing every
+# site.pages entry that has a title, which (combined with GitHub Pages'
+# jekyll-optional-front-matter + jekyll-titles-from-headings plugins) means
+# ANY repo-root markdown file with a heading gets pulled into the header nav.
+header_pages:
+  - blog.md
+
 collections:
   # releases:
   #   output: true
@@ -89,3 +96,10 @@ defaults:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+# Repo-root files that are meant for tooling/humans reading the repo (not
+# site content). GitHub Pages treats any markdown file as a page by default
+# (jekyll-optional-front-matter), so these must be excluded explicitly or
+# they get built and linked into the nav.
+exclude:
+  - AGENTS.md
