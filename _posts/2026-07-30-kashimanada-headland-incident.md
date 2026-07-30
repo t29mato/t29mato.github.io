@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Reconstructing a Near-Drowning at Kashima-nada with Claude Opus 5 and Claude Fable 5"
-date: 2026-07-31
+date: 2026-07-30
 description: "A rip current nearly killed me at a headland beach on the Kashima-nada coast. I fed the full account into Claude Opus 5, Claude Fable 5, and GPT-5.5, and asked each to reconstruct it."
 tags: [surfing, claude, ai, safety]
 ---
