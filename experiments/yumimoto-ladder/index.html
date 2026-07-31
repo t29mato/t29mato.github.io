@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yumimoto Ladder — vocabulary for Fear and Trembling</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html,body{margin:0;padding:0;background:#0d141d;}
+  #root{min-height:100vh;}
+  .font-serif{font-family:Georgia,"Times New Roman",serif;}
+  .font-mono{font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ------------------------------------------------------------------ */
+/*  YUMIMOTO LADDER — vocabulary for Fear and Trembling                */
+/*  Four choices. Wrong cards come back. No saving, no AI, no typing.  */
+/*  Example sentences are written for this app, not taken from the book*/
+/* ------------------------------------------------------------------ */
+
+const C = {
+  night: "#0d141d",
+  panel: "#151f2b",
+  glass: "#1d2a38",
+  line: "#2b3a4a",
+  paper: "#f2efe4",
+  ink: "#141a20",
+  seal: "#d9483f",
+  city: "#7fa8c4",
+  muted: "#8a99a8",
+  dim: "#5d6c7b",
+  ok: "#5fa87e",
+};
+
+/* ----------------------------- ranks ------------------------------ */
+
+const RANKS = [
+  { xp: 0,    title: "Restroom Attendant", seal: "44F",    suit: "#7f8b93", hair: "#2a2f36", style: "short", bow: 24, prop: "mop",    scale: 1.0,  note: "Forty-fourth floor. Nowhere left to fall." },
+  { xp: 700,  title: "Accounting Clerk",   seal: "ACCT",   suit: "#8d8674", hair: "#2a2f36", style: "short", bow: 20, prop: "ledger", scale: 1.0,  note: "The columns will not tally. They never will." },
+  { xp: 1600, title: "Tea Server",         seal: "TEA",    suit: "#7d9482", hair: "#2a2f36", style: "short", bow: 16, prop: "tray",   scale: 1.0,  note: "Green tea, correct temperature, correct order." },
+  { xp: 2600, title: "Photocopy Clerk",    seal: "COPY",   suit: "#6f8398", hair: "#2a2f36", style: "short", bow: 12, prop: "papers", scale: 1.0,  note: "Again. By hand this time." },
+  { xp: 3700, title: "Interpreter",        seal: "INTP",   suit: "#4d6480", hair: "#2a2f36", style: "short", bow: 8,  prop: "pad",    scale: 1.0,  note: "The job you were actually hired to do." },
+  { xp: 4900, title: "Fubuki Mori",        seal: "MORI",   suit: "#26303c", hair: "#12161c", style: "long",  bow: 4,  prop: "none",   scale: 0.98, note: "Deputy. One metre eighty of perfect posture." },
+  { xp: 6200, title: "Mr. Saito",          seal: "SAITO",  suit: "#3a4048", hair: "#3b3f45", style: "thin",  bow: 2,  prop: "folder", scale: 0.94, note: "Section chief. Rewrite it. No, he will not say why." },
+  { xp: 7500, title: "Mr. Omochi",         seal: "OMOCHI", suit: "#232a33", hair: "#191d23", style: "short", bow: 0,  prop: "none",   scale: 1.28, note: "Vice-president. The whole floor can hear him." },
+  { xp: 8800, title: "Mr. Haneda",         seal: "HANEDA", suit: "#1b2129", hair: "#b9c2c9", style: "short", bow: 0,  prop: "seal",   scale: 1.02, note: "President. Decent, distant, and far above all this." },
+];
+
+function rankIndexFor(xp) {
+  let i = 0;
+  for (let k = 0; k < RANKS.length; k++) if (xp >= RANKS[k].xp) i = k;
+  return i;
+}
+
+/* ----------------------------- words ------------------------------ */
+
+const DECKS = [
+  {
+    title: "The First Day",
+    period: "Hierarchy, bowing, and no work at all",
+    cards: [
+      ["hierarchy", "n.", "階層・上下関係", "In this company the hierarchy is absolute, and no one skips a level."],
+      ["deference", "n.", "（目上への）敬意・恭順", "She bowed with a deference that nobody bothered to acknowledge."],
+      ["subordinate", "n. / adj.", "部下・下位の者", "A subordinate does not correct a superior in front of others."],
+      ["menial", "adj.", "単純で地位の低い（仕事）", "The tasks were menial, and there were more of them every day."],
+      ["protocol", "n.", "儀礼・手続き上の作法", "Speaking to the president directly would breach protocol."],
+      ["servile", "adj.", "卑屈な・へつらう", "His tone turned servile whenever a director passed the desk."],
+      ["impeccable", "adj.", "非の打ちどころのない", "Her manners were impeccable, which made the cruelty worse."],
+      ["condescend", "v.", "見下す／恩着せがましく〜してやる", "He condescended to explain the filing system exactly once."],
+      ["bewilder", "v.", "当惑させる・面食らわせる", "The unwritten rules bewildered her for months."],
+      ["reprimand", "n. / v.", "叱責（する）", "She had expected praise and received a reprimand."],
+      ["prostrate", "adj. / v.", "平伏した・ひれ伏す", "He was almost prostrate with apology on the office floor."],
+      ["reverence", "n.", "崇敬・畏敬", "He spoke of the company with something close to reverence."],
+    ],
+  },
+  {
+    title: "Copies, Tea and Silence",
+    period: "Work invented to fill a person's hours",
+    cards: [
+      ["obsequious", "adj.", "こびへつらう", "His obsequious laughter always arrived half a second too early."],
+      ["futile", "adj.", "無駄な・徒労の", "By the fortieth copy the whole task was obviously futile."],
+      ["arbitrary", "adj.", "恣意的な・気まぐれな", "The standard was arbitrary, and it moved each time she met it."],
+      ["immaculate", "adj.", "一点の汚れもない・完璧な", "The desk was immaculate; not one page sat out of line."],
+      ["tedious", "adj.", "退屈で長ったらしい", "The mornings were tedious in a way she had not thought possible."],
+      ["humiliation", "n.", "屈辱", "The humiliation was administrative, which made it impossible to protest."],
+      ["incompetent", "adj.", "無能な", "She was declared incompetent at work nobody had taught her."],
+      ["scrupulous", "adj.", "几帳面な・良心的な", "She was scrupulous about tasks that no one would ever inspect."],
+      ["dismay", "n. / v.", "落胆・狼狽（させる）", "To her dismay, the corrected pages came back a fourth time."],
+      ["mundane", "adj.", "ありふれた・平凡な", "Her duties were mundane to the point of absurdity."],
+      ["contempt", "n.", "軽蔑", "There was no anger in his voice, only contempt."],
+      ["compliance", "n.", "服従・遵守", "What the company wanted was not skill but compliance."],
+    ],
+  },
+  {
+    title: "The Dairy Report",
+    period: "One good piece of work, and the fall it caused",
+    cards: [
+      ["denounce", "v.", "告発する・密告する", "One telephone call was enough to denounce them both."],
+      ["breach", "n. / v.", "違反（する）・破ること", "Borrowing an employee from another section was a breach of the rules."],
+      ["resentment", "n.", "恨み・積年の憤り", "Years of quiet resentment lay behind a single phone call."],
+      ["meticulous", "adj.", "細部まで几帳面な", "The report was meticulous, and that turned out to be the problem."],
+      ["betray", "v.", "裏切る", "She had not thought her friend could betray her so easily."],
+      ["treachery", "n.", "裏切り・背信", "It was not a mistake. It was treachery, and it was calculated."],
+      ["insubordination", "n.", "命令違反・上官への反抗", "Competence outside the ladder counted as insubordination."],
+      ["commendable", "adj.", "称賛に値する", "The work was commendable and therefore unforgivable."],
+      ["reproach", "n. / v.", "とがめ・小言（を言う）", "She left the room without a word of reproach."],
+      ["vindicate", "v.", "潔白・正しさを証明する", "He hoped the report would vindicate him; it ruined him instead."],
+      ["jeopardise", "v.", "危険にさらす", "A single initiative had jeopardised two careers."],
+      ["wrath", "n.", "激怒・憤怒", "The vice-president's wrath filled the entire floor."],
+    ],
+  },
+  {
+    title: "Accounting",
+    period: "Expense reports, and nights that do not end",
+    cards: [
+      ["ineptitude", "n.", "無能・不器用さ", "Her ineptitude with figures was not laziness, whatever they assumed."],
+      ["discrepancy", "n.", "食い違い・不一致", "A discrepancy of one yen meant starting the column again."],
+      ["relentless", "adj.", "容赦ない・絶え間ない", "The folders came back relentlessly, faster than she could empty them."],
+      ["tally", "v. / n.", "（数が）一致する／集計", "The two columns refused to tally, however often she added them."],
+      ["tedium", "n.", "退屈・単調さ", "The tedium was itself a form of punishment."],
+      ["despair", "n. / v.", "絶望（する）", "She worked through the night out of despair rather than hope."],
+      ["delirium", "n.", "錯乱・うわごと", "By four in the morning she was close to delirium."],
+      ["vertigo", "n.", "眩暈・高所の目まい", "She stood at the window and felt a vertigo she almost welcomed."],
+      ["oblivion", "n.", "忘却・意識の消滅", "She wanted oblivion rather more than she wanted sleep."],
+      ["exhaustion", "n.", "極度の疲労", "Exhaustion made the numbers move about on the page."],
+      ["futility", "n.", "無益・空しさ", "The futility of it was the point, and she understood that too late."],
+      ["degrade", "v.", "貶める・品位を落とす", "Each new post was designed to degrade her a little further."],
+    ],
+  },
+  {
+    title: "The Forty-Fourth Floor",
+    period: "The last post, and the correct way to lose",
+    cards: [
+      ["demote", "v.", "降格させる", "To demote her further, they would have had to invent a new floor."],
+      ["atone", "v.", "償う・罪滅ぼしをする", "She was there to atone for something nobody would name."],
+      ["austere", "adj.", "厳格で簡素な・飾り気のない", "The room was austere: white tile, a mirror, and nothing else."],
+      ["scapegoat", "n.", "身代わり・生贄", "Every institution needs a scapegoat, and she had the merit of being foreign."],
+      ["dignity", "n.", "尊厳・威厳・面子", "Leaving early would have cost her more dignity than staying."],
+      ["endure", "v.", "耐え抜く・持ちこたえる", "She had decided to endure the contract to its final day."],
+      ["resignation", "n.", "辞職／諦め", "Her resignation was delivered in the correct order, rung by rung."],
+      ["redemption", "n.", "救済・埋め合わせ", "There was no redemption on offer, and she stopped expecting any."],
+      ["absurdity", "n.", "不条理・ばかばかしさ", "She began to find a certain freedom in the absurdity of it."],
+      ["reconcile", "v.", "和解させる／折り合いをつける", "She never quite reconciled the two versions of her friend."],
+      ["serene", "adj.", "穏やかな・晴朗な", "She polished the mirror with a serene attention that unnerved them."],
+      ["defiance", "n.", "（あえて）逆らうこと・不服従", "Staying to the last day was her only act of defiance."],
+    ],
+  },
+];
+
+const TOTAL_CARDS = DECKS.reduce((n, d) => n + d.cards.length, 0);
+const ALL_WORDS = DECKS.flatMap((d) => d.cards.map((c) => ({ w: c[0], ja: c[2] })));
+
+function seeded(n) {
+  let s = Math.abs(Math.floor(n)) * 9301 + 49297;
+  return () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+}
+
+function buildOptions(word, ja, seed) {
+  const rnd = seeded(seed);
+  const stem = word.slice(0, 4).toLowerCase();
+  const pool = ALL_WORDS.filter((o) => o.ja !== ja && o.w.slice(0, 4).toLowerCase() !== stem);
+  const picks = [];
+  while (picks.length < 3 && pool.length) picks.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0].ja);
+  const opts = [ja, ...picks];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { opts, answer: opts.indexOf(ja) };
+}
+
+/* --------------------------- character ---------------------------- */
+
+function Figure({ rank, size = 150, bowOverride }) {
+  const r = RANKS[rank];
+  const bow = bowOverride != null ? bowOverride : r.bow;
+  const s = r.scale;
+  const skin = "#e8cdb5";
+
+  const Prop = () => {
+    switch (r.prop) {
+      case "mop":
+        return (
+          <g>
+            <rect x="86" y="60" width="3.5" height="66" rx="1.7" fill="#8a6a45" />
+            <path d="M79 120 h18 l-4 16 h-10 Z" fill="#c9cfc6" />
+            <path d="M82 126 v10 M87.7 126 v10 M93 126 v10" stroke="#9aa398" strokeWidth="1.2" />
+          </g>
+        );
+      case "ledger":
+        return (
+          <g>
+            <rect x="40" y="86" width="40" height="26" rx="2" fill="#e7e1cf" stroke="#b9b09a" strokeWidth="1.2" />
+            <path d="M46 94 h28 M46 99 h28 M46 104 h20" stroke="#b0a68e" strokeWidth="1.2" />
+          </g>
+        );
+      case "tray":
+        return (
+          <g>
+            <rect x="38" y="88" width="44" height="5" rx="2.5" fill="#6b4b32" />
+            <rect x="52" y="76" width="16" height="12" rx="2" fill="#f4f1e6" stroke="#cdc6b4" strokeWidth="1" />
+            <path d="M56 74 q2 -5 4 0 M62 73 q2 -5 4 0" stroke={C.city} strokeWidth="1.2" fill="none" opacity="0.7" />
+          </g>
+        );
+      case "papers":
+        return (
+          <g>
+            <rect x="42" y="84" width="34" height="28" rx="1.5" fill="#f4f1e6" transform="rotate(-5 59 98)" />
+            <rect x="45" y="87" width="34" height="28" rx="1.5" fill="#fbf9f2" stroke="#cdc6b4" strokeWidth="1" />
+            <path d="M50 95 h24 M50 100 h24 M50 105 h16" stroke="#c2baa6" strokeWidth="1.2" />
+          </g>
+        );
+      case "pad":
+        return (
+          <g>
+            <rect x="46" y="88" width="26" height="22" rx="2" fill="#f4f1e6" stroke="#cdc6b4" strokeWidth="1" />
+            <path d="M51 95 h16 M51 100 h16" stroke="#c2baa6" strokeWidth="1.2" />
+          </g>
+        );
+      case "folder":
+        return <path d="M44 86 h20 l4 5 h12 v22 h-36 Z" fill="#d8cdae" stroke="#b3a684" strokeWidth="1.2" />;
+      case "seal":
+        return (
+          <g>
+            <rect x="54" y="88" width="12" height="18" rx="2" fill="#8a6a45" />
+            <rect x="52" y="104" width="16" height="6" rx="1.5" fill={C.seal} />
+          </g>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <svg viewBox="0 0 120 150" width={size} height={size * 1.25} aria-hidden="true">
+      <g style={{ transform: `rotate(${-bow}deg)`, transformOrigin: "60px 142px", transition: "transform .7s cubic-bezier(.3,1.2,.4,1)" }}>
+        <g style={{ transform: `scale(${s}) translate(${(1 - s) * 60}px, ${(1 - s) * 142}px)`, transformOrigin: "60px 142px" }}>
+          <rect x="48" y="118" width="9" height="24" rx="3" fill="#1a2029" />
+          <rect x="63" y="118" width="9" height="24" rx="3" fill="#1a2029" />
+          <rect x="44" y="138" width="15" height="5" rx="2.5" fill="#0c1016" />
+          <rect x="61" y="138" width="15" height="5" rx="2.5" fill="#0c1016" />
+          <path d="M43 72 h34 l7 50 h-48 Z" fill={r.suit} />
+          <path d="M60 72 v50" stroke="#000" strokeOpacity="0.12" strokeWidth="1.4" />
+          <path d="M52 72 l8 12 l8 -12 l-5 -3 h-6 Z" fill="#f3f0e7" />
+          <path d="M60 84 l3 -6 l-3 -3 l-3 3 Z" fill={rank >= 6 ? C.seal : "#3d4753"} />
+          <rect x="34" y="74" width="10" height="40" rx="5" fill={r.suit} />
+          <rect x="76" y="74" width="10" height="40" rx="5" fill={r.suit} />
+          <circle cx="39" cy="114" r="5" fill={skin} />
+          <circle cx="81" cy="114" r="5" fill={skin} />
+          <rect x="55" y="60" width="10" height="12" rx="3" fill={skin} />
+          {r.style === "long" && <rect x="41" y="44" width="38" height="42" rx="14" fill={r.hair} />}
+          <circle cx="60" cy="46" r="17" fill={r.hair} />
+          <circle cx="60" cy="50" r="15" fill={skin} />
+          {r.style === "thin" && <circle cx="60" cy="42" r="14" fill={skin} opacity="0.95" />}
+          <path d="M52 50 h5 M63 50 h5" stroke="#1a2029" strokeWidth="2" strokeLinecap="round" />
+          {r.style === "thin" && (
+            <g stroke="#3d4753" strokeWidth="1.3" fill="none">
+              <circle cx="54.5" cy="50" r="5" />
+              <circle cx="65.5" cy="50" r="5" />
+              <path d="M59.5 50 h1" />
+            </g>
+          )}
+          <path d="M56 59 q4 3 8 0" stroke="#b98d78" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          <Prop />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+/* ------------------------- city background ------------------------ */
+
+function City() {
+  const lights = useMemo(() => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+    return Array.from({ length: 90 }, () => ({
+      x: rnd() * 100, y: 45 + rnd() * 55, w: 0.5 + rnd() * 1.1,
+      h: 0.7 + rnd() * 1.4, o: 0.15 + rnd() * 0.6, d: rnd() * 9,
+    }));
+  }, []);
+  return (
+    <div className="fixed inset-0" style={{ zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${C.night} 0%, #101b27 55%, #0a1119 100%)` }} />
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        {lights.map((l, i) => (
+          <rect key={i} className="yl-light" x={l.x} y={l.y} width={l.w} height={l.h} fill={C.city} opacity={l.o} style={{ animationDelay: `${l.d}s` }} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/* ---------------------------- status ------------------------------ */
+
+function Ladder({ xp, compact }) {
+  const ri = rankIndexFor(xp);
+  const rank = RANKS[ri];
+  const next = RANKS[ri + 1];
+  const pct = next ? Math.min(100, ((xp - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+  return (
+    <div className="flex items-center gap-4 p-4" style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 6 }}>
+      <div className="shrink-0 flex items-end" style={{ width: compact ? 50 : 68, height: compact ? 62 : 86, overflow: "hidden" }}>
+        <Figure rank={ri} size={compact ? 50 : 68} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="truncate" style={{ color: C.paper, fontSize: 15.5, fontWeight: 600 }}>{rank.title}</span>
+          <span className="font-mono shrink-0" style={{ color: C.paper, fontSize: 14 }}>{xp.toLocaleString()}</span>
+        </div>
+        <div className="mt-2" style={{ height: 5, background: C.glass, borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${pct}%`, background: C.seal, transition: "width .55s cubic-bezier(.3,1,.4,1)" }} />
+        </div>
+        <div className="font-mono mt-1.5" style={{ color: C.dim, fontSize: 10.5, letterSpacing: "0.06em" }}>
+          {next ? `${(next.xp - xp).toLocaleString()} XP → ${next.title.toUpperCase()}` : "TOP OF THE LADDER"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Rule({ label }) {
+  return (
+    <div className="font-mono flex items-center gap-3" style={{ color: C.dim, fontSize: 10.5, letterSpacing: "0.2em" }}>
+      {label}
+      <span style={{ flex: 1, height: 1, background: C.line }} />
+    </div>
+  );
+}
+
+/* ---------------------------- overlays ---------------------------- */
+
+function Promotion({ rank, onClose }) {
+  const r = RANKS[rank];
+  const [bow, setBow] = useState(RANKS[Math.max(0, rank - 1)].bow);
+  useEffect(() => {
+    const t = setTimeout(() => setBow(r.bow), 500);
+    const t2 = setTimeout(onClose, 3600);
+    return () => { clearTimeout(t); clearTimeout(t2); };
+  }, [rank, r.bow, onClose]);
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center p-6 yl-veil" style={{ background: "rgba(8,13,19,.94)", zIndex: 60 }} onClick={onClose}>
+      <div className="font-mono yl-in-1" style={{ color: C.seal, fontSize: 11, letterSpacing: "0.34em" }}>PROMOTED</div>
+      <div className="yl-rise" style={{ marginTop: 6 }}><Figure rank={rank} size={190} bowOverride={bow} /></div>
+      <div className="yl-stamp" style={{ marginTop: -12, marginBottom: 14 }}>
+        <div className="font-mono" style={{ border: `2.5px solid ${C.seal}`, color: C.seal, borderRadius: 6, padding: "7px 13px", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em" }}>{r.seal}</div>
+      </div>
+      <h2 className="font-serif text-center yl-in-2" style={{ color: C.paper, fontSize: 33, lineHeight: 1.1 }}>{r.title}</h2>
+      <p className="text-center yl-in-3 mt-2" style={{ color: C.muted, fontSize: 14.5, maxWidth: 330, lineHeight: 1.5 }}>{r.note}</p>
+      <button onClick={onClose} className="font-mono yl-in-3 mt-7 px-6 py-3" style={{ border: `1px solid ${C.line}`, color: C.muted, borderRadius: 5, fontSize: 11, letterSpacing: "0.16em", background: "transparent" }}>BACK TO WORK</button>
+    </div>
+  );
+}
+
+function Tirade({ onClose }) {
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center p-7 yl-snap" style={{ background: C.seal, zIndex: 60 }} onClick={onClose}>
+      <div className="yl-shout"><Figure rank={7} size={165} bowOverride={-3} /></div>
+      <div className="font-mono mt-1" style={{ color: "#fff", fontSize: 10.5, letterSpacing: "0.28em", opacity: 0.8 }}>MR. OMOCHI · VICE-PRESIDENT</div>
+      <p className="font-serif text-center mt-4" style={{ color: "#fff", fontSize: 29, lineHeight: 1.18, maxWidth: 400 }}>
+        Three wrong in a row. Do you imagine this company was built by people like you?
+      </p>
+      <div className="font-mono mt-4" style={{ color: "#fff", fontSize: 15, opacity: 0.9 }}>−150 XP</div>
+      <button onClick={onClose} className="font-mono mt-7 px-7 py-3" style={{ border: "1.5px solid #fff", color: "#fff", borderRadius: 5, fontSize: 11, letterSpacing: "0.16em", background: "transparent" }}>BOW AND CONTINUE</button>
+    </div>
+  );
+}
+
+/* ------------------------------ home ------------------------------ */
+
+function Home({ xp, cleared, onStart, onReset }) {
+  const ri = rankIndexFor(xp);
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex items-end gap-4">
+        <div className="shrink-0 yl-idle"><Figure rank={ri} size={104} /></div>
+        <div className="min-w-0 pb-1">
+          <div className="font-mono" style={{ color: C.dim, fontSize: 10, letterSpacing: "0.24em" }}>YUMIMOTO · 44F</div>
+          <h1 className="font-serif mt-2" style={{ color: C.paper, fontSize: 34, lineHeight: 1, fontWeight: 500 }}>Fear and<br />Trembling</h1>
+          <p className="mt-2.5 font-mono" style={{ color: C.seal, fontSize: 11, letterSpacing: "0.1em" }}>{TOTAL_CARDS} WORDS · 5 DECKS</p>
+        </div>
+      </header>
+
+      <Ladder xp={xp} />
+
+      <div>
+        <Rule label="DECKS" />
+        <ul className="mt-1">
+          {DECKS.map((d, i) => (
+            <li key={i}>
+              <button onClick={() => onStart(i)} className="yl-row w-full text-left flex items-center gap-4 py-4" style={{ borderBottom: `1px solid ${C.line}`, background: "transparent" }}>
+                <span className="font-mono" style={{ color: C.seal, fontSize: 12, width: 22 }}>{String(i + 1).padStart(2, "0")}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block" style={{ color: C.paper, fontSize: 16.5, fontWeight: 600 }}>{d.title}</span>
+                  <span className="block mt-0.5" style={{ color: C.dim, fontSize: 12.5 }}>{d.period}</span>
+                </span>
+                <span className="font-mono shrink-0" style={{ color: cleared[i] != null ? C.ok : C.dim, fontSize: 11 }}>
+                  {cleared[i] != null ? `${cleared[i]}%` : `${d.cards.length}`}
+                </span>
+                <span className="yl-arrow" style={{ color: C.dim, fontSize: 16 }}>→</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <Rule label="THE LADDER" />
+        <div className="flex flex-wrap gap-y-3 mt-3">
+          {RANKS.map((r, i) => (
+            <div key={i} className="flex flex-col items-center" style={{ width: "11.11%", opacity: i <= ri ? 1 : 0.28, transition: "opacity .4s" }}>
+              <div style={{ height: 44, display: "flex", alignItems: "flex-end", overflow: "hidden" }}><Figure rank={i} size={34} /></div>
+              <div className="font-mono mt-1" style={{ color: i === ri ? C.seal : C.dim, fontSize: 8 }}>{r.seal}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <footer className="flex items-center justify-between gap-4">
+        <p style={{ color: C.dim, fontSize: 11.5, lineHeight: 1.5, maxWidth: 330 }}>
+          Nothing is saved — reloading returns you to the restroom. Example sentences are written for this
+          app; no text from the novel is reproduced.
+        </p>
+        <button onClick={onReset} className="font-mono shrink-0" style={{ color: C.dim, fontSize: 10, letterSpacing: "0.14em", background: "transparent", textDecoration: "underline" }}>RESET</button>
+      </footer>
+    </div>
+  );
+}
+
+/* ----------------------------- study ------------------------------ */
+
+function Study({ deckIdx, xp, setXp, onTirade, onQuit, onDone }) {
+  const deck = DECKS[deckIdx];
+  const total = deck.cards.length;
+
+  const [queue, setQueue] = useState(() => {
+    const a = deck.cards.map((_, i) => i);
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  });
+  const [picked, setPicked] = useState(null);
+  const [nonce, setNonce] = useState(1);
+  const [streak, setStreak] = useState(0);
+  const [wrongRun, setWrongRun] = useState(0);
+  const [gain, setGain] = useState(0);
+  const [learned, setLearned] = useState(0);
+  const [firstTry, setFirstTry] = useState(0);
+  const [seen, setSeen] = useState(() => new Set());
+
+  const idx = queue[0];
+  const card = idx != null ? deck.cards[idx] : null;
+  const { opts, answer } = useMemo(
+    () => (card ? buildOptions(card[0], card[2], idx * 131 + nonce * 17) : { opts: [], answer: 0 }),
+    [card, idx, nonce]
+  );
+  const answered = picked !== null;
+
+  const choose = useCallback((i) => {
+    if (answered || idx == null) return;
+    setPicked(i);
+    const fresh = !seen.has(idx);
+    setSeen((s) => new Set(s).add(idx));
+    if (i === answer) {
+      const g = 100 + Math.min(streak, 5) * 20;
+      setGain(g);
+      setXp((x) => x + g);
+      setStreak((s) => s + 1);
+      setWrongRun(0);
+      setLearned((n) => n + 1);
+      if (fresh) setFirstTry((n) => n + 1);
+    } else {
+      setGain(0);
+      setStreak(0);
+      const wr = wrongRun + 1;
+      setWrongRun(wr);
+      if (wr >= 3) { setWrongRun(0); setXp((x) => Math.max(0, x - 150)); onTirade(); }
+    }
+  }, [answered, idx, answer, streak, wrongRun, seen, setXp, onTirade]);
+
+  const advance = useCallback(() => {
+    if (!answered) return;
+    const correct = picked === answer;
+    setQueue((q) => {
+      const [head, ...rest] = q;
+      if (correct) return rest;
+      const at = Math.min(rest.length, 4);
+      return [...rest.slice(0, at), head, ...rest.slice(at)];
+    });
+    setPicked(null);
+    setGain(0);
+    setNonce((n) => n + 1);
+  }, [answered, picked, answer]);
+
+  useEffect(() => {
+    if (queue.length === 0) onDone({ deckIdx, total, firstTry, attempts: learned });
+  }, [queue.length, onDone, deckIdx, total, firstTry, learned]);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (["1", "2", "3", "4"].includes(e.key)) choose(Number(e.key) - 1);
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); advance(); }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [choose, advance]);
+
+  if (!card) return null;
+  const [word, pos, ja, ex] = card;
+  const done = total - queue.length;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Ladder xp={xp} compact />
+
+      <div className="font-mono flex items-center gap-3" style={{ color: C.dim, fontSize: 10.5, letterSpacing: "0.16em" }}>
+        <button onClick={onQuit} style={{ color: C.dim, background: "transparent" }}>← DECKS</button>
+        <span style={{ flex: 1, height: 1, background: C.line }} />
+        <span>{done}/{total} DONE</span>
+        {streak > 1 && <span style={{ color: C.seal }}>×{streak}</span>}
+      </div>
+
+      <div style={{ height: 3, background: C.glass, borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${(done / total) * 100}%`, background: C.ok, transition: "width .4s ease" }} />
+      </div>
+
+      <div key={`${idx}-${nonce}`} className="yl-card yl-deal" style={{ background: C.paper }}>
+        <div className="font-mono" style={{ position: "absolute", top: 14, left: 16, color: "#a49b86", fontSize: 9.5, letterSpacing: "0.2em" }}>
+          {String(deckIdx + 1).padStart(2, "0")} · {deck.title.toUpperCase()}
+        </div>
+        <div className="font-serif text-center px-5" style={{ color: C.ink, fontSize: word.length > 13 ? 30 : 40, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+          {word}
+        </div>
+        <div className="font-mono" style={{ position: "absolute", bottom: 14, color: "#a49b86", fontSize: 10, letterSpacing: "0.16em" }}>{pos}</div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {opts.map((o, i) => {
+          const right = i === answer;
+          const mine = i === picked;
+          let bg = C.glass, bd = C.line, fg = C.paper;
+          if (answered && right) { bg = "#1c3a2c"; bd = C.ok; fg = "#a8dcbf"; }
+          else if (answered && mine) { bg = "#3a1d1c"; bd = C.seal; fg = "#f0a9a2"; }
+          else if (answered) { fg = C.dim; }
+          return (
+            <button key={i} onClick={() => choose(i)} disabled={answered}
+              className="yl-opt w-full text-left flex items-center gap-3 px-4 py-3.5"
+              style={{ background: bg, border: `1px solid ${bd}`, borderRadius: 6, color: fg, transition: "all .18s" }}>
+              <span className="font-mono shrink-0" style={{ fontSize: 11, opacity: 0.55 }}>{i + 1}</span>
+              <span style={{ fontSize: 15.5, lineHeight: 1.4 }}>{o}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {answered && (
+        <div className="yl-reveal" style={{ background: C.paper, borderRadius: 8, padding: "16px 18px" }}>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-mono" style={{ color: picked === answer ? "#3d7f5c" : C.seal, fontSize: 10.5, letterSpacing: "0.2em" }}>
+              {picked === answer ? "APPROVED" : "REJECTED · COMES BACK"}
+            </span>
+            <span className="font-mono" style={{ color: gain ? "#3d7f5c" : "#a49b86", fontSize: 12 }}>{gain ? `+${gain} XP` : "+0 XP"}</span>
+          </div>
+          <div style={{ height: 1, background: "#ded7c5", margin: "11px 0" }} />
+          <div style={{ color: C.seal, fontSize: 18, fontWeight: 700 }}>{ja}</div>
+          <p className="mt-2.5" style={{ color: "#4c5560", fontSize: 14.5, lineHeight: 1.6, fontStyle: "italic" }}>{ex}</p>
+          <button onClick={advance} className="w-full mt-4 py-3.5 font-mono" style={{ background: C.ink, color: C.paper, borderRadius: 6, fontSize: 11.5, letterSpacing: "0.16em" }}>
+            {queue.length === 1 && picked === answer ? "END OF DECK" : "NEXT"}
+          </button>
+        </div>
+      )}
+
+      {!answered && (
+        <p className="font-mono text-center" style={{ color: C.dim, fontSize: 10, letterSpacing: "0.1em" }}>
+          WRONG WORDS RETURN TO THE PILE · KEYS 1–4
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ----------------------------- cleared ---------------------------- */
+
+function Cleared({ res, xp, onHome, onRepeat }) {
+  const deck = DECKS[res.deckIdx];
+  const ri = rankIndexFor(xp);
+  const acc = Math.round((res.firstTry / res.total) * 100);
+  return (
+    <div className="flex flex-col gap-5 items-center text-center">
+      <div className="font-mono" style={{ color: C.dim, fontSize: 10.5, letterSpacing: "0.24em" }}>DECK CLEARED</div>
+      <div className="yl-rise"><Figure rank={ri} size={150} /></div>
+      <h2 className="font-serif" style={{ color: C.paper, fontSize: 27, lineHeight: 1.15 }}>{deck.title}</h2>
+      <div className="flex gap-9">
+        <div>
+          <div className="font-serif" style={{ color: acc >= 80 ? C.ok : C.paper, fontSize: 32 }}>{acc}%</div>
+          <div className="font-mono mt-1" style={{ color: C.dim, fontSize: 9.5, letterSpacing: "0.14em" }}>FIRST TRY</div>
+        </div>
+        <div>
+          <div className="font-serif" style={{ color: C.paper, fontSize: 32 }}>{res.firstTry}<span style={{ color: C.dim, fontSize: 18 }}>/{res.total}</span></div>
+          <div className="font-mono mt-1" style={{ color: C.dim, fontSize: 9.5, letterSpacing: "0.14em" }}>WORDS</div>
+        </div>
+        <div>
+          <div className="font-serif" style={{ color: C.paper, fontSize: 32 }}>{xp.toLocaleString()}</div>
+          <div className="font-mono mt-1" style={{ color: C.dim, fontSize: 9.5, letterSpacing: "0.14em" }}>TOTAL XP</div>
+        </div>
+      </div>
+      <p style={{ color: C.muted, fontSize: 14.5, lineHeight: 1.55, maxWidth: 330 }}>
+        {acc === 100 ? "Not one word came back. Mr. Saito will find something wrong with it anyway."
+          : acc >= 80 ? "Acceptable. Do not expect anyone to say so."
+          : "The pile is empty, which is the only kind of victory available here."}
+      </p>
+      <div className="flex gap-2.5 w-full mt-1">
+        <button onClick={onRepeat} className="flex-1 py-3.5 font-mono" style={{ border: `1px solid ${C.line}`, color: C.muted, borderRadius: 6, fontSize: 11.5, letterSpacing: "0.14em", background: "transparent" }}>RUN AGAIN</button>
+        <button onClick={onHome} className="flex-1 py-3.5 font-mono" style={{ background: C.paper, color: C.ink, borderRadius: 6, fontSize: 11.5, letterSpacing: "0.14em", fontWeight: 600 }}>NEXT DECK</button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- app ------------------------------ */
+
+function App() {
+  const [screen, setScreen] = useState("home");
+  const [xp, setXpRaw] = useState(0);
+  const [deckIdx, setDeckIdx] = useState(0);
+  const [res, setRes] = useState(null);
+  const [cleared, setCleared] = useState({});
+  const [promo, setPromo] = useState(null);
+  const [tirade, setTirade] = useState(false);
+  const [run, setRun] = useState(0);
+  const rankRef = useRef(0);
+
+  const setXp = useCallback((fn) => {
+    setXpRaw((prev) => {
+      const nextXp = typeof fn === "function" ? fn(prev) : fn;
+      const nr = rankIndexFor(nextXp);
+      if (nr > rankRef.current) { rankRef.current = nr; setTimeout(() => setPromo(nr), 260); }
+      else rankRef.current = nr;
+      return nextXp;
+    });
+  }, []);
+
+  const onDone = useCallback((r) => {
+    setRes(r);
+    setCleared((c) => ({ ...c, [r.deckIdx]: Math.max(c[r.deckIdx] ?? 0, Math.round((r.firstTry / r.total) * 100)) }));
+    setScreen("cleared");
+  }, []);
+
+  return (
+    <div style={{ minHeight: "100vh", position: "relative", fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+      <City />
+      <style>{`
+        .yl-light { animation: ylBlink 7s ease-in-out infinite }
+        @keyframes ylBlink { 0%,100% { opacity:.15 } 45% { opacity:.75 } }
+        .yl-card {
+          position:relative; width:100%; height:158px; border-radius:10px;
+          display:flex; align-items:center; justify-content:center;
+          box-shadow:0 16px 40px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.28) inset;
+        }
+        .yl-deal { animation: ylDeal .42s cubic-bezier(.2,1.1,.35,1) both }
+        @keyframes ylDeal { from { opacity:0; transform:translateY(16px) rotate(-1.4deg) scale(.97) } to { opacity:1; transform:none } }
+        .yl-opt:not(:disabled):hover { transform:translateX(3px) }
+        .yl-reveal { animation: ylUp .3s cubic-bezier(.2,1,.3,1) both }
+        .yl-veil { animation: ylVeil .3s ease both }
+        @keyframes ylVeil { from { opacity:0 } to { opacity:1 } }
+        .yl-snap { animation: ylSnap .14s steps(2) both }
+        @keyframes ylSnap { from { opacity:0 } to { opacity:1 } }
+        .yl-rise { animation: ylRise .8s cubic-bezier(.2,1,.3,1) both }
+        @keyframes ylRise { from { opacity:0; transform:translateY(34px) } to { opacity:1; transform:none } }
+        .yl-shout { animation: ylShout .34s ease-in-out 3 both }
+        @keyframes ylShout { 0%,100% { transform:translateX(0) scale(1) } 25% { transform:translateX(-7px) scale(1.03) } 75% { transform:translateX(7px) scale(1.03) } }
+        .yl-stamp { animation: ylStamp .55s cubic-bezier(.2,1.5,.4,1) .55s both }
+        @keyframes ylStamp { 0% { transform:scale(2.1) rotate(-11deg); opacity:0 } 55% { transform:scale(.93) rotate(3deg); opacity:1 } 100% { transform:scale(1) rotate(0); opacity:1 } }
+        .yl-in-1 { animation: ylUp .5s ease .1s both }
+        .yl-in-2 { animation: ylUp .5s ease .95s both }
+        .yl-in-3 { animation: ylUp .5s ease 1.2s both }
+        @keyframes ylUp { from { opacity:0; transform:translateY(9px) } to { opacity:1; transform:none } }
+        .yl-idle { animation: ylIdle 5.5s ease-in-out infinite }
+        @keyframes ylIdle { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-4px) } }
+        .yl-row .yl-arrow { transition: transform .22s ease }
+        .yl-row:hover .yl-arrow { transform: translateX(5px) }
+        button { cursor:pointer; font-family:inherit }
+        button:disabled { cursor:default }
+        button:focus-visible { outline:2px solid ${C.seal}; outline-offset:3px }
+        @media (prefers-reduced-motion: reduce) {
+          .yl-light,.yl-idle,.yl-shout { animation:none !important }
+          .yl-deal,.yl-reveal,.yl-rise,.yl-stamp,.yl-in-1,.yl-in-2,.yl-in-3,.yl-veil,.yl-snap { animation-duration:.01s !important }
+        }
+      `}</style>
+
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 540, margin: "0 auto", padding: "26px 18px 52px" }}>
+        {screen === "home" && (
+          <Home xp={xp} cleared={cleared} onStart={(i) => { setDeckIdx(i); setRun((r) => r + 1); setScreen("study"); }} onReset={() => { setXpRaw(0); rankRef.current = 0; setCleared({}); }} />
+        )}
+        {screen === "study" && (
+          <Study key={`${deckIdx}-${run}`} deckIdx={deckIdx} xp={xp} setXp={setXp}
+            onTirade={() => setTirade(true)} onQuit={() => setScreen("home")} onDone={onDone} />
+        )}
+        {screen === "cleared" && res && (
+          <Cleared res={res} xp={xp} onHome={() => setScreen("home")} onRepeat={() => { setRun((r) => r + 1); setScreen("study"); }} />
+        )}
+      </div>
+
+      {promo != null && <Promotion rank={promo} onClose={() => setPromo(null)} />}
+      {tirade && <Tirade onClose={() => setTirade(false)} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

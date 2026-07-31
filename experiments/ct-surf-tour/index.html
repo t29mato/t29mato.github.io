@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WORLD TOUR SURF — CT &amp; CS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a1522; --panel:#0f2233; --panel2:#14304a; --line:#1f4666;
+  --sand:#f2e8d5; --gold:#ffc94d; --coral:#ff5a3c; --aqua:#39c6d6;
+  --white:#f4f9fc; --mut:#8fb0c6;
+  --disp:'Archivo Black', 'Archivo', system-ui, sans-serif;
+  --body:'Archivo', system-ui, sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--white);font-family:var(--body)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto}
+.screen.on{display:flex}
+button{font-family:var(--body);border:none;cursor:pointer;color:inherit;background:none}
+.btn{background:var(--gold);color:#20160a;font-weight:800;font-size:16px;letter-spacing:.06em;
+  padding:14px 28px;border-radius:10px;text-transform:uppercase;transition:transform .08s}
+.btn:active{transform:scale(.96)}
+.btn.ghost{background:transparent;color:var(--white);border:2px solid var(--line)}
+.btn.coral{background:var(--coral);color:#fff}
+.btn:disabled{opacity:.35;cursor:default}
+.eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);font-weight:700}
+h1.disp{font-family:var(--disp);font-size:clamp(34px,9vw,72px);line-height:.95;text-transform:uppercase}
+h2.disp{font-family:var(--disp);font-size:clamp(22px,5.5vw,38px);text-transform:uppercase}
+
+/* ---------- TITLE ---------- */
+#screen-title{align-items:center;justify-content:center;text-align:center;gap:22px;padding:24px;
+  background:linear-gradient(180deg,#071120 0%,#0c2a44 55%,#0e3a55 100%)}
+#titleWave{width:min(520px,88vw);height:120px}
+.title-sub{color:var(--mut);max-width:420px;font-size:14px;line-height:1.55}
+
+/* ---------- TOUR SELECT ---------- */
+#screen-tour{padding:26px 18px;gap:18px;align-items:center;justify-content:center}
+.tour-card{width:min(460px,92vw);border:2px solid var(--line);border-radius:16px;padding:22px;
+  background:var(--panel);text-align:left;transition:border-color .15s, transform .1s}
+.tour-card:active{transform:scale(.98)}
+.tour-card:hover{border-color:var(--gold)}
+.tour-card .tc-tag{display:inline-block;font-family:var(--disp);font-size:12px;padding:4px 10px;border-radius:6px;margin-bottom:10px}
+.tour-card h3{font-family:var(--disp);font-size:26px;margin-bottom:6px}
+.tour-card p{color:var(--mut);font-size:13px;line-height:1.5}
+
+/* ---------- SPOT SELECT (WORLD MAP) ---------- */
+#screen-spot{padding:22px 16px 40px}
+.spot-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+#mapWrap{border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#0a2136;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.35)}
+#worldMap{display:block;width:100%;height:auto}
+.mk{cursor:pointer}
+.mk .hit{fill:transparent}
+.mk .dot{fill:var(--gold);stroke:#0a1522;stroke-width:2.5;transition:r .12s}
+.mk .ring{fill:none;stroke:var(--gold);stroke-width:1.6;opacity:0}
+.mk text{font-family:var(--body);font-size:13px;font-weight:700;fill:var(--sand);
+  paint-order:stroke;stroke:#0a1522;stroke-width:3.5px;pointer-events:none}
+.mk .flg{font-size:12px;stroke-width:0}
+.mk:hover .dot{fill:#ffe08a}
+.mk.sel .dot{fill:var(--aqua)}
+.mk.sel text{fill:var(--aqua)}
+.mk.sel .ring{opacity:1;animation:mkpulse 1.6s ease-out infinite}
+@keyframes mkpulse{
+  0%{r:9;opacity:.9}
+  100%{r:24;opacity:0}
+}
+#spotDetail{margin-top:14px}
+.detail-hint{text-align:center;color:var(--mut);font-size:13px;padding:22px;border:2px dashed var(--line);border-radius:14px}
+.detail-card{display:flex;border:2px solid var(--aqua);border-radius:14px;overflow:hidden;background:var(--panel);
+  animation:dslide .22s ease-out}
+@keyframes dslide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.detail-thumb{width:34%;min-width:130px;position:relative}
+.detail-thumb .flag{position:absolute;top:8px;left:10px;font-size:22px}
+.detail-thumb .size{position:absolute;bottom:8px;right:10px;font-family:var(--disp);font-size:13px;
+  background:rgba(6,14,22,.72);padding:3px 8px;border-radius:6px;color:var(--gold)}
+.detail-body{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:7px}
+.detail-body h3{font-family:var(--disp);font-size:18px}
+.detail-body .geo{color:var(--aqua);font-size:12px;font-weight:700;letter-spacing:.04em}
+.detail-body p{color:var(--mut);font-size:12.5px;line-height:1.5}
+.detail-body .fine{color:#6f93aa;font-size:11px}
+.detail-body .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--sand)}
+@media (max-width:560px){
+  .detail-card{flex-direction:column}
+  .detail-thumb{width:100%;height:96px;min-width:0}
+}
+
+/* ---------- BRACKET ---------- */
+#screen-bracket{padding:24px 16px 40px;align-items:center}
+#bracketWrap{display:flex;gap:16px;margin:18px 0 22px;width:100%;max-width:760px;justify-content:center}
+.br-col{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:12px;min-width:0}
+.br-col .col-title{text-align:center;font-family:var(--disp);font-size:12px;color:var(--mut);letter-spacing:.15em}
+.heatbox{background:var(--panel);border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.heatbox.live{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,201,77,.18)}
+.heatrow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:12.5px;gap:6px}
+.heatrow+.heatrow{border-top:1px solid var(--line)}
+.heatrow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.heatrow .sc{font-family:var(--disp);font-size:12px;color:var(--mut)}
+.heatrow.win .nm,.heatrow.win .sc{color:var(--gold)}
+.heatrow.lose{opacity:.42}
+.heatrow.me .nm{color:var(--aqua)}
+
+/* ---------- HEAT ---------- */
+#screen-heat{background:#000}
+#gameWrap{position:relative;flex:1;min-height:0}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#hud{position:absolute;top:0;left:0;right:0;padding:10px 12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.hud-box{background:rgba(6,14,22,.78);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:7px 11px;backdrop-filter:blur(4px)}
+#hudTimer{font-family:var(--disp);font-size:22px;color:var(--gold);text-align:center;min-width:86px}
+#hudTimer .rd{display:block;font-size:9px;letter-spacing:.2em;color:var(--mut);font-family:var(--body);font-weight:700}
+.score-line{display:flex;align-items:center;gap:7px;font-size:12px}
+.score-line .who{font-weight:800;letter-spacing:.05em}
+.score-line .tot{font-family:var(--disp);font-size:16px}
+.score-line.me .tot{color:var(--aqua)}
+.score-line.opp .tot{color:var(--coral)}
+.mini{font-size:10px;color:var(--mut)}
+#needTxt{font-size:10.5px;font-weight:700;color:var(--gold);letter-spacing:.05em}
+#noticeBar{position:absolute;top:76px;left:0;right:0;text-align:center;pointer-events:none}
+#noticeBar span{display:inline-block;background:rgba(6,14,22,.8);border:1px solid var(--line);
+  color:var(--gold);font-family:var(--disp);font-size:14px;padding:6px 16px;border-radius:8px}
+#controls{display:flex;gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:#060e16;border-top:1px solid var(--line)}
+.ctl{flex:1;background:var(--panel2);border:2px solid var(--line);border-radius:12px;color:var(--white);
+  font-weight:800;font-size:13px;padding:15px 4px;text-transform:uppercase;letter-spacing:.04em;user-select:none;touch-action:manipulation}
+.ctl:active{background:#1d4568}
+.ctl:disabled{opacity:.3}
+.ctl small{display:block;font-size:9px;color:var(--mut);font-weight:700;margin-top:2px}
+.ctl.big{background:var(--gold);color:#20160a;border-color:var(--gold)}
+.ctl.tube{background:#0d4a3a;border-color:#1c7a5f}
+.ctl.danger{background:#5a1f14;border-color:#8a3322}
+#speedWrap{position:absolute;left:12px;bottom:12px;width:120px;pointer-events:none}
+#speedWrap .lbl{font-size:9px;letter-spacing:.2em;color:var(--mut);font-weight:700;margin-bottom:3px}
+#speedBar{height:8px;background:rgba(255,255,255,.14);border-radius:6px;overflow:hidden}
+#speedFill{height:100%;width:40%;background:linear-gradient(90deg,var(--aqua),var(--gold));border-radius:6px}
+
+/* overlays inside heat */
+.overlay{position:absolute;inset:0;background:rgba(4,10,17,.86);display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:20px;z-index:5}
+.overlay.on{display:flex}
+#judgePanel{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.jcard{width:66px;height:88px;perspective:500px}
+.jinner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s}
+.jcard.flip .jinner{transform:rotateY(180deg)}
+.jface{position:absolute;inset:0;border-radius:10px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;backface-visibility:hidden;border:2px solid var(--line)}
+.jfront{background:var(--panel2);font-size:26px}
+.jback{background:var(--panel);transform:rotateY(180deg)}
+.jback .flg{font-size:16px}
+.jback .val{font-family:var(--disp);font-size:20px;color:var(--white);margin-top:4px}
+.jcard.drop .jback .val{color:#5b7183;text-decoration:line-through}
+.jcard.drop .jback{opacity:.6}
+#judgeFinal{font-family:var(--disp);font-size:56px;color:var(--gold);opacity:0;transition:opacity .4s}
+#judgeFinal.show{opacity:1}
+#judgeMeta{color:var(--mut);font-size:12px}
+.res-big{font-family:var(--disp);font-size:clamp(30px,8vw,54px)}
+.res-tot{display:flex;gap:28px;justify-content:center;font-family:var(--disp);font-size:22px}
+.res-tot .me{color:var(--aqua)}.res-tot .op{color:var(--coral)}
+
+/* ---------- CHAMPION ---------- */
+#screen-champ{align-items:center;justify-content:center;text-align:center;gap:18px;padding:24px;position:relative;overflow:hidden}
+#confetti{position:absolute;inset:0;pointer-events:none}
+.trophy{font-size:74px}
+.champ-sub{color:var(--mut);max-width:420px;font-size:14px;line-height:1.6}
+.center-col{display:flex;flex-direction:column;align-items:center;gap:14px;z-index:2}
+.backrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+@media (max-width:520px){
+  .jcard{width:56px;height:76px}
+  .ctl{font-size:12px;padding:13px 2px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <div class="screen on" id="screen-title">
+    <div class="eyebrow">Pro Surfing Circuit · 2026 Season</div>
+    <h1 class="disp">World Tour<br>Surf</h1>
+    <svg id="titleWave" viewBox="0 0 520 120" fill="none">
+      <path id="twPath" d="M0 80 C 90 20, 150 20, 210 62 C 250 90, 300 96, 520 88 L520 120 L0 120 Z" fill="#1b6ea0"/>
+      <path d="M0 84 C 90 34, 150 34, 210 70 C 250 94, 300 100, 520 92" stroke="#eaf6fb" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <p class="title-sub">Paddle into world-class lineups, ride the set waves, and stack maneuvers.
+    Five international judges score every ride out of 10 — your best two waves carry you through the bracket.</p>
+    <button class="btn" onclick="show('screen-tour')">Start</button>
+  </div>
+
+  <!-- TOUR SELECT -->
+  <div class="screen" id="screen-tour">
+    <div class="eyebrow" style="text-align:center">Choose your tour</div>
+    <button class="tour-card" onclick="pickTour('CT')">
+      <span class="tc-tag" style="background:var(--gold);color:#20160a">CT</span>
+      <h3>Championship Tour</h3>
+      <p>The elite level. Heavy reef passes, giant open faces and the world's most famous barrels.
+      Bigger waves, higher scoring potential, sharper rivals.</p>
+    </button>
+    <button class="tour-card" onclick="pickTour('CS')">
+      <span class="tc-tag" style="background:var(--aqua);color:#062a30">CS</span>
+      <h3>Challenger Series</h3>
+      <p>The qualifying grind. Punchy beach breaks and sand-bottom points — friendlier waves,
+      hungry up-and-comers, and a shot at earning your stripes.</p>
+    </button>
+    <button class="btn ghost" onclick="show('screen-title')">Back</button>
+  </div>
+
+  <!-- SPOT SELECT (WORLD MAP) -->
+  <div class="screen" id="screen-spot">
+    <div class="spot-head">
+      <div>
+        <div class="eyebrow" id="spotTourLbl">Championship Tour</div>
+        <h2 class="disp">Pick your stop</h2>
+      </div>
+      <button class="btn ghost" onclick="show('screen-tour')">Change tour</button>
+    </div>
+    <div id="mapWrap">
+      <svg id="worldMap" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map of tour stops">
+        <defs>
+          <linearGradient id="ogr" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0a2136"/><stop offset="1" stop-color="#0d3a57"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="1000" height="500" fill="url(#ogr)"/>
+        <g id="latLines" stroke="rgba(255,255,255,0.05)" stroke-width="1">
+          <line x1="0" y1="250" x2="1000" y2="250"/>
+          <line x1="0" y1="167" x2="1000" y2="167" stroke-dasharray="4 6"/>
+          <line x1="0" y1="333" x2="1000" y2="333" stroke-dasharray="4 6"/>
+        </g>
+        <g id="continents" fill="#17364e" stroke="rgba(160,205,235,0.28)" stroke-width="1.4" stroke-linejoin="round">
+          <!-- North & Central America -->
+          <path d="M18,120 L45,98 L80,88 L120,70 L165,62 L215,58 L262,66 L300,78 L306,102 L288,118 L296,138 L280,150 L286,168 L278,181 L262,192 L253,214 L266,222 L281,228 L273,236 L258,230 L246,218 L236,205 L224,192 L205,182 L186,172 L172,160 L160,148 L146,138 L120,132 L95,128 L66,130 L38,132 Z"/>
+          <!-- Greenland -->
+          <path d="M340,30 L385,24 L405,40 L392,66 L368,80 L346,64 Z"/>
+          <!-- South America -->
+          <path d="M281,228 L302,222 L325,222 L352,238 L378,252 L403,269 L396,296 L381,314 L368,336 L352,358 L332,382 L312,398 L300,382 L296,352 L288,320 L286,292 L279,262 L273,240 Z"/>
+          <!-- Europe -->
+          <path d="M470,150 L475,142 L468,128 L482,118 L496,104 L492,88 L510,74 L534,60 L560,52 L575,66 L566,84 L552,96 L560,110 L548,124 L560,138 L548,152 L530,158 L512,152 L496,158 L482,158 Z"/>
+          <!-- Africa -->
+          <path d="M470,160 L490,158 L512,158 L534,162 L560,164 L583,167 L608,176 L630,196 L642,222 L628,240 L616,262 L606,290 L586,318 L565,338 L553,344 L538,332 L524,308 L512,282 L500,258 L492,236 L470,222 L453,208 L458,186 L466,170 Z"/>
+          <!-- Asia -->
+          <path d="M575,66 L620,50 L680,40 L750,36 L830,42 L905,50 L970,60 L982,78 L948,90 L912,102 L878,118 L858,140 L845,160 L839,167 L822,182 L806,198 L792,222 L778,236 L762,222 L748,208 L730,222 L714,228 L700,212 L688,196 L672,186 L650,180 L630,172 L608,164 L583,167 L560,164 L552,148 L560,138 L548,124 L560,110 L552,96 L566,84 Z"/>
+          <!-- Japan -->
+          <path d="M878,150 L890,138 L898,152 L888,168 L878,162 Z"/>
+          <!-- SE Asia / Indonesia -->
+          <path d="M790,236 L812,244 L836,252 L861,264 L852,274 L826,268 L802,258 L786,248 Z"/>
+          <!-- Australia -->
+          <path d="M812,326 L824,300 L842,288 L864,283 L888,292 L910,306 L925,328 L920,346 L906,356 L884,362 L858,358 L836,348 L818,342 Z"/>
+          <!-- New Zealand -->
+          <path d="M978,352 L988,344 L995,360 L985,376 L975,368 Z"/>
+          <!-- island chains -->
+          <circle cx="61" cy="190" r="3.2"/><circle cx="52" cy="184" r="2"/>
+          <circle cx="85" cy="300" r="2.8"/><circle cx="77" cy="294" r="1.8"/>
+          <circle cx="992" cy="300" r="2.8"/><circle cx="984" cy="294" r="1.8"/>
+        </g>
+        <g id="mapMarkers"></g>
+      </svg>
+    </div>
+    <div id="spotDetail">
+      <div class="detail-hint">Tap a marker to scout the lineup 🌍</div>
+    </div>
+  </div>
+
+  <!-- BRACKET -->
+  <div class="screen" id="screen-bracket">
+    <div class="eyebrow" id="brEvent">Event</div>
+    <h2 class="disp" id="brRound">Quarterfinals</h2>
+    <div id="bracketWrap"></div>
+    <div class="backrow">
+      <button class="btn" id="brGo" onclick="startPlayerHeat()">Surf your heat</button>
+      <button class="btn ghost" onclick="quitEvent()">Quit event</button>
+    </div>
+  </div>
+
+  <!-- HEAT -->
+  <div class="screen" id="screen-heat">
+    <div id="gameWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">
+          <div class="score-line me"><span class="who">YOU</span><span class="tot" id="myTot">0.00</span></div>
+          <div class="mini" id="myWaves">— + —</div>
+        </div>
+        <div class="hud-box" id="hudTimer">0:00<span class="rd" id="hudRound">HEAT</span></div>
+        <div class="hud-box" style="text-align:right">
+          <div class="score-line opp"><span class="who" id="oppName">RIVAL</span><span class="tot" id="oppTot">0.00</span></div>
+          <div class="mini" id="needTxt">Needs —</div>
+        </div>
+      </div>
+      <div id="noticeBar"></div>
+      <div id="speedWrap"><div class="lbl">SPEED</div><div id="speedBar"><div id="speedFill"></div></div></div>
+
+      <!-- heat intro -->
+      <div class="overlay" id="ovIntro">
+        <div class="eyebrow" id="inRound">Quarterfinal</div>
+        <h2 class="disp" id="inVs">YOU vs RIVAL</h2>
+        <p style="color:var(--mut);font-size:13px;max-width:360px" id="inSpot"></p>
+        <p style="color:var(--sand);font-size:12px;max-width:380px;line-height:1.6">
+          Tap <b>TAKE OFF</b> as the peak reaches you · <b>PUMP</b> for speed ·
+          hit turns near the lip · <b>AIR</b> needs full speed at the top ·
+          hold <b>TUBE</b> in barrel sections. Best 2 scores count.</p>
+        <button class="btn" onclick="beginHeat()">Paddle out</button>
+      </div>
+
+      <!-- judges -->
+      <div class="overlay" id="ovJudge">
+        <div class="eyebrow">Judging panel</div>
+        <div id="judgePanel"></div>
+        <div id="judgeMeta">Top &amp; bottom scores dropped · average of middle three</div>
+        <div id="judgeFinal">0.00</div>
+        <button class="btn" id="judgeCont" style="visibility:hidden" onclick="closeJudges()">Continue</button>
+      </div>
+
+      <!-- heat result -->
+      <div class="overlay" id="ovResult">
+        <div class="eyebrow" id="resRound">Quarterfinal</div>
+        <div class="res-big" id="resTitle">HEAT WON</div>
+        <div class="res-tot"><span class="me" id="resMe">0.00</span><span style="color:var(--mut)">—</span><span class="op" id="resOp">0.00</span></div>
+        <p style="color:var(--mut);font-size:13px" id="resNote"></p>
+        <button class="btn" id="resBtn" onclick="afterHeat()">Continue</button>
+      </div>
+    </div>
+    <div id="controls"></div>
+  </div>
+
+  <!-- CHAMPION / ELIMINATED -->
+  <div class="screen" id="screen-champ">
+    <canvas id="confetti"></canvas>
+    <div class="center-col">
+      <div class="trophy" id="chIcon">🏆</div>
+      <div class="eyebrow" id="chTag">Event Champion</div>
+      <h1 class="disp" id="chTitle">Champion</h1>
+      <p class="champ-sub" id="chSub"></p>
+      <div class="backrow">
+        <button class="btn" onclick="show('screen-spot')">Next stop</button>
+        <button class="btn ghost" onclick="show('screen-tour')">Change tour</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+/* ============================ helpers ============================ */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $('#'+id).classList.add('on');
+  if(id==='screen-champ') runConfetti();}
+
+/* ============================ audio ============================ */
+let AC=null;
+function beep(f,dur,type,vol){try{
+  if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'triangle';o.frequency.value=f;
+  g.gain.setValueAtTime(vol||0.08,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+(dur||0.15));
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+(dur||0.15));
+}catch(e){}}
+document.addEventListener('pointerdown',()=>{try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}},{once:true});
+
+/* ============================ data ============================ */
+const JUDGES=['🇦🇺','🇺🇸','🇧🇷','🇫🇷','🇿🇦'];
+
+const SPOTS={
+CT:[
+ {id:'pipe',name:'Banzai Pipeline',country:'Oahu, Hawaii · USA',flag:'🇺🇸',geo:'North Shore · shallow lava reef · winter NW swells',
+  size:[6,12],barrel:.95,air:.25,dur:8.5,land:'palms',
+  desc:'The sport\'s proving ground. A slab of lava reef throws square, spitting left barrels metres from dry rock.',
+  tags:['Reef break','Heavy barrels','Left'],
+  pal:{skyT:'#20355e',skyB:'#8fc0e0',sea:'#0d5f8d',seaD:'#052f47',foam:'#ecf7fc',land:'#123322',sun:'#ffd98a'}},
+ {id:'sunset',name:'Sunset Beach',country:'Oahu, Hawaii · USA',flag:'🇺🇸',geo:'North Shore · wide open-ocean peak · shifting lineup',
+  size:[8,15],barrel:.45,air:.2,dur:10,land:'palms',
+  desc:'A huge, shifting big-wave peak. Long open faces built for full-rail power carves at speed.',
+  tags:['Big waves','Power surfing','Right'],
+  pal:{skyT:'#5a2a4e',skyB:'#f2a65a',sea:'#155a80',seaD:'#0a3049',foam:'#f6ecdd',land:'#241a2e',sun:'#ffb347'}},
+ {id:'teahupoo',name:'Teahupo\'o',country:'Tahiti · French Polynesia',flag:'🇵🇫',geo:'End of the road, Tahiti Iti · coral reef pass below jungle peaks',
+  size:[6,12],barrel:1,air:.1,dur:7.5,land:'mountain',
+  desc:'The heaviest wave on tour. Below sheer green mountains, the whole ocean folds over near-dry coral.',
+  tags:['Reef pass','Ultra heavy','Left barrel'],
+  pal:{skyT:'#1d4a56',skyB:'#a8dfe0',sea:'#0e8f86',seaD:'#04443f',foam:'#eafcf8',land:'#0e3d2a',sun:'#fff0b3'}},
+ {id:'bells',name:'Bells Beach',country:'Victoria · Australia',flag:'🇦🇺',geo:'Surf Coast · limestone reef under ochre cliffs · cold SW swells',
+  size:[4,8],barrel:.15,air:.3,dur:11,land:'cliff',
+  desc:'The tour\'s oldest trophy. Long, walled rights wrap into the Bowl — a canvas for huge carves.',
+  tags:['Point reef','Long walls','Carves'],
+  pal:{skyT:'#4a5a70',skyB:'#cfd8dc',sea:'#2a6a7d',seaD:'#123845',foam:'#eef4f5',land:'#8a5a2b',sun:'#ffe9c9'}},
+ {id:'margs',name:'Margaret River',country:'Western Australia',flag:'🇦🇺',geo:'Main Break · raw Indian Ocean swell · granite &amp; wind',
+  size:[6,12],barrel:.35,air:.2,dur:9.5,land:'cliff',
+  desc:'Raw Indian Ocean power detonating on Main Break. Big drops, bigger hacks.',
+  tags:['Big waves','Power','Left &amp; right'],
+  pal:{skyT:'#33475e',skyB:'#9fc3d4',sea:'#1c5a72',seaD:'#0b2f3e',foam:'#e9f3f6',land:'#4c5a4a',sun:'#f7d488'}},
+ {id:'jbay',name:'Jeffreys Bay',country:'Eastern Cape · South Africa',flag:'🇿🇦',geo:'Supertubes · aloe-lined point · winter groundswell freight trains',
+  size:[4,8],barrel:.55,air:.35,dur:13,land:'point',
+  desc:'The world\'s best right point. Freight-train walls reel for hundreds of metres past the aloes.',
+  tags:['Right point','Very long rides','Speed'],
+  pal:{skyT:'#3d4a63',skyB:'#e8c988',sea:'#186a80',seaD:'#0a3644',foam:'#f2f0e4',land:'#6a5a33',sun:'#ffcf6e'}},
+ {id:'saqua',name:'Saquarema',country:'Rio de Janeiro · Brazil',flag:'🇧🇷',geo:'Itaúna Beach · punchy sand-bottom peaks · the "Maracanã of surf"',
+  size:[3,6],barrel:.2,air:1,dur:8,land:'beach',
+  desc:'Brazil\'s surf stadium. Punchy ramps made for launching the biggest airs on tour.',
+  tags:['Beach break','Air show','Crowd energy'],
+  pal:{skyT:'#1a6e8a',skyB:'#bfe8ef',sea:'#1387a0',seaD:'#085162',foam:'#f0fbfd',land:'#2c6b3f',sun:'#ffe27a'}},
+ {id:'trestles',name:'Lower Trestles',country:'California · USA',flag:'🇺🇸',geo:'San Onofre · cobblestone point · WSL Finals venue',
+  size:[3,6],barrel:.1,air:.9,dur:11,land:'beach',
+  desc:'The high-performance skate park where world titles are decided. Perfect A-frame cobblestone peaks.',
+  tags:['Cobblestone point','Performance','Finals venue'],
+  pal:{skyT:'#7a8aa0',skyB:'#e8e2d2',sea:'#3d7d92',seaD:'#1c4656',foam:'#f4f6f2',land:'#7d7a5e',sun:'#fff3cf'}},
+ {id:'punta',name:'Punta Roca',country:'La Libertad · El Salvador',flag:'🇸🇻',geo:'Rocky right point · warm Pacific · long tapering walls',
+  size:[4,8],barrel:.45,air:.5,dur:12,land:'point',
+  desc:'Central America\'s premier right point — fast, hollow sections tapering down the rocks.',
+  tags:['Right point','Fast walls','Warm water'],
+  pal:{skyT:'#274a5e',skyB:'#ffd9a0',sea:'#17708a',seaD:'#0a3c4c',foam:'#f5efe0',land:'#3c4a2e',sun:'#ffb35c'}},
+ {id:'cloudbreak',name:'Cloudbreak',country:'Tavarua · Fiji',flag:'🇫🇯',geo:'Outer reef pass · 3 km offshore · long hollow lefts',
+  size:[6,12],barrel:.85,air:.15,dur:10,land:'island',
+  desc:'A world-class reef pass in open ocean — long, hollow lefts over vivid coral.',
+  tags:['Reef pass','Barrels','Left'],
+  pal:{skyT:'#1e5f76',skyB:'#aee3ea',sea:'#0d7d95',seaD:'#04424f',foam:'#ebfbfd',land:'#175c37',sun:'#ffef9e'}}
+],
+CS:[
+ {id:'snapper',name:'Snapper Rocks',country:'Gold Coast · Australia',flag:'🇦🇺',geo:'The Superbank · man-made sand point · rides up to 2 km',
+  size:[3,6],barrel:.5,air:.7,dur:13,land:'point',
+  desc:'The Superbank — sand-bottom rights spinning from behind the rock, barrels into turn sections forever.',
+  tags:['Sand point','Very long','Right'],
+  pal:{skyT:'#2a7a95',skyB:'#cfeef2',sea:'#199ab0',seaD:'#0a5a68',foam:'#f2fcfd',land:'#d9c27e',sun:'#ffe98a'}},
+ {id:'hb',name:'Huntington Beach',country:'California · USA',flag:'🇺🇸',geo:'Surf City USA · pier-side beach break · US Open crowds',
+  size:[2,5],barrel:.1,air:.9,dur:8,land:'pier',
+  desc:'Surf City. Shifty pier-bowl peaks in front of the biggest crowds in surfing.',
+  tags:['Beach break','Airs','Pier bowl'],
+  pal:{skyT:'#8a93a8',skyB:'#efe6d3',sea:'#4a7d8e',seaD:'#244854',foam:'#f6f6f0',land:'#6e6a58',sun:'#ffedb8'}},
+ {id:'ericeira',name:'Ribeira d\'Ilhas',country:'Ericeira · Portugal',flag:'🇵🇹',geo:'World Surfing Reserve · rocky right point · Atlantic swells',
+  size:[3,7],barrel:.3,air:.5,dur:11,land:'cliff',
+  desc:'Heart of Europe\'s only World Surfing Reserve — a rocky right point with rippable Atlantic walls.',
+  tags:['Point reef','Right','Reserve'],
+  pal:{skyT:'#44536e',skyB:'#cdd8de',sea:'#2a6580',seaD:'#123646',foam:'#eef3f5',land:'#8a6a3e',sun:'#ffe3a8'}},
+ {id:'ballito',name:'Ballito',country:'KwaZulu-Natal · South Africa',flag:'🇿🇦',geo:'Willard Beach · warm-water beach break · Indian Ocean',
+  size:[3,6],barrel:.25,air:.7,dur:8.5,land:'beach',
+  desc:'Warm Indian-Ocean beach break peaks — wedges and ramps for progressive surfing.',
+  tags:['Beach break','Wedges','Airs'],
+  pal:{skyT:'#2c6478',skyB:'#bfe4e8',sea:'#178094',seaD:'#0a4650',foam:'#effbfc',land:'#2f6b45',sun:'#ffe58c'}},
+ {id:'haleiwa',name:'Haleʻiwa',country:'Oahu, Hawaii · USA',flag:'🇺🇸',geo:'North Shore gateway · shallow reef · strong currents',
+  size:[4,9],barrel:.4,air:.35,dur:9,land:'palms',
+  desc:'The North Shore proving ground for qualifiers — a rippy, powerful right over shallow reef.',
+  tags:['Reef break','Power','Right'],
+  pal:{skyT:'#27436a',skyB:'#9fcbe4',sea:'#0f628c',seaD:'#063750',foam:'#ecf7fb',land:'#144028',sun:'#ffd98a'}},
+ {id:'newcastle',name:'Merewether',country:'Newcastle · Australia',flag:'🇦🇺',geo:'Steel-city beach break · consistent East Coast swell',
+  size:[3,6],barrel:.2,air:.6,dur:9,land:'beach',
+  desc:'Newcastle\'s pride — consistent, punchy peaks that breed world champions.',
+  tags:['Beach break','Consistent','Punchy'],
+  pal:{skyT:'#4c5a72',skyB:'#d6dde2',sea:'#2f6e84',seaD:'#153c4a',foam:'#f0f5f6',land:'#5a6250',sun:'#ffeec4'}}
+]};
+
+const AI_NAMES={
+CT:[['Kai Nakoa','🇺🇸'],['João Ferreira','🇧🇷'],['Mick Callahan','🇦🇺'],['Teiva Poema','🇵🇫'],
+    ['Leo Marchand','🇫🇷'],['Jack Whitmore','🇿🇦'],['Diego Marín','🇸🇻'],['Ryu Katase','🇯🇵'],
+    ['Gabriel Souza','🇧🇷'],['Ethan Kalili','🇺🇸']],
+CS:[['Sam Rutledge','🇦🇺'],['Tiago Costa','🇵🇹'],['Marco Alves','🇧🇷'],['Dylan Pieterse','🇿🇦'],
+    ['Cole Bradford','🇺🇸'],['Hiro Tanaka','🇯🇵'],['Nate Corrigan','🇦🇺'],['Luca Moretti','🇮🇹'],
+    ['Felipe Rocha','🇧🇷'],['Owen Hale','🇺🇸']]};
+
+/* ============================ global state ============================ */
+const G={tour:'CT',spot:null,surfers:[],round:0,heats:[],titles:{CT:0,CS:0}};
+const ROUND_NAMES=['Quarterfinals','Semifinals','Final'];
+const ROUND_ONE=['Quarterfinal','Semifinal','Final'];
+
+/* ============================ tour / spot select ============================ */
+function pickTour(t){G.tour=t;
+  $('#spotTourLbl').textContent=t==='CT'?'Championship Tour':'Challenger Series';
+  buildMap();show('screen-spot');}
+
+/* [lat, lon, labelDx, labelDy, anchor, markerDx, markerDy] */
+const GEO={
+  pipe:      [21.7,-158.1,  10,-8,'start', 0,-7],
+  sunset:    [21.7,-158.0,  10, 14,'start', 5, 9],
+  teahupoo:  [-17.9,-149.3, 10, 4,'start', 0, 0],
+  bells:     [-38.4, 144.3,-10, 12,'end', 0, 0],
+  margs:     [-34.0, 115.0, -8,-10,'end', 0, 0],
+  jbay:      [-34.1,  24.9,  0, 18,'middle', 0, 0],
+  saqua:     [-22.9, -42.5, 10, 4,'start', 0, 0],
+  trestles:  [33.4,-117.6, -10,-8,'end', 0, 0],
+  punta:     [13.5, -89.3, -12, 6,'end', 0, 0],
+  cloudbreak:[-17.9, 177.2,-12,-8,'end', 0, 0],
+  snapper:   [-28.2, 153.6,-12,-8,'end', 0,-3],
+  hb:        [33.7,-118.0, -10,-8,'end', 0, 0],
+  ericeira:  [39.0,  -9.4, -12, 4,'end', 0, 0],
+  ballito:   [-29.5,  31.2, 12, 4,'start', 0, 0],
+  haleiwa:   [21.6,-158.1,  10, 4,'start', 0, 0],
+  newcastle: [-32.9, 151.8, 12, 10,'start',-2, 5]
+};
+const proj=(lat,lon)=>[ (lon+180)/360*1000, (90-lat)/180*500 ];
+let selSpotId=null;
+
+function buildMap(){
+  const g=$('#mapMarkers');g.innerHTML='';
+  selSpotId=null;
+  $('#spotDetail').innerHTML='<div class="detail-hint">Tap a marker to scout the lineup 🌍</div>';
+  const NS='http://www.w3.org/2000/svg';
+  SPOTS[G.tour].forEach(sp=>{
+    const geo=GEO[sp.id];if(!geo)return;
+    let [x,y]=proj(geo[0],geo[1]);
+    x+=geo[5]||0;y+=geo[6]||0;
+    const grp=document.createElementNS(NS,'g');
+    grp.setAttribute('class','mk');grp.dataset.id=sp.id;
+    grp.setAttribute('transform','translate('+x.toFixed(1)+','+y.toFixed(1)+')');
+    const ring=document.createElementNS(NS,'circle');
+    ring.setAttribute('class','ring');ring.setAttribute('r','9');
+    const dot=document.createElementNS(NS,'circle');
+    dot.setAttribute('class','dot');dot.setAttribute('r','7');
+    const hit=document.createElementNS(NS,'circle');
+    hit.setAttribute('class','hit');hit.setAttribute('r','20');
+    const lbl=document.createElementNS(NS,'text');
+    lbl.setAttribute('x',geo[2]);lbl.setAttribute('y',geo[3]+4);
+    lbl.setAttribute('text-anchor',geo[4]);
+    lbl.textContent=sp.name;
+    grp.appendChild(ring);grp.appendChild(dot);grp.appendChild(hit);grp.appendChild(lbl);
+    grp.addEventListener('click',()=>selectSpot(sp));
+    g.appendChild(grp);
+  });
+}
+function selectSpot(sp){
+  selSpotId=sp.id;
+  document.querySelectorAll('#mapMarkers .mk').forEach(m=>
+    m.classList.toggle('sel',m.dataset.id===sp.id));
+  beep(600,.08,'sine',.05);
+  $('#spotDetail').innerHTML=
+    '<div class="detail-card">'+
+      '<div class="detail-thumb" style="background:'+thumbBG(sp)+'">'+
+        '<span class="flag">'+sp.flag+'</span>'+
+        '<span class="size">'+sp.size[0]+'–'+sp.size[1]+' ft</span>'+
+        thumbDeco(sp)+
+      '</div>'+
+      '<div class="detail-body">'+
+        '<h3>'+sp.name+'</h3>'+
+        '<div class="geo">'+sp.country+'</div>'+
+        '<p>'+sp.desc+'</p>'+
+        '<p class="fine">'+sp.geo+'</p>'+
+        '<div class="tags">'+sp.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>'+
+        '<div class="row"><button class="btn" id="surfHereBtn">Surf this stop</button></div>'+
+      '</div>'+
+    '</div>';
+  $('#surfHereBtn').onclick=()=>startEvent(sp);
+  $('#spotDetail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function thumbBG(sp){const p=sp.pal;
+  return 'linear-gradient(180deg,'+p.skyT+' 0%,'+p.skyB+' 46%,'+p.sea+' 52%,'+p.seaD+' 100%)';}
+function thumbDeco(sp){const p=sp.pal;
+  let land='';
+  if(sp.land==='mountain')land='<svg style="position:absolute;left:0;bottom:44%;width:100%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 L14 4 L26 14 L40 0 L56 16 L70 6 L84 18 L100 10 L100 20 Z" fill="'+p.land+'"/></svg>';
+  else if(sp.land==='cliff')land='<svg style="position:absolute;left:0;bottom:44%;width:60%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 L0 5 L55 5 L70 12 L86 20 Z" fill="'+p.land+'"/></svg>';
+  else if(sp.land==='point')land='<svg style="position:absolute;right:0;bottom:44%;width:70%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M100 20 L100 6 L60 10 L20 17 L0 20 Z" fill="'+p.land+'"/></svg>';
+  else if(sp.land==='palms')land='<svg style="position:absolute;left:0;bottom:44%;width:100%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 L0 12 Q30 8 60 13 Q85 17 100 15 L100 20 Z" fill="'+p.land+'"/></svg><span style="position:absolute;left:8%;bottom:47%;font-size:16px">🌴</span>';
+  else if(sp.land==='island')land='<svg style="position:absolute;right:6%;bottom:46%;width:34%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 Q30 2 60 6 Q85 9 100 20 Z" fill="'+p.land+'"/></svg>';
+  else if(sp.land==='pier')land='<svg style="position:absolute;left:10%;bottom:30%;width:70%" viewBox="0 0 100 26" preserveAspectRatio="none"><rect x="0" y="4" width="100" height="3" fill="'+p.land+'"/><rect x="10" y="7" width="3" height="18" fill="'+p.land+'"/><rect x="40" y="7" width="3" height="18" fill="'+p.land+'"/><rect x="70" y="7" width="3" height="18" fill="'+p.land+'"/></svg>';
+  else land='<svg style="position:absolute;left:0;bottom:44%;width:100%" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 20 L0 14 Q40 10 100 15 L100 20 Z" fill="'+p.land+'"/></svg>';
+  const wave='<svg style="position:absolute;left:12%;bottom:8%;width:44%" viewBox="0 0 100 40" fill="none"><path d="M4 36 C 24 6, 44 4, 58 16 C 66 23, 82 30, 96 30" stroke="'+p.foam+'" stroke-width="5" stroke-linecap="round"/></svg>';
+  return land+wave;
+}
+
+/* ============================ event / bracket ============================ */
+function startEvent(spot){
+  G.spot=spot;G.round=0;
+  const names=[...AI_NAMES[G.tour]];
+  // shuffle
+  for(let i=names.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[names[i],names[j]]=[names[j],names[i]];}
+  const base=G.tour==='CT'?6.2:5.4;
+  G.surfers=[{name:'YOU',flag:'🏄',me:true,skill:0}];
+  for(let i=0;i<7;i++)G.surfers.push({name:names[i][0],flag:names[i][1],me:false,skill:base+rnd(-0.7,1.2)});
+  G.heats=[[[0,1],[2,3],[4,5],[6,7]].map(p=>({a:p[0],b:p[1],sa:null,sb:null,win:null}))];
+  renderBracket();show('screen-bracket');
+}
+function quitEvent(){show('screen-spot');}
+
+function renderBracket(){
+  $('#brEvent').textContent=(G.tour==='CT'?'Championship Tour · ':'Challenger Series · ')+G.spot.name+' '+G.spot.flag;
+  $('#brRound').textContent=ROUND_NAMES[G.round];
+  const wrap=$('#bracketWrap');wrap.innerHTML='';
+  const titles=['QF','SF','FINAL'];
+  for(let r=0;r<3;r++){
+    const col=document.createElement('div');col.className='br-col';
+    col.innerHTML='<div class="col-title">'+titles[r]+'</div>';
+    const heats=G.heats[r];
+    const n=r===0?4:(r===1?2:1);
+    for(let h=0;h<n;h++){
+      const box=document.createElement('div');box.className='heatbox';
+      const ht=heats?heats[h]:null;
+      if(ht){
+        if(r===G.round&&ht.win===null&&(G.surfers[ht.a].me||G.surfers[ht.b].me))box.classList.add('live');
+        box.appendChild(heatRow(ht.a,ht.sa,ht.win===ht.a,ht.win!==null&&ht.win!==ht.a));
+        box.appendChild(heatRow(ht.b,ht.sb,ht.win===ht.b,ht.win!==null&&ht.win!==ht.b));
+      }else{
+        box.innerHTML='<div class="heatrow"><span class="nm" style="color:#4a6478">TBD</span></div><div class="heatrow"><span class="nm" style="color:#4a6478">TBD</span></div>';
+      }
+      col.appendChild(box);
+    }
+    wrap.appendChild(col);
+  }
+}
+function heatRow(idx,score,won,lost){
+  const s=G.surfers[idx];
+  const d=document.createElement('div');
+  d.className='heatrow'+(won?' win':'')+(lost?' lose':'')+(s.me?' me':'');
+  d.innerHTML='<span class="nm">'+s.flag+' '+s.name+'</span><span class="sc">'+(score!==null&&score!==undefined?score.toFixed(2):'')+'</span>';
+  return d;
+}
+
+/* AI vs AI simulation */
+function simHeat(ht){
+  const A=G.surfers[ht.a],B=G.surfers[ht.b];
+  const sc=s=>{const w=()=>clamp(s.skill+gauss()*1.4,0.5,10);
+    const ws=[w(),w(),w(),w()].sort((x,y)=>y-x);return ws[0]+ws[1];};
+  ht.sa=sc(A);ht.sb=sc(B);
+  if(Math.abs(ht.sa-ht.sb)<0.05)ht.sb=ht.sa-0.11;
+  ht.win=ht.sa>ht.sb?ht.a:ht.b;
+}
+
+/* ============================ heat setup ============================ */
+const HEAT_TIME=80;
+let H=null,raf=0,lastT=0;
+
+function startPlayerHeat(){
+  const heats=G.heats[G.round];
+  const myHeat=heats.find(h=>G.surfers[h.a].me||G.surfers[h.b].me);
+  if(!myHeat){show('screen-bracket');return;}
+  const oppIdx=G.surfers[myHeat.a].me?myHeat.b:myHeat.a;
+  const opp=G.surfers[oppIdx];
+  const oppSkill=opp.skill+G.round*0.55;
+  H={t:HEAT_TIME,phase:'intro',spot:G.spot,heatRef:myHeat,oppIdx,
+     my:[],opp:{name:opp.name,flag:opp.flag,skill:oppSkill,scores:[],events:[]},
+     wave:null,nextIn:rnd(2,3.5),ride:null,particles:[],popups:[],time:0,noticeT:0,notice:'',
+     buzzer:false,pendingScore:null};
+  // schedule opponent waves
+  const n=3+Math.floor(Math.random()*3);
+  for(let i=0;i<n;i++)H.opp.events.push({t:rnd(8,HEAT_TIME-6),done:false});
+  H.opp.events.sort((a,b)=>a.t-b.t);
+  $('#hudRound').textContent=ROUND_ONE[G.round].toUpperCase();
+  $('#oppName').textContent=opp.flag+' '+opp.name.split(' ').pop().toUpperCase();
+  $('#inRound').textContent=ROUND_ONE[G.round]+' · '+G.spot.name;
+  $('#inVs').textContent='YOU vs '+opp.name;
+  $('#inSpot').textContent=G.spot.flag+' '+G.spot.geo+' · '+G.spot.size[0]+'–'+G.spot.size[1]+' ft today';
+  $('#ovIntro').classList.add('on');$('#ovJudge').classList.remove('on');$('#ovResult').classList.remove('on');
+  updateHUD();buildControls('wait');
+  show('screen-heat');resizeCanvas();
+  cancelAnimationFrame(raf);lastT=performance.now();raf=requestAnimationFrame(loop);
+}
+function beginHeat(){$('#ovIntro').classList.remove('on');H.phase='wait';beep(520,.12);beep(660,.12);}
+
+/* ============================ controls ============================ */
+const CTRL={};
+function buildControls(mode){
+  const c=$('#controls');c.innerHTML='';
+  function mk(id,label,sub,cls){
+    const b=document.createElement('button');b.className='ctl '+(cls||'');b.id='ctl-'+id;
+    b.innerHTML=label+(sub?'<small>'+sub+'</small>':'');
+    c.appendChild(b);CTRL[id]=b;return b;}
+  if(mode==='wait'){
+    mk('takeoff','Take Off','time the peak','big');
+    CTRL.takeoff.addEventListener('pointerdown',e=>{e.preventDefault();tryTakeoff();});
+  }else{
+    mk('pump','Pump','speed');
+    mk('snap','Snap','at the lip');
+    mk('cut','Cutback','on the face');
+    mk('air','Air','full speed, top','danger');
+    if(G.spot.barrel>=0.3)mk('tube','Tube','hold in barrel','tube');
+    mk('kick','Kick Out','bank the score');
+    CTRL.pump.addEventListener('pointerdown',e=>{e.preventDefault();doPump();});
+    CTRL.snap.addEventListener('pointerdown',e=>{e.preventDefault();doTrick('snap');});
+    CTRL.cut.addEventListener('pointerdown',e=>{e.preventDefault();doTrick('cut');});
+    CTRL.air.addEventListener('pointerdown',e=>{e.preventDefault();doTrick('air');});
+    if(CTRL.tube){
+      CTRL.tube.addEventListener('pointerdown',e=>{e.preventDefault();if(H&&H.ride)H.ride.holdTube=true;});
+      const up=()=>{if(H&&H.ride)H.ride.holdTube=false;};
+      CTRL.tube.addEventListener('pointerup',up);CTRL.tube.addEventListener('pointerleave',up);CTRL.tube.addEventListener('pointercancel',up);
+    }
+    CTRL.kick.addEventListener('pointerdown',e=>{e.preventDefault();endRide(false);});
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(!H)return;
+  if(e.repeat)return;
+  if(H.phase==='wait'&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();tryTakeoff();}
+  else if(H.phase==='riding'){
+    if(e.code==='Space'){e.preventDefault();doPump();}
+    else if(e.key==='j'||e.key==='J')doTrick('snap');
+    else if(e.key==='k'||e.key==='K')doTrick('cut');
+    else if(e.key==='l'||e.key==='L')doTrick('air');
+    else if(e.key==='b'||e.key==='B'){if(H.ride)H.ride.holdTube=true;}
+    else if(e.code==='Enter')endRide(false);
+  }
+});
+document.addEventListener('keyup',e=>{if(H&&H.ride&&(e.key==='b'||e.key==='B'))H.ride.holdTube=false;});
+
+/* ============================ heat logic ============================ */
+function notice(txt,dur){H.notice=txt;H.noticeT=dur||1.6;
+  $('#noticeBar').innerHTML='<span>'+txt+'</span>';}
+
+function spawnWave(){
+  const sp=G.spot;
+  const size=rnd(sp.size[0],sp.size[1]);
+  const quality=rnd(0.72,1.08);
+  H.wave={size,quality,x:1.15,speed:rnd(0.115,0.14),caught:false};
+  const label=size>=sp.size[0]+(sp.size[1]-sp.size[0])*0.66?'SET WAVE':'Wave';
+  notice(label+' · '+size.toFixed(0)+' ft',1.8);
+  beep(300,.1,'sine');
+}
+function tryTakeoff(){
+  if(!H||H.phase!=='wait'||!H.wave)return;
+  const x=H.wave.x;
+  if(x<=0.46&&x>=0.30){
+    const center=0.38, off=Math.abs(x-center);
+    const timing=clamp(1.05-off*1.8,0.8,1.05);
+    startRide(timing);
+  }else if(x<0.55){
+    notice('Too early — wait for the peak',1.2);beep(180,.12,'square',.05);
+  }
+}
+function startRide(timing){
+  const sp=G.spot,w=H.wave;
+  const sizeF=(w.size-sp.size[0])/(sp.size[1]-sp.size[0]);
+  const dur=sp.dur*(0.85+w.quality*0.25);
+  const ride={t:0,dur,timing,speed:52,tricks:[],pts:0,typeCount:{},
+    holdTube:false,tubeTime:0,inTube:false,barrelWins:[],cool:{},fell:false,
+    yPhase:rnd(0,Math.PI*2),anim:null,sizeF,wave:w};
+  // barrel windows
+  if(sp.barrel>=0.3){
+    const nWin=sp.barrel>0.7?2:1;
+    let t0=rnd(1.2,2.5);
+    for(let i=0;i<nWin;i++){
+      const len=rnd(1.6,2.6)*(0.6+sp.barrel*0.6);
+      if(t0+len<dur-1){ride.barrelWins.push({s:t0,e:t0+len});t0+=len+rnd(2.5,4);}
+    }
+  }
+  H.ride=ride;H.phase='riding';H.wave=null;
+  buildControls('ride');
+  notice(timing>1?'Perfect takeoff!':'Dropping in…',1.2);
+  beep(700,.12);
+}
+function yPos(r){return 0.5+0.42*Math.sin(r.t*2.3+r.yPhase);} // 0=lip 1=bottom... (lower val = top)
+function atTop(r){return yPos(r)<0.33;}
+function doPump(){
+  const r=H&&H.ride;if(!r||H.phase!=='riding')return;
+  r.speed=clamp(r.speed+9,0,100);
+  addSpray(4,0.4);beep(240+r.speed*2,.06,'sine',.04);
+}
+function doTrick(type){
+  const r=H&&H.ride;if(!r||H.phase!=='riding'||r.anim)return;
+  const now=r.t;
+  if(r.cool[type]&&now-r.cool[type]<1.0)return;
+  r.cool[type]=now;
+  const sp=G.spot;
+  const top=atTop(r);
+  if(type==='air'){
+    const ok=top&&r.speed>=55;
+    const failP=ok?0.14:0.7;
+    if(Math.random()<failP){wipeout(top?'Under-rotated!':'Not enough speed!');return;}
+  }
+  let exec=clamp(0.5+r.speed/180+rnd(-0.04,0.1),0.35,1);
+  let base=0;
+  if(type==='snap'){base=1.15;exec+= top?0.12:-0.12;}
+  else if(type==='cut'){base=0.95;exec+= top?-0.05:0.08;}
+  else if(type==='air'){base=2.3*(1+sp.air*0.35);exec+=0.05;}
+  exec=clamp(exec,0.3,1.15);
+  const count=r.typeCount[type]||0;
+  const rep=Math.pow(0.78,count);
+  const sizeBonus=0.9+r.sizeF*0.45;
+  const pts=base*exec*rep*sizeBonus*r.timing;
+  r.typeCount[type]=count+1;
+  r.pts+=pts;r.tricks.push(type);
+  r.speed=clamp(r.speed-(type==='air'?28:type==='snap'?13:8),5,100);
+  r.anim={type,t:0,dur:type==='air'?0.75:0.55};
+  const names={snap:'SNAP',cut:'CUTBACK',air:'AIR'};
+  popup((count>0?names[type]:names[type])+' +'+pts.toFixed(1),type==='air'?'#ffc94d':'#eaf6fb');
+  addSpray(type==='air'?26:16,1);
+  beep(type==='air'?880:640,.14,'triangle',.09);
+}
+function wipeout(msg){
+  const r=H.ride;if(!r)return;
+  r.fell=true;
+  popup('WIPEOUT','#ff5a3c');notice(msg||'Wipeout!',1.6);
+  addSpray(40,1.4);beep(140,.35,'sawtooth',.09);
+  endRide(true);
+}
+function popup(txt,color){
+  H.popups.push({txt,color,t:0,x:rnd(-20,20)});
+}
+function addSpray(n,pow){
+  const c=$('#gameCanvas');const W=c.clientWidth,Hh=c.clientHeight;
+  const r=H.ride;const sx=W*0.4,sy=r?Hh*(0.3+yPos(r)*0.38):Hh*0.6;
+  for(let i=0;i<n;i++)H.particles.push({x:sx+rnd(-8,8),y:sy+rnd(-6,6),
+    vx:rnd(-90,140)*pow,vy:rnd(-260,-60)*pow,t:0,life:rnd(0.5,1)});
+}
+function endRide(fromWipe){
+  const r=H.ride;if(!r||H.phase!=='riding')return;
+  H.phase='judging';
+  if(r.holdTube)r.holdTube=false;
+  computeScore(r,fromWipe);
+}
+function computeScore(r,fell){
+  const sp=G.spot;
+  const base=(1.1+r.sizeF*2.1)*r.wave.quality*r.timing;
+  const tubePts=Math.min(3.4,r.tubeTime*1.15)*(1+r.sizeF*0.35)*(0.7+sp.barrel*0.4);
+  let raw=base+r.pts+tubePts;
+  if(fell)raw*=0.85;
+  raw=clamp(raw,0.3,10);
+  const js=JUDGES.map(()=>clamp(raw+gauss()*0.32,0,10));
+  const sorted=[...js].sort((a,b)=>a-b);
+  const finalScore=Math.round(((sorted[1]+sorted[2]+sorted[3])/3)*100)/100;
+  H.pendingScore=finalScore;
+  showJudges(js,finalScore);
+}
+function showJudges(js,finalScore){
+  const p=$('#judgePanel');p.innerHTML='';
+  const hiI=js.indexOf(Math.max(...js));
+  let loI=hiI===0?1:0;
+  js.forEach((v,i)=>{if(i!==hiI&&v<js[loI])loI=i;});
+  const cards=[];
+  js.forEach((v,i)=>{
+    const d=document.createElement('div');d.className='jcard';
+    d.innerHTML='<div class="jinner"><div class="jface jfront">'+JUDGES[i]+'</div>'+
+      '<div class="jface jback"><span class="flg">'+JUDGES[i]+'</span><span class="val">'+v.toFixed(2)+'</span></div></div>';
+    p.appendChild(d);cards.push(d);
+  });
+  $('#judgeFinal').classList.remove('show');
+  $('#judgeFinal').textContent=finalScore.toFixed(2);
+  $('#judgeCont').style.visibility='hidden';
+  $('#ovJudge').classList.add('on');
+  cards.forEach((c,i)=>setTimeout(()=>{c.classList.add('flip');beep(480+i*60,.09,'sine',.06);},350+i*260));
+  setTimeout(()=>{
+    cards[hiI].classList.add('drop');cards[loI].classList.add('drop');
+    beep(320,.1,'square',.05);
+  },350+5*260+250);
+  setTimeout(()=>{
+    $('#judgeFinal').classList.add('show');
+    $('#judgeCont').style.visibility='visible';
+    beep(760,.2,'triangle',.1);beep(950,.25,'triangle',.08);
+  },350+5*260+800);
+}
+function closeJudges(){
+  $('#ovJudge').classList.remove('on');
+  H.my.push(H.pendingScore);H.pendingScore=null;H.ride=null;
+  updateHUD();
+  if(H.t<=0){finishHeat();return;}
+  H.phase='wait';H.wave=null;H.nextIn=rnd(2.5,5.5);
+  buildControls('wait');
+}
+
+function best2(arr){const s=[...arr].sort((a,b)=>b-a);return (s[0]||0)+(s[1]||0);}
+function updateHUD(){
+  const s=[...H.my].sort((a,b)=>b-a);
+  $('#myTot').textContent=best2(H.my).toFixed(2);
+  $('#myWaves').textContent=(s[0]?s[0].toFixed(2):'—')+' + '+(s[1]?s[1].toFixed(2):'—');
+  const ot=best2(H.opp.scores);
+  $('#oppTot').textContent=ot.toFixed(2);
+  const my=best2(H.my);
+  if(ot>my){
+    const need=ot-(s[0]||0);
+    $('#needTxt').textContent=need>10?'COMBO — needs 2 waves':'Needs '+Math.max(need+0.01,0.01).toFixed(2);
+  }else{$('#needTxt').textContent='You lead';}
+}
+
+/* main loop */
+function loop(now){
+  raf=requestAnimationFrame(loop);
+  const dt=Math.min((now-lastT)/1000,0.05);lastT=now;
+  if(!H)return;
+  H.time+=dt;
+  const running=(H.phase==='wait'||H.phase==='riding');
+  if(running){
+    H.t-=dt;
+    if(H.t<=0){H.t=0;
+      if(H.phase==='riding'){if(!H.buzzer){H.buzzer=true;notice('BUZZER — finish the ride!',2);beep(200,.6,'square',.1);}}
+      else{finishHeat();return;}
+    }
+    // opponent scores
+    H.opp.events.forEach(ev=>{
+      if(!ev.done&&H.time>ev.t){ev.done=true;
+        const sc=clamp(H.opp.skill+gauss()*1.25,0.4,10);
+        H.opp.scores.push(sc);updateHUD();
+        notice(H.opp.flag+' '+H.opp.name.split(' ').pop()+' scores '+sc.toFixed(2),1.8);
+        beep(360,.15,'sine',.06);
+      }});
+  }
+  if(H.noticeT>0){H.noticeT-=dt;if(H.noticeT<=0)$('#noticeBar').innerHTML='';}
+  if(H.phase==='wait'){
+    if(!H.wave){H.nextIn-=dt;if(H.nextIn<=0)spawnWave();}
+    else{
+      H.wave.x-=H.wave.speed*dt;
+      if(H.wave.x<0.24){notice('Missed it — next set coming',1.4);H.wave=null;H.nextIn=rnd(3,6);}
+    }
+  }else if(H.phase==='riding'){
+    const r=H.ride;
+    r.t+=dt;
+    r.speed=clamp(r.speed-6.5*dt,4,100);
+    // tube
+    const inWin=r.barrelWins.some(w=>r.t>=w.s&&r.t<=w.e);
+    const coming=r.barrelWins.some(w=>r.t>=w.s-1&&r.t<w.s);
+    if(coming&&!r.warned){r.warned=true;notice('BARREL SECTION — hold TUBE!',1.4);beep(500,.1);beep(500,.1);}
+    if(!inWin)r.warned=false;
+    r.inTube=inWin&&r.holdTube;
+    if(r.inTube){r.tubeTime+=dt;
+      if(Math.random()<dt*3)addSpray(2,0.5);
+      if(!r.tubeTick||r.t-r.tubeTick>0.75){r.tubeTick=r.t;popup('TUBE +'+(0.85).toFixed(1),'#39c6d6');beep(560,.08,'sine',.05);}
+    }
+    if(r.anim){r.anim.t+=dt;if(r.anim.t>r.anim.dur)r.anim=null;}
+    if(r.t>=r.dur){notice('Wave closed out',1.2);endRide(false);}
+    $('#speedFill').style.width=r.speed+'%';
+  }
+  // particles/popups
+  H.particles.forEach(p=>{p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=680*dt;});
+  H.particles=H.particles.filter(p=>p.t<p.life);
+  H.popups.forEach(p=>p.t+=dt);
+  H.popups=H.popups.filter(p=>p.t<1.4);
+  // timer text
+  const tm=Math.max(0,H.t);
+  $('#hudTimer').childNodes[0].nodeValue=Math.floor(tm/60)+':'+String(Math.floor(tm%60)).padStart(2,'0');
+  draw();
+}
+
+function finishHeat(){
+  H.phase='done';
+  const my=best2(H.my),op=best2(H.opp.scores);
+  let win=my>op;
+  if(Math.abs(my-op)<0.001)win=(Math.max(...H.my,0)>=Math.max(...H.opp.scores,0));
+  const ht=H.heatRef;
+  const meIsA=G.surfers[ht.a].me;
+  ht.sa=meIsA?my:op;ht.sb=meIsA?op:my;
+  ht.win=win?(meIsA?ht.a:ht.b):(meIsA?ht.b:ht.a);
+  $('#resRound').textContent=ROUND_ONE[G.round]+' · '+G.spot.name;
+  $('#resTitle').textContent=win?'HEAT WON':'ELIMINATED';
+  $('#resTitle').style.color=win?'var(--gold)':'var(--coral)';
+  $('#resMe').textContent=my.toFixed(2);
+  $('#resOp').textContent=op.toFixed(2);
+  $('#resNote').textContent=win
+    ?(G.round<2?'You advance to the '+ROUND_NAMES[G.round+1].toLowerCase()+'.':'You have won the event!')
+    :('Best waves: '+H.my.map(v=>v.toFixed(2)).join(', ')+(H.my.length?'':'no scoring rides'));
+  $('#resBtn').textContent=win?(G.round<2?'Continue':'Claim the trophy'):'Back to tour';
+  H.win=win;
+  $('#ovResult').classList.add('on');
+  beep(win?820:220,.3,win?'triangle':'sawtooth',.1);
+}
+function afterHeat(){
+  $('#ovResult').classList.remove('on');
+  cancelAnimationFrame(raf);
+  const win=H.win;
+  // simulate the other heats of this round
+  G.heats[G.round].forEach(h=>{if(h.win===null)simHeat(h);});
+  if(!win){
+    $('#chIcon').textContent='🌊';
+    $('#chTag').textContent=(G.tour==='CT'?'Championship Tour':'Challenger Series')+' · '+G.spot.name;
+    $('#chTitle').textContent='Eliminated';
+    $('#chSub').textContent='You went down in the '+ROUND_ONE[G.round].toLowerCase()+'. The ocean gives and the ocean takes — pick another stop and paddle back out.';
+    H=null;show('screen-champ');return;
+  }
+  if(G.round<2){
+    // build next round from winners
+    const winners=G.heats[G.round].map(h=>h.win);
+    const next=[];
+    for(let i=0;i<winners.length;i+=2)next.push({a:winners[i],b:winners[i+1],sa:null,sb:null,win:null});
+    G.heats[G.round+1]=next;
+    G.round++;
+    renderBracket();H=null;show('screen-bracket');
+  }else{
+    G.titles[G.tour]++;
+    $('#chIcon').textContent=G.tour==='CT'?'🏆':'🥇';
+    $('#chTag').textContent=(G.tour==='CT'?'Championship Tour':'Challenger Series')+' · '+G.spot.name+' '+G.spot.flag;
+    $('#chTitle').textContent='Event Champion';
+    $('#chSub').textContent=(G.tour==='CT'
+      ?'You conquered '+G.spot.name+' and claimed the CT trophy. Titles this season — CT: '+G.titles.CT+' · CS: '+G.titles.CS+'.'
+      :'A Challenger Series win at '+G.spot.name+'! Valuable qualifying points banked. Titles — CT: '+G.titles.CT+' · CS: '+G.titles.CS+'.');
+    H=null;show('screen-champ');
+  }
+}
+
+/* ============================ rendering ============================ */
+const cv=$('#gameCanvas');let ctx=cv.getContext('2d');
+function resizeCanvas(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const w=cv.clientWidth,h=cv.clientHeight;
+  cv.width=w*dpr;cv.height=h*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',()=>{if($('#screen-heat').classList.contains('on'))resizeCanvas();});
+
+function draw(){
+  const W=cv.clientWidth,Hh=cv.clientHeight;
+  if(cv.width===0)resizeCanvas();
+  const p=G.spot.pal;
+  ctx.clearRect(0,0,W,Hh);
+  if(H.phase==='riding'||(H.phase==='judging'&&H.ride))drawRide(W,Hh,p);
+  else drawLineup(W,Hh,p);
+  // particles
+  ctx.fillStyle='rgba(240,250,253,0.9)';
+  H.particles.forEach(pt=>{
+    ctx.globalAlpha=1-pt.t/pt.life;
+    ctx.beginPath();ctx.arc(pt.x,pt.y,2.4,0,7);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  // popups
+  ctx.textAlign='center';
+  H.popups.forEach(pp=>{
+    ctx.globalAlpha=1-pp.t/1.4;
+    ctx.font='800 22px Archivo, sans-serif';
+    ctx.fillStyle=pp.color;
+    ctx.fillText(pp.txt,W*0.5+pp.x,Hh*0.32-pp.t*46);
+  });
+  ctx.globalAlpha=1;
+}
+
+function skyAndLand(W,Hh,p,horizon){
+  const g=ctx.createLinearGradient(0,0,0,horizon);
+  g.addColorStop(0,p.skyT);g.addColorStop(1,p.skyB);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,horizon);
+  // sun
+  ctx.fillStyle=p.sun;ctx.globalAlpha=.9;
+  ctx.beginPath();ctx.arc(W*0.78,horizon*0.42,Math.min(W,Hh)*0.055,0,7);ctx.fill();
+  ctx.globalAlpha=1;
+  // land silhouette
+  ctx.fillStyle=p.land;
+  const t=G.spot.land;
+  ctx.beginPath();
+  if(t==='mountain'){
+    ctx.moveTo(0,horizon);
+    const pts=[[0.05,0.55],[0.14,0.28],[0.24,0.6],[0.36,0.18],[0.5,0.62],[0.62,0.4],[0.74,0.68],[0.88,0.5],[1,0.7]];
+    pts.forEach(q=>ctx.lineTo(W*q[0],horizon*q[1]));
+    ctx.lineTo(W,horizon);
+  }else if(t==='cliff'){
+    ctx.moveTo(0,horizon);ctx.lineTo(0,horizon*0.5);ctx.lineTo(W*0.4,horizon*0.52);
+    ctx.lineTo(W*0.52,horizon*0.75);ctx.lineTo(W*0.62,horizon);
+  }else if(t==='point'){
+    ctx.moveTo(W,horizon);ctx.lineTo(W,horizon*0.6);ctx.lineTo(W*0.55,horizon*0.72);ctx.lineTo(W*0.2,horizon*0.92);ctx.lineTo(0,horizon);
+  }else if(t==='palms'){
+    ctx.moveTo(0,horizon);ctx.lineTo(0,horizon*0.8);
+    ctx.quadraticCurveTo(W*0.3,horizon*0.68,W*0.6,horizon*0.82);
+    ctx.quadraticCurveTo(W*0.85,horizon*0.9,W,horizon*0.86);ctx.lineTo(W,horizon);
+  }else if(t==='island'){
+    ctx.moveTo(W*0.6,horizon);ctx.quadraticCurveTo(W*0.72,horizon*0.55,W*0.86,horizon*0.7);
+    ctx.quadraticCurveTo(W*0.95,horizon*0.8,W,horizon*0.86);ctx.lineTo(W,horizon);
+  }else if(t==='pier'){
+    ctx.rect(W*0.1,horizon*0.72,W*0.7,horizon*0.045);
+    for(let i=0;i<4;i++)ctx.rect(W*(0.16+i*0.18),horizon*0.76,W*0.012,horizon*0.24);
+  }else{ // beach
+    ctx.moveTo(0,horizon);ctx.lineTo(0,horizon*0.86);
+    ctx.quadraticCurveTo(W*0.4,horizon*0.78,W,horizon*0.88);ctx.lineTo(W,horizon);
+  }
+  ctx.closePath();ctx.fill();
+  if(t==='palms'){ // palm trees
+    ctx.font=Math.round(horizon*0.16)+'px serif';ctx.textAlign='left';
+    ctx.fillText('🌴',W*0.06,horizon*0.82);ctx.fillText('🌴',W*0.2,horizon*0.86);
+  }
+}
+
+function drawLineup(W,Hh,p){
+  const horizon=Hh*0.5;
+  skyAndLand(W,Hh,p,horizon);
+  // sea
+  const g=ctx.createLinearGradient(0,horizon,0,Hh);
+  g.addColorStop(0,p.sea);g.addColorStop(1,p.seaD);
+  ctx.fillStyle=g;ctx.fillRect(0,horizon,W,Hh-horizon);
+  // shimmer lines
+  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1.5;
+  for(let i=0;i<6;i++){
+    const y=horizon+ (Hh-horizon)*(0.12+i*0.15)+Math.sin(H.time*0.9+i)*3;
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(let x=0;x<=W;x+=28)ctx.lineTo(x,y+Math.sin(x*0.03+H.time*2+i)*2.5);
+    ctx.stroke();
+  }
+  // incoming wave
+  if(H.wave){
+    const w=H.wave;
+    const sp=G.spot;
+    const sizeF=(w.size-sp.size[0])/(sp.size[1]-sp.size[0]);
+    const hgt=(Hh-horizon)*(0.28+sizeF*0.45);
+    const cx=w.x*W;
+    const base=horizon+(Hh-horizon)*0.55;
+    const wid=W*(0.34+sizeF*0.14);
+    ctx.fillStyle=p.sea;
+    ctx.beginPath();
+    ctx.moveTo(cx-wid,base);
+    ctx.quadraticCurveTo(cx-wid*0.35,base-hgt*1.15,cx+wid*0.08,base-hgt);
+    ctx.quadraticCurveTo(cx+wid*0.5,base-hgt*0.5,cx+wid,base);
+    ctx.closePath();ctx.fill();
+    // face shading
+    ctx.fillStyle='rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(cx-wid*0.7,base);
+    ctx.quadraticCurveTo(cx-wid*0.3,base-hgt,cx+wid*0.05,base-hgt*0.92);
+    ctx.quadraticCurveTo(cx-wid*0.15,base-hgt*0.4,cx-wid*0.3,base);
+    ctx.closePath();ctx.fill();
+    // crest foam
+    ctx.strokeStyle=p.foam;ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(cx-wid*0.45,base-hgt*0.95);
+    ctx.quadraticCurveTo(cx-wid*0.05,base-hgt*1.12,cx+wid*0.14,base-hgt*0.88);
+    ctx.stroke();
+    // takeoff zone indicator
+    if(w.x<=0.46&&w.x>=0.30){
+      ctx.strokeStyle='rgba(255,201,77,'+(0.5+0.4*Math.sin(H.time*8))+')';
+      ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(W*0.38,base-hgt*0.3,26+4*Math.sin(H.time*8),0,7);ctx.stroke();
+      ctx.fillStyle='#ffc94d';ctx.font='800 16px Archivo, sans-serif';ctx.textAlign='center';
+      ctx.fillText('TAKE OFF!',W*0.38,base-hgt*0.3-40);
+    }
+  }
+  // sitting surfer
+  const sy=horizon+(Hh-horizon)*0.55+Math.sin(H.time*1.6)*4;
+  drawSurfer(W*0.38,sy,0,1,false);
+}
+
+function drawRide(W,Hh,p){
+  const r=H.ride;
+  const horizon=Hh*0.2;
+  // sky strip
+  const g0=ctx.createLinearGradient(0,0,0,horizon);
+  g0.addColorStop(0,p.skyT);g0.addColorStop(1,p.skyB);
+  ctx.fillStyle=g0;ctx.fillRect(0,0,W,horizon);
+  ctx.fillStyle=p.sun;ctx.globalAlpha=.85;
+  ctx.beginPath();ctx.arc(W*0.82,horizon*0.55,horizon*0.3,0,7);ctx.fill();ctx.globalAlpha=1;
+  // wave face
+  const g=ctx.createLinearGradient(0,horizon,0,Hh);
+  g.addColorStop(0,p.sea);g.addColorStop(0.65,p.seaD);g.addColorStop(1,p.seaD);
+  ctx.fillStyle=g;
+  const lipY=x=>horizon+Hh*0.1+Math.sin(x*0.008+H.time*3)*6 + (x/W)*Hh*0.28;
+  ctx.beginPath();ctx.moveTo(0,Hh);ctx.lineTo(0,lipY(0));
+  for(let x=0;x<=W;x+=24)ctx.lineTo(x,lipY(x));
+  ctx.lineTo(W,Hh);ctx.closePath();ctx.fill();
+  // face highlight sweep
+  ctx.fillStyle='rgba(255,255,255,0.07)';
+  ctx.beginPath();ctx.moveTo(0,lipY(0));
+  for(let x=0;x<=W;x+=24)ctx.lineTo(x,lipY(x)+34);
+  for(let x=W;x>=0;x-=24)ctx.lineTo(x,lipY(x)+120);
+  ctx.closePath();ctx.fill();
+  // lip foam
+  ctx.strokeStyle=p.foam;ctx.lineWidth=10;ctx.lineCap='round';
+  ctx.beginPath();
+  for(let x=-10;x<=W+10;x+=22){
+    const y=lipY(x)+Math.sin(x*0.09+H.time*10)*3;
+    x<0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // whitewater on the left (broken part)
+  ctx.fillStyle='rgba(240,250,252,0.75)';
+  for(let i=0;i<14;i++){
+    const bx=(i*47+H.time*60)%(W*0.3);
+    const by=lipY(bx)+10+((i*83)%90);
+    ctx.beginPath();ctx.arc(W*0.02+bx*0.8,by,7+(i%4)*3,0,7);ctx.fill();
+  }
+  // speed streaks
+  ctx.strokeStyle='rgba(255,255,255,0.16)';ctx.lineWidth=2;
+  const streak=(H.time*(80+r.speed*3))%W;
+  for(let i=0;i<7;i++){
+    const sx=(W-((streak+i*W/7)%W));
+    const sy=lipY(sx)+40+((i*67)%(Hh*0.5));
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-26-r.speed*0.3,sy+7);ctx.stroke();
+  }
+  // surfer
+  const yp=yPos(r);
+  let sx=W*0.4, sy=Hh*(0.3+yp*0.42);
+  let rot=Math.cos(r.t*2.3+r.yPhase)*0.35;
+  if(r.anim){
+    const a=r.anim,k=a.t/a.dur;
+    if(a.type==='air'){sy-=Math.sin(k*Math.PI)*Hh*0.16;rot=k*Math.PI*2;}
+    else if(a.type==='snap'){rot+= Math.sin(k*Math.PI)*1.4;}
+    else if(a.type==='cut'){rot-= Math.sin(k*Math.PI)*1.1;}
+  }
+  // tube overlay behind surfer first? draw curl after surfer for depth
+  drawSurfer(sx,sy,rot,1.15,true);
+  if(r.inTube){
+    ctx.save();
+    ctx.strokeStyle='rgba(6,30,44,0.55)';
+    ctx.lineWidth=Hh*0.16;
+    ctx.beginPath();
+    ctx.arc(sx+W*0.09,sy,Hh*0.24,Math.PI*0.75,Math.PI*1.9);
+    ctx.stroke();
+    ctx.strokeStyle='rgba(236,247,252,0.85)';
+    ctx.lineWidth=8;
+    ctx.beginPath();ctx.arc(sx+W*0.09,sy,Hh*0.24+Hh*0.08,Math.PI*0.8,Math.PI*1.85);ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='#39c6d6';ctx.font='800 15px Archivo, sans-serif';ctx.textAlign='center';
+    ctx.fillText('IN THE TUBE',sx,sy-Hh*0.2);
+  }else{
+    const win=r.barrelWins.find(w=>r.t>=w.s&&r.t<=w.e);
+    if(win){
+      ctx.fillStyle='rgba(57,198,214,'+(0.6+0.4*Math.sin(H.time*9))+')';
+      ctx.font='800 15px Archivo, sans-serif';ctx.textAlign='center';
+      ctx.fillText('HOLD TUBE!',sx,Hh*0.26);
+    }
+  }
+  // wave time bar
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.fillRect(W*0.3,Hh-12,W*0.4,5);
+  ctx.fillStyle=p.foam;
+  ctx.fillRect(W*0.3,Hh-12,W*0.4*(1-r.t/r.dur),5);
+}
+
+function drawSurfer(x,y,rot,scale,riding){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(scale,scale);
+  // board
+  ctx.fillStyle='#f2e8d5';
+  ctx.beginPath();ctx.ellipse(0,12,26,5.5,riding?-0.18:0,0,7);ctx.fill();
+  ctx.strokeStyle='#c9b891';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-20,12);ctx.lineTo(20,12);ctx.stroke();
+  // legs
+  ctx.strokeStyle='#12283a';ctx.lineWidth=4.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-6,10);ctx.lineTo(-4,-2);ctx.moveTo(8,10);ctx.lineTo(5,-2);ctx.stroke();
+  // torso (jersey)
+  ctx.strokeStyle='#ff5a3c';ctx.lineWidth=6;
+  ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(riding?-4:0,-16);ctx.stroke();
+  // arms
+  ctx.strokeStyle='#12283a';ctx.lineWidth=3.5;
+  ctx.beginPath();ctx.moveTo(-2,-12);ctx.lineTo(-14,-6);ctx.moveTo(-2,-12);ctx.lineTo(11,-16);ctx.stroke();
+  // head
+  ctx.fillStyle='#e8b98a';
+  ctx.beginPath();ctx.arc(riding?-5:0,-22,5.5,0,7);ctx.fill();
+  ctx.restore();
+}
+
+/* ============================ confetti ============================ */
+let confRaf=0;
+function runConfetti(){
+  cancelAnimationFrame(confRaf);
+  const c=$('#confetti');const x=c.getContext('2d');
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  c.width=c.clientWidth*dpr;c.height=c.clientHeight*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+  if($('#chTitle').textContent==='Eliminated')return;
+  const W=c.clientWidth,Hh=c.clientHeight;
+  const cols=['#ffc94d','#ff5a3c','#39c6d6','#f2e8d5'];
+  const bits=Array.from({length:90},()=>({x:rnd(0,W),y:rnd(-Hh,0),v:rnd(60,160),w:rnd(4,8),r:rnd(0,7),vr:rnd(-3,3),c:pick(cols)}));
+  let last=performance.now(),T=0;
+  (function anim(now){
+    const dt=Math.min((now-last)/1000,0.05);last=now;T+=dt;
+    x.clearRect(0,0,W,Hh);
+    bits.forEach(b=>{b.y+=b.v*dt;b.r+=b.vr*dt;b.x+=Math.sin(b.y*0.02)*0.6;
+      if(b.y>Hh+10)b.y=-10;
+      x.save();x.translate(b.x,b.y);x.rotate(b.r);x.fillStyle=b.c;x.fillRect(-b.w/2,-b.w/2,b.w,b.w*0.6);x.restore();});
+    if(T<12&&$('#screen-champ').classList.contains('on'))confRaf=requestAnimationFrame(anim);
+    else x.clearRect(0,0,W,Hh);
+  })(last);
+}
+</script>
+</body>
+</html>
