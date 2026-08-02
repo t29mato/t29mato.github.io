@@ -133,6 +133,14 @@ aside{display:flex;flex-direction:column;gap:14px;min-width:0}
 #log p.good{border-color:var(--green)} #log p.bad{border-color:var(--red)}
 #log p.gold{border-color:var(--gold);color:var(--salt)}
 
+/* ── City art ─────────────────────────────────────── */
+.art{width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#1b1330;margin-bottom:14px;box-shadow:0 10px 26px #00000055;line-height:0}
+.art svg{display:block;width:100%;height:auto}
+.dest-thumb{border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-top:12px;line-height:0;position:relative;z-index:1}
+.dest-thumb svg{display:block;width:100%;height:auto}
+#musicBtn{min-width:104px}
+#musicBtn.off{color:var(--salt-dim);opacity:.75}
+
 /* ── Modal ────────────────────────────────────────── */
 #overlay{position:fixed;inset:0;background:#120c24cc;backdrop-filter:blur(3px);display:none;place-items:center;padding:18px;z-index:50}
 #overlay.show{display:grid}
@@ -187,6 +195,7 @@ footer{padding:10px 20px 16px;text-align:center;color:#7a6da8;font-size:.75rem}
   <h1>ALTIPLANO EXPRESS<small>A Bolivian rail fortune game · learn as you ride</small></h1>
   <div class="hdr-right">
     <span class="year-chip">Year <b id="yearNow">1</b> / <span id="yearMax">12</span></span>
+    <button class="btn ghost" id="musicBtn" style="padding:7px 14px;font-size:.8rem">♪ Music on</button>
     <button class="btn ghost" id="newGameBtn" style="padding:7px 14px;font-size:.8rem">New game</button>
   </div>
 </header>
@@ -203,6 +212,7 @@ footer{padding:10px 20px 16px;text-align:center;color:#7a6da8;font-size:.75rem}
       <div class="dest-city" id="destName">—</div>
       <div class="dest-tag" id="destTag"></div>
       <div class="dest-bonus">First arrival: <span id="destBonus">Bs 0</span></div>
+      <div class="dest-thumb" id="destThumb"></div>
     </div>
 
     <div class="card">
@@ -327,6 +337,311 @@ const TIO_LINES = [
 const WIPHALA_COLORS=["#e8443f","#f08a24","#f5d31c","#f6efe2","#5aa84e","#3b6fd1","#8a5cd6"];
 const CPU_NAMES=["Illimani","Tunupa","Kantuta","Sajama"];
 const P_COLORS=["#e8447a","#f5b31c","#37b3a4","#7bc86c"];
+
+/* ═══════════ CITY SCENES (original vector art) ═══════════ */
+const band=(y,h,c)=>`<rect x="0" y="${y}" width="400" height="${h}" fill="${c}"/>`;
+const dot=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+const poly=(p,c,o="")=>`<polygon points="${p}" fill="${c}" ${o}/>`;
+const rct=(x,y,w,h,c,r=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${c}"/>`;
+const clouds=(list)=>list.map(([x,y,s])=>`<g opacity=".85"><ellipse cx="${x}" cy="${y}" rx="${22*s}" ry="${9*s}" fill="#f6efe2"/><ellipse cx="${x-12*s}" cy="${y+3*s}" rx="${14*s}" ry="${7*s}" fill="#f6efe2"/><ellipse cx="${x+14*s}" cy="${y+3*s}" rx="${16*s}" ry="${7*s}" fill="#f6efe2"/></g>`).join("");
+const palm=(x,y,s,c="#2e7d5b")=>`<g transform="translate(${x},${y}) scale(${s})"><path d="M0,0 C-3,-20 2,-38 0,-52" stroke="#7a5230" stroke-width="6" fill="none"/><g fill="${c}"><path d="M0,-52 C-22,-58 -36,-48 -42,-38 C-28,-46 -12,-48 0,-46Z"/><path d="M0,-52 C22,-58 36,-48 42,-38 C28,-46 12,-48 0,-46Z"/><path d="M0,-52 C-14,-70 -4,-80 6,-84 C0,-72 -2,-62 0,-52Z"/><path d="M0,-52 C16,-68 30,-66 38,-60 C24,-62 10,-58 0,-50Z"/><path d="M0,-52 C-16,-66 -30,-64 -38,-58 C-24,-60 -10,-56 0,-50Z"/></g></g>`;
+const cow=(x,y,s,c="#f6efe2")=>`<g transform="translate(${x},${y}) scale(${s})"><ellipse cx="0" cy="0" rx="17" ry="10" fill="${c}"/><rect x="-13" y="8" width="4" height="11" fill="${c}"/><rect x="-3" y="8" width="4" height="11" fill="${c}"/><rect x="8" y="8" width="4" height="11" fill="${c}"/><circle cx="18" cy="-7" r="7" fill="${c}"/><path d="M13,-13 L10,-19 M23,-13 L26,-19" stroke="${c}" stroke-width="3"/><ellipse cx="-4" cy="-2" rx="7" ry="5" fill="#8e5a3c" opacity=".7"/></g>`;
+
+const SCENES={
+ lapaz:()=>band(0,132,"#3b2a6b")+dot(336,42,22,"#f5b31c")
+  +poly("0,134 58,50 96,94 138,36 206,134","#5a4a94")+poly("116,60 138,36 160,60 149,58 138,48 127,58","#f6efe2")
+  +poly("40,72 58,50 76,72 66,70 58,62 50,70","#f6efe2")
+  +poly("200,134 262,68 318,108 400,56 400,134","#4a3b7d")
+  +band(126,84,"#2b2050")
+  +(()=>{let s="";for(let i=0;i<78;i++){const x=(i*47)%392,y=112+((i*61)%84),w=11+((i*7)%9),h=9+((i*11)%9);s+=rct(x,y,w,h,i%4?"#b8613f":"#8e4a31")+rct(x+2,y+2,3,3,"#f5d38a");}return s;})()
+  +`<path d="M0,86 C120,116 250,58 400,88" stroke="#cfc4b0" stroke-width="2" fill="none"/>`
+  +`<g><path d="M118,101 v9" stroke="#cfc4b0" stroke-width="2"/>${rct(110,110,17,13,"#e8447a",3)}${rct(113,113,11,5,"#241a3f",1)}</g>`
+  +`<g><path d="M296,80 v9" stroke="#cfc4b0" stroke-width="2"/>${rct(288,89,17,13,"#f5b31c",3)}${rct(291,92,11,5,"#241a3f",1)}</g>`,
+
+ elalto:()=>band(0,124,"#6aa6e0")+dot(52,40,18,"#f5b31c")+clouds([[300,38,1],[150,26,.7]])
+  +poly("0,126 70,86 150,120 240,80 330,116 400,92 400,126","#8f8bbf")+band(122,88,"#8a7a5e")+band(150,60,"#7a6a52")
+  +rct(112,42,176,132,"#e8447a")+rct(112,42,176,16,"#f5b31c")+rct(112,58,176,8,"#37b3a4")
+  +rct(126,72,148,52,"#241a3f",4)
+  +(()=>{let s="";for(let i=0;i<6;i++)for(let j=0;j<2;j++)s+=rct(132+i*24,78+j*24,18,18,i%2?"#37b3a4":"#5b8fe8",2);return s;})()
+  +poly("112,42 200,16 288,42","#8a5cd6")+rct(180,20,40,24,"#f5b31c",3)
+  +(()=>{let s="";for(let i=0;i<7;i++)s+=poly(`${118+i*24},134 ${130+i*24},126 ${142+i*24},134`,"#f5b31c");return s;})()
+  +rct(112,140,176,34,"#8a5cd6")+rct(126,146,148,22,"#f6efe2",3)
+  +`<g>${rct(300,132,74,34,"#f6efe2",6)}${rct(306,138,20,14,"#5b8fe8",2)}${rct(332,138,20,14,"#5b8fe8",2)}${dot(316,168,7,"#241a3f")}${dot(360,168,7,"#241a3f")}</g>`,
+
+ copacabana:()=>band(0,112,"#8fd0ea")+dot(322,40,21,"#f5b31c")+clouds([[110,34,.8],[250,24,.6]])
+  +poly("0,114 46,74 96,114","#5a6f8f")+poly("240,114 300,66 372,114","#4a5f80")+poly("288,80 300,66 314,82 300,76","#f6efe2")
+  +band(110,100,"#2f9fb8")+band(140,70,"#2589a3")
+  +`<g stroke="#7fd8e8" stroke-width="2" fill="none" opacity=".7"><path d="M20,150 h44"/><path d="M300,164 h50"/><path d="M120,178 h60"/><path d="M240,190 h44"/></g>`
+  +`<g>${rct(24,72,86,42,"#f6efe2")}${rct(52,42,30,32,"#f6efe2")}<path d="M52,42 a15,17 0 0,1 30,0" fill="#f6efe2"/>${rct(64,32,4,12,"#f5b31c")}${rct(36,86,14,20,"#5b8fe8",6)}${rct(84,86,14,20,"#5b8fe8",6)}${rct(60,88,16,26,"#8e5a3c",7)}</g>`
+  +`<g><path d="M132,168 C144,146 236,146 250,168 C232,180 150,180 132,168Z" fill="#d9a441"/><path d="M132,168 C122,158 124,146 136,142 C136,152 136,160 141,166Z" fill="#c08c30"/><path d="M250,168 C260,158 258,146 246,142 C246,152 246,160 241,166Z" fill="#c08c30"/>${rct(184,132,4,26,"#8e5a3c")}<path d="M188,132 L214,142 L188,152Z" fill="#e8447a"/>${dot(168,160,4,"#37b3a4")}${dot(206,160,4,"#f5b31c")}</g>`,
+
+ oruro:()=>band(0,210,"#2b1f52")
+  +(()=>{let s="";const c=["#e8447a","#f5b31c","#37b3a4","#7bc86c","#8a5cd6"];for(let i=0;i<34;i++)s+=rct((i*53)%396,(i*37)%200,5,9,c[i%5],1);return s;})()
+  +`<g stroke-width="4" fill="none" opacity=".8"><path d="M0,14 C60,44 120,-6 180,24" stroke="#e8447a"/><path d="M220,18 C280,48 340,-2 400,28" stroke="#37b3a4"/></g>`
+  +`<g transform="translate(200,116)">
+     <path d="M-46,-52 C-84,-70 -96,-40 -72,-24 C-78,-44 -62,-52 -44,-42Z" fill="#f5b31c"/>
+     <path d="M46,-52 C84,-70 96,-40 72,-24 C78,-44 62,-52 44,-42Z" fill="#f5b31c"/>
+     <path d="M0,-72 C48,-72 68,-34 64,10 C60,54 32,80 0,80 C-32,80 -60,54 -64,10 C-68,-34 -48,-72 0,-72Z" fill="#e05252"/>
+     <path d="M0,-72 C40,-72 60,-40 60,-14 L-60,-14 C-60,-40 -40,-72 0,-72Z" fill="#c73f3f"/>
+     <ellipse cx="-27" cy="-8" rx="19" ry="17" fill="#f6efe2"/><ellipse cx="27" cy="-8" rx="19" ry="17" fill="#f6efe2"/>
+     <circle cx="-27" cy="-6" r="8" fill="#241a3f"/><circle cx="27" cy="-6" r="8" fill="#241a3f"/>
+     <path d="M-46,-24 C-38,-34 -18,-34 -10,-26 M46,-24 C38,-34 18,-34 10,-26" stroke="#f5b31c" stroke-width="5" fill="none"/>
+     <path d="M-34,26 C-14,42 14,42 34,26 C24,52 -24,52 -34,26Z" fill="#f6efe2"/>
+     <path d="M-24,30 L-18,42 M-8,33 L-4,46 M8,33 L4,46 M24,30 L18,42" stroke="#e05252" stroke-width="3"/>
+     <circle cx="-64" cy="16" r="9" fill="#37b3a4"/><circle cx="64" cy="16" r="9" fill="#37b3a4"/>
+     <path d="M-14,-44 C-6,-56 6,-56 14,-44" stroke="#f5b31c" stroke-width="4" fill="none"/>
+   </g>`,
+
+ cochabamba:()=>band(0,120,"#8fc4e8")+dot(60,36,17,"#f5b31c")+clouds([[290,32,.9]])
+  +poly("0,124 90,58 190,124","#6f9e63")+poly("150,124 260,74 400,124","#5d8a54")+band(120,90,"#7fae6a")
+  +`<g transform="translate(90,56) scale(1.5)">${rct(-9,14,18,22,"#cfc4b0")}${rct(-6,-16,12,32,"#f6efe2")}${rct(-25,-9,50,7,"#f6efe2")}${dot(0,-23,7,"#f6efe2")}</g>`
+  +(()=>{let s="";const c=["#e8447a","#f5b31c","#37b3a4","#8a5cd6","#7bc86c"];for(let i=0;i<6;i++){const x=18+i*64;s+=poly(`${x},152 ${x+56},152 ${x+46},134 ${x+10},134`,c[i%5])+rct(x+4,152,48,34,"#8e5a3c");for(let j=0;j<3;j++)s+=dot(x+14+j*14,162,5,["#e05252","#f5b31c","#7bc86c"][j]);}return s;})()
+  +band(190,20,"#5d8a54"),
+
+ santacruz:()=>band(0,126,"#79c0e8")+dot(330,36,20,"#f5b31c")+clouds([[110,30,.9],[240,20,.6]])
+  +rct(30,58,34,70,"#4a5f80")+rct(72,40,28,88,"#5a6f8f")+rct(108,72,24,56,"#4a5f80")
+  +(()=>{let s="";for(let i=0;i<4;i++)for(let j=0;j<5;j++)s+=rct(36+i*7,64+j*12,4,7,"#f5d38a");for(let i=0;i<3;i++)for(let j=0;j<6;j++)s+=rct(78+i*8,46+j*13,5,8,"#f5d38a");return s;})()
+  +band(124,86,"#8fb84f")
+  +`<g>${rct(268,64,54,64,"#cfc4b0",4)}<path d="M268,64 a27,16 0 0,1 54,0" fill="#b8ac97"/>${rct(276,96,38,8,"#8e8272")}</g>`
+  +(()=>{let s="";for(let i=0;i<7;i++)s+=`<path d="M${-20+i*66},210 C${20+i*66},178 ${40+i*66},166 ${90+i*66},156" stroke="#6f9e40" stroke-width="7" fill="none"/>`;return s;})()
+  +palm(166,150,1.05)+palm(212,158,.8)+palm(370,146,1.15),
+
+ psuarez:()=>band(0,116,"#f0a05a")+band(0,52,"#e8834a")+dot(300,96,26,"#f5d38a")
+  +poly("0,118 54,66 108,96 150,74 200,118","#7a3b3f")+poly("60,84 78,66 96,84","#a04a44")
+  +`<g stroke="#5a2b2f" stroke-width="2" opacity=".6"><path d="M20,104 h70 M36,92 h56 M54,80 h32"/></g>`
+  +band(114,96,"#c9713f")+band(148,62,"#a85a35")
+  +`<g stroke="#f5d38a" stroke-width="2" opacity=".55"><path d="M240,132 h90 M180,150 h70 M280,168 h80"/></g>`
+  +`<g><path d="M60,206 C60,180 52,164 56,146 M76,206 C76,182 84,166 80,148 M92,206 C92,184 100,170 98,152" stroke="#4a6b3a" stroke-width="4" fill="none"/></g>`
+  +`<g transform="translate(268,132)"><path d="M0,0 C22,-6 40,4 44,20 C40,36 18,42 0,34 C-12,26 -12,8 0,0Z" fill="#f6efe2"/><path d="M-4,4 C-22,-4 -30,-22 -26,-38" stroke="#241a3f" stroke-width="7" fill="none"/><path d="M-2,-2 C-14,-8 -20,-18 -19,-26" stroke="#e05252" stroke-width="7" fill="none"/><circle cx="-27" cy="-40" r="6" fill="#241a3f"/><path d="M-31,-42 L-46,-38" stroke="#241a3f" stroke-width="4"/><path d="M14,36 v22 M32,34 v22" stroke="#241a3f" stroke-width="3"/></g>`,
+
+ sucre:()=>band(0,132,"#79aee8")+clouds([[70,34,.9],[300,26,.7]])
+  +`<g>${rct(200,44,44,92,"#f6efe2")}${poly("196,44 222,20 248,44","#b8513f")}${rct(214,54,16,22,"#241a3f",8)}${dot(222,88,7,"#f5b31c")}</g>`
+  +(()=>{let s="";const xs=[10,74,128,258,318];const ws=[62,52,66,58,74];for(let i=0;i<xs.length;i++){s+=rct(xs[i],80,ws[i],56,"#f6efe2")+poly(`${xs[i]-4},80 ${xs[i]+ws[i]+4},80 ${xs[i]+ws[i]-2},68 ${xs[i]+2},68`,"#b8513f");for(let j=0;j<Math.floor(ws[i]/22);j++)s+=rct(xs[i]+10+j*22,94,12,20,"#5b8fe8",6);}return s;})()
+  +band(134,76,"#c9a877")+band(160,50,"#b8946a")
+  +(()=>{let s="";for(let i=0;i<6;i++){const x=30+i*62,y=150+(i%2)*22;s+=`<g opacity=".5" fill="#8e6f4a"><ellipse cx="${x}" cy="${y}" rx="11" ry="8"/><ellipse cx="${x-6}" cy="${y-8}" rx="4" ry="4"/><ellipse cx="${x+2}" cy="${y-10}" rx="4" ry="4"/><ellipse cx="${x+9}" cy="${y-7}" rx="4" ry="4"/></g>`;}return s;})()
+  +`<g transform="translate(340,176)" fill="#6b533a" opacity=".8"><path d="M-38,0 C-30,-16 -12,-22 0,-20 C10,-18 16,-10 26,-12 C34,-14 38,-20 40,-24 L44,-20 C40,-8 28,-2 16,-4 C6,-6 0,-12 -10,-12 C-20,-12 -28,-6 -32,2Z"/></g>`,
+
+ potosi:()=>band(0,210,"#3f2f6b")+dot(342,36,16,"#f6efe2")
+  +(()=>{let s="";for(let i=0;i<24;i++)s+=dot((i*79)%392,(i*43)%70,1.4,"#f6efe2");return s;})()
+  +poly("48,178 200,26 352,178","#9c5a48")+poly("140,90 200,26 260,90","#b86b54")
+  +`<g stroke="#7a4436" stroke-width="2.5" opacity=".8" fill="none"><path d="M96,148 C140,138 240,138 300,150"/><path d="M120,124 C160,116 236,116 278,126"/><path d="M148,102 C176,96 224,96 250,104"/></g>`
+  +`<g><path d="M186,178 a14,18 0 0,1 28,0 Z" fill="#241a3f"/><path d="M192,178 a8,11 0 0,1 16,0 Z" fill="#f5b31c" opacity=".55"/></g>`
+  +`<g transform="translate(200,166)"><path d="M-7,10 a7,9 0 0,1 14,0Z" fill="#e05252"/><circle cx="0" cy="0" r="7" fill="#e05252"/><path d="M-6,-6 L-11,-14 M6,-6 L11,-14" stroke="#f5b31c" stroke-width="3"/><circle cx="-2.5" cy="-1" r="1.4" fill="#241a3f"/><circle cx="2.5" cy="-1" r="1.4" fill="#241a3f"/></g>`
+  +band(176,34,"#2b2050")
+  +(()=>{let s="";for(let i=0;i<9;i++){const x=6+i*45;s+=rct(x,180,34,26,"#f6efe2")+poly(`${x-3},180 ${x+37},180 ${x+34},170 ${x},170`,"#b8513f")+rct(x+12,188,10,14,"#5b8fe8",5);}return s;})()
+  +`<g transform="translate(330,186)">${rct(-26,0,52,10,"#cfc4b0",2)}${rct(-20,-9,40,9,"#e8e0cf",2)}${rct(-13,-18,26,9,"#f6efe2",2)}</g>`,
+
+ uyuni:()=>band(0,96,"#4f8fd8")+band(0,40,"#3f74c0")+clouds([[80,34,1.1],[250,26,.9],[350,44,.7]])
+  +dot(316,30,15,"#f5b31c")
+  +band(94,116,"#f6efe2")
+  +`<g opacity=".45">${clouds([[80,120,1.1],[250,128,.9]])}</g>`
+  +`<g stroke="#d8d0bd" stroke-width="1.6" fill="none" opacity=".9">${(()=>{let s="";for(let r=0;r<5;r++){const y=112+r*20;for(let i=0;i<7;i++){const x=(r%2?-24:0)+i*60;s+=`<path d="M${x},${y} l30,-9 l30,9 l-30,9 Z"/>`;}}return s;})()}</g>`
+  +`<g>${poly("40,120 56,96 72,120","#ffffff")}${poly("74,124 88,102 102,124","#f0ead9")}</g>`
+  +`<g transform="translate(300,120)"><path d="M0,0 h72 v-30 h-14 v-12 h-40 v12 h-18 Z" fill="#8e5a3c"/><rect x="6" y="-26" width="14" height="12" fill="#f5b31c" opacity=".7"/><circle cx="16" cy="6" r="8" fill="#5a3a26"/><circle cx="52" cy="6" r="8" fill="#5a3a26"/><path d="M-6,14 h88" stroke="#b8ac97" stroke-width="3"/></g>`
+  +`<g transform="translate(168,152)"><rect x="-3" y="-22" width="6" height="22" fill="#e8447a"/><circle cx="0" cy="-28" r="6" fill="#241a3f"/><path d="M-3,0 l-6,16 M3,0 l6,16" stroke="#241a3f" stroke-width="4"/><path d="M-3,-18 l-13,8 M3,-18 l13,-6" stroke="#e8447a" stroke-width="4"/></g>`,
+
+ tarija:()=>band(0,110,"#f2d08a")+band(0,46,"#eebf6a")+dot(70,40,20,"#f5b31c")
+  +poly("0,112 90,62 180,112","#c9a24a")+poly("140,112 250,70 400,112","#b8913c")+band(108,102,"#9fae55")
+  +(()=>{let s="";for(let i=0;i<6;i++){const y=124+i*15;s+=`<path d="M${-10-i*8},${y+22} C120,${y} 280,${y} ${410+i*8},${y+22}" stroke="#4f7a3a" stroke-width="5" fill="none"/>`;for(let j=0;j<9;j++)s+=dot(20+j*44+(i%2)*20,y+16-i*1.2,5,"#6f9e40");}return s;})()
+  +`<g transform="translate(310,150)"><g fill="#7a4a9c">${[[0,0],[14,0],[7,11],[-7,11],[21,11],[0,22],[14,22],[7,33]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="8"/>`).join("")}</g><path d="M7,-10 C-10,-22 -26,-16 -30,-4 C-16,-10 -2,-8 7,-2Z" fill="#4f7a3a"/><path d="M7,-8 v10" stroke="#4f7a3a" stroke-width="3"/></g>`
+  +`<g transform="translate(66,132)"><path d="M-9,60 v-38 c0,-10 3,-12 3,-20 v-8 h12 v8 c0,8 3,10 3,20 v38 Z" fill="#3f6b3a"/><rect x="-9" y="30" width="18" height="16" fill="#f6efe2"/><rect x="-3" y="-70" width="6" height="4" fill="#8e5a3c"/></g>`,
+
+ villazon:()=>band(0,124,"#8fc4e8")+clouds([[100,30,.8],[300,38,.9]])+poly("0,126 80,92 170,126","#a89a86")+poly("230,126 320,86 400,126","#9c8e7a")
+  +band(122,88,"#c2b49a")
+  +`<g>${rct(96,54,18,110,"#cfc4b0")}${rct(286,54,18,110,"#cfc4b0")}${rct(88,38,224,20,"#e8e0cf")}<text x="200" y="53" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="800" font-size="12" fill="#241a3f" letter-spacing="2">FRONTERA</text></g>`
+  +`<g>${rct(122,64,44,30,"#e05252")}${rct(122,74,44,10,"#f5b31c")}${rct(122,84,44,10,"#7bc86c")}<path d="M122,64 v40" stroke="#8e8272" stroke-width="3"/></g>`
+  +`<g>${rct(236,64,44,30,"#7fc4e8")}${rct(236,74,44,10,"#f6efe2")}${dot(258,79,4,"#f5b31c")}<path d="M236,64 v40" stroke="#8e8272" stroke-width="3"/></g>`
+  +`<g stroke="#8e8272" stroke-width="4" fill="none"><path d="M150,210 L188,128"/><path d="M256,210 L212,128"/></g>`
+  +(()=>{let s="";for(let i=0;i<9;i++){const t=i/8,y=132+t*76,w=16+t*40;s+=rct(200-w/2,y,w,5,"#8e5a3c");}return s;})()
+  +(()=>{let s="";const c=["#e8447a","#f5b31c","#37b3a4","#8a5cd6"];for(let i=0;i<4;i++){const x=24+i*22,y=168-i%2*8;s+=`<g transform="translate(${x},${y})"><ellipse cx="0" cy="0" rx="17" ry="13" fill="${c[i]}"/><path d="M-16,-4 h32 M-16,4 h32" stroke="#241a3f" stroke-width="2" opacity=".4"/></g>`;}return s;})()
+  +`<g transform="translate(340,158)"><ellipse cx="0" cy="6" rx="16" ry="12" fill="#e8447a"/><circle cx="0" cy="-12" r="8" fill="#8e5a3c"/><ellipse cx="0" cy="-20" rx="13" ry="4" fill="#241a3f"/><rect x="-6" y="-24" width="12" height="6" rx="2" fill="#241a3f"/></g>`,
+
+ trinidad:()=>band(0,116,"#a8d8f0")+clouds([[80,30,1.2],[240,24,.9],[350,44,.8]])+dot(56,42,16,"#f5b31c")
+  +band(114,96,"#8fbf62")+band(150,60,"#7cae52")
+  +`<g fill="none" stroke="#5b9fe0" stroke-width="7" opacity=".85"><path d="M-10,138 C80,130 150,146 240,136 C310,128 360,138 410,132"/><path d="M-10,182 C90,174 180,190 280,178 C340,170 380,178 410,174"/></g>`
+  +`<g stroke="#6f9e40" stroke-width="3" opacity=".6"><path d="M0,158 h400 M0,196 h400"/></g>`
+  +cow(120,158,1)+cow(230,148,.8)+cow(310,182,1.15,"#c9a074")
+  +`<g transform="translate(56,148)"><path d="M0,32 v-30" stroke="#7a5230" stroke-width="6"/><circle cx="0" cy="-8" r="17" fill="#3f7a44"/><circle cx="-14" cy="0" r="11" fill="#4f8f4a"/><circle cx="14" cy="-2" r="12" fill="#356b3c"/></g>`
+  +`<g transform="translate(196,120)"><ellipse cx="0" cy="0" rx="12" ry="7" fill="#f6efe2"/><path d="M8,-4 C14,-10 18,-14 22,-14" stroke="#f6efe2" stroke-width="4" fill="none"/><path d="M22,-14 l7,2" stroke="#f5b31c" stroke-width="3"/><path d="M-4,6 v9 M4,6 v9" stroke="#241a3f" stroke-width="2"/></g>`,
+
+ riberalta:()=>band(0,120,"#9ad4ea")+clouds([[300,28,.8]])+dot(340,44,15,"#f5b31c")
+  +(()=>{let s="";for(let i=0;i<10;i++)s+=dot((i*63)%410,96+((i*29)%22),24+((i*13)%16),i%2?"#2f6b3f":"#3f8046");return s;})()
+  +band(126,84,"#3f8046")
+  +`<g transform="translate(118,128)"><path d="M-9,44 v-44" stroke="#7a5230" stroke-width="16"/><path d="M-9,10 l-24,-14 M-9,-6 l26,-16" stroke="#7a5230" stroke-width="7"/><circle cx="-4" cy="-32" r="34" fill="#2f6b3f"/><circle cx="-40" cy="-16" r="22" fill="#3f8046"/><circle cx="30" cy="-18" r="24" fill="#256035"/><circle cx="-22" cy="-6" r="8" fill="#8e5a3c"/><circle cx="10" cy="-2" r="8" fill="#8e5a3c"/><circle cx="-46" cy="-2" r="7" fill="#8e5a3c"/></g>`
+  +band(158,52,"#4f8fd8")+`<g stroke="#7fb6e8" stroke-width="2" opacity=".8"><path d="M20,176 h60 M120,192 h70 M280,180 h80"/></g>`
+  +`<g transform="translate(300,178)"><path d="M-40,0 C-30,12 30,12 40,0 C20,6 -20,6 -40,0Z" fill="#8e5a3c"/><path d="M-14,0 v-16" stroke="#5a3a26" stroke-width="3"/><circle cx="-14" cy="-22" r="6" fill="#241a3f"/><path d="M-14,-16 l14,-8" stroke="#5a3a26" stroke-width="3"/></g>`
+  +`<g transform="translate(212,168)"><circle cx="0" cy="0" r="30" fill="#6b4a2f"/><path d="M0,-30 A30,30 0 0,1 0,30 Z" fill="#8e6440"/>${[[-8,-14],[6,-16],[-14,0],[2,2],[-6,16],[10,12]].map(([x,y])=>`<path d="M${x},${y} l9,4 l-3,10 l-9,-3Z" fill="#e8dcc4"/>`).join("")}</g>`,
+
+ cobija:()=>band(0,110,"#f2c48a")+band(0,44,"#eeae6a")+dot(300,54,22,"#f5b31c")
+  +(()=>{let s="";for(let i=0;i<9;i++)s+=dot((i*57)%400,104+((i*31)%18),22+((i*17)%14),i%2?"#2f6b3f":"#3f8046");return s;})()
+  +`<path d="M0,208 C60,180 40,150 120,138 C200,126 220,150 320,132 C370,124 386,116 400,112 L400,210 Z" fill="#4f8fd8"/>`
+  +`<path d="M0,208 C60,182 40,154 120,142 C200,130 220,154 320,136 C370,128 386,120 400,116" stroke="#7fb6e8" stroke-width="3" fill="none" opacity=".8"/>`
+  +`<g><path d="M60,148 h230" stroke="#cfc4b0" stroke-width="7"/><path d="M60,148 v20 M290,148 v20" stroke="#b8ac97" stroke-width="6"/><g stroke="#e8e0cf" stroke-width="3" fill="none">${(()=>{let s="";for(let i=0;i<9;i++){const x=64+i*25;s+=`<path d="M${x},146 l12,-22 l13,22"/>`;}return s;})()}</g><path d="M64,124 h226" stroke="#cfc4b0" stroke-width="4"/></g>`
+  +`<g transform="translate(96,62)"><path d="M0,0 C14,-8 30,-6 40,4 C26,2 12,4 0,10Z" fill="#e05252"/><path d="M0,0 C-6,-14 2,-26 14,-30 C8,-18 6,-8 8,0Z" fill="#f5b31c"/><ellipse cx="4" cy="6" rx="12" ry="6" fill="#e05252"/><circle cx="16" cy="4" r="4" fill="#241a3f"/><path d="M20,4 l8,3 l-8,3Z" fill="#f5b31c"/></g>`
+  +`<g transform="translate(236,70)" opacity=".8"><path d="M0,0 C10,-6 22,-4 30,3 C19,2 8,3 0,7Z" fill="#37b3a4"/></g>`,
+};
+function cityArt(id,opts){
+  opts=opts||{};
+  const gen=SCENES[id];
+  const inner=gen?gen():band(0,210,"#3a2d66");
+  if(opts.bare) return `<svg viewBox="0 0 400 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration of ${CITIES[id].n}">${inner}</svg>`;
+  const stripe=["#e8447a","#f5b31c","#37b3a4","#8a5cd6","#7bc86c"];
+  const cap=`<rect x="0" y="210" width="400" height="36" fill="#1b1330"/>
+    ${stripe.map((c,i)=>`<rect x="${i*80}" y="210" width="80" height="4" fill="${c}"/>`).join("")}
+    <text x="16" y="236" font-family="Alfa Slab One,Georgia,serif" font-size="20" fill="#f5b31c">${CITIES[id].n}</text>
+    <text x="386" y="235" text-anchor="end" font-family="Archivo,sans-serif" font-size="9" font-weight="800" letter-spacing="3" fill="#cfc4b0">BOLIVIA</text>`;
+  return `<svg viewBox="0 0 400 246" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration of ${CITIES[id].n}">${inner}${cap}</svg>`;
+}
+
+/* ═══════════ SOUND: Andean-flavored engine ═══════════ */
+const Snd=(()=>{
+  let ctx=null,master,musicG,sfxG,dly,noiseBuf,on=true,running=false,step=0,nextT=0,loopTimer=null;
+  const BPM=100, STEP=(60/BPM)/4;
+  const CH=[
+    {b:110,n:[220,261.63,329.63]},{b:98,n:[196,246.94,293.66]},
+    {b:87.31,n:[174.61,220,261.63]},{b:98,n:[196,246.94,293.66]},
+    {b:110,n:[220,261.63,329.63]},{b:130.81,n:[261.63,329.63,392]},
+    {b:98,n:[196,246.94,293.66]},{b:110,n:[220,261.63,329.63]},
+  ];
+  const MEL=[
+    [[0,440,4],[4,523.25,4],[8,659.25,6],[14,587.33,2]],
+    [[0,523.25,4],[4,587.33,2],[6,523.25,2],[8,392,8]],
+    [[0,523.25,4],[4,440,4],[8,523.25,4],[12,587.33,4]],
+    [[0,659.25,6],[6,587.33,2],[8,523.25,8]],
+    [[0,659.25,2],[2,783.99,2],[4,659.25,4],[8,587.33,4],[12,523.25,4]],
+    [[0,587.33,4],[4,659.25,4],[8,783.99,8]],
+    [[0,440,4],[4,523.25,4],[8,392,6],[14,440,2]],
+    [[0,523.25,4],[4,440,4],[8,220,8]],
+  ];
+  const STRUM=[0,3,4,6,8,11,12,14], DRUM=[[0,1],[6,.55],[8,.9],[11,.4],[14,.6]];
+
+  function init(){
+    if(ctx) return;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    ctx=new AC();
+    master=ctx.createGain(); master.gain.value=0.85; master.connect(ctx.destination);
+    musicG=ctx.createGain(); musicG.gain.value=0; musicG.connect(master);
+    sfxG=ctx.createGain(); sfxG.gain.value=0.5; sfxG.connect(master);
+    dly=ctx.createDelay(1); dly.delayTime.value=0.30;
+    const fb=ctx.createGain(); fb.gain.value=0.30; dly.connect(fb); fb.connect(dly);
+    const dw=ctx.createGain(); dw.gain.value=0.34; dly.connect(dw); dw.connect(musicG);
+    noiseBuf=ctx.createBuffer(1,ctx.sampleRate*0.6,ctx.sampleRate);
+    const d=noiseBuf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  }
+  const noise=(t,dur,freq,q,vol,out)=>{
+    const s=ctx.createBufferSource(); s.buffer=noiseBuf;
+    const f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=freq; f.Q.value=q;
+    const g=ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(out||sfxG); s.start(t); s.stop(t+dur+0.02);
+  };
+  function flute(t,freq,dur,vol,out){
+    out=out||musicG;
+    const o=ctx.createOscillator(); o.type="sine"; o.frequency.setValueAtTime(freq,t);
+    const o2=ctx.createOscillator(); o2.type="triangle"; o2.frequency.setValueAtTime(freq*2,t);
+    const g=ctx.createGain(), g2=ctx.createGain(); g2.gain.value=0.11;
+    const lfo=ctx.createOscillator(); lfo.frequency.value=5.1;
+    const lg=ctx.createGain(); lg.gain.setValueAtTime(0,t); lg.gain.linearRampToValueAtTime(freq*0.009,t+dur*0.5);
+    lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+    o.connect(g); o2.connect(g2); g2.connect(g);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.055);
+    g.gain.setValueAtTime(vol,t+dur*0.62);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.08);
+    g.connect(out); if(out===musicG) g.connect(dly);
+    noise(t,0.09,freq*1.6,1.2,vol*0.5,out);
+    o.start(t); o2.start(t); lfo.start(t);
+    o.stop(t+dur+0.2); o2.stop(t+dur+0.2); lfo.stop(t+dur+0.2);
+  }
+  function pluck(t,freq,vol,out){
+    out=out||musicG;
+    const o=ctx.createOscillator(); o.type="triangle"; o.frequency.setValueAtTime(freq,t);
+    const o2=ctx.createOscillator(); o2.type="sawtooth"; o2.frequency.setValueAtTime(freq,t); o2.detune.value=9;
+    const f=ctx.createBiquadFilter(); f.type="lowpass";
+    f.frequency.setValueAtTime(4200,t); f.frequency.exponentialRampToValueAtTime(700,t+0.3);
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
+    o.connect(f); o2.connect(f); f.connect(g); g.connect(out);
+    o.start(t); o2.start(t); o.stop(t+0.5); o2.stop(t+0.5);
+  }
+  function bombo(t,vol){
+    const o=ctx.createOscillator(); o.type="sine";
+    o.frequency.setValueAtTime(155,t); o.frequency.exponentialRampToValueAtTime(46,t+0.13);
+    const g=ctx.createGain(); g.gain.setValueAtTime(vol*0.6,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.33);
+    o.connect(g); g.connect(musicG); o.start(t); o.stop(t+0.36);
+    noise(t,0.05,1800,0.8,vol*0.10,musicG);
+  }
+  function bass(t,freq,dur){
+    const o=ctx.createOscillator(); o.type="triangle"; o.frequency.setValueAtTime(freq,t);
+    const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(0.16,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(musicG); o.start(t); o.stop(t+dur+0.05);
+  }
+  function schedule(){
+    if(!ctx) return;
+    while(nextT < ctx.currentTime+0.15){
+      const bar=Math.floor(step/16)%8, s=step%16, ch=CH[bar];
+      if(s===0||s===8) bass(nextT,ch.b/2,0.6);
+      if(s===12) bass(nextT,ch.b*0.75,0.3);
+      const dr=DRUM.find(d=>d[0]===s); if(dr) bombo(nextT,dr[1]);
+      if(STRUM.indexOf(s)>=0){
+        const k=STRUM.indexOf(s);
+        pluck(nextT,ch.n[k%3],0.075);
+        pluck(nextT+0.012,ch.n[(k+1)%3]*2,0.05);
+      }
+      MEL[bar].forEach(m=>{ if(m[0]===s) flute(nextT,m[1],m[2]*STEP*0.92,0.15); });
+      nextT+=STEP; step++;
+    }
+  }
+  function start(){
+    init(); if(!ctx) return;
+    ctx.resume();
+    if(!running){ running=true; step=0; nextT=ctx.currentTime+0.1; loopTimer=setInterval(schedule,25); }
+    musicG.gain.cancelScheduledValues(ctx.currentTime);
+    musicG.gain.setTargetAtTime(on?0.42:0,ctx.currentTime,0.8);
+  }
+  function toggle(){
+    on=!on; init();
+    if(ctx) musicG.gain.setTargetAtTime(on?0.42:0,ctx.currentTime,0.25);
+    return on;
+  }
+  const T=()=>ctx?ctx.currentTime:0;
+  return {
+    start, toggle, isOn:()=>on, ready:()=>!!ctx,
+    tick(){ if(!ctx)return; noise(T(),0.035,2400,3,0.28); },
+    step(){ if(!ctx)return; pluck(T(),660,0.10,sfxG); },
+    coin(){ if(!ctx)return; const t=T(); flute(t,880,0.11,0.16,sfxG); flute(t+0.09,1174.66,0.2,0.16,sfxG); },
+    hit(){ if(!ctx)return; const t=T(); noise(t,0.35,180,0.7,0.5); flute(t,196,0.22,0.14,sfxG); flute(t+0.12,164.81,0.3,0.13,sfxG); },
+    buy(){ if(!ctx)return; const t=T(); [523.25,659.25,880].forEach((f,i)=>pluck(t+i*0.05,f,0.14,sfxG)); },
+    right(){ if(!ctx)return; const t=T(); [523.25,659.25,783.99,1046.5].forEach((f,i)=>flute(t+i*0.08,f,0.22,0.14,sfxG)); },
+    wrong(){ if(!ctx)return; const t=T();
+      const o=ctx.createOscillator(); o.type="square"; o.frequency.setValueAtTime(196,t);
+      o.frequency.exponentialRampToValueAtTime(92,t+0.34);
+      const g=ctx.createGain(); g.gain.setValueAtTime(0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.36);
+      o.connect(g); g.connect(sfxG); o.start(t); o.stop(t+0.4); },
+    tio(){ if(!ctx)return; const t=T();
+      [58,87,116].forEach(f=>{ const o=ctx.createOscillator(); o.type="sawtooth"; o.frequency.setValueAtTime(f,t);
+        o.frequency.linearRampToValueAtTime(f*0.86,t+0.9);
+        const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.07,t+0.12);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+1.0);
+        const f2=ctx.createBiquadFilter(); f2.type="lowpass"; f2.frequency.value=420;
+        o.connect(f2); f2.connect(g); g.connect(sfxG); o.start(t); o.stop(t+1.1); });
+      noise(t,0.8,300,0.6,0.22); },
+    fanfare(){ if(!ctx)return; const t=T();
+      [[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.36]].forEach(([f,d])=>flute(t+d,f,0.42,0.19,sfxG));
+      bombo(t,0.9); bombo(t+0.36,0.9); },
+    win(){ if(!ctx)return; const t=T();
+      [[440,0],[523.25,.14],[659.25,.28],[880,.42],[783.99,.62],[880,.76]].forEach(([f,d])=>flute(t+d,f,0.5,0.2,sfxG));
+      [0,.14,.28,.42,.62,.76].forEach(d=>bombo(t+d,0.8)); },
+  };
+})();
+document.getElementById("musicBtn").onclick=e=>{
+  const state=Snd.toggle();
+  e.currentTarget.textContent=state?"♪ Music on":"♪ Music off";
+  e.currentTarget.classList.toggle("off",!state);
+};
 
 /* ═══════════ GRAPH BUILD ═══════════ */
 const nodes={}, adj={};
@@ -494,6 +809,7 @@ function setDestCard(){
   document.getElementById("destName").textContent=c.n.toUpperCase();
   document.getElementById("destTag").textContent=c.tag;
   document.getElementById("destBonus").textContent=fmt(destBonus());
+  document.getElementById("destThumb").innerHTML=cityArt(dest,{bare:true});
 }
 const destBonus=()=>600+100*year;
 
@@ -531,6 +847,7 @@ async function startGame(cfg){
   drawBoard(); renderTokens(); markDest(); markOwned(); setDestCard(); refreshPlayers();
   log(`All aboard at <b>La Paz</b>! First destination: <b>${CITIES[dest].n}</b>.`,"gold");
   await modalOnce(`
+    <div class="art">${cityArt("lapaz")}</div>
     <div class="eyebrow">All aboard</div><h3>Departure: La Paz</h3>
     <p>Every traveler starts with <span class="money">${fmt(1000)}</span> at 3,600 m above the sea.
     Race to <b>${CITIES[dest].n}</b> — first arrival earns <span class="money">${fmt(destBonus())}</span>, then a new destination is drawn.</p>
@@ -569,6 +886,7 @@ async function playTurn(){
   if(tioIntroduced && tioHolder===turnIdx){
     const d=60+rnd(101);
     p.cash=Math.max(0,p.cash-d);
+    Snd.tio();
     log(`👹 ${TIO_LINES[rnd(TIO_LINES.length)]} <b>${p.name}</b> loses <span style="color:var(--red)">−${fmt(d)}</span>.`,"bad");
     refreshPlayers();
   }
@@ -590,7 +908,7 @@ async function playTurn(){
     else if(p.cpu){ opts.sort((a,b)=>bfsDist(a,dest)-bfsDist(b,dest)); next=opts[0]; }
     else next=await humanChoose(opts);
     p.prev=p.node; p.node=next;
-    renderTokens();
+    renderTokens(); Snd.step();
     await sleep(240);
   }
   await land(p);
@@ -600,7 +918,7 @@ function animateRoll(){
   return new Promise(res=>{
     dieBtn.classList.add("rolling");
     const faces="⚀⚁⚂⚃⚄⚅"; let t=0;
-    const iv=setInterval(()=>{ dieBtn.textContent=faces[rnd(6)]; if(++t>7){ clearInterval(iv); const r=1+rnd(6); dieBtn.textContent=faces[r-1]; dieBtn.classList.remove("rolling"); res(r);} },70);
+    const iv=setInterval(()=>{ dieBtn.textContent=faces[rnd(6)]; Snd.tick(); if(++t>7){ clearInterval(iv); const r=1+rnd(6); dieBtn.textContent=faces[r-1]; dieBtn.classList.remove("rolling"); Snd.coin(); res(r);} },70);
   });
 }
 function humanChoose(opts){
@@ -619,11 +937,11 @@ function humanChoose(opts){
 async function land(p){
   const nd=nodes[p.node];
   if(nd.type==="blue"){
-    p.cash+=nd.val;
+    p.cash+=nd.val; Snd.coin();
     log(`<b>${p.name}</b> earns <span style="color:var(--green)">+${fmt(nd.val)}</span> hauling freight.`,"good");
   }else if(nd.type==="red"){
     const v=Math.min(nd.val,p.cash);
-    p.cash-=v;
+    p.cash-=v; Snd.hit();
     log(`<b>${p.name}</b> hits a landslide on the pass: <span style="color:var(--red)">−${fmt(v)}</span>.`,"bad");
   }else if(nd.type==="event"){
     await quizStop(p);
@@ -642,6 +960,7 @@ async function quizStop(p){
     const pick=pickOk?shuffled.find(o=>o.ok):shuffled.find(o=>!o.ok);
     const delta=pickOk?150:-50;
     p.cash=Math.max(0,p.cash+delta);
+    pickOk?Snd.right():Snd.wrong();
     await autoModal(`
       <div class="eyebrow">Bolivia quiz · ${p.name} (CPU)</div><h3>${q.q}</h3>
       <p>${p.name} answers: <b>“${pick.t}”</b> — ${pickOk?'<span class="money">correct! +'+fmt(150)+'</span>':'<span class="money neg">wrong. −'+fmt(50)+'</span>'}</p>
@@ -659,6 +978,7 @@ async function quizStop(p){
           const ok=b.dataset.ok==="true";
           document.querySelectorAll("#qOpts .opt").forEach(x=>{ x.disabled=true; if(x.dataset.ok==="true")x.classList.add("correct"); });
           if(!ok)b.classList.add("wrong");
+          ok?Snd.right():Snd.wrong();
           const delta=ok?150:-50; p.cash=Math.max(0,p.cash+delta);
           log(`❓ <b>${p.name}</b> ${ok?"answers correctly (+"+fmt(150)+")":"answers wrong (−"+fmt(50)+")"}.`,ok?"good":"bad");
           const div=document.createElement("div");
@@ -682,7 +1002,9 @@ async function cityStop(p){
   if(p.cpu){
     let bought=false;
     if(canBuy && p.cash>=c.prop.cost+150){ p.cash-=c.prop.cost; p.props.push(id); bought=true; }
+    if(bought) Snd.buy();
     await autoModal(`
+      <div class="art">${cityArt(id)}</div>
       <div class="eyebrow">Station stop · ${p.name} (CPU)</div><h3>${c.n}</h3>
       <p>${c.fact}</p>${propLine}
       ${bought?`<p style="margin-top:8px;color:var(--gold);font-weight:800">${p.name} buys the ${c.prop.n}!</p>`:""}`,2600);
@@ -691,6 +1013,7 @@ async function cityStop(p){
   }else{
     await new Promise(res=>{
       showModal(`
+        <div class="art">${cityArt(id)}</div>
         <div class="eyebrow">Station stop</div><h3>${c.n}</h3>
         <p style="color:var(--salt-dim);font-size:.85rem;margin-bottom:8px">${c.tag}</p>
         <p>${c.fact}</p>${propLine}
@@ -699,7 +1022,7 @@ async function cityStop(p){
           <button class="btn ghost" id="passBtn">${canBuy?"Pass":"Continue"}</button>
         </div>`);
       const buy=document.getElementById("buyBtn");
-      if(buy) buy.onclick=()=>{ p.cash-=c.prop.cost; p.props.push(id);
+      if(buy) buy.onclick=()=>{ p.cash-=c.prop.cost; p.props.push(id); Snd.buy();
         log(`🏪 <b>${p.name}</b> buys the <b>${c.prop.n}</b> in ${c.n} (−${fmt(c.prop.cost)}).`,"gold");
         hideModal(); res(); };
       document.getElementById("passBtn").onclick=()=>{ log(`<b>${p.name}</b> stops at <b>${c.n}</b>.`); hideModal(); res(); };
@@ -710,7 +1033,7 @@ async function cityStop(p){
 
 async function arriveDest(p){
   const c=CITIES[dest], bonus=destBonus();
-  p.cash+=bonus;
+  p.cash+=bonus; Snd.fanfare();
   log(`🎯 <b>${p.name}</b> reaches <b>${c.n}</b> first! <span style="color:var(--gold)">+${fmt(bonus)}</span>`,"gold");
   const oldDest=dest;
   dest=pickDest(oldDest);
@@ -724,9 +1047,11 @@ async function arriveDest(p){
     ? `<div class="fact"><b>👹 El Tío boards the rails!</b> In the mines of Potosí, workers honor El Tío — Lord of the Underworld — with cigarettes, coca leaves and alcohol, so he protects rather than punishes. He now rides with <b>${players[far].name}</b>, the traveler farthest from the new destination, demanding offerings each turn.</div>`
     : `<div class="fact">👹 <b>El Tío</b> switches trains — he now rides with <b>${players[far].name}</b>, farthest from ${CITIES[dest].n}.</div>`;
   const html=`
+    <div class="art">${cityArt(oldDest)}</div>
     <div class="eyebrow">Destination reached</div><h3>${c.n} — ${fmt(bonus)} prize!</h3>
     <p><b>${p.name}</b> arrives first. ${c.fact}</p>
     <p style="margin-top:10px">🧭 Next destination: <b style="color:var(--gold)">${CITIES[dest].n}</b> — ${CITIES[dest].tag}.</p>
+    <div class="art" style="margin:12px 0 0">${cityArt(dest)}</div>
     ${tioMsg}`;
   if(p.cpu) await autoModal(html,3400); else await modalOnce(html,"Full steam ahead");
   log(`🧭 New destination: <b>${CITIES[dest].n}</b>. 👹 El Tío rides with <b>${players[far].name}</b>.`);
@@ -735,7 +1060,7 @@ async function arriveDest(p){
 /* ═══════════ END & SETUP ═══════════ */
 function netWorth(p){ return p.cash+p.props.reduce((s,id)=>s+CITIES[id].prop.cost,0); }
 function endGame(){
-  over=true; dieBtn.disabled=true;
+  over=true; dieBtn.disabled=true; Snd.win();
   const ranked=[...players].sort((a,b)=>netWorth(b)-netWorth(a));
   const rows=ranked.map((p,i)=>`
     <div class="rank ${i===0?"first":""}">
@@ -786,6 +1111,7 @@ function openSetup(){
       </div>
       <div class="rules">
         <b>How to ride:</b> Roll the die and steer along Bolivia's rails toward the destination city — first arrival wins a growing cash prize. <b>Blue</b> squares pay, <b>red</b> squares cost, <b>gold “?”</b> squares quiz you on Bolivian culture, history and politics (+${fmt(150)} for a correct answer). Land on a station to learn its story and buy its business for yearly income. Beware <b>El Tío 👹</b>, spirit of the Potosí mines — he haunts whoever falls farthest behind. Richest traveler at the end wins.
+        <br><br>🎵 A live charango-and-panpipe soundtrack starts when you press Start. Toggle it any time with <b>♪ Music</b> in the corner.
       </div>
       <div class="btnrow"><button class="btn" id="startBtn" style="width:100%">Start the journey</button></div>`);
     modalBox.querySelectorAll(".slot input").forEach(inp=>inp.onchange=()=>{slots[+inp.dataset.i].name=inp.value.trim()||("Traveler "+(+inp.dataset.i+1));});
@@ -796,6 +1122,7 @@ function openSetup(){
     modalBox.querySelectorAll("#yearsSeg button").forEach(b=>b.onclick=()=>{years=+b.dataset.y;render();});
     document.getElementById("startBtn").onclick=()=>{
       const active=slots.filter(s=>s.mode!=="off");
+      Snd.start();
       hideModal();
       startGame({years,players:active.map(s=>({name:s.name,cpu:s.mode==="cpu"}))});
     };
