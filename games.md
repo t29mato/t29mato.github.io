@@ -14,7 +14,7 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 - [**Bomb Rush**](/experiments/bomb-rush/)
   Arcade bomb action.
 
-- [**Dawn Keep**](/experiments/tower-defense/)
+- [**Order of Magnitude**](https://order-of-magnitude.vercel.app)
   A wave-based tower defense game.
 
 - [**World Tour Surf**](/experiments/ct-surf-tour/)
