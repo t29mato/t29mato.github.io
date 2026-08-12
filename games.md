@@ -14,6 +14,9 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 - [**Bomb Rush**](/experiments/bomb-rush/)
   Arcade bomb action.
 
+- [**Life Journey**](https://life-journey-boardgame.vercel.app)
+  Spin your way through a whole life — careers, marriage, houses and a few gambles. Play with friends around one screen, or against the computer.
+
 - [**Order of Magnitude**](https://order-of-magnitude.vercel.app)
   A wave-based tower defense game.
 
