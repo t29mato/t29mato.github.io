@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ōarai Sun Beach — south breakwater incident reconstruction</title>
+<meta name="description" content="An animated reconstruction of a surfing incident at the south breakwater of Ōarai Sun Beach, built from a participant's account.">
+<style>
+  :root{
+    --paper:#EFEAE0; --paper-2:#F7F4EE;
+    --ink:#1F2A2E; --ink-2:#4C5A5F; --ink-3:#7C8A8E;
+    --rule:#C9C1B2; --rule-2:#B0A692;
+    --flow:#0E7C93; --danger:#B8452C; --danger-bg:#F3DED8;
+    --a:#D2503C; --b:#D79B2B; --c:#4E8C6A; --d:#7C8A8E; --e:#3B6E97;
+    --font-sans:"Inter","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+    --font-num:ui-monospace,"SFMono-Regular","Menlo","Consolas","Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1020px;margin:0 auto;padding:34px 20px 72px}
+
+  .eyebrow{font-family:var(--font-num);font-size:11px;letter-spacing:.2em;color:var(--ink-3);text-transform:uppercase;margin:0 0 12px}
+  h1{font-size:33px;line-height:1.18;font-weight:600;margin:0;letter-spacing:-.02em}
+  h1 small{display:block;font-size:16.5px;font-weight:400;color:var(--ink-2);letter-spacing:0;line-height:1.62;margin-top:12px;max-width:64ch}
+
+  .strip{display:flex;flex-wrap:wrap;margin:24px 0 0;border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2)}
+  .strip div{flex:1 1 122px;padding:11px 14px 12px;border-right:1px solid var(--rule)}
+  .strip div:last-child{border-right:0}
+  .strip dt{font-size:10.5px;letter-spacing:.14em;color:var(--ink-3);margin:0 0 2px;font-family:var(--font-num);text-transform:uppercase}
+  .strip dd{margin:0;font-size:15px;font-weight:600;line-height:1.35}
+  .strip dd span{font-weight:400;font-size:12.5px;color:var(--ink-2)}
+
+  .stage{margin:26px 0 0;background:#11181B;border:1px solid var(--ink);line-height:0}
+  video{display:block;width:100%;height:auto;background:#11181B}
+  .caption{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:9px 2px 0;font-family:var(--font-num);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);line-height:1.6}
+  .caption a{color:var(--ink-2)}
+
+  h2{font-size:21px;font-weight:600;letter-spacing:-.01em;margin:52px 0 4px;padding-top:22px;border-top:2px solid var(--ink)}
+  h2 .n{font-family:var(--font-num);font-size:11px;letter-spacing:.2em;color:var(--ink-3);display:block;font-weight:400;margin-bottom:7px;text-transform:uppercase}
+  p{margin:.5em 0 1em}
+  .lede{font-size:16px;color:var(--ink-2);max-width:72ch}
+
+  .people{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:14px}
+  .people th{font-family:var(--font-num);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:400;text-align:left;padding:0 12px 7px 0;border-bottom:1px solid var(--rule-2)}
+  .people td{padding:12px 12px 12px 0;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+  .people td:first-child{width:34px;padding-right:0}
+  .people td:nth-child(2){width:31%;color:var(--ink)}
+  .who{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;color:#F7F4EE;font-family:var(--font-num);font-size:12px;font-weight:600}
+  .who.a{background:var(--a)} .who.b{background:var(--b)} .who.c{background:var(--c)} .who.d{background:var(--d)} .who.e{background:var(--e)}
+
+  ol.pos{list-style:none;counter-reset:p;padding:0;margin:18px 0 0}
+  ol.pos>li{counter-increment:p;position:relative;padding:12px 0 13px 44px;border-top:1px solid var(--rule);font-size:14px;color:var(--ink-2);line-height:1.72}
+  ol.pos>li:before{content:counter(p);position:absolute;left:0;top:12px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--paper-2);font-family:var(--font-num);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+  .chain{margin:16px 0 0;padding:12px 15px;background:var(--paper-2);border:1px solid var(--rule-2);font-family:var(--font-num);font-size:13px;letter-spacing:.06em;color:var(--ink-2)}
+
+  .seq{margin:18px 0 0;border-left:3px solid var(--rule-2);padding:2px 0 2px 18px}
+  .seq p{margin:0 0 13px;font-size:14px;color:var(--ink-2);line-height:1.75}
+  .seq p:last-child{margin-bottom:0}
+  .seq b{color:var(--ink)}
+
+  ol.check{list-style:none;counter-reset:c;padding:0;margin:16px 0 0}
+  ol.check>li{counter-increment:c;position:relative;padding:14px 0 15px 46px;border-top:1px solid var(--rule)}
+  ol.check>li:before{content:counter(c,decimal-leading-zero);position:absolute;left:0;top:16px;font-family:var(--font-num);font-size:11.5px;letter-spacing:.08em;color:var(--danger)}
+  ol.check b{display:block;font-size:15.5px;margin-bottom:2px}
+  ol.check span{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.72}
+
+  .note{margin:30px 0 0;padding:15px 17px;background:var(--danger-bg);border-left:3px solid var(--danger);font-size:13.5px;line-height:1.75}
+  footer{margin:54px 0 0;padding-top:18px;border-top:1px solid var(--rule-2);font-size:12.5px;color:var(--ink-3);line-height:1.8}
+  footer a{color:var(--ink-2)}
+
+  @media (max-width:640px){
+    h1{font-size:25px} h2{font-size:19px}
+    .people td:nth-child(2){width:auto}
+    .people, .people tbody, .people tr, .people td{display:block;width:auto}
+    .people thead{display:none}
+    .people tr{border-bottom:1px solid var(--rule);padding:12px 0}
+    .people td{border:0;padding:0 0 4px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="eyebrow">Ōarai Sun Beach · Ibaraki Prefecture · south breakwater · animated reconstruction</p>
+<h1>Five surfers, one breakwater, and the wrong idea about safety.
+  <small>A beginner who could not swim lost his depth beside the south breakwater and was carried out past the tetrapods. Everything that followed turned on four judgements. This is the account of participant E, drawn as an animation.</small>
+</h1>
+
+<div class="strip">
+  <div><dt>Date</dt><dd>8 Aug<span> / ~10:00</span></dd></div>
+  <div><dt>Swell</dt><dd>1.3 m<span> / 10.3 s ESE</span></dd></div>
+  <div><dt>Felt like</dt><dd>1.5–2 m<span> / no lull</span></dd></div>
+  <div><dt>People</dt><dd>5<span> / A–E, known to each other</span></dd></div>
+  <div><dt>Outcome</dt><dd>No fatality<span> / cuts to A</span></dd></div>
+  <div><dt>Loss</dt><dd>¥80,000<span> / 2 rental boards</span></dd></div>
+</div>
+
+<div class="stage">
+  <video controls preload="metadata" playsinline poster="poster.jpg" width="1280" height="720">
+    <source src="oarai-reconstruction.mp4" type="video/mp4">
+    Your browser cannot play this video. <a href="oarai-reconstruction.mp4">Download the MP4</a> instead.
+  </video>
+</div>
+<p class="caption">
+  <span>2 min 08 s · silent · captions burned in</span>
+  <span><a href="oarai-reconstruction.mp4" download>Download MP4 (7.9 MB)</a></span>
+</p>
+
+<h2><span class="n">1</span>The setting</h2>
+<p class="lede">Ōarai Sun Beach is a sand beach on the Ibaraki coast. At its south end a rock breakwater armoured with tetrapods runs out from the sand toward the sea, angling seaward and bending part way along its length. The water on either side of it is deeper than it appears from the beach, and the current alongside it sets seaward.</p>
+<p>On the morning of 8 August the forecast swell was 1.3 m at a 10.3 second period from the east-southeast. In the water it felt closer to 1.5–2 m, and the sets arrived without long gaps between them. That last detail matters more than the height: the absence of a lull is what shaped every decision that followed.</p>
+
+<h2><span class="n">2</span>The five</h2>
+<table class="people">
+  <thead><tr><th></th><th>Experience</th><th>Role in the incident</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="who a">A</span></td>
+      <td>Beginner, rental board, <b>cannot swim</b></td>
+      <td>The person in trouble. Drifted out of his depth, was carried past the breakwater, then wedged between tetrapods.</td>
+    </tr>
+    <tr>
+      <td><span class="who b">B</span></td>
+      <td>Beginner, rental board</td>
+      <td>First to reach A. Made the decision to head for the breakwater — the wrong call.</td>
+    </tr>
+    <tr>
+      <td><span class="who c">C</span></td>
+      <td>Intermediate</td>
+      <td>Climbed onto the tetrapods and pulled A free. Later helped push from behind during the paddle out.</td>
+    </tr>
+    <tr>
+      <td><span class="who d">D</span></td>
+      <td>Surfing at position ⑤</td>
+      <td>Raised the alarm to E, pointing at position ④, about 20 m away.</td>
+    </tr>
+    <tr>
+      <td><span class="who e">E</span></td>
+      <td>Experienced — the narrator</td>
+      <td>Took A and B onto his board and towed them offshore, then timed the run back to the beach.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">3</span>Seven positions</h2>
+<p class="lede">The reconstruction is carried by seven numbered positions. They are numbered in story order, not geographic order.</p>
+<ol class="pos">
+  <li>E's lineup, north of the breakwater. Where the story starts and where E is when D shouts.</li>
+  <li>Where A loses his depth and calls for help — roughly level with the inner breakwater, on its north side.</li>
+  <li>The tetrapods themselves, near the seaward bend. Where A is wedged between blocks and both boards are destroyed.</li>
+  <li>Just clear of the blocks, where C leaves A and B. Still only metres from the rocks — <em>not</em> safe.</li>
+  <li>D's lineup, about 20 m from E.</li>
+  <li>About 30 m offshore of ④. The holding point, out of reach of the breakwater.</li>
+  <li>Standing depth near the beach. The end of the incident.</li>
+</ol>
+<p class="chain">Movement chain:&nbsp; ② → ③ → ④ → ⑥ → ⑦</p>
+
+<h2><span class="n">4</span>Sequence of events</h2>
+<div class="seq">
+  <p><b>Before.</b> E is surfing at ①, D at ⑤. A and B are out on rental boards. Nobody is watching anybody.</p>
+  <p><b>A loses his depth (②).</b> A drifts to where he can no longer stand. He cannot swim. He shouts "Help! Help!" for roughly five minutes. Nobody around him notices — the surf noise and the ordinary sight of a person beside a board hide it completely.</p>
+  <p><b>A is carried out.</b> A cannot reach the breakwater on his own. The current alongside it carries him past ③ and out to its seaward side, away from the beach.</p>
+  <p><b>B reaches him.</b> B, also a beginner, paddles out to A. B judges: "if we can get up onto the breakwater, we're saved." That judgement is the pivot of the whole incident, and it is wrong — the breakwater is where the waves are breaking hardest.</p>
+  <p><b>The tetrapods (③).</b> They move to the blocks and try to climb out. Set after set breaks straight onto the rocks. A wave drives A into a gap between two tetrapods and he is wedged there. Successive waves slam him against the concrete; he is cut and bleeding. His board is <em>not</em> stuck in the blocks — the endless sets throw it against them again and again until it is wrecked. B's board is destroyed the same way.</p>
+  <p><b>C intervenes.</b> C, an intermediate surfer, reaches the breakwater, climbs up onto the tetrapods, braces against the sets and hauls A out of the gap, then gets both A and B clear to ④.</p>
+  <p><b>E is alerted.</b> E rides a wave in from ①. About 20 m away, D at ⑤ is shouting and pointing at ④.</p>
+  <p><b>E's approach.</b> Rather than cutting straight across, E paddles out first and comes back in from seaward — going out and around is faster than fighting the sets broadside. He finds A and B hanging off a single board, A exhausted. "You're OK, you're OK."</p>
+  <p><b>The tow (④ → ⑥).</b> E judges that ④ is not safe: one more set puts them back into the rocks. He gets both of them onto his board and has them hold his leash; C pushes from behind. They cover about 30 m of water straight into the swell. It takes maybe five minutes, though it felt like ten.</p>
+  <p><b>The wait (⑥).</b> At ⑥ the pull toward the rocks is gone. "We're all right now." But the sets toward the beach do not ease. They wait five minutes, then another five to ten.</p>
+  <p><b>The run in (⑥ → ⑦).</b> E stops waiting for calm water and decides to use the waves instead. "When a big one comes: hold your breath, and do not let go of the board." Three or four big waves carry them in to ⑦, where they can stand.</p>
+</div>
+
+<h2><span class="n">5</span>The decision points</h2>
+<p class="lede">The account is built around judgement, not around drama. Four decisions define it.</p>
+<ol class="check">
+  <li><b>B: "the breakwater means safety."</b><span>Wrong. Structures concentrate breaking waves; the rocks were the most dangerous water available.</span></li>
+  <li><b>C: climb onto the blocks.</b><span>Correct here, but only because C could read the sets and brace. It is not a general recommendation.</span></li>
+  <li><b>E: ④ is not a rescue, it is a pause.</b><span>Distance from the structure comes before everything else, including getting to the beach.</span></li>
+  <li><b>E: stop waiting for a lull.</b><span>When the sets will not ease, the waves become the way in rather than the obstacle — with a brief, explicit instruction given to two exhausted beginners.</span></li>
+</ol>
+
+<h2><span class="n">6</span>Aftermath</h2>
+<p>A had cuts and bleeding from the tetrapods at ③. Both rental boards were destroyed, at ¥40,000 each — ¥80,000 in total. Nobody drowned.</p>
+
+<div class="note">
+  <b>Reading the animation.</b> A and danger are red, B amber, C green, E blue, D neutral grey-blue. Figures are always a board plus a rider, so paddling reads from above. Elapsed time is compressed — the swell period was 10.3 s, far slower than the animation plays. Times and distances are as recalled by participant E and are approximate.
+</div>
+
+<footer>
+  Reconstruction built from a written account by participant E. It has not been checked against any external source, and it is a personal record rather than an incident report.<br>
+  Related: <a href="/experiments/kashimanada-headland-incident/">Kashima-nada headland drift incident</a> · <a href="/animations/">All animations</a> · <a href="/blog/">Blog</a>
+</footer>
+
+</div>
+</body>
+</html>
