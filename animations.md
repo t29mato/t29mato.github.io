@@ -8,6 +8,15 @@ permalink: /animations/
 
 Animated reconstructions and explainers. Each one is a self-contained page — open it and press play.
 
+### Gojo vs Sukuna — Shibuya, October 31
+
+<video controls preload="none" playsinline poster="/experiments/gojo-vs-sukuna/poster.jpg" style="display:block;width:100%;height:auto;background:#000;margin:0 0 8px">
+  <source src="/experiments/gojo-vs-sukuna/gojo-vs-sukuna.mp4" type="video/mp4">
+  Your browser cannot play this video. <a href="/experiments/gojo-vs-sukuna/gojo-vs-sukuna.mp4">Download the MP4</a> instead.
+</video>
+
+1 min 03 s · silent · captions burned in. A silhouette animation of the Shibuya duel — blue against red over a dark skyline, techniques named one line at a time, and two domains opening on a split screen. Notes on how it is built are on the [animation page](/experiments/gojo-vs-sukuna/).
+
 ### Ōarai Sun Beach — south breakwater incident
 
 <video controls preload="none" playsinline poster="/experiments/oarai-reconstruction/poster.jpg" style="display:block;width:100%;height:auto;background:#11181B;margin:0 0 8px">
