@@ -45,6 +45,7 @@ header_pages:
   - blog.md
   - animations.md
   - games.md
+  - tools.md
 
 collections:
   # releases:
