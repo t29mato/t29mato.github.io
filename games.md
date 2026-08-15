@@ -11,6 +11,9 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 - [**Bomb Rush**](/experiments/bomb-rush/)
   Arcade bomb action.
 
+- [**Grand Express**](https://grand-express.vercel.app) · [source](https://github.com/t29mato/grand-express)
+  A rail fortune game across nineteen boards — learn as you ride, rebuilt on Next.js as the successor to World Express.
+
 - [**Life Journey**](https://life-journey-boardgame.vercel.app)
   Spin your way through a whole life — careers, marriage, houses and a few gambles. Play with friends around one screen, or against the computer.
 
@@ -19,9 +22,6 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 
 - [**Tokyo Neon**](https://neon-city-psi-livid.vercel.app)
   An open-world crime action game set in a procedurally generated Tokyo at night — steal a car and tear through the back streets.
-
-- [**World Express**](https://world-express.vercel.app)
-  A rail fortune game across nineteen boards — learn as you ride.
 
 - [**World Tour Surf**](/experiments/ct-surf-tour/)
   Compete on the pro surf tour, from qualifying series to championship tour.
