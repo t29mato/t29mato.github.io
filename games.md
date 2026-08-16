@@ -14,7 +14,7 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 - [**Grand Express**](https://grand-express.vercel.app) · [source](https://github.com/t29mato/grand-express)
   A rail fortune game across nineteen boards — learn as you ride, rebuilt on Next.js as the successor to World Express.
 
-- [**Life Journey**](https://life-journey-boardgame.vercel.app)
+- [**Life Journey**](/life-game/)
   Spin your way through a whole life — careers, marriage, houses and a few gambles. Play with friends around one screen, or against the computer.
 
 - [**Order of Magnitude**](https://order-of-magnitude.vercel.app)
