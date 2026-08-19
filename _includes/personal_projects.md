@@ -2,6 +2,14 @@
 
 A selection of software projects developed for personal interest and hobbies.
 
+### 2026
+
+- [**Dive Visibility Forecast Japan**](https://dive-forecast.vercel.app/)
+  AI-powered 7-day underwater visibility and water-temperature forecasts for 40+ dive sites across Japan.
+  Built on 46,000+ real observations scraped from dive-shop logs since 2006, combined with weather,
+  marine, and satellite data, and served through gradient-boosted models with quantile prediction
+  intervals. Includes an interactive map, per-site history, and a published accuracy report.
+
 ### 2023
 
 - **[Peakaboo]((https://peakaboo.vercel.app/))** Interactive Map of Japan’s 100, 200, and 300 Famous Mountains.
