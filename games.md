@@ -11,8 +11,8 @@ Small self-contained browser games and toys, built for fun. Each one runs entire
 - [**Bomb Rush**](/experiments/bomb-rush/)
   Arcade bomb action.
 
-- [**Grand Express**](https://grand-express.vercel.app) · [source](https://github.com/t29mato/grand-express)
-  A rail fortune game across nineteen boards — learn as you ride, rebuilt on Next.js as the successor to World Express.
+- [**Grand Express**](/grand-express/) · [source](https://github.com/t29mato/grand-express)
+  A rail fortune game across forty-seven boards — roll dice along a real railway map, buy businesses in real towns, answer geography quizzes. English, Spanish, French and Japanese.
 
 - [**Life Journey**](/life-game/)
   Spin your way through a whole life — careers, marriage, houses and a few gambles. Play with friends around one screen, or against the computer.
