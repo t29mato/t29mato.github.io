@@ -6,7 +6,10 @@ permalink: /games/
 # Each card is generated from this list, so adding a game means adding an entry
 # here — no HTML to copy. `rating` is my own recommendation out of 5, based on
 # how finished the thing actually is, not on how much work went into it.
-# Cards are shown highest-rated first.
+#
+# Cards render in the order written here, so keep this list highest-rated
+# first. Sorting in Liquid was tried and dropped: `sort | reverse` flips the
+# order of everything sharing a rating, which shuffled the four-star three.
 games:
   - name: Grand Express
     slug: grand-express
@@ -116,6 +119,11 @@ games:
 .game-shot {
   display: block;
   width: 100%;
+  /* The width/height attributes on the tag reserve space while the image
+     loads, but minima does not set `height: auto` on images, so the
+     presentational height="750" wins and aspect-ratio never gets to apply —
+     the cards came out as 354x751 slivers. Override it here. */
+  height: auto;
   aspect-ratio: 16 / 10;
   object-fit: cover;
   background: #11151c;
@@ -185,8 +193,7 @@ how finished and worth-your-evening the thing actually is, not how much work wen
 </p>
 
 <ul class="game-grid">
-{% assign ranked = page.games | sort: "rating" | reverse %}
-{% for game in ranked %}
+{% for game in page.games %}
   <li class="game-card">
     <a href="{{ game.url }}" tabindex="-1" aria-hidden="true">
       <img class="game-shot" src="/assets/games/{{ game.slug }}.jpg" alt="" loading="lazy" width="1200" height="750">
