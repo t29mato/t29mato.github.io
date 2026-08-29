@@ -44,6 +44,7 @@ future: false
 header_pages:
   - blog.md
   - publications.md
+  - presentations.md
   - animations.md
   - games.md
   - tools.md

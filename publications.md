@@ -58,7 +58,8 @@ structured data processing, and applying large language models to both.
 {% include publication-list.html papers=page.papers %}
 
 <p class="page-outro" markdown="1">
-Oral presentations, and anything published since this page was last touched,
-are on the profile that stays current:
+Conference talks are on the **[Presentations](/presentations/)** page.
+Anything published since this page was last touched is on the profile that
+stays current:
 **[NIMS SAMURAI — Mato Tomoya](https://samurai.nims.go.jp/profiles/mato_tomoya)**.
 </p>
