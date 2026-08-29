@@ -45,6 +45,7 @@ future: false
 # ANY repo-root markdown file with a heading gets pulled into the header nav.
 header_pages:
   - blog.md
+  - works.md
   - publications.md
   - presentations.md
   - animations.md
