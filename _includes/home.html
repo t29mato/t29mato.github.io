@@ -1,43 +1,85 @@
 <section class="home-hero">
   <canvas class="home-field" id="home-field" aria-hidden="true"></canvas>
   <div class="home-hero-inner">
-    <p class="home-eyebrow"><span class="home-pip" aria-hidden="true"></span>Tomoya Mato · Materials Data Engineer · NIMS</p>
-    <h1 class="home-title">From published plots <br class="home-br">to living data.</h1>
-    <p class="home-lede">I build <a href="https://www.starrydata2.org/">Starrydata</a> — an open
-    platform that turns figures in the materials-science literature into shared,
-    machine-readable data — and the tools around it.</p>
+    <p class="home-eyebrow"><span class="home-pip" aria-hidden="true"></span>Tomoya Mato · Engineer · NIMS</p>
+    <h1 class="home-title">Engineer by day, <br class="home-br">maker after hours.</h1>
+    <p class="home-lede">By day I'm an engineer at NIMS working on
+    <a href="https://www.starrydata2.org/">Starrydata</a>, an open platform that
+    turns plots in the materials-science literature into shared, machine-readable
+    data. The rest of this site is board games, animations, small tools, and
+    writing — built after hours, for the fun of it.</p>
   </div>
 </section>
 
-<nav class="home-portals" aria-label="Highlights">
-  <a class="portal" href="{{ "/works/" | relative_url }}">
-    <span class="portal-index" aria-hidden="true">01</span>
-    <h2 class="portal-name">Works</h2>
-    <p class="portal-desc">The Starrydata platform, visualizer and datasets, plus
-    the open-source tools built around them at NIMS.</p>
-    <span class="portal-cta" aria-hidden="true">→</span>
-  </a>
-  <a class="portal" href="{{ "/publications/" | relative_url }}">
-    <span class="portal-index" aria-hidden="true">02</span>
-    <h2 class="portal-name">Publications</h2>
-    <p class="portal-desc">Seven journal articles — dielectric property curation,
-    quasicrystal datasets, thermoelectrics, and Starrydata itself.</p>
-    <span class="portal-cta" aria-hidden="true">→</span>
-  </a>
-  <a class="portal" href="{{ "/presentations/" | relative_url }}">
-    <span class="portal-index" aria-hidden="true">03</span>
-    <h2 class="portal-name">Presentations</h2>
-    <p class="portal-desc">Conference talks going back to 2016, lately on
-    large-language-model tools for literature curation.</p>
-    <span class="portal-cta" aria-hidden="true">→</span>
-  </a>
+<nav class="home-portals-nav" aria-label="Site sections">
+  <section class="portal-group">
+    <h2 class="portal-group-label">The day job</h2>
+    <div class="home-portals">
+      <a class="portal" href="{{ "/works/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">01</span>
+        <h3 class="portal-name">Works</h3>
+        <p class="portal-desc">The Starrydata platform, visualizer and datasets,
+        plus the open-source tools built around them at NIMS.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+      <a class="portal" href="{{ "/publications/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">02</span>
+        <h3 class="portal-name">Publications</h3>
+        <p class="portal-desc">Seven journal articles — dielectric property
+        curation, quasicrystal datasets, thermoelectrics, and Starrydata itself.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+      <a class="portal" href="{{ "/presentations/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">03</span>
+        <h3 class="portal-name">Presentations</h3>
+        <p class="portal-desc">Conference talks going back to 2016, lately on
+        large-language-model tools for literature curation.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
+  <section class="portal-group">
+    <h2 class="portal-group-label">After hours</h2>
+    <div class="home-portals">
+      <a class="portal" href="{{ "/games/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">04</span>
+        <h3 class="portal-name">Games</h3>
+        <p class="portal-desc">Board and browser games — dice along real railway
+        maps, a spin through a whole life, tower defense by powers of ten.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+      <a class="portal" href="{{ "/animations/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">05</span>
+        <h3 class="portal-name">Animations</h3>
+        <p class="portal-desc">Canvas reconstructions of two surf incidents on
+        the Ibaraki coast, and a silhouette cut of the Shibuya duel.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+      <a class="portal" href="{{ "/tools/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">06</span>
+        <h3 class="portal-name">Tools</h3>
+        <p class="portal-desc">Small utilities that do one thing, entirely
+        client-side — nothing you feed them leaves your device.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+      <a class="portal" href="{{ "/blog/" | relative_url }}">
+        <span class="portal-index" aria-hidden="true">07</span>
+        <h3 class="portal-name">Blog</h3>
+        <p class="portal-desc">The write-ups behind the animations, and the
+        occasional dive into a rebuilt shell environment.</p>
+        <span class="portal-cta" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
 </nav>
 
 <script>
   /*
-   * The hero field: data points drifting along faint curves, coloured cold to
-   * warm along the x axis — a property-versus-temperature plot with nothing
-   * labelled. Pure canvas, no libraries.
+   * The hero field: markers drifting along faint curves, coloured cold to warm
+   * along the x axis. Each curve carries its own marker — circle, square,
+   * triangle, diamond — so the field reads two ways at once: the series
+   * markers of a multi-series plot, and a scatter of game pieces. Both halves
+   * of the site in one picture. Pure canvas, no libraries.
    *
    * Colours come from --field-cold / --field-warm so both themes work, and the
    * script re-reads them when the theme toggle flips data-theme. With
@@ -99,7 +141,7 @@
           wob: Math.random() * Math.PI * 2,
           ws: 0.3 + Math.random() * 0.5,
           speed: 0.006 + Math.random() * 0.01,
-          r: 1 + Math.random() * 1.6,
+          r: 1.2 + Math.random() * 1.6,
           bright: Math.random() < 0.12
         });
       }
@@ -107,6 +149,28 @@
 
     function curveY(c, x) {
       return c.base + c.a1 * Math.sin(x * c.f1 + c.p1) + c.a2 * Math.sin(x * c.f2 + c.p2);
+    }
+
+    /* One marker path per curve. The non-circles are drawn a touch larger so
+       all four shapes carry the same visual weight at the same r. */
+    function markerPath(shape, cx, cy, r) {
+      ctx.beginPath();
+      if (shape === 1) {
+        ctx.rect(cx - r, cy - r, r * 2, r * 2);
+      } else if (shape === 2) {
+        ctx.moveTo(cx, cy - r * 1.25);
+        ctx.lineTo(cx + r * 1.15, cy + r * 0.95);
+        ctx.lineTo(cx - r * 1.15, cy + r * 0.95);
+        ctx.closePath();
+      } else if (shape === 3) {
+        ctx.moveTo(cx, cy - r * 1.35);
+        ctx.lineTo(cx + r * 1.35, cy);
+        ctx.lineTo(cx, cy + r * 1.35);
+        ctx.lineTo(cx - r * 1.35, cy);
+        ctx.closePath();
+      } else {
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      }
     }
 
     function resize() {
@@ -141,7 +205,7 @@
         ctx.stroke();
       }
 
-      /* The points. */
+      /* The markers. */
       for (var i = 0; i < points.length; i++) {
         var p = points[i];
         var px = p.x;
@@ -151,15 +215,13 @@
         var col = lerpColor(Math.max(0, Math.min(1, px)));
         ctx.globalAlpha = p.bright ? 0.85 : 0.4;
         ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(cx, cy, p.r * dpr, 0, Math.PI * 2);
+        markerPath(p.k, cx, cy, p.r * dpr);
         ctx.fill();
         if (p.bright) {
           ctx.globalAlpha = 0.25;
           ctx.strokeStyle = col;
           ctx.lineWidth = dpr;
-          ctx.beginPath();
-          ctx.arc(cx, cy, (p.r + 3) * dpr, 0, Math.PI * 2);
+          markerPath(p.k, cx, cy, (p.r + 3) * dpr);
           ctx.stroke();
         }
       }
@@ -228,7 +290,7 @@
   })();
 
   /*
-   * Portal tilt: the three panels lean toward the pointer and carry a specular
+   * Portal tilt: the panels lean toward the pointer and carry a specular
    * highlight where it sits. Only for fine pointers that can hover, and never
    * when reduced motion is asked for — everyone else gets the flat panel.
    */

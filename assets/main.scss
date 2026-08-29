@@ -672,9 +672,10 @@ table {
    Homepage
    --------------------------------------------------------------------------
    The one page allowed a different register from the card language: a framed
-   instrument panel — graph paper, a canvas field of data points running cold
-   to warm like a property-versus-temperature plot — and three portal panels
-   that lean toward the pointer. Everything stays inside the wrapper on
+   instrument panel — graph paper, a canvas field of plot markers that double
+   as game pieces, running cold to warm — and two shelves of portal panels
+   (day job, after hours) that lean toward the pointer. Everything stays
+   inside the wrapper on
    purpose: a full-bleed hero needs 100vw, and 100vw plus a classic scrollbar
    is the horizontal-scroll bug this stylesheet has already fixed twice.
    ========================================================================== */
@@ -746,7 +747,7 @@ table {
 }
 
 /* The controlled two-line break earns its keep only where the first line
-   fits; on a phone it strands "plots" alone, so natural wrapping wins. */
+   fits on one line; on a phone natural wrapping wins. */
 @media (max-width: 480px) {
   .home-br { display: none; }
 }
@@ -784,13 +785,31 @@ table {
 
 /* Portals ----------------------------------------------------------------- */
 
+/* Two shelves — the day job, then after hours — so the professional pages and
+   the hobby pages get equal billing instead of the old three-door lineup. */
+.home-portals-nav {
+  margin: 1.6rem 0 3rem;
+}
+
+.portal-group + .portal-group {
+  margin-top: 2rem;
+}
+
+.portal-group-label {
+  margin: 0 0 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
 .home-portals {
   display: grid;
   /* `min(...)` again: a bare minmax floor does not shrink below 15rem and
      would push a 390px phone sideways. */
   grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
   gap: 1.1rem;
-  margin: 1.1rem 0 3rem;
 }
 
 .portal {
