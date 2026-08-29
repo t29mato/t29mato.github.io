@@ -1,0 +1,256 @@
+<section class="home-hero">
+  <canvas class="home-field" id="home-field" aria-hidden="true"></canvas>
+  <div class="home-hero-inner">
+    <p class="home-eyebrow"><span class="home-pip" aria-hidden="true"></span>Tomoya Mato · Materials Data Engineer · NIMS</p>
+    <h1 class="home-title">From published plots <br class="home-br">to living data.</h1>
+    <p class="home-lede">I build <a href="https://www.starrydata2.org/">Starrydata</a> — an open
+    platform that turns figures in the materials-science literature into shared,
+    machine-readable data — and the tools around it.</p>
+  </div>
+</section>
+
+<nav class="home-portals" aria-label="Highlights">
+  <a class="portal" href="{{ "/works/" | relative_url }}">
+    <span class="portal-index" aria-hidden="true">01</span>
+    <h2 class="portal-name">Works</h2>
+    <p class="portal-desc">The Starrydata platform, visualizer and datasets, plus
+    the open-source tools built around them at NIMS.</p>
+    <span class="portal-cta" aria-hidden="true">→</span>
+  </a>
+  <a class="portal" href="{{ "/publications/" | relative_url }}">
+    <span class="portal-index" aria-hidden="true">02</span>
+    <h2 class="portal-name">Publications</h2>
+    <p class="portal-desc">Seven journal articles — dielectric property curation,
+    quasicrystal datasets, thermoelectrics, and Starrydata itself.</p>
+    <span class="portal-cta" aria-hidden="true">→</span>
+  </a>
+  <a class="portal" href="{{ "/presentations/" | relative_url }}">
+    <span class="portal-index" aria-hidden="true">03</span>
+    <h2 class="portal-name">Presentations</h2>
+    <p class="portal-desc">Conference talks going back to 2016, lately on
+    large-language-model tools for literature curation.</p>
+    <span class="portal-cta" aria-hidden="true">→</span>
+  </a>
+</nav>
+
+<script>
+  /*
+   * The hero field: data points drifting along faint curves, coloured cold to
+   * warm along the x axis — a property-versus-temperature plot with nothing
+   * labelled. Pure canvas, no libraries.
+   *
+   * Colours come from --field-cold / --field-warm so both themes work, and the
+   * script re-reads them when the theme toggle flips data-theme. With
+   * prefers-reduced-motion the field still draws — once, as a still.
+   */
+  (function () {
+    var canvas = document.getElementById("home-field");
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext("2d");
+    var panel = canvas.parentElement;
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var W = 0, H = 0, dpr = 1;
+    var cold = [116, 184, 255], warm = [242, 177, 52];
+    var running = false, rafId = 0, t0 = 0;
+
+    function parseHex(v) {
+      var m = /^#([0-9a-f]{6})$/i.exec((v || "").trim());
+      if (!m) return null;
+      var n = parseInt(m[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    function readColors() {
+      var cs = getComputedStyle(document.documentElement);
+      cold = parseHex(cs.getPropertyValue("--field-cold")) || cold;
+      warm = parseHex(cs.getPropertyValue("--field-warm")) || warm;
+    }
+
+    function lerpColor(x) {
+      var r = Math.round(cold[0] + (warm[0] - cold[0]) * x);
+      var g = Math.round(cold[1] + (warm[1] - cold[1]) * x);
+      var b = Math.round(cold[2] + (warm[2] - cold[2]) * x);
+      return "rgb(" + r + "," + g + "," + b + ")";
+    }
+
+    /* Curves live in normalised 0..1 space so a resize never rebuilds them. */
+    var K = 4, curves = [], points = [];
+
+    function makeField() {
+      curves = [];
+      for (var k = 0; k < K; k++) {
+        curves.push({
+          base: 0.18 + (0.64 * k) / (K - 1) + (Math.random() - 0.5) * 0.06,
+          a1: 0.03 + Math.random() * 0.05,
+          f1: 3 + Math.random() * 3,
+          p1: Math.random() * Math.PI * 2,
+          a2: 0.015 + Math.random() * 0.03,
+          f2: 7 + Math.random() * 5,
+          p2: Math.random() * Math.PI * 2
+        });
+      }
+      points = [];
+      var n = Math.max(40, Math.min(130, Math.round((W * H) / (dpr * dpr * 14000))));
+      for (var i = 0; i < n; i++) {
+        points.push({
+          k: i % K,
+          x: Math.random() * 1.1 - 0.05,
+          jitter: (Math.random() - 0.5) * 0.035,
+          wob: Math.random() * Math.PI * 2,
+          ws: 0.3 + Math.random() * 0.5,
+          speed: 0.006 + Math.random() * 0.01,
+          r: 1 + Math.random() * 1.6,
+          bright: Math.random() < 0.12
+        });
+      }
+    }
+
+    function curveY(c, x) {
+      return c.base + c.a1 * Math.sin(x * c.f1 + c.p1) + c.a2 * Math.sin(x * c.f2 + c.p2);
+    }
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = panel.clientWidth, h = panel.clientHeight;
+      if (!w || !h) return;
+      W = Math.round(w * dpr);
+      H = Math.round(h * dpr);
+      canvas.width = W;
+      canvas.height = H;
+      if (!points.length) makeField();
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, W, H);
+
+      /* The curves themselves, barely there. */
+      var grad = ctx.createLinearGradient(0, 0, W, 0);
+      grad.addColorStop(0, lerpColor(0));
+      grad.addColorStop(1, lerpColor(1));
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = dpr;
+      ctx.globalAlpha = 0.09;
+      for (var k = 0; k < K; k++) {
+        ctx.beginPath();
+        for (var s = 0; s <= 72; s++) {
+          var x = s / 72;
+          var y = curveY(curves[k], x);
+          if (s === 0) ctx.moveTo(x * W, y * H);
+          else ctx.lineTo(x * W, y * H);
+        }
+        ctx.stroke();
+      }
+
+      /* The points. */
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        var px = p.x;
+        var py = curveY(curves[p.k], px) + p.jitter +
+                 Math.sin(t * p.ws + p.wob) * 0.006;
+        var cx = px * W, cy = py * H;
+        var col = lerpColor(Math.max(0, Math.min(1, px)));
+        ctx.globalAlpha = p.bright ? 0.85 : 0.4;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(cx, cy, p.r * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        if (p.bright) {
+          ctx.globalAlpha = 0.25;
+          ctx.strokeStyle = col;
+          ctx.lineWidth = dpr;
+          ctx.beginPath();
+          ctx.arc(cx, cy, (p.r + 3) * dpr, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function step(now) {
+      if (!running) return;
+      if (!t0) t0 = now;
+      var t = (now - t0) / 1000;
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        p.x += p.speed / 60;
+        if (p.x > 1.05) p.x = -0.05;
+      }
+      draw(t);
+      rafId = requestAnimationFrame(step);
+    }
+
+    function start() {
+      if (running || reduced.matches || document.hidden) return;
+      running = true;
+      rafId = requestAnimationFrame(step);
+    }
+
+    function stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+    }
+
+    function still() { draw(0); }
+
+    readColors();
+    resize();
+    if (reduced.matches) still(); else start();
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () {
+        resize();
+        if (!running) still();
+      }).observe(panel);
+    } else {
+      window.addEventListener("resize", function () {
+        resize();
+        if (!running) still();
+      });
+    }
+
+    /* Theme flips: the toggle writes data-theme, the OS writes a media event. */
+    new MutationObserver(function () {
+      readColors();
+      if (!running) still();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    var osDark = window.matchMedia("(prefers-color-scheme: dark)");
+    if (osDark.addEventListener) osDark.addEventListener("change", function () {
+      readColors();
+      if (!running) still();
+    });
+
+    if (reduced.addEventListener) reduced.addEventListener("change", function () {
+      if (reduced.matches) { stop(); still(); } else start();
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) stop(); else start();
+    });
+  })();
+
+  /*
+   * Portal tilt: the three panels lean toward the pointer and carry a specular
+   * highlight where it sits. Only for fine pointers that can hover, and never
+   * when reduced motion is asked for — everyone else gets the flat panel.
+   */
+  (function () {
+    var fine = window.matchMedia("(hover: hover) and (pointer: fine)");
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    var portals = document.querySelectorAll(".portal");
+    Array.prototype.forEach.call(portals, function (el) {
+      el.addEventListener("pointermove", function (e) {
+        if (!fine.matches || reduced.matches) return;
+        var r = el.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;
+        var py = (e.clientY - r.top) / r.height;
+        el.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+        el.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+        el.style.setProperty("--ry", ((px - 0.5) * 4).toFixed(2) + "deg");
+        el.style.setProperty("--rx", ((0.5 - py) * 4).toFixed(2) + "deg");
+      });
+      el.addEventListener("pointerleave", function () {
+        el.style.setProperty("--rx", "0deg");
+        el.style.setProperty("--ry", "0deg");
+      });
+    });
+  })();
+</script>

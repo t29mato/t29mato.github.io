@@ -44,6 +44,18 @@
   --code-bg: #131a24;
   --shadow: rgba(0, 0, 0, 0.55);
   --header-border: #232c38;
+
+  /* Homepage hero. The field runs cold to warm along x like a
+     property-versus-temperature plot; the headline gradient repeats it. */
+  --field-cold: #74b8ff;
+  --field-warm: #f2b134;
+  --hero-ink-a: #8fc6ff;
+  --hero-ink-b: #f4f7fb;
+  --hero-ink-c: #ffc46b;
+  --hero-glow-a: rgba(56, 120, 200, 0.20);
+  --hero-glow-b: rgba(200, 130, 40, 0.13);
+  --grid-line: rgba(150, 175, 205, 0.07);
+  --sheen: rgba(140, 190, 255, 0.10);
 }
 
 @mixin theme-light {
@@ -75,6 +87,19 @@
   --code-bg: #eef1f6;
   --shadow: rgba(15, 23, 42, 0.12);
   --header-border: #e2e7ee;
+
+  /* Homepage hero, light. Field dots need to be darker than their dark-theme
+     twins or they vanish on a pale panel; the headline inks are the theme's
+     own accent, heading, and (AA-checked) star colours. */
+  --field-cold: #2e6fc4;
+  --field-warm: #b07500;
+  --hero-ink-a: #1257b8;
+  --hero-ink-b: #0f1720;
+  --hero-ink-c: #8a5a00;
+  --hero-glow-a: rgba(90, 145, 215, 0.18);
+  --hero-glow-b: rgba(225, 165, 70, 0.14);
+  --grid-line: rgba(40, 70, 110, 0.07);
+  --sheen: rgba(18, 87, 184, 0.07);
 }
 
 :root { @include theme-dark; }
@@ -641,4 +666,213 @@ table {
 
   &[data-state="success"] { color: var(--accent); }
   &[data-state="error"] { color: var(--danger); }
+}
+
+/* ==========================================================================
+   Homepage
+   --------------------------------------------------------------------------
+   The one page allowed a different register from the card language: a framed
+   instrument panel — graph paper, a canvas field of data points running cold
+   to warm like a property-versus-temperature plot — and three portal panels
+   that lean toward the pointer. Everything stays inside the wrapper on
+   purpose: a full-bleed hero needs 100vw, and 100vw plus a classic scrollbar
+   is the horizontal-scroll bug this stylesheet has already fixed twice.
+   ========================================================================== */
+
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(26rem, 72vh, 44rem);
+  display: flex;
+  align-items: flex-end;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 90% at 10% 108%, var(--hero-glow-a), transparent 60%),
+    radial-gradient(110% 85% at 96% -8%, var(--hero-glow-b), transparent 55%),
+    repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 64px),
+    var(--surface);
+}
+
+.home-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.home-hero-inner {
+  position: relative;
+  padding: clamp(1.4rem, 4vw, 3rem);
+  max-width: 46rem;
+}
+
+.home-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.home-pip {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--field-cold);
+  box-shadow: 0 0 0 0 var(--hero-glow-a);
+}
+
+.home-title {
+  margin: 0 0 1.1rem;
+  font-size: clamp(2.4rem, 7.5vw, 5rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  /* Real text under a painted-on gradient: the glyphs stay selectable,
+     findable, and read by screen readers. */
+  background: linear-gradient(96deg, var(--hero-ink-a), var(--hero-ink-b) 42%, var(--hero-ink-c) 78%);
+  background-size: 180% 100%;
+  background-position: 0% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The controlled two-line break earns its keep only where the first line
+   fits; on a phone it strands "plots" alone, so natural wrapping wins. */
+@media (max-width: 480px) {
+  .home-br { display: none; }
+}
+
+.home-lede {
+  margin: 0;
+  max-width: 34rem;
+  font-size: clamp(0.98rem, 1.6vw, 1.1rem);
+  line-height: 1.65;
+  color: var(--text-dim);
+
+  a { font-weight: 700; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-title {
+    animation: home-ink 16s ease-in-out infinite alternate;
+  }
+
+  .home-pip {
+    animation: home-pip 3.2s ease-out infinite;
+  }
+}
+
+@keyframes home-ink {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }
+}
+
+@keyframes home-pip {
+  0% { box-shadow: 0 0 0 0 var(--hero-glow-a); }
+  70% { box-shadow: 0 0 0 9px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Portals ----------------------------------------------------------------- */
+
+.home-portals {
+  display: grid;
+  /* `min(...)` again: a bare minmax floor does not shrink below 15rem and
+     would push a 390px phone sideways. */
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: 1.1rem;
+  margin: 1.1rem 0 3rem;
+}
+
+.portal {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.4rem 1.5rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  text-decoration: none;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+
+  /* The sheen is a positioned pseudo-element, which paints above in-flow
+     children — so the children are positioned too, further down. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(26rem circle at var(--mx) var(--my), var(--sheen), transparent 62%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  > * { position: relative; }
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--border-strong);
+    box-shadow: 0 10px 30px var(--shadow);
+    text-decoration: none;
+
+    &::before { opacity: 1; }
+
+    .portal-cta { transform: translateX(0.35rem); }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.portal-index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.portal-name {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--heading);
+}
+
+.portal-desc {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.portal-cta {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  font-size: 1.15rem;
+  color: var(--accent);
+  transition: transform 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal,
+  .portal-cta { transition: none; }
 }
