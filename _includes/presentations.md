@@ -14,6 +14,7 @@
 - Yukari Katsura, Yu Takada, **Tomoya Mato**, Masaya Kumagai, Masakazu Akiyama
   **Reconstruction of Inorganic Crystal Chemistry Based on Delaunay Tetrahedral Expressions of Crystal Structures**
   The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
+{: .card-list}
 
 ### 2024
 
@@ -36,6 +37,7 @@
 - **Tomoya Mato**, Yu Takada, Yukari Katsura, Masaya Kumagai
   **Development of semi-automatic AI system for large-scale data curation in Starrydata**
   The 71st Spring Meeting of the Japan Society of Applied Physics, 2024
+{: .card-list}
 
 ---
 
@@ -48,6 +50,7 @@
 - Yukari KATSURA, **Tomoya MATO**, Eiji Koyama, Satoshi Gunji, Fumiaki Hosono, Dewi Yana, Erina Fujita, Atsumi Tanaka, Kaoru Kimura
   **Starrydata Database for Data-Driven Comparison of Thermoelectric Materials**
   MRM2023 / IUMRS-ICA2023, 2023
+{: .card-list}
 
 ---
 
@@ -60,6 +63,7 @@
 - Luca Foppiano, Pedro Baptista de Castro, **Tomoya Mato**, Chikako Sakai, Kensei Terashima, Yoshihiko Takano, Masashi Ishii
   **From Automatically Extracted Databases Toward Semi-Supervised Curation**
   The 69th Spring Meeting of the Japan Society of Applied Physics, 2022
+{: .card-list}
 
 ---
 
@@ -80,6 +84,7 @@
 - Yukari Katsura, **Tomoya Mato**, Erina Fujita, Masaya Kumagai
   **Development of the concept trees for the thermoelectric database**
   The 18th Annual Meeting of the Thermoelectrics Society of Japan, 2021
+{: .card-list}
 
 ---
 
@@ -89,3 +94,4 @@
   **Spectroscopic and Functional Study of Arginine 109 in Na⁺ Transport by Na⁺-Pump Rhodopsin**
   2015 Annual Meeting of the Biophysical Society of Japan, Chubu Branch
   February 29, 2016, Okazaki Conference Center, Aichi, Japan
+{: .card-list}

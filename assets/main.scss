@@ -1,0 +1,463 @@
+---
+# Front matter (even empty) is what tells Jekyll to run this through Sass.
+---
+
+@import "minima";
+
+/* ==========================================================================
+   Colour tokens
+   --------------------------------------------------------------------------
+   Nothing below this block writes a colour literal. Everything reads a
+   custom property, so a theme is a set of values and not a second stylesheet.
+
+   Dark is the base — it lives in `:root`, not behind a media query. The site
+   goes light only when the OS explicitly asks for it, which means a browser
+   that expresses no preference gets dark rather than white.
+
+   The reader's own choice has to beat the OS in both directions, so the
+   explicit `[data-theme]` rules come last and the media query is written to
+   stand aside when a choice exists.
+   ========================================================================== */
+
+@mixin theme-dark {
+  color-scheme: dark;
+
+  --bg: #0f1319;
+  --surface: #161c25;
+  --surface-2: #1d2530;
+  --border: #2a323e;
+  --border-strong: #3a4552;
+
+  --text: #e7ecf3;
+  --text-dim: #9aa6b6;
+  --heading: #f4f7fb;
+
+  --accent: #74b8ff;
+  --accent-hover: #a5d2ff;
+  --accent-quiet: #223046;
+
+  --star: #f2b134;
+  --tag-bg: #212c3c;
+  --tag-text: #b7c8dd;
+
+  --code-bg: #131a24;
+  --shadow: rgba(0, 0, 0, 0.55);
+  --header-border: #232c38;
+}
+
+@mixin theme-light {
+  color-scheme: light;
+
+  /* Not pure white: a full-brightness page is the thing this site is trying
+     to get away from, even in the light theme. */
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --border: #dfe4ec;
+  --border-strong: #c6cfdb;
+
+  --text: #1b222c;
+  --text-dim: #586372;
+  --heading: #0f1720;
+
+  --accent: #1257b8;
+  --accent-hover: #0b3f8a;
+  --accent-quiet: #e6eefb;
+
+  /* Darkened from #b07500, which measured 3.90:1 on the card surface —
+     under AA. This measures 5.93:1. */
+  --star: #8a5a00;
+  --tag-bg: #e9edf3;
+  --tag-text: #47525f;
+
+  --code-bg: #eef1f6;
+  --shadow: rgba(15, 23, 42, 0.12);
+  --header-border: #e2e7ee;
+}
+
+:root { @include theme-dark; }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { @include theme-light; }
+}
+
+:root[data-theme="light"] { @include theme-light; }
+:root[data-theme="dark"] { @include theme-dark; }
+
+/* ==========================================================================
+   Base — repainting what minima hard-codes
+   ========================================================================== */
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+h1, h2, h3, h4, h5, h6 { color: var(--heading); }
+
+a {
+  color: var(--accent);
+
+  &:visited { color: var(--accent); }
+
+  &:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+}
+
+hr { border: 0; border-top: 1px solid var(--border); }
+
+blockquote {
+  color: var(--text-dim);
+  border-left: 4px solid var(--border-strong);
+}
+
+pre, code {
+  border: 1px solid var(--border);
+  background-color: var(--code-bg);
+  color: var(--text);
+}
+
+/* Long shell lines used to push the whole post sideways on a phone — the page
+   itself scrolled 20px, so the body text moved with it. Measured the same on
+   the live site before this redesign, so it is an old bug, not a new one.
+   The code block scrolls inside its own box now; the page does not. */
+pre,
+.highlight,
+div.highlighter-rouge {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+pre > code {
+  white-space: pre;
+  border: 0;
+}
+
+/* Wide tables were the other half of the sideways-scrolling post: a 395px
+   table in a 390px viewport dragged the whole page with it. Kramdown emits a
+   bare <table> with nothing to wrap, so the table itself becomes the scroll
+   container. */
+table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+
+  color: var(--text);
+  border-color: var(--border);
+
+  th, td { border-color: var(--border); }
+  th { background-color: var(--surface-2); }
+  tr:nth-child(even) { background-color: var(--surface); }
+}
+
+/* The default 800px column is narrow for a grid of cards. */
+.wrapper {
+  max-width: 1120px;
+}
+
+/* ==========================================================================
+   Header and footer
+   ========================================================================== */
+
+.site-header {
+  background-color: var(--surface);
+  border-top: 4px solid var(--accent);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.site-title {
+  &, &:visited, &:hover { color: var(--heading); }
+  text-decoration: none;
+}
+
+.site-nav {
+  background-color: transparent;
+
+  .page-link {
+    color: var(--text-dim);
+    text-decoration: none;
+
+    &:hover { color: var(--accent-hover); }
+  }
+
+  @include media-query($on-palm) {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+
+    .menu-icon > svg { fill: var(--text-dim); }
+  }
+}
+
+.site-footer {
+  background-color: var(--surface);
+  border-top: 1px solid var(--header-border);
+  color: var(--text-dim);
+}
+
+.footer-heading, .site-footer .footer-col-wrapper { color: var(--text-dim); }
+.social-media-list a { color: var(--text-dim); }
+.svg-icon { fill: var(--text-dim); }
+
+/* Theme switch ------------------------------------------------------------ */
+
+.theme-toggle {
+  float: right;
+  margin: 14px 0 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  line-height: 0;
+
+  &:hover {
+    color: var(--accent-hover);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Both icons ship in the markup so the right one is correct on first paint,
+     before any script has run. */
+  .theme-icon { display: none; }
+  .theme-icon-moon { display: block; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle {
+    .theme-icon-moon { display: none; }
+    .theme-icon-sun { display: block; }
+  }
+}
+
+:root[data-theme="dark"] .theme-toggle {
+  .theme-icon-moon { display: none; }
+  .theme-icon-sun { display: block; }
+}
+
+:root[data-theme="light"] .theme-toggle {
+  .theme-icon-sun { display: none; }
+  .theme-icon-moon { display: block; }
+}
+
+@include media-query($on-palm) {
+  /* Sits beside the site title rather than next to the hamburger.
+     Put it on the right and the opened menu panel — which grows leftwards and
+     down — swallows it: the button ends up drawn inside the menu box and
+     reads as one of its items. On the left it is never covered. */
+  .theme-toggle {
+    float: left;
+    margin: 13px 0 0 14px;
+  }
+}
+
+/* ==========================================================================
+   Card language
+   --------------------------------------------------------------------------
+   Established on the games page and reused everywhere: a bordered surface,
+   a title that is the link, and quiet supporting text. Markdown lists opt in
+   with `{: .card-list}` so the pages stay readable as prose.
+   ========================================================================== */
+
+.card-list {
+  list-style: none;
+  margin: 1.75rem 0 2.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1.25rem;
+
+  > li {
+    margin: 0;
+    padding: 1.1rem 1.25rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.94rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+
+    /* The first link in a card is its title. */
+    > a:first-child,
+    > strong:first-child > a,
+    > em:first-child {
+      font-weight: 700;
+    }
+
+    strong a { text-decoration: none; }
+    p { margin: 0.45rem 0 0; }
+    p:first-child { margin-top: 0; }
+  }
+}
+
+/* Year headings inside a card list keep their own line. */
+.card-list-heading {
+  margin: 2rem 0 0.5rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Blog index ------------------------------------------------------------- */
+
+/* Same card language as `.card-list`, written out rather than `@extend`ed so
+   the generated selectors stay readable. */
+.post-list {
+  list-style: none;
+  margin: 1.75rem 0 2.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1.25rem;
+
+  > li {
+    margin: 0;
+    padding: 1.1rem 1.25rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-dim);
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+  }
+
+  h3 { margin-bottom: 0.3rem; }
+}
+
+.post-meta { color: var(--text-dim); }
+.post-link { text-decoration: none; }
+
+/* Post page -------------------------------------------------------------- */
+
+.post-title { color: var(--heading); }
+.post-content h2, .post-content h3 { color: var(--heading); }
+
+/* ==========================================================================
+   Games page
+   ========================================================================== */
+
+.games-intro { max-width: 46rem; color: var(--text-dim); }
+
+.game-grid {
+  display: grid;
+  /* Cards find their own column count; this collapses to one column on a
+     phone without a breakpoint to keep in sync. */
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.75rem;
+  margin: 2rem 0 3rem;
+  padding: 0;
+  list-style: none;
+}
+
+.game-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  margin: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 22px var(--shadow);
+  }
+}
+
+/* The picture does the "what kind of game is this" work, so it gets a fixed
+   shape and never letterboxes — the sources are all 1200x750.
+   `height: auto` is not optional: minima leaves images at their presentational
+   height attribute, which beats aspect-ratio and turned the cards into
+   354x751 slivers the first time round. */
+.game-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.game-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem 1.2rem;
+  flex: 1;
+}
+
+.game-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.game-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  a { text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.game-stars {
+  color: var(--star);
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.game-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.game-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  white-space: nowrap;
+}
+
+.game-blurb { font-size: 0.92rem; line-height: 1.5; margin: 0; color: var(--text); }
+.game-note { font-size: 0.8rem; color: var(--text-dim); margin: 0; }
+
+.game-links {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+}

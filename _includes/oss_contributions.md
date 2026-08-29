@@ -5,3 +5,4 @@
 
 - **[streamlit-pdf-viewer](https://github.com/lfoppiano/streamlit-pdf-viewer)**
   A Streamlit component that enables interactive PDF viewing and enrichment, designed to support document-based workflows in web applications.
+{: .card-list}

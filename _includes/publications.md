@@ -5,6 +5,7 @@
 - Murata, Tomoki; Saito, Naoto; Koyama, Eiji; Phuong, Ton Nu Thanh; Misawa, Ryusuke; Yokomizo, Satoshi; **Mato, Tomoya**; Takada, Yu; Hirose, Sakyo; Katsura, Yukari
   **Data-driven analysis and visualization of dielectric properties curated from scientific literature**
   _Science and Technology of Advanced Materials: Methods_, just-accepted, p.2485018. Taylor & Francis.
+{: .card-list}
 
 ---
 
@@ -17,6 +18,7 @@
 - Parse, Nuttawat; Recatala‐Gomez, Jose; Zhu, Ruiming; Low, Andre KY; Hippalgaonkar, Kedar; **Mato, Tomoya**; Katsura, Yukari; Pinitsoontorn, Supree
   **Predicting High‐Performance Thermoelectric Materials With StarryData2**
   _Advanced Theory and Simulations_, 7(11), p.2400308. Wiley Online Library.
+{: .card-list}
 
 ---
 
@@ -29,6 +31,7 @@
 - Ryu, Byungki; Chung, Jaywan; Kumagai, Masaya; **Mato, Tomoya**; Ando, Yuki; Gunji, Sakiko; Tanaka, Atsumi; Yana, Dewi; Fujimoto, Masayuki; Imai, Yoji
   **Best thermoelectric efficiency of ever-explored materials**
   _iScience_, 26(4). Elsevier.
+{: .card-list}
 
 ---
 
@@ -37,3 +40,4 @@
 - Tomida, Sahoko; Ito, Shota; **Mato, Tomoya**; Furutani, Yuji; Inoue, Keiichi; Kandori, Hideki
   **Infrared spectroscopic analysis on structural changes around the protonated Schiff base upon retinal isomerization in light-driven sodium pump KR2**
   _Biochimica et Biophysica Acta (BBA)-Bioenergetics_, 1861(7), p.148190. Elsevier.
+{: .card-list}

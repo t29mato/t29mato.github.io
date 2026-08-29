@@ -10,6 +10,7 @@ Small utilities that do one thing. Like the games, each runs entirely client-sid
 
 - [**Candy Spice Certificate Maker**](https://candy-spice.vercel.app)
   Tsukuba's soup curry shop *candy spice* goes up to spice level 30, and if you clear level 15 or above they photograph you and pin the print to the wall. This makes the same certificate from your own photo — the red level badge, the date, your name, and the big red 完食!! stamp — and exports it at L-size 300dpi so you can actually print it.
+{: .card-list}
 
   Point it at a photo and it finds the faces, then shifts the crop so nobody ends up under the date or the level badge — about 0.4 s, no upload. Available in Japanese and English (auto-detected from your browser, switchable anytime).
 
