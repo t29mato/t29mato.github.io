@@ -11,10 +11,10 @@ permalink: /games/
 # first. Sorting in Liquid was tried and dropped: `sort | reverse` flips the
 # order of everything sharing a rating, which shuffled the four-star three.
 games:
-  - name: Grand Express
-    slug: grand-express
-    url: /grand-express/
-    source: https://github.com/t29mato/grand-express
+  - name: World Express
+    slug: world-express
+    url: /world-express/
+    source: https://github.com/t29mato/world-express
     rating: 4
     tags: [Board game, Trivia]
     blurb: >-
@@ -83,106 +83,6 @@ games:
       Tokyo at night.
     note: An early build — the city is there, the missions are not.
 ---
-
-<style>
-.games-intro { max-width: 46rem; }
-
-.game-grid {
-  display: grid;
-  /* Cards find their own column count. Below ~640px this collapses to one
-     column on its own, so there is no breakpoint to keep in sync. */
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: 1.75rem;
-  margin: 2rem 0 3rem;
-  padding: 0;
-  list-style: none;
-}
-
-.game-card {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.game-card:hover,
-.game-card:focus-within {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
-}
-
-/* The picture carries the "what kind of game is this" job, so it gets a fixed
-   shape and never letterboxes — the images are all 1200x750. */
-.game-shot {
-  display: block;
-  width: 100%;
-  /* The width/height attributes on the tag reserve space while the image
-     loads, but minima does not set `height: auto` on images, so the
-     presentational height="750" wins and aspect-ratio never gets to apply —
-     the cards came out as 354x751 slivers. Override it here. */
-  height: auto;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  background: #11151c;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.game-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem 1.1rem 1.2rem;
-  flex: 1;
-}
-
-.game-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.game-title { font-size: 1.15rem; font-weight: 700; line-height: 1.2; }
-.game-title a { text-decoration: none; }
-.game-title a:hover { text-decoration: underline; }
-
-.game-stars { color: #e0a800; letter-spacing: 0.08em; font-size: 0.95rem; white-space: nowrap; }
-
-.game-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-
-.game-tag {
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  background: #eef1f5;
-  color: #48525f;
-  white-space: nowrap;
-}
-
-.game-blurb { font-size: 0.92rem; line-height: 1.5; margin: 0; }
-.game-note { font-size: 0.8rem; color: #6b7480; margin: 0; }
-
-.game-links {
-  margin-top: auto;
-  padding-top: 0.6rem;
-  display: flex;
-  gap: 0.9rem;
-  font-size: 0.85rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .game-card { background: #1b1f26; border-color: #2c323c; }
-  .game-shot { border-bottom-color: #2c323c; }
-  .game-tag { background: #263040; color: #b9c4d2; }
-  .game-note { color: #97a2b0; }
-}
-</style>
 
 ## 🎮 Games
 
