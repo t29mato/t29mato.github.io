@@ -43,6 +43,7 @@ future: false
 # ANY repo-root markdown file with a heading gets pulled into the header nav.
 header_pages:
   - blog.md
+  - publications.md
   - animations.md
   - games.md
   - tools.md
@@ -106,3 +107,7 @@ defaults:
 # they get built and linked into the nav.
 exclude:
   - AGENTS.md
+  # The raw SAMURAI extract the publications page was built from. Kept as
+  # provenance, but it is not a page — without this it would be built and
+  # served at /publications-data.html.
+  - publications-data.md

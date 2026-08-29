@@ -12,7 +12,7 @@ permalink: /games/
 # order of everything sharing a rating, which shuffled the four-star three.
 games:
   - name: World Express
-    slug: world-express
+    img: /assets/games/world-express.jpg
     url: /world-express/
     source: https://github.com/t29mato/world-express
     rating: 4
@@ -23,7 +23,7 @@ games:
     note: English, Spanish, French and Japanese. Installs to a phone and plays offline.
 
   - name: Life Journey
-    slug: life-journey
+    img: /assets/games/life-journey.jpg
     url: /life-game/
     source: https://github.com/t29mato/life-game
     rating: 4
@@ -34,7 +34,7 @@ games:
     note: Five country editions. Two to four players around one screen, or against the computer.
 
   - name: Order of Magnitude
-    slug: order-of-magnitude
+    img: /assets/games/order-of-magnitude.jpg
     url: https://order-of-magnitude.vercel.app
     rating: 4
     tags: [Tower defense, Strategy]
@@ -44,7 +44,7 @@ games:
     note: Twelve sectors, drawn like a field manual.
 
   - name: Bomb Rush
-    slug: bomb-rush
+    img: /assets/games/bomb-rush.jpg
     url: /experiments/bomb-rush/
     rating: 3
     tags: [Arcade, Action]
@@ -54,7 +54,7 @@ games:
     note: Keyboard arcade action, one screen per stage.
 
   - name: World Tour Surf
-    slug: world-tour-surf
+    img: /assets/games/world-tour-surf.jpg
     url: /experiments/ct-surf-tour/
     rating: 3
     tags: [Sports, Career]
@@ -64,7 +64,7 @@ games:
     note: Two tours, from the qualifying grind to the championship.
 
   - name: Yumimoto Ladder
-    slug: yumimoto-ladder
+    img: /assets/games/yumimoto-ladder.jpg
     url: /experiments/yumimoto-ladder/
     rating: 3
     tags: [Word game, Learning]
@@ -74,7 +74,7 @@ games:
     note: Sixty words across five decks.
 
   - name: Tokyo Neon
-    slug: tokyo-neon
+    img: /assets/games/tokyo-neon.jpg
     url: https://neon-city-psi-livid.vercel.app
     rating: 2
     tags: [Open world, 3D action]
@@ -86,35 +86,10 @@ games:
 
 ## 🎮 Games
 
-<p class="games-intro" markdown="1">
+<p class="page-intro" markdown="1">
 Small self-contained browser games and toys, built for fun. Each one runs entirely
 client-side — just open and play. **The stars are my own recommendation** out of five:
 how finished and worth-your-evening the thing actually is, not how much work went in.
 </p>
 
-<ul class="game-grid">
-{% for game in page.games %}
-  <li class="game-card">
-    <a href="{{ game.url }}" tabindex="-1" aria-hidden="true">
-      <img class="game-shot" src="/assets/games/{{ game.slug }}.jpg" alt="" loading="lazy" width="1200" height="750">
-    </a>
-    <div class="game-body">
-      <div class="game-head">
-        <span class="game-title"><a href="{{ game.url }}">{{ game.name }}</a></span>
-        <span class="game-stars" title="{{ game.rating }} out of 5" aria-label="Rated {{ game.rating }} out of 5">
-          {%- for i in (1..5) -%}{%- if i <= game.rating -%}★{%- else -%}☆{%- endif -%}{%- endfor -%}
-        </span>
-      </div>
-      <div class="game-tags">
-        {% for tag in game.tags %}<span class="game-tag">{{ tag }}</span>{% endfor %}
-      </div>
-      <p class="game-blurb">{{ game.blurb | markdownify | remove: "<p>" | remove: "</p>" }}</p>
-      <p class="game-note">{{ game.note }}</p>
-      <div class="game-links">
-        <a href="{{ game.url }}">Play</a>
-        {% if game.source %}<a href="{{ game.source }}">Source</a>{% endif %}
-      </div>
-    </div>
-  </li>
-{% endfor %}
-</ul>
+{% include showcase.html items=page.games action="Play" %}

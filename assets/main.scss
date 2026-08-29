@@ -275,7 +275,10 @@ table {
   margin: 1.75rem 0 2.5rem;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  /* `min(...)` is what keeps a card from being wider than the screen: a bare
+     minmax floor does not shrink, so on a narrow phone the grid pushes the
+     page sideways. */
+  grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
   gap: 1.25rem;
 
   > li {
@@ -326,7 +329,10 @@ table {
   margin: 1.75rem 0 2.5rem;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  /* `min(...)` is what keeps a card from being wider than the screen: a bare
+     minmax floor does not shrink, so on a narrow phone the grid pushes the
+     page sideways. */
+  grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
   gap: 1.25rem;
 
   > li {
@@ -357,23 +363,26 @@ table {
 .post-content h2, .post-content h3 { color: var(--heading); }
 
 /* ==========================================================================
-   Games page
+   Showcase cards — games, tools, animations, publications
+   --------------------------------------------------------------------------
+   The picture-led card established on the games page. Every page that lists
+   things people can open uses it, so the site reads as one thing.
    ========================================================================== */
 
-.games-intro { max-width: 46rem; color: var(--text-dim); }
+.page-intro { max-width: 46rem; color: var(--text-dim); }
 
-.game-grid {
+.showcase-grid {
   display: grid;
   /* Cards find their own column count; this collapses to one column on a
      phone without a breakpoint to keep in sync. */
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
   gap: 1.75rem;
   margin: 2rem 0 3rem;
   padding: 0;
   list-style: none;
 }
 
-.game-card {
+.showcase-card {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border);
@@ -396,7 +405,7 @@ table {
    `height: auto` is not optional: minima leaves images at their presentational
    height attribute, which beats aspect-ratio and turned the cards into
    354x751 slivers the first time round. */
-.game-shot {
+.showcase-shot {
   display: block;
   width: 100%;
   height: auto;
@@ -406,7 +415,7 @@ table {
   border-bottom: 1px solid var(--border);
 }
 
-.game-body {
+.showcase-body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -414,7 +423,7 @@ table {
   flex: 1;
 }
 
-.game-head {
+.showcase-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -422,7 +431,7 @@ table {
   flex-wrap: wrap;
 }
 
-.game-title {
+.showcase-title {
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.2;
@@ -431,16 +440,16 @@ table {
   a:hover { text-decoration: underline; }
 }
 
-.game-stars {
+.showcase-stars {
   color: var(--star);
   letter-spacing: 0.08em;
   font-size: 0.95rem;
   white-space: nowrap;
 }
 
-.game-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.showcase-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
-.game-tag {
+.showcase-tag {
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -451,13 +460,106 @@ table {
   white-space: nowrap;
 }
 
-.game-blurb { font-size: 0.92rem; line-height: 1.5; margin: 0; color: var(--text); }
-.game-note { font-size: 0.8rem; color: var(--text-dim); margin: 0; }
+.showcase-blurb { font-size: 0.92rem; line-height: 1.5; margin: 0; color: var(--text); }
+.showcase-note { font-size: 0.8rem; color: var(--text-dim); margin: 0; }
 
-.game-links {
+.showcase-links {
   margin-top: auto;
   padding-top: 0.6rem;
   display: flex;
   gap: 0.9rem;
   font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Publications
+   --------------------------------------------------------------------------
+   Same surface, border and hover as the showcase cards. These carry no
+   picture, so the year takes the job the image does elsewhere: it is the
+   thing your eye lands on when scanning for a paper you half-remember.
+   ========================================================================== */
+
+.page-outro {
+  margin: 2rem 0 3rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.pub-list {
+  list-style: none;
+  margin: 1.75rem 0 2.5rem;
+  padding: 0;
+  display: grid;
+  /* Wider than the showcase grid: author lists are long, and breaking them
+     over four narrow columns makes them unreadable. */
+  grid-template-columns: repeat(auto-fill, minmax(min(26rem, 100%), 1fr));
+  gap: 1.25rem;
+}
+
+.pub-card {
+  margin: 0;
+  padding: 1.1rem 1.25rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 22px var(--shadow);
+  }
+}
+
+.pub-year {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pub-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  font-weight: 700;
+
+  a { text-decoration: none; }
+  a:hover { text-decoration: underline; }
+}
+
+.pub-authors {
+  margin: 0 0 0.35rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+
+  /* The author this site belongs to. */
+  strong { color: var(--text); }
+}
+
+.pub-venue {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.pub-doi {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+
+  a { color: var(--text-dim); text-decoration: none; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; }
 }

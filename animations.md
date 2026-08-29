@@ -2,18 +2,44 @@
 layout: default
 title: Animations
 permalink: /animations/
+
+animations:
+  - name: Ōarai Sun Beach — south breakwater
+    img: /assets/showcase/oarai-reconstruction.jpg
+    url: /experiments/oarai-reconstruction/
+    tags: [Reconstruction, Surf safety]
+    blurb: >-
+      Five surfers, one breakwater, and the wrong idea about safety. A beginner
+      who could not swim lost his depth beside the tetrapods and was carried
+      out; everything after that turned on four judgements.
+    note: Built from one participant's account — satellite overview, seven numbered positions, no fatality.
+
+  - name: Kashima-nada — headland drift
+    img: /assets/showcase/kashimanada.jpg
+    url: /experiments/kashimanada-headland-incident/animation.html
+    tags: [Reconstruction, Surf safety]
+    blurb: >-
+      A canvas reenactment of a near-drowning in a headland rip at Top Sante,
+      played out in real time along the beach.
+    note: Twelve scenes, with the headland geometry taken from the prefecture's own pamphlet.
+
+  - name: Gojo vs Sukuna
+    img: /assets/showcase/gojo-vs-sukuna.jpg
+    url: /experiments/gojo-vs-sukuna/
+    tags: [Silhouette, Fan work]
+    blurb: >-
+      The Shibuya duel drawn as two lights over a dark city — blue against red,
+      techniques named one line at a time, and two domains opening on a split
+      screen.
+    note: One minute three seconds, silent.
 ---
 
 ## 🎬 Animations
 
-Animated reconstructions and explainers, built for fun or to make sense of something that happened. Each one is a self-contained page — just open and press play.
+<p class="page-intro" markdown="1">
+Animated reconstructions and explainers, built for fun or to make sense of
+something that happened. Each one is a self-contained page — just open and
+press play.
+</p>
 
-- [**Gojo vs Sukuna**](/experiments/gojo-vs-sukuna/)
-  A silhouette animation of the Shibuya duel — blue against red over a dark skyline, techniques named one line at a time, and two domains opening on a split screen.
-
-- [**Kashima-nada — headland drift incident**](/experiments/kashimanada-headland-incident/animation.html)
-  A canvas reenactment of a near-drowning in a headland rip at Top Sante, played out in real time along the beach.
-
-- [**Ōarai Sun Beach — south breakwater incident**](/experiments/oarai-reconstruction/)
-  A reconstruction of a surfing incident at the south breakwater of Ōarai Sun Beach, built from a participant's account: satellite overview, seven numbered positions, and the four judgements the outcome turned on.
-{: .card-list}
+{% include showcase.html items=page.animations action="Watch" %}

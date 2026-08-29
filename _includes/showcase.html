@@ -1,0 +1,44 @@
+{%- comment -%}
+  One card grid, used by games, tools and animations.
+
+  Callers pass a list from their own front matter:
+
+
+
+  Each item wants: name, url, img, blurb. Optional: note, source, tags,
+  rating (1-5), source_label, action. A page-wide `action="Play"` sets the
+  link text for every card at once.
+
+  The markup lives here rather than in each page so the three lists cannot
+  drift apart — the whole point of having one card language.
+{%- endcomment -%}
+<ul class="showcase-grid">
+{% for item in include.items %}
+  <li class="showcase-card">
+    <a href="{{ item.url }}" tabindex="-1" aria-hidden="true">
+      <img class="showcase-shot" src="{{ item.img }}" alt="" loading="lazy" width="1200" height="750">
+    </a>
+    <div class="showcase-body">
+      <div class="showcase-head">
+        <span class="showcase-title"><a href="{{ item.url }}">{{ item.name }}</a></span>
+        {% if item.rating %}
+        <span class="showcase-stars" title="{{ item.rating }} out of 5" aria-label="Rated {{ item.rating }} out of 5">
+          {%- for i in (1..5) -%}{%- if i <= item.rating -%}★{%- else -%}☆{%- endif -%}{%- endfor -%}
+        </span>
+        {% endif %}
+      </div>
+      {% if item.tags %}
+      <div class="showcase-tags">
+        {% for tag in item.tags %}<span class="showcase-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <p class="showcase-blurb">{{ item.blurb | markdownify | remove: "<p>" | remove: "</p>" }}</p>
+      {% if item.note %}<p class="showcase-note">{{ item.note | markdownify | remove: "<p>" | remove: "</p>" }}</p>{% endif %}
+      <div class="showcase-links">
+        <a href="{{ item.url }}">{{ item.action | default: include.action | default: "Open" }}</a>
+        {% if item.source %}<a href="{{ item.source }}">{{ item.source_label | default: "Source" }}</a>{% endif %}
+      </div>
+    </div>
+  </li>
+{% endfor %}
+</ul>

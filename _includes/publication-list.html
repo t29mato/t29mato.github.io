@@ -1,0 +1,21 @@
+{%- comment -%}
+  Publication cards. Same surface and hover as the showcase cards, but these
+  have no picture, so the year does the work the image does elsewhere.
+
+  `doi` is optional on purpose: a link is only shown where the source actually
+  gave one. Guessing a DOI would produce a link that resolves to the wrong
+  paper, which is worse than no link.
+{%- endcomment -%}
+<ol class="pub-list">
+{% for paper in include.papers %}
+  <li class="pub-card">
+    <span class="pub-year">{{ paper.year }}</span>
+    <h3 class="pub-title">
+      {% if paper.doi %}<a href="https://doi.org/{{ paper.doi }}">{{ paper.title }}</a>{% else %}{{ paper.title }}{% endif %}
+    </h3>
+    <p class="pub-authors">{{ paper.authors | markdownify | remove: "<p>" | remove: "</p>" }}</p>
+    <p class="pub-venue">{{ paper.venue | markdownify | remove: "<p>" | remove: "</p>" }}</p>
+    {% if paper.doi %}<p class="pub-doi"><a href="https://doi.org/{{ paper.doi }}">doi:{{ paper.doi }}</a></p>{% endif %}
+  </li>
+{% endfor %}
+</ol>
