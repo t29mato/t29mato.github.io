@@ -55,7 +55,7 @@ games:
 
   - name: World Tour Surf
     img: /assets/games/world-tour-surf.jpg
-    url: /experiments/ct-surf-tour/
+    url: https://world-tour-surf.vercel.app
     rating: 3
     tags: [Sports, Career]
     blurb: >-
