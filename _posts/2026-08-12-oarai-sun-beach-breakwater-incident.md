@@ -10,7 +10,7 @@ On 8 August, five surfers at Ōarai Sun Beach in Ibaraki Prefecture had a mornin
 
 I wasn't there. The account comes from participant E, the most experienced person in the water that day, and I collected it from him with a written question form rather than a conversation — a fixed set of questions about conditions, positions, timings, and, above all, *what each person decided and why*. That form and the resulting brief are what the animation was built from.
 
-**Watch it here: [Ōarai Sun Beach — south breakwater incident reconstruction](/experiments/oarai-reconstruction/)** (2 min 08 s, silent, captions burned in).
+**Watch it here: [Ōarai Sun Beach — south breakwater incident reconstruction](/animations/oarai-reconstruction/)** (2 min 08 s, silent, captions burned in).
 
 ## Why a question form rather than a chat
 

@@ -6,7 +6,7 @@ permalink: /animations/
 animations:
   - name: Ōarai Sun Beach — south breakwater
     img: /assets/showcase/oarai-reconstruction.jpg
-    url: /experiments/oarai-reconstruction/
+    url: /animations/oarai-reconstruction/
     tags: [Reconstruction, Surf safety]
     blurb: >-
       Five surfers, one breakwater, and the wrong idea about safety. A beginner
@@ -16,7 +16,7 @@ animations:
 
   - name: Kashima-nada — headland drift
     img: /assets/showcase/kashimanada.jpg
-    url: /experiments/kashimanada-headland-incident/animation.html
+    url: /animations/kashimanada-headland-incident/animation.html
     tags: [Reconstruction, Surf safety]
     blurb: >-
       A canvas reenactment of a near-drowning in a headland rip at Top Sante,
@@ -25,7 +25,7 @@ animations:
 
   - name: Gojo vs Sukuna
     img: /assets/showcase/gojo-vs-sukuna.jpg
-    url: /experiments/gojo-vs-sukuna/
+    url: /animations/gojo-vs-sukuna/
     tags: [Silhouette, Fan work]
     blurb: >-
       The Shibuya duel drawn as two lights over a dark city — blue against red,

@@ -25,14 +25,17 @@ This repository (`t29mato.github.io`) is a personal portfolio/blog site built wi
 - `_layouts/post.html` already exists, so no new layout is needed.
 - Only introduce a custom collection (e.g. `_verifications`) in `_config.yml` once the number of articles grows enough to warrant splitting by genre. Until then, use `_posts` only.
 
-### 2. Self-made experiment HTML (self-contained pages) → `/experiments/<slug>/`
+### 2. Self-made static HTML (self-contained pages)
 
-- Use this when publishing a finished static HTML page as-is (visualizations, demos, experiment outputs, etc.).
-- Location: `/experiments/<slug>/index.html` (put related CSS/JS/images in the same folder).
+- Use this when publishing a finished static HTML page as-is (visualizations, demos, animations, experiment outputs, etc.).
 - **Important: do not add front matter (a YAML block starting with `---`).**
   - Files without front matter are copied by Jekyll as-is, without Liquid processing, so the page renders exactly as written and is unaffected by the site theme (minima).
   - Adding front matter turns it into a Jekyll page, which will have the theme's layout applied and may break the page.
-- Published URL: `https://t29mato.github.io/experiments/<slug>/`
+- Pick the location by what the page is and where it's linked from:
+  - Animated reconstructions/explainers listed on `/animations/` → `/animations/<slug>/index.html` (put related CSS/JS/video/images in the same folder).
+  - Games listed on `/games/` that don't warrant an external deploy → `/experiments/<slug>/index.html`. Games that get their own build pipeline (e.g. deployed to Vercel) link out to that URL directly instead; `/experiments/` is for the ones that don't.
+  - Anything else self-contained and not yet claimed by a showcase page (`/games/`, `/animations/`, `/tools/`) → `/experiments/<slug>/` as the default catch-all.
+- Published URL: `https://t29mato.github.io/<location>/<slug>/`, matching wherever the file was placed above.
 - If a related verification article exists in `_posts`, link to this page from that article.
 
 ## Other notes
