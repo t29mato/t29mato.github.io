@@ -19,7 +19,9 @@
 # in the templates via {{ site.myvariable }}.
 
 title: Tomoya Mato
-email: MATO.Tomoya (at) nims.go.jp
+# No `email:` here on purpose — this is a personal site, not a NIMS one, and
+# the contact form (contact.md, via Web3Forms) is the intended way in. Adding
+# `email:` back would put a mailto icon in minima's footer.
 # description: >- # this means to ignore newlines until "baseurl:"
 #   Write an awesome description for your new site here. You can edit this
 #   line in _config.yml. It will appear in your document head meta (for
@@ -48,6 +50,7 @@ header_pages:
   - animations.md
   - games.md
   - tools.md
+  - contact.md
 
 collections:
   # releases:

@@ -39,6 +39,7 @@
   --star: #f2b134;
   --tag-bg: #212c3c;
   --tag-text: #b7c8dd;
+  --danger: #ffb4ab;
 
   --code-bg: #131a24;
   --shadow: rgba(0, 0, 0, 0.55);
@@ -69,6 +70,7 @@
   --star: #8a5a00;
   --tag-bg: #e9edf3;
   --tag-text: #47525f;
+  --danger: #b3261e;
 
   --code-bg: #eef1f6;
   --shadow: rgba(15, 23, 42, 0.12);
@@ -562,4 +564,81 @@ table {
 
   a { color: var(--text-dim); text-decoration: none; }
   a:hover { color: var(--accent-hover); text-decoration: underline; }
+}
+
+/* ==========================================================================
+   Contact form
+   --------------------------------------------------------------------------
+   The only way in — there is no `email:` in _config.yml, so this is not a
+   decoration next to a mailto link, it is the whole contact story.
+   ========================================================================== */
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 32rem;
+  margin: 2rem 0 3rem;
+
+  label {
+    margin-top: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dim);
+  }
+
+  input[type="text"],
+  input[type="email"],
+  textarea {
+    font: inherit;
+    padding: 0.6rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    resize: vertical;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+  }
+
+  button {
+    align-self: flex-start;
+    margin-top: 1.25rem;
+    padding: 0.6rem 1.4rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--bg);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover:not(:disabled) { background: var(--accent-hover); }
+    &:disabled { opacity: 0.6; cursor: default; }
+  }
+}
+
+/* Honeypot field: off-screen rather than `display: none`, which some bots
+   already know to skip. A real visitor never sees or reaches it. */
+.contact-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.contact-status {
+  min-height: 1.3em;
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+
+  &[data-state="success"] { color: var(--accent); }
+  &[data-state="error"] { color: var(--danger); }
 }
