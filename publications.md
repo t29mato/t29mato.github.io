@@ -9,7 +9,7 @@ permalink: /publications/
 papers:
   - year: 2025
     title: "Starrydata: from published plots to shared materials data"
-    authors: "Katsura, Yukari; Kumagai, Masaya; **Mato, Tomoya**; Takada, Yu; Ando, Yuki; Fujita, Erina; et al."
+    authors: "Katsura, Yukari; Kumagai, Masaya; **Mato, Tomoya**; Takada, Yu; Ando, Yuki; Fujita, Erina; et al"
     venue: "_Science and Technology of Advanced Materials: Methods_, 5(1)"
     doi: 10.1080/27660400.2025.2506976
 
