@@ -752,6 +752,119 @@ table {
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
+/* Featured stars ----------------------------------------------------------
+   Four of the sky's points are real destinations — the owner's own picks,
+   drawn brighter than the ambient field. A canvas cannot hold focusable
+   links, so these are genuine anchors layered over it; the field script pins
+   each one to a curve and sets --star-col along the cold-to-warm axis (the
+   nth-child positions below are only the no-JS fallback). The name is a pill
+   that appears on hover, focus, or press; a touch tap just navigates, which
+   is what a link does. The 44px hit target is bigger than the visible star. */
+
+.home-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.home-star {
+  --star-col: var(--field-cold);
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  pointer-events: auto;
+
+  &:nth-child(1) { left: 28%; top: 22%; }
+  &:nth-child(2) { left: 55%; top: 40%; }
+  &:nth-child(3) { left: 74%; top: 60%; }
+  &:nth-child(4) { left: 86%; top: 18%; }
+
+  /* The slow ping that marks these four as more than scenery. */
+  &::after {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--star-col);
+    opacity: 0.35;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  &:hover .home-star-dot,
+  &:focus-visible .home-star-dot,
+  &:active .home-star-dot {
+    transform: rotate(45deg) scale(1.5);
+  }
+
+  &:hover .home-star-label,
+  &:focus-visible .home-star-label,
+  &:active .home-star-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.home-star-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--star-col);
+  box-shadow: 0 0 10px var(--star-col);
+  transform: rotate(45deg); /* the diamond ✦ of the sky */
+  transition: transform 0.2s ease;
+}
+
+.home-star-label {
+  position: absolute;
+  left: calc(100% - 6px);
+  top: 50%;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px var(--shadow);
+  opacity: 0; /* not display: none — the link keeps its name for readers */
+  transform: translateY(-50%) translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+
+.home-star-flip .home-star-label {
+  left: auto;
+  right: calc(100% - 6px);
+  transform: translateY(-50%) translateX(4px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-star::after {
+    animation: home-star-ping 3.2s ease-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-star-dot,
+  .home-star-label { transition: none; }
+}
+
+@keyframes home-star-ping {
+  0% { transform: scale(0.6); opacity: 0.45; }
+  80% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
 /* Portals ----------------------------------------------------------------- */
 
 /* Two shelves — the day job, then after hours — so the professional pages and

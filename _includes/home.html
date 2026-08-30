@@ -6,6 +6,24 @@
     rest of this site is board games, animations, small tools, and writing —
     built after hours, for the fun of it.</p>
   </div>
+  <nav class="home-stars" aria-label="Recommended">
+    <a class="home-star" href="https://www.starrydata2.org/">
+      <span class="home-star-dot" aria-hidden="true"></span>
+      <span class="home-star-label">Starrydata</span>
+    </a>
+    <a class="home-star" href="{{ "/life-game/" | relative_url }}">
+      <span class="home-star-dot" aria-hidden="true"></span>
+      <span class="home-star-label">Life Journey</span>
+    </a>
+    <a class="home-star" href="https://digitizer.starrydata.org/">
+      <span class="home-star-dot" aria-hidden="true"></span>
+      <span class="home-star-label">StarryDigitizer</span>
+    </a>
+    <a class="home-star" href="{{ "/world-express/" | relative_url }}">
+      <span class="home-star-dot" aria-hidden="true"></span>
+      <span class="home-star-label">World Express</span>
+    </a>
+  </nav>
 </section>
 
 <nav class="home-portals-nav" aria-label="Site sections">
@@ -77,6 +95,11 @@
    * triangle, diamond — so the field reads two ways at once: the series
    * markers of a multi-series plot, and a scatter of game pieces. Both halves
    * of the site in one picture. Pure canvas, no libraries.
+   *
+   * Four of the sky's stars are real destinations — see .home-stars in the
+   * markup. A canvas cannot hold focusable links, so those four are genuine
+   * anchors layered on top; placeStars() pins each one to the same curves the
+   * ambient markers ride and colours it along the same cold-to-warm axis.
    *
    * Colours come from --field-cold / --field-warm so both themes work, and the
    * script re-reads them when the theme toggle flips data-theme. With
@@ -170,6 +193,37 @@
       }
     }
 
+    /*
+     * The featured stars. Fixed stars in a drifting sky: each sits at a chosen
+     * x on one of the field's curves rather than riding along, because a link
+     * that wanders is a link you cannot click. Two coordinate sets — a phone
+     * hero is mostly text from halfway down, so the narrow set keeps to the
+     * upper curves. Labels flip to the left near the right edge so the pill
+     * never leaves the panel.
+     */
+    var starEls = document.querySelectorAll(".home-star");
+    var starSpots = [
+      { k: 0, x: 0.28, nk: 0, nx: 0.20 }, /* Starrydata */
+      { k: 1, x: 0.55, nk: 1, nx: 0.42 }, /* Life Journey */
+      { k: 2, x: 0.74, nk: 0, nx: 0.65 }, /* StarryDigitizer */
+      { k: 0, x: 0.86, nk: 1, nx: 0.85 }  /* World Express */
+    ];
+
+    function placeStars() {
+      if (!curves.length || !starEls.length) return;
+      var narrow = panel.clientWidth < 600;
+      for (var i = 0; i < starEls.length && i < starSpots.length; i++) {
+        var s = starSpots[i];
+        var k = narrow ? s.nk : s.k;
+        var x = narrow ? s.nx : s.x;
+        var el = starEls[i];
+        el.style.left = (x * 100) + "%";
+        el.style.top = (curveY(curves[k], x) * 100) + "%";
+        el.style.setProperty("--star-col", lerpColor(x));
+        el.classList.toggle("home-star-flip", x > 0.55);
+      }
+    }
+
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       var w = panel.clientWidth, h = panel.clientHeight;
@@ -179,6 +233,7 @@
       canvas.width = W;
       canvas.height = H;
       if (!points.length) makeField();
+      placeStars();
     }
 
     function draw(t) {
@@ -267,14 +322,17 @@
       });
     }
 
-    /* Theme flips: the toggle writes data-theme, the OS writes a media event. */
+    /* Theme flips: the toggle writes data-theme, the OS writes a media event.
+       The featured stars re-place too — their colour rides the same axis. */
     new MutationObserver(function () {
       readColors();
+      placeStars();
       if (!running) still();
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     var osDark = window.matchMedia("(prefers-color-scheme: dark)");
     if (osDark.addEventListener) osDark.addEventListener("change", function () {
       readColors();
+      placeStars();
       if (!running) still();
     });
 
