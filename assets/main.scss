@@ -730,28 +730,6 @@ table {
   box-shadow: 0 0 0 0 var(--hero-glow-a);
 }
 
-.home-title {
-  margin: 0 0 1.1rem;
-  font-size: clamp(2.4rem, 7.5vw, 5rem);
-  font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.03em;
-  /* Real text under a painted-on gradient: the glyphs stay selectable,
-     findable, and read by screen readers. */
-  background: linear-gradient(96deg, var(--hero-ink-a), var(--hero-ink-b) 42%, var(--hero-ink-c) 78%);
-  background-size: 180% 100%;
-  background-position: 0% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* The controlled two-line break earns its keep only where the first line
-   fits on one line; on a phone natural wrapping wins. */
-@media (max-width: 480px) {
-  .home-br { display: none; }
-}
-
 .home-lede {
   margin: 0;
   max-width: 34rem;
@@ -763,18 +741,9 @@ table {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .home-title {
-    animation: home-ink 16s ease-in-out infinite alternate;
-  }
-
   .home-pip {
     animation: home-pip 3.2s ease-out infinite;
   }
-}
-
-@keyframes home-ink {
-  from { background-position: 0% 0; }
-  to { background-position: 100% 0; }
 }
 
 @keyframes home-pip {
