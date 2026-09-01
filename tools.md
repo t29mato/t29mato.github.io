@@ -19,6 +19,21 @@ tools:
       browser** — a `connect-src 'self'` policy means the browser itself
       refuses outbound requests, EXIF and GPS are dropped on import, and even
       the face detection model is served from the page. Japanese and English.
+
+  - name: PlantUML Anywhere
+    img: /assets/showcase/plantuml-anywhere.jpg
+    url: https://github.com/t29mato/plantuml-anywhere
+    action: View on GitHub
+    tags: [VS Code extension, Diagrams]
+    blurb: >-
+      Open a `.puml` file and get a live diagram preview — no Java, no
+      Graphviz, no server. The PlantUML engine and its Graphviz layout step
+      both run client-side, compiled to WebAssembly, so it works the same in
+      desktop VS Code and in a browser-based editor like github.dev.
+    note: >-
+      Not yet on the VS Code Marketplace — install from a local `.vsix`, or
+      use the standalone Chrome/Brave extension to open `.puml` files
+      straight off disk. MIT licensed.
 ---
 
 ## 🛠 Tools
