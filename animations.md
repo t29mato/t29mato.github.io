@@ -1,7 +1,9 @@
 ---
-layout: default
+layout: page
 title: Animations
 permalink: /animations/
+tty_cwd: ~/site/after-hours/animations
+tty_cmd: ls -l
 
 animations:
   - name: Ōarai Sun Beach — south breakwater
@@ -34,7 +36,7 @@ animations:
     note: One minute three seconds, silent.
 ---
 
-## 🎬 Animations
+# Animations
 
 <p class="page-intro" markdown="1">
 Animated reconstructions and explainers, built for fun or to make sense of

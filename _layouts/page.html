@@ -1,0 +1,18 @@
+---
+layout: default
+---
+{%- comment -%}
+  The shell every content page lives in: a prompt opens the document, the
+  page's own markdown is what the command printed, and an idle prompt with
+  the cursor closes the session. Pages set the working directory and command
+  in front matter:
+
+    layout: page
+    tty_cwd: ~/site/day-job/works
+    tty_cmd: cat README.md
+{%- endcomment -%}
+{% include tty-prompt.html cwd=page.tty_cwd cmd=page.tty_cmd %}
+<div class="tty-doc">
+{{ content }}
+</div>
+{% include tty-prompt.html cwd=page.tty_cwd cursor=true %}

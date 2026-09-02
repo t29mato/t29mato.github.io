@@ -1,0 +1,8 @@
+{%- comment -%}
+  One prompt line: `tomoya@mato <cwd> $ <cmd>`. The opening move of every
+  page — pass `cwd` (defaults to ~) and `cmd`, plus `cursor=true` for the
+  idle prompt that closes a session.
+
+    {% include tty-prompt.html cwd="~/site/day-job/works" cmd="cat README.md" %}
+{%- endcomment -%}
+<p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">{{ include.cwd | default: "~" }}</span> $</span>{% if include.cmd %} <span class="tty-cmd">{{ include.cmd }}</span>{% endif %}{% if include.comment %} <span class="tty-dim"># {{ include.comment }}</span>{% endif %}{% if include.cursor %} <span class="tty-cursor" aria-hidden="true"></span>{% endif %}</p>

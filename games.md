@@ -1,7 +1,9 @@
 ---
-layout: default
+layout: page
 title: Games
 permalink: /games/
+tty_cwd: ~/site/after-hours/games
+tty_cmd: ls -l
 
 # Each card is generated from this list, so adding a game means adding an entry
 # here — no HTML to copy. `rating` is my own recommendation out of 5, based on
@@ -84,7 +86,7 @@ games:
     note: An early build — the city is there, the missions are not.
 ---
 
-## 🎮 Games
+# Games
 
 <p class="page-intro" markdown="1">
 Small self-contained browser games and toys, built for fun. Each one runs entirely

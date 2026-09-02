@@ -1,7 +1,9 @@
 ---
-layout: default
+layout: page
 title: Publications
 permalink: /publications/
+tty_cwd: ~/site/day-job/publications
+tty_cmd: grep -n "" papers.txt
 
 # Journal articles, newest first. `doi` is only filled in where a source
 # actually provided one — see _includes/publication-list.html.
@@ -46,7 +48,7 @@ papers:
     venue: "_Biochimica et Biophysica Acta (BBA) — Bioenergetics_, 1861(7), 148190. Elsevier"
 ---
 
-## 📚 Publications
+# Publications
 
 <p class="page-intro" markdown="1">
 NIMS · Research Network and Facility Services Division, Materials Data

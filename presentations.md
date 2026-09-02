@@ -1,17 +1,19 @@
 ---
-layout: default
+layout: page
 title: Presentations
 permalink: /presentations/
+tty_cwd: ~/site/day-job/presentations
+tty_cmd: grep -n "" talks/*.txt
 ---
 
-## 🎤 Oral Presentations
+# Oral Presentations
 
 <p class="page-intro" markdown="1">
 Conference talks, newest first — thermoelectric materials, the Starrydata
 platform, and large-language-model tools for literature curation.
 </p>
 
-### 2025
+## 2025
 
 - **Tomoya Mato**, Yu Takada, Masaya Kumagai, Yukari Katsura
   **Development of Automatic Suggestion System of Sample Information Data from Literature by Large Language Models**
@@ -26,7 +28,7 @@ platform, and large-language-model tools for literature curation.
   The 72st Spring Meeting of the Japan Society of Applied Physics, 2025
 {: .plain-list}
 
-### 2024
+## 2024
 
 - Yukari Katsura, **Tomoya Mato**, Yu Takada, Eiji Koyama, Naoto Saito, Yoshihiro Sakamoto, Atsumi Tanaka, Dewi Yana, Erina Fujita, Fumiaki Hosono, Kaoru Kimura, Masaya Kumagai
   **2D/3D visualization tools for the Starrydata’s large-scale thermoelectric materials data**
@@ -51,7 +53,7 @@ platform, and large-language-model tools for literature curation.
 
 ---
 
-### 2023
+## 2023
 
 - Yukari KATSURA, Yu TAKADA, **Tomoya MATO**, Masaya Kumagai, Haruhiko Morito, Masaya Fujioka, Masakazu Akiyama
   **Crystal Structure Builder Based on Delaunay Tetrahedral Chemistry**
@@ -64,7 +66,7 @@ platform, and large-language-model tools for literature curation.
 
 ---
 
-### 2022
+## 2022
 
 - Luca Foppiano, **Tomoya Mato**, Pedro Baptista de Castro, Kensei Terashima, Yoshihiko Takano, Masashi Ishii
   **Integrated System for Large-Scale Harvesting and Data Curation: Challenges and Prospects**
@@ -77,7 +79,7 @@ platform, and large-language-model tools for literature curation.
 
 ---
 
-### 2021
+## 2021
 
 - Yukari Katsura, Masaya Kumagai, **Tomoya Mato**, Yuki Ando, Atsumi Tanaka, Yoshihiro Sakamoto, Erina Fujita, Kaoru Kimura, Koji Tsuda
   **Starrydata: A Curation-Based Database of Published Plot Data in Materials Science**
@@ -98,7 +100,7 @@ platform, and large-language-model tools for literature curation.
 
 ---
 
-### 2016
+## 2016
 
 - **Tomoya Mato**, Keiichi Inoue, Hideki Kandori (Nagoya Institute of Technology)
   **Spectroscopic and Functional Study of Arginine 109 in Na⁺ Transport by Na⁺-Pump Rhodopsin**

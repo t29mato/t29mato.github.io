@@ -1,0 +1,29 @@
+---
+layout: default
+---
+{%- comment -%}
+  Overrides minima's home.html — used by /blog/. The post index as the
+  session would actually produce it: ls -lt over the blog directory, newest
+  first, one row per post. Each row is one link: date, then title.
+{%- endcomment -%}
+{% include tty-prompt.html cwd="~/site/after-hours/blog" cmd="ls -lt" %}
+<h1 class="tty-out">{{ page.title | default: "Blog" }}</h1>
+
+{{ content }}
+
+{%- if site.posts.size > 0 -%}
+<ul class="post-list">
+  {%- for post in site.posts -%}
+  <li>
+    <a class="post-row" href="{{ post.url | relative_url }}">
+      <span class="post-row-date">{{ post.date | date: "%Y-%m-%d" }}</span>
+      <span class="post-row-title">{{ post.title | escape }}</span>
+    </a>
+  </li>
+  {%- endfor -%}
+</ul>
+
+<p class="rss-subscribe tty-dim">subscribe <a href="{{ "/feed.xml" | relative_url }}">via RSS</a></p>
+{%- endif -%}
+
+{% include tty-prompt.html cwd="~/site/after-hours/blog" cursor=true %}

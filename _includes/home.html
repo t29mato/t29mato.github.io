@@ -5,12 +5,12 @@
   it below.
 
   No script. The one moving part (the cursor) blinks in CSS and only under
-  prefers-reduced-motion: no-preference; every colour is a --tty-* token from
-  main.scss so both themes work. The status bar and the scanline texture are
-  decoration and stay aria-hidden.
+  prefers-reduced-motion: no-preference; every colour comes from the site
+  tokens in main.scss so both themes work. The panel frame this section once
+  had is gone: the whole site is the screen now, so the session sits directly
+  on the page like every other document.
 {%- endcomment -%}
 <section class="tty">
-  <div class="tty-screen">
 
     <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cmd">whoami</span></p>
     <h1 class="tty-out">Tomoya Mato — Software Engineer for Materials Science</h1>
@@ -45,10 +45,4 @@ and writing — built after hours, for the fun of it.</p>
 
     <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cursor" aria-hidden="true"></span></p>
 
-  </div>
-
-  <div class="tty-statusbar" aria-hidden="true">
-    <span class="tty-statusbar-left"><b>[0] mato-site</b>  1:home*  2:works  3:games</span>
-    <span>t29mato · UTF-8 · 100%</span>
-  </div>
 </section>

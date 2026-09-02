@@ -1,0 +1,12 @@
+{%- comment -%}
+  Overrides minima's footer.html. The bottom status line of the same tmux
+  session the header opens: session name, owner, and the two real ways out —
+  GitHub and the feed. Body flex keeps it at the foot of the screen even when
+  the page is short.
+{%- endcomment -%}
+<footer class="site-footer">
+  <div class="wrapper tty-statusline">
+    <span class="tty-status-left"><span class="tty-session">[mato-site]</span> {{ site.title | escape }} · software engineer for materials science</span>
+    <span class="tty-status-right"><a href="https://github.com/{{ site.github_username }}">github</a> · <a href="{{ "/feed.xml" | relative_url }}">rss</a> · <span aria-hidden="true">UTF-8 · 100%</span></span>
+  </div>
+</footer>

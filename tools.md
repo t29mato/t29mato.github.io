@@ -1,7 +1,9 @@
 ---
-layout: default
+layout: page
 title: Tools
 permalink: /tools/
+tty_cwd: ~/site/after-hours/tools
+tty_cmd: ls -l
 
 tools:
   - name: Candy Spice Certificate Maker
@@ -36,7 +38,7 @@ tools:
       straight off disk. MIT licensed.
 ---
 
-## 🛠 Tools
+# Tools
 
 <p class="page-intro" markdown="1">
 Small utilities that do one thing. Like the games, each runs entirely

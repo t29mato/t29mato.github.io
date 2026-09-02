@@ -1,10 +1,12 @@
 ---
-layout: default
+layout: page
 title: Works
 permalink: /works/
+tty_cwd: ~/site/day-job/works
+tty_cmd: cat README.md
 ---
 
-## 💼 Works
+# Works
 
 <p class="page-intro" markdown="1">
 Projects and open-source contributions from my work at NIMS, mostly around
@@ -28,4 +30,4 @@ materials data infrastructure.
 
 - **[streamlit-pdf-viewer](https://github.com/lfoppiano/streamlit-pdf-viewer)**
   A Streamlit component that enables interactive PDF viewing and enrichment, designed to support document-based workflows in web applications.
-{: .card-list}
+{: .proj-list}

@@ -1,10 +1,12 @@
 ---
-layout: default
+layout: page
 title: Contact
 permalink: /contact/
+tty_cwd: ~/site
+tty_cmd: mail t29mato
 ---
 
-## ✉️ Contact
+# Contact
 
 <p class="page-intro" markdown="1">
 Get in touch — the message goes straight to my inbox, no email address

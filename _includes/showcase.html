@@ -10,11 +10,15 @@
   link text for every card at once.
 
   The markup lives here rather than in each page so the three lists cannot
-  drift apart — the whole point of having one card language.
+  drift apart — the whole point of having one pane language.
+
+  Each pane opens with the preview's own filename, derived from `img`, so the
+  screenshot reads as an inline image preview and not a marketing thumbnail.
 {%- endcomment -%}
 <ul class="showcase-grid">
 {% for item in include.items %}
   <li class="showcase-card">
+    <span class="showcase-file" aria-hidden="true">img: {{ item.img | split: "/" | last }}</span>
     <a href="{{ item.url }}" tabindex="-1" aria-hidden="true">
       <img class="showcase-shot" src="{{ item.img }}" alt="" loading="lazy" width="1200" height="750">
     </a>

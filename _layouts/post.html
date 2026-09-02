@@ -2,6 +2,12 @@
 layout: default
 ---
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  {%- comment -%}
+    The post is what the session just cat'ed out of the blog directory, so
+    the prompt names the file the permalink came from.
+  {%- endcomment -%}
+  {%- capture cat_cmd %}cat {{ page.date | date: "%Y-%m-%d" }}-{{ page.slug }}.md{% endcapture -%}
+  {% include tty-prompt.html cwd="~/site/after-hours/blog" cmd=cat_cmd %}
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">
       {%- if page.version -%}
@@ -48,4 +54,6 @@ layout: default
   {%- endif -%}
 
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
+
+  {% include tty-prompt.html cwd="~/site/after-hours/blog" cursor=true %}
 </article>
