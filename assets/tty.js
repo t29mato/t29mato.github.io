@@ -27,9 +27,9 @@
 
   var NOW_TXT =
     "Currently poking at: Herd (a local dev environment), Orca (a strange " +
-    "little step-sequencer), and Zed as a daily editor. Also running a " +
+    "little step-sequencer), and Zed as a daily editor. Also bringing up a " +
     "4-node cluster of 2011 Mac Minis, mostly because old hardware deserves " +
-    "a second job.";
+    "a second job — what is up so far is in homelab/.";
 
   var INTERESTS_TXT =
     "Diving, mountains, and board games I end up building instead of just " +

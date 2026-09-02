@@ -51,6 +51,7 @@ header_pages:
   - animations.md
   - games.md
   - tools.md
+  - homelab.md
   - contact.md
 
 collections:
@@ -112,6 +113,9 @@ defaults:
 # they get built and linked into the nav.
 exclude:
   - AGENTS.md
+  # Post-processing for the generated homelab diagrams (see AGENTS.md).
+  # Jekyll already skips `_`-prefixed entries; this is belt and braces.
+  - _scripts/
   # The raw SAMURAI extract the publications page was built from. Kept as
   # provenance, but it is not a page — without this it would be built and
   # served at /publications-data.html.

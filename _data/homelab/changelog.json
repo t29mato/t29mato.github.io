@@ -1,0 +1,8 @@
+[
+  {
+    "date": "2026-09-02",
+    "title": "The lab gets a status page",
+    "body": "First published inventory: mini-1 provisioned and reachable, mini-2 through mini-4 racked but not yet installed, sw-1 wiring them together. The topology diagram and this log start here, so the first entry has nothing to diff against.",
+    "delta": null
+  }
+]

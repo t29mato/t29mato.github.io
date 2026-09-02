@@ -38,10 +38,114 @@ This repository (`t29mato.github.io`) is a personal portfolio/blog site built wi
 - Published URL: `https://t29mato.github.io/<location>/<slug>/`, matching wherever the file was placed above.
 - If a related verification article exists in `_posts`, link to this page from that article.
 
+## Keeping the homelab page current (`/homelab/`)
+
+`/homelab/` publishes the state of the home cluster — four Mac minis, a
+switch, and the laptop that drives them. It exists to be *updated*, not
+written once, and the update is expected to be made by whichever Claude Code
+session happens to be running in the lab when something actually changes.
+
+### Where the truth lives
+
+| File | What it is |
+|---|---|
+| `_data/homelab/inventory.json` | The single source of truth for the page: hosts, network, software stack, services, house rules. `homelab.md` renders it and holds no facts of its own. |
+| `_data/homelab/changelog.json` | The `git log` block, newest first. One entry per real change. |
+| `homelab/spec/current.architecture.json` | The archify source for the topology diagram. Published as-is next to the diagram. |
+| `homelab/spec/history/<YYYY-MM-DD>.architecture.json` | The spec as it stood before a change, kept so a delta can be computed. |
+| `homelab/topology/index.html` | Generated. Never hand-edit — regenerate it. |
+| `_scripts/strip-webfont.mjs` | Post-processing for the two generated pages above. Not site content; `_`-prefixed, so Jekyll never builds it. |
+| `homelab/changes/<YYYY-MM-DD>/index.html` | Generated delta for one dated change, when there was a topology change worth showing. |
+
+`_data/` is never published by Jekyll, so the inventory itself is not served;
+the architecture spec under `homelab/spec/` is, deliberately — it is the
+diagram's source and contains nothing that is not already on the page.
+
+### The update loop
+
+1. Edit `_data/homelab/inventory.json` to match reality, and bump
+   `updated_at` to today.
+2. Add one entry to the top of `_data/homelab/changelog.json`: `date`,
+   `title`, `body`, and `delta` (a site path, or `null`).
+3. If the *topology* changed — a host appeared, a link changed, a component
+   was added or removed — copy the previous spec into history first, then
+   edit the current one:
+
+   ```bash
+   cp homelab/spec/current.architecture.json \
+      homelab/spec/history/<previous-updated_at>.architecture.json
+   # ...now edit homelab/spec/current.architecture.json...
+   ```
+
+4. Validate, then regenerate the diagram. Both commands run from the archify
+   skill directory (`~/.agents/skills/archify`, installed with
+   `npx skills add tt-a1i/archify -g`):
+
+   ```bash
+   cd ~/.agents/skills/archify
+   node bin/archify.mjs validate architecture <repo>/homelab/spec/current.architecture.json --quality showcase --json
+   node bin/archify.mjs deliver  architecture <repo>/homelab/spec/current.architecture.json <repo>/homelab/topology/index.html --quality showcase --json
+   ```
+
+   Showcase acceptance means all 9 checks pass with 0 errors and 0 warnings.
+   Anything less is not ready to publish. The optional
+   `node bin/archify.mjs visual-check <output.html>` needs a local Chrome or
+   Chromium and writes an `index.visual-check.json` receipt beside the page —
+   delete that receipt, it is not site content.
+
+   Then, back in the repo, strip the web font archify links in. Every other
+   page on this site is set in the visitor's own monospace and makes no
+   third-party request; a diagram page calling Google on load would be the
+   only exception, on the one section that is about not leaking anything:
+
+   ```bash
+   node _scripts/strip-webfont.mjs homelab/topology/index.html
+   ```
+
+   The script exits non-zero if it matches nothing, so an upstream template
+   change gets noticed. Re-run `node bin/archify.mjs check <output.html>`
+   afterwards — it should still report 9/9.
+
+5. Only if the topology changed, generate the delta and point the changelog
+   entry's `delta` at it:
+
+   ```bash
+   node bin/archify.mjs compare architecture \
+     <repo>/homelab/spec/history/<previous>.architecture.json \
+     <repo>/homelab/spec/current.architecture.json \
+     <repo>/homelab/changes/<today>/index.html --quality showcase --json
+   ```
+
+   Strip the web font from the delta page too:
+   `node _scripts/strip-webfont.mjs homelab/changes/<today>/index.html`.
+
+   A delta page is ~2 MB, so generate one for a real structural change and
+   not for a wording fix.
+
+**Component and connection ids are permanent.** `compare` matches on
+`components[].id` and `connections[].id`, so renaming an id reads as "one
+thing removed, another added". Give every connection an explicit `id`, and
+retire an id rather than reusing it for something else.
+
+### What must never go on this page
+
+The page is world-readable, and the lab is a home. None of the following
+belongs in the inventory, the diagram, the changelog or the commit message:
+
+- IP addresses, MAC addresses, real hostnames, SSID or router details. Hosts
+  appear under logical names only (`mini-1`, `sw-1`, `air-1`).
+- SSH configuration detail, public keys, tokens, or anything that names a
+  remote-access path into the LAN.
+- Anything with real-time resolution. The page states a date and moves in
+  days; it is not a live dashboard, because "what is up right now" is also
+  "whether anyone is home right now". During a long absence, do not update
+  it at all rather than publishing a fresher timestamp.
+- Photographs that place the hardware in an identifiable home.
+
 ## Other notes
 
 - The top page (`index.md`) is composed of `_includes/*.md` files (projects, publications, presentations, etc.). This portfolio section is independent from blog posts (`_posts`), so adding an article does not require touching these include files.
 - The full post list is at `/blog/` (`blog.md`, `layout: home`), which auto-lists everything in `_posts`.
 - GitHub Pages treats any markdown file as a Jekyll page by default (`jekyll-optional-front-matter`), and minima's header nav lists every page that has a title — so a repo-root `.md` file with a heading (like this one) will otherwise get built into a live page and show up in the nav. Because of this:
-  - `_config.yml` has an explicit `header_pages:` list (currently just `blog.md`). Don't rely on the "show every page with a title" default — add new nav entries to this list deliberately.
+  - `_config.yml` has an explicit `header_pages:` list. Don't rely on the "show every page with a title" default — add new nav entries to this list deliberately.
   - `_config.yml` `exclude:` lists repo-root files that are for tooling/humans only, not site content (currently `AGENTS.md`). Add any future non-site markdown file here too.

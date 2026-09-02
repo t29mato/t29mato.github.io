@@ -1,0 +1,95 @@
+{
+  "updated_at": "2026-09-02",
+  "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. One host is provisioned so far; the rest are hardware waiting for an OS.",
+  "hosts": [
+    {
+      "id": "air-1",
+      "hardware": "MacBook Air (M1)",
+      "ram": "8 GB",
+      "os": "macOS",
+      "role": "workstation — drives every session",
+      "status": "up"
+    },
+    {
+      "id": "mini-1",
+      "hardware": "Mac mini (Mid 2011)",
+      "ram": "8 GB",
+      "os": "Ubuntu 24.04 LTS",
+      "role": "SSH node, one agent session",
+      "status": "up"
+    },
+    {
+      "id": "mini-2",
+      "hardware": "Mac mini (Mid 2011)",
+      "ram": "8 GB",
+      "os": "-",
+      "role": "SSH node, one agent session",
+      "status": "planned"
+    },
+    {
+      "id": "mini-3",
+      "hardware": "Mac mini (Mid 2011)",
+      "ram": "8 GB",
+      "os": "-",
+      "role": "SSH node, one agent session",
+      "status": "planned"
+    },
+    {
+      "id": "mini-4",
+      "hardware": "Mac mini (Mid 2011)",
+      "ram": "8 GB",
+      "os": "-",
+      "role": "SSH node, one agent session",
+      "status": "planned"
+    },
+    {
+      "id": "sw-1",
+      "hardware": "Buffalo LSW4-GT-8NS/WH",
+      "ram": "-",
+      "os": "-",
+      "role": "8-port unmanaged Gigabit switch",
+      "status": "up"
+    }
+  ],
+  "network": {
+    "topology": "One wired segment: every mini goes to sw-1 over 1000BASE-T, and sessions reach them from air-1 by SSH.",
+    "disclosure": "Addresses, hostnames and key material are deliberately not published here."
+  },
+  "stack": [
+    {
+      "name": "Ubuntu 24.04 LTS",
+      "note": "Server install on each mini, replacing the 2011 macOS they shipped with.",
+      "status": "in use"
+    },
+    {
+      "name": "OpenSSH server",
+      "note": "The only way onto a mini. Key auth from air-1.",
+      "status": "in use"
+    },
+    {
+      "name": "Node.js (via nvm)",
+      "note": "Per-user install, so a mini can be re-pinned without touching the system packages.",
+      "status": "in use"
+    },
+    {
+      "name": "Claude Code CLI",
+      "note": "One session per host. That ratio is the whole reason there are four of them.",
+      "status": "in use"
+    },
+    {
+      "name": "herdr",
+      "note": "Terminal and session management across the hosts.",
+      "status": "in use"
+    },
+    {
+      "name": "NFS share for ~/repos",
+      "note": "Repositories are cloned per host today. A shared mount would save four clones of the same tree.",
+      "status": "considering"
+    }
+  ],
+  "services": [],
+  "house_rules": [
+    "One agent session per host — that ratio is the point of the cluster, not a limitation of it.",
+    "Mid-2011 thermals were designed for open air, so the minis sit side by side and are never stacked."
+  ]
+}
