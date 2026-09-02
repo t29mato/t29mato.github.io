@@ -526,6 +526,99 @@ a.tty-trow:focus-visible {
 a.tty-prow:hover .tty-purl,
 a.tty-prow:focus-visible .tty-purl { color: var(--accent); }
 
+/* --------------------------------------------------------------------------
+   The live prompt (homepage only, assets/tty.js)
+   --------------------------------------------------------------------------
+   A real <input> wearing the idle prompt's clothes. Hidden until the script
+   reveals it, so a no-JS session still ends on the static cursor line. The
+   blinking block sits over the input while it is empty and unfocused; once
+   the reader clicks in, the native caret (painted green) takes over. The
+   blink itself reuses .tty-cursor, so reduced-motion already covers it. */
+
+#tty-form[hidden],
+#tty-hint[hidden],
+#tty-idle[hidden] { display: none; }
+
+.tty-form {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+
+  .tty-prompt { flex: none; white-space: pre; }
+}
+
+.tty-inputwrap {
+  position: relative;
+  flex: 1 1 8ch;
+  min-width: 8ch;
+}
+
+#tty-input {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600; /* typed commands match .tty-cmd */
+  caret-color: var(--green);
+
+  /* the site's one focus convention, from the block near the top */
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.tty-form .tty-cursor {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.tty-form:focus-within .tty-cursor,
+.tty-form.has-text .tty-cursor { display: none; }
+
+.tty-hint {
+  margin: 0.15em 0 0;
+  font-size: 0.85em;
+
+  .tty-cmd { color: inherit; }
+}
+
+/* Typed output. Everything reuses the session primitives; these are only
+   the shapes the script adds: an error line, an ls row, the help table. */
+#tty-history {
+  p.tty-out { margin: 0.15em 0 0; }
+  .tty-block { margin: 0.15em 0 0; }
+}
+
+.tty-err { color: var(--danger); }
+
+.tty-ls {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 2ch;
+  row-gap: 0.1em;
+
+  a.tty-ls-page { font-weight: 600; text-decoration: none; }
+  a.tty-ls-page:hover { text-decoration: underline; }
+  .tty-ls-dir { color: var(--amber); font-weight: 600; }
+  .tty-ls-file { color: var(--text); }
+}
+
+.tty-help {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 2ch;
+
+  .tty-help-cmd { flex: none; min-width: 14ch; color: var(--accent); font-weight: 600; }
+  .tty-dim { flex: 1 1 18rem; min-width: 0; }
+}
+
 /* ==========================================================================
    Documents — intro, outro, prose width
    ========================================================================== */

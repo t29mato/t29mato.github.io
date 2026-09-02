@@ -43,6 +43,27 @@ and writing — built after hours, for the fun of it.</p>
       <a class="tty-prow" href="{{ "/world-express/" | relative_url }}"><span class="tty-lineno" aria-hidden="true">4:</span><span class="tty-star" aria-hidden="true">*</span><span class="tty-pname">World Express</span><span class="tty-purl">→ /world-express/           dice race along railway maps</span></a>
     </nav>
 
-    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cursor" aria-hidden="true"></span></p>
+    {%- comment -%}
+      The live prompt (homepage only). Everything below is a progressive
+      enhancement: with scripting off, only #tty-idle renders — the exact
+      idle line this page always ended on. tty.js hides it, reveals the
+      form, and appends typed commands and their output into #tty-history.
+      The static session above is untouched either way; tty.js *reads* the
+      tree and picks blocks as its filesystem instead of carrying a copy.
+    {%- endcomment -%}
+    {%- assign zsh_post = site.posts | where_exp: "p", "p.url contains 'zsh'" | first -%}
+    <div id="tty-history" role="log"></div>
+
+    <p class="tty-cmdline" id="tty-idle"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cursor" aria-hidden="true"></span></p>
+
+    <form id="tty-form" class="tty-cmdline tty-form" hidden
+          data-zsh-url="{{ zsh_post.url | relative_url }}"
+          data-zsh-title="{{ zsh_post.title | escape }}">
+      <span class="tty-prompt" aria-hidden="true">tomoya@mato <span class="tty-path" id="tty-cwd">~</span> $</span>
+      <span class="tty-inputwrap"><input id="tty-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Command input" aria-describedby="tty-hint"><span class="tty-cursor" aria-hidden="true"></span></span>
+    </form>
+    <p id="tty-hint" class="tty-dim tty-hint" hidden># this prompt is live — type <span class="tty-cmd">help</span> and press Enter</p>
+
+    <script src="{{ "/assets/tty.js" | relative_url }}" defer></script>
 
 </section>
