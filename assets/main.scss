@@ -45,17 +45,20 @@
   --shadow: rgba(0, 0, 0, 0.55);
   --header-border: #232c38;
 
-  /* Homepage hero. The field runs cold to warm along x like a
-     property-versus-temperature plot; the headline gradient repeats it. */
-  --field-cold: #74b8ff;
-  --field-warm: #f2b134;
-  --hero-ink-a: #8fc6ff;
-  --hero-ink-b: #f4f7fb;
-  --hero-ink-c: #ffc46b;
-  --hero-glow-a: rgba(56, 120, 200, 0.20);
-  --hero-glow-b: rgba(200, 130, 40, 0.13);
-  --grid-line: rgba(150, 175, 205, 0.07);
-  --sheen: rgba(140, 190, 255, 0.10);
+  /* Homepage terminal. A deliberate departure from the site's blue — the one
+     page that reads as a shell session gets a phosphor palette. Every text
+     colour is AA-checked against --tty-bg and against --tty-sel, the
+     hovered/focused row. */
+  --tty-bg: #0b0f0c;
+  --tty-border: #263329;
+  --tty-fg: #c8d2c8;      /* 12.42:1 */
+  --tty-dim: #8a978c;     /* 6.33:1 — the mockup's #6d7a6e measured 4.28, under AA */
+  --tty-green: #7ddb8a;   /* 11.37:1 */
+  --tty-amber: #e5b567;   /* 10.24:1 */
+  --tty-cyan: #7fc7d9;    /* 10.18:1 */
+  --tty-sel: #16241a;
+  --tty-bar-bg: #131c15;
+  --tty-scanline: rgba(0, 0, 0, 0.07);
 }
 
 @mixin theme-light {
@@ -88,18 +91,19 @@
   --shadow: rgba(15, 23, 42, 0.12);
   --header-border: #e2e7ee;
 
-  /* Homepage hero, light. Field dots need to be darker than their dark-theme
-     twins or they vanish on a pale panel; the headline inks are the theme's
-     own accent, heading, and (AA-checked) star colours. */
-  --field-cold: #2e6fc4;
-  --field-warm: #b07500;
-  --hero-ink-a: #1257b8;
-  --hero-ink-b: #0f1720;
-  --hero-ink-c: #8a5a00;
-  --hero-glow-a: rgba(90, 145, 215, 0.18);
-  --hero-glow-b: rgba(225, 165, 70, 0.14);
-  --grid-line: rgba(40, 70, 110, 0.07);
-  --sheen: rgba(18, 87, 184, 0.07);
+  /* Homepage terminal, light: paper instead of phosphor. Same AA rule as the
+     dark set — checked on --tty-bg and on --tty-sel. */
+  --tty-bg: #f2f4ef;
+  --tty-border: #c9d1c4;
+  --tty-fg: #23301f;      /* 12.52:1 */
+  --tty-dim: #5f6a5c;     /* 5.12:1 — the mockup's #7b8577 measured 3.47, under AA */
+  --tty-green: #196e2a;   /* 5.74:1 */
+  --tty-amber: #8a5e08;   /* 5.15:1 — the mockup's #9a6a0a measured 3.76 on --tty-sel */
+  --tty-cyan: #0c6a85;    /* 5.55:1 */
+  --tty-sel: #dfe8db;
+  --tty-bar-bg: #e2e8dc;
+  /* Scanlines are a dark-phosphor thing; transparent lines paint nothing. */
+  --tty-scanline: transparent;
 }
 
 :root { @include theme-dark; }
@@ -638,311 +642,197 @@ table {
 }
 
 /* ==========================================================================
-   Homepage
+   Homepage — the terminal
    --------------------------------------------------------------------------
-   The one page allowed a different register from the card language: a framed
-   instrument panel — graph paper, a canvas field of plot markers that double
-   as game pieces, running cold to warm — and two shelves of portal panels
-   (day job, after hours) that lean toward the pointer. Everything stays
-   inside the wrapper on
-   purpose: a full-bleed hero needs 100vw, and 100vw plus a classic scrollbar
-   is the horizontal-scroll bug this stylesheet has already fixed twice.
+   The one page allowed a different register from the card language: a shell
+   session. whoami, a README, a tree of the seven sections, a grep for the
+   four picks — the tree rows and pick rows are the real links. The panel
+   stays inside the wrapper on purpose: a full-bleed screen needs 100vw, and
+   100vw plus a classic scrollbar is the horizontal-scroll bug this
+   stylesheet has already fixed twice.
    ========================================================================== */
 
-.home-hero {
+.tty {
   position: relative;
   overflow: hidden;
-  min-height: clamp(26rem, 72vh, 44rem);
-  display: flex;
-  align-items: flex-end;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background:
-    radial-gradient(120% 90% at 10% 108%, var(--hero-glow-a), transparent 60%),
-    radial-gradient(110% 85% at 96% -8%, var(--hero-glow-b), transparent 55%),
-    repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px 64px),
-    repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 64px),
-    var(--surface);
-}
+  max-width: 62rem;
+  margin: 1.5rem auto 3rem;
+  border: 1px solid var(--tty-border);
+  border-radius: 12px;
+  background: var(--tty-bg);
+  color: var(--tty-fg);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: clamp(0.75rem, 2.6vw, 0.9rem);
+  line-height: 1.55;
 
-.home-field {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.home-hero-inner {
-  position: relative;
-  padding: clamp(1.4rem, 4vw, 3rem);
-  max-width: 46rem;
-}
-
-.home-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin: 0 0 1.1rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.home-pip {
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--field-cold);
-  box-shadow: 0 0 0 0 var(--hero-glow-a);
-}
-
-.home-lede {
-  margin: 0;
-  max-width: 34rem;
-  font-size: clamp(0.98rem, 1.6vw, 1.1rem);
-  line-height: 1.65;
-  color: var(--text-dim);
-
-  a { font-weight: 700; }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-pip {
-    animation: home-pip 3.2s ease-out infinite;
-  }
-}
-
-@keyframes home-pip {
-  0% { box-shadow: 0 0 0 0 var(--hero-glow-a); }
-  70% { box-shadow: 0 0 0 9px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Featured stars ----------------------------------------------------------
-   Four of the sky's points are real destinations — the owner's own picks,
-   drawn brighter than the ambient field. A canvas cannot hold focusable
-   links, so these are genuine anchors layered over it; the field script pins
-   each one to a curve and sets --star-col along the cold-to-warm axis (the
-   nth-child positions below are only the no-JS fallback). The name is a pill
-   that appears on hover, focus, or press; a touch tap just navigates, which
-   is what a link does. The 44px hit target is bigger than the visible star. */
-
-.home-stars {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.home-star {
-  --star-col: var(--field-cold);
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  transform: translate(-50%, -50%);
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  pointer-events: auto;
-
-  &:nth-child(1) { left: 28%; top: 22%; }
-  &:nth-child(2) { left: 55%; top: 40%; }
-  &:nth-child(3) { left: 74%; top: 60%; }
-  &:nth-child(4) { left: 86%; top: 18%; }
-
-  /* The slow ping that marks these four as more than scenery. */
+  /* Faint scanline texture. The line colour is a token that goes transparent
+     in the light theme, so no selector juggling here. Static — nothing for
+     prefers-reduced-motion to stop. */
   &::after {
     content: "";
     position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 1px solid var(--star-col);
-    opacity: 0.35;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  &:hover .home-star-dot,
-  &:focus-visible .home-star-dot,
-  &:active .home-star-dot {
-    transform: rotate(45deg) scale(1.5);
-  }
-
-  &:hover .home-star-label,
-  &:focus-visible .home-star-label,
-  &:active .home-star-label {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
-}
-
-.home-star-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  background: var(--star-col);
-  box-shadow: 0 0 10px var(--star-col);
-  transform: rotate(45deg); /* the diamond ✦ of the sky */
-  transition: transform 0.2s ease;
-}
-
-.home-star-label {
-  position: absolute;
-  left: calc(100% - 6px);
-  top: 50%;
-  padding: 0.3rem 0.65rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--heading);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 6px 18px var(--shadow);
-  opacity: 0; /* not display: none — the link keeps its name for readers */
-  transform: translateY(-50%) translateX(-4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-  pointer-events: none;
-}
-
-.home-star-flip .home-star-label {
-  left: auto;
-  right: calc(100% - 6px);
-  transform: translateY(-50%) translateX(4px);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-star::after {
-    animation: home-star-ping 3.2s ease-out infinite;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-star-dot,
-  .home-star-label { transition: none; }
-}
-
-@keyframes home-star-ping {
-  0% { transform: scale(0.6); opacity: 0.45; }
-  80% { transform: scale(1.5); opacity: 0; }
-  100% { transform: scale(1.5); opacity: 0; }
-}
-
-/* Portals ----------------------------------------------------------------- */
-
-/* Two shelves — the day job, then after hours — so the professional pages and
-   the hobby pages get equal billing instead of the old three-door lineup. */
-.home-portals-nav {
-  margin: 1.6rem 0 3rem;
-}
-
-.portal-group + .portal-group {
-  margin-top: 2rem;
-}
-
-.portal-group-label {
-  margin: 0 0 0.8rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.home-portals {
-  display: grid;
-  /* `min(...)` again: a bare minmax floor does not shrink below 15rem and
-     would push a 390px phone sideways. */
-  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
-  gap: 1.1rem;
-}
-
-.portal {
-  --rx: 0deg;
-  --ry: 0deg;
-  --mx: 50%;
-  --my: 50%;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding: 1.4rem 1.5rem 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
-  text-decoration: none;
-  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-
-  /* The sheen is a positioned pseudo-element, which paints above in-flow
-     children — so the children are positioned too, further down. */
-  &::before {
-    content: "";
-    position: absolute;
     inset: 0;
-    background: radial-gradient(26rem circle at var(--mx) var(--my), var(--sheen), transparent 62%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
     pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent 0 2px, var(--tty-scanline) 2px 3px);
   }
+}
 
-  > * { position: relative; }
+.tty-screen {
+  padding: 1.25rem 1.1rem 1.5rem;
+}
+
+.tty-cmdline {
+  margin: 1.35em 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  &:first-child { margin-top: 0; }
+}
+
+/* Command output. The h1 wears this too: on a terminal the hierarchy is the
+   session itself, not a type scale, so the heading keeps the body size. */
+.tty-out {
+  margin: 0.15em 0 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--tty-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+p.tty-out { font-weight: 400; }
+
+.tty-prompt { color: var(--tty-green); }
+.tty-path { color: var(--tty-cyan); }
+.tty-cmd { color: var(--tty-fg); font-weight: 600; }
+.tty-dim { color: var(--tty-dim); }
+
+.tty-block { margin-top: 0.15em; }
+
+.tty-line {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tty-summary { margin-top: 1.55em; }
+
+.tty-branch {
+  flex: none;
+  white-space: pre;
+  color: var(--tty-dim);
+}
+
+.tty-group { color: var(--tty-amber); font-weight: 600; }
+
+/* Tree rows and pick rows: the links themselves. Flex instead of the
+   mockup's pre-wrap so a long description wraps inside its own column on a
+   wide screen and drops to a clean full-width line on a phone, instead of
+   snaking back under the branch characters. */
+a.tty-trow,
+a.tty-prow {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1ch;
+  padding: 0.05rem 0.25rem;
+  margin: 0 -0.25rem;
+  border-radius: 2px;
+  color: var(--tty-fg);
+  text-decoration: none;
+
+  &:visited { color: var(--tty-fg); }
 
   &:hover,
   &:focus-visible {
-    border-color: var(--border-strong);
-    box-shadow: 0 10px 30px var(--shadow);
+    background: var(--tty-sel);
+    color: var(--tty-fg);
     text-decoration: none;
-
-    &::before { opacity: 1; }
-
-    .portal-cta { transform: translateX(0.35rem); }
   }
 
+  /* The row highlight alone is not a strong enough focus mark, so the site's
+     2px-outline convention applies here too — in the terminal's own accent. */
   &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline: 2px solid var(--tty-cyan);
+    outline-offset: 1px;
   }
 }
 
-.portal-index {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
+.tty-node {
+  flex: none;
+  min-width: 15ch; /* presentations/ is 14ch — one column for all seven */
+  color: var(--tty-cyan);
+  font-weight: 600;
 }
 
-.portal-name {
-  margin: 0;
-  font-size: 1.45rem;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  color: var(--heading);
+.tty-desc {
+  flex: 1 1 18rem;
+  min-width: 0;
+  color: var(--tty-dim);
+  overflow-wrap: anywhere;
 }
 
-.portal-desc {
-  margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--text-dim);
+a.tty-trow:hover,
+a.tty-trow:focus-visible {
+  .tty-node { color: var(--tty-amber); }
+  .tty-desc { color: var(--tty-fg); }
 }
 
-.portal-cta {
-  margin-top: auto;
-  padding-top: 0.6rem;
-  font-size: 1.15rem;
-  color: var(--accent);
-  transition: transform 0.2s ease;
+.tty-lineno { flex: none; color: var(--tty-dim); }
+.tty-star { flex: none; color: var(--tty-amber); }
+
+.tty-pname {
+  flex: none;
+  min-width: 15ch; /* StarryDigitizer, exactly */
+  color: var(--tty-amber);
+  font-weight: 600;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .portal,
-  .portal-cta { transition: none; }
+.tty-purl {
+  flex: 1 1 18rem;
+  min-width: 0;
+  color: var(--tty-dim);
+  white-space: pre-wrap; /* keeps the grep output's aligned columns */
+  overflow-wrap: anywhere;
+}
+
+a.tty-prow:hover .tty-purl,
+a.tty-prow:focus-visible .tty-purl { color: var(--tty-cyan); }
+
+/* The one moving part. Blink is opt-in behind no-preference, same as the old
+   hero's pip: reduced-motion readers get a steady block. */
+.tty-cursor {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.15em;
+  background: var(--tty-green);
+  vertical-align: text-bottom;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tty-cursor { animation: tty-blink 1.1s steps(1) infinite; }
+}
+
+@keyframes tty-blink { 50% { opacity: 0; } }
+
+/* tmux-style status bar: the panel's bottom edge, not a fixed overlay — it
+   must not cover the site footer. Decoration, aria-hidden in the markup. */
+.tty-statusbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0.8rem;
+  border-top: 1px solid var(--tty-sel);
+  background: var(--tty-bar-bg);
+  color: var(--tty-dim);
+  font-size: 0.86em;
+  white-space: nowrap;
+  overflow: hidden;
+
+  b { color: var(--tty-green); font-weight: 600; }
+}
+
+.tty-statusbar-left {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre; /* the double spaces between the fake tmux windows */
 }

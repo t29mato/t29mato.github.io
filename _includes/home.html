@@ -1,373 +1,54 @@
-<section class="home-hero">
-  <canvas class="home-field" id="home-field" aria-hidden="true"></canvas>
-  <div class="home-hero-inner">
-    <h1 class="home-eyebrow"><span class="home-pip" aria-hidden="true"></span>Tomoya Mato · Software Engineer for Materials Science</h1>
-    <p class="home-lede">I streamline systems and get them ready for AI. The
-    rest of this site is board games, animations, small tools, and writing —
-    built after hours, for the fun of it.</p>
+{%- comment -%}
+  The homepage as a shell session: whoami, a README, a tree of the seven
+  sections, and a grep for the four picks. The tree rows and pick rows are the
+  real links — the session *is* the navigation, so there is no second copy of
+  it below.
+
+  No script. The one moving part (the cursor) blinks in CSS and only under
+  prefers-reduced-motion: no-preference; every colour is a --tty-* token from
+  main.scss so both themes work. The status bar and the scanline texture are
+  decoration and stay aria-hidden.
+{%- endcomment -%}
+<section class="tty">
+  <div class="tty-screen">
+
+    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cmd">whoami</span></p>
+    <h1 class="tty-out">Tomoya Mato — Software Engineer for Materials Science</h1>
+
+    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cmd">cat README</span></p>
+    <p class="tty-out">I streamline systems and get them ready for AI.
+The rest of this site is board games, animations, small tools,
+and writing — built after hours, for the fun of it.</p>
+
+    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cmd">tree ~/site</span> <span class="tty-dim"># * = recommended below</span></p>
+    <nav class="tty-block" aria-label="Site sections">
+      <span class="tty-line tty-dim">~/site</span>
+      <span class="tty-line"><span class="tty-branch">├──</span> <span class="tty-group">day-job/</span></span>
+      <a class="tty-trow" href="{{ "/works/" | relative_url }}"><span class="tty-branch" aria-hidden="true">│   ├──</span><span class="tty-node">works/</span><span class="tty-desc">The Starrydata platform, visualizer and datasets, plus the open-source tools built around them.</span></a>
+      <a class="tty-trow" href="{{ "/publications/" | relative_url }}"><span class="tty-branch" aria-hidden="true">│   ├──</span><span class="tty-node">publications/</span><span class="tty-desc">Seven journal articles — dielectric property curation, quasicrystal datasets, thermoelectrics, and Starrydata itself.</span></a>
+      <a class="tty-trow" href="{{ "/presentations/" | relative_url }}"><span class="tty-branch" aria-hidden="true">│   └──</span><span class="tty-node">presentations/</span><span class="tty-desc">Conference talks going back to 2016, lately on large-language-model tools for literature curation.</span></a>
+      <span class="tty-line"><span class="tty-branch">└──</span> <span class="tty-group">after-hours/</span></span>
+      <a class="tty-trow" href="{{ "/games/" | relative_url }}"><span class="tty-branch" aria-hidden="true">    ├──</span><span class="tty-node">games/</span><span class="tty-desc">Board and browser games — dice along real railway maps, a spin through a whole life, tower defense by powers of ten.</span></a>
+      <a class="tty-trow" href="{{ "/animations/" | relative_url }}"><span class="tty-branch" aria-hidden="true">    ├──</span><span class="tty-node">animations/</span><span class="tty-desc">Canvas reconstructions of two surf incidents on the Ibaraki coast, and a silhouette cut of the Shibuya duel.</span></a>
+      <a class="tty-trow" href="{{ "/tools/" | relative_url }}"><span class="tty-branch" aria-hidden="true">    ├──</span><span class="tty-node">tools/</span><span class="tty-desc">Small utilities that do one thing, entirely client-side — nothing you feed them leaves your device.</span></a>
+      <a class="tty-trow" href="{{ "/blog/" | relative_url }}"><span class="tty-branch" aria-hidden="true">    └──</span><span class="tty-node">blog/</span><span class="tty-desc">The write-ups behind the animations, and the occasional dive into a rebuilt shell environment.</span></a>
+      <span class="tty-line tty-dim tty-summary">2 directories, 7 sections</span>
+    </nav>
+
+    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cmd">grep -n "" ~/site/picks</span></p>
+    <nav class="tty-block" aria-label="Recommended">
+      <a class="tty-prow" href="https://www.starrydata2.org/"><span class="tty-lineno" aria-hidden="true">1:</span><span class="tty-star" aria-hidden="true">*</span><span class="tty-pname">Starrydata</span><span class="tty-purl">→ starrydata2.org           open database of published materials data</span></a>
+      <a class="tty-prow" href="{{ "/life-game/" | relative_url }}"><span class="tty-lineno" aria-hidden="true">2:</span><span class="tty-star" aria-hidden="true">*</span><span class="tty-pname">Life Journey</span><span class="tty-purl">→ /life-game/               a whole life, one board game</span></a>
+      <a class="tty-prow" href="https://digitizer.starrydata.org/"><span class="tty-lineno" aria-hidden="true">3:</span><span class="tty-star" aria-hidden="true">*</span><span class="tty-pname">StarryDigitizer</span><span class="tty-purl">→ digitizer.starrydata.org  charts back into numbers</span></a>
+      <a class="tty-prow" href="{{ "/world-express/" | relative_url }}"><span class="tty-lineno" aria-hidden="true">4:</span><span class="tty-star" aria-hidden="true">*</span><span class="tty-pname">World Express</span><span class="tty-purl">→ /world-express/           dice race along railway maps</span></a>
+    </nav>
+
+    <p class="tty-cmdline"><span class="tty-prompt">tomoya@mato <span class="tty-path">~</span> $</span> <span class="tty-cursor" aria-hidden="true"></span></p>
+
   </div>
-  <nav class="home-stars" aria-label="Recommended">
-    <a class="home-star" href="https://www.starrydata2.org/">
-      <span class="home-star-dot" aria-hidden="true"></span>
-      <span class="home-star-label">Starrydata</span>
-    </a>
-    <a class="home-star" href="{{ "/life-game/" | relative_url }}">
-      <span class="home-star-dot" aria-hidden="true"></span>
-      <span class="home-star-label">Life Journey</span>
-    </a>
-    <a class="home-star" href="https://digitizer.starrydata.org/">
-      <span class="home-star-dot" aria-hidden="true"></span>
-      <span class="home-star-label">StarryDigitizer</span>
-    </a>
-    <a class="home-star" href="{{ "/world-express/" | relative_url }}">
-      <span class="home-star-dot" aria-hidden="true"></span>
-      <span class="home-star-label">World Express</span>
-    </a>
-  </nav>
+
+  <div class="tty-statusbar" aria-hidden="true">
+    <span class="tty-statusbar-left"><b>[0] mato-site</b>  1:home*  2:works  3:games</span>
+    <span>t29mato · UTF-8 · 100%</span>
+  </div>
 </section>
-
-<nav class="home-portals-nav" aria-label="Site sections">
-  <section class="portal-group">
-    <h2 class="portal-group-label">The day job</h2>
-    <div class="home-portals">
-      <a class="portal" href="{{ "/works/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">01</span>
-        <h3 class="portal-name">Works</h3>
-        <p class="portal-desc">The Starrydata platform, visualizer and datasets,
-        plus the open-source tools built around them.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-      <a class="portal" href="{{ "/publications/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">02</span>
-        <h3 class="portal-name">Publications</h3>
-        <p class="portal-desc">Seven journal articles — dielectric property
-        curation, quasicrystal datasets, thermoelectrics, and Starrydata itself.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-      <a class="portal" href="{{ "/presentations/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">03</span>
-        <h3 class="portal-name">Presentations</h3>
-        <p class="portal-desc">Conference talks going back to 2016, lately on
-        large-language-model tools for literature curation.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-    </div>
-  </section>
-  <section class="portal-group">
-    <h2 class="portal-group-label">After hours</h2>
-    <div class="home-portals">
-      <a class="portal" href="{{ "/games/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">04</span>
-        <h3 class="portal-name">Games</h3>
-        <p class="portal-desc">Board and browser games — dice along real railway
-        maps, a spin through a whole life, tower defense by powers of ten.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-      <a class="portal" href="{{ "/animations/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">05</span>
-        <h3 class="portal-name">Animations</h3>
-        <p class="portal-desc">Canvas reconstructions of two surf incidents on
-        the Ibaraki coast, and a silhouette cut of the Shibuya duel.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-      <a class="portal" href="{{ "/tools/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">06</span>
-        <h3 class="portal-name">Tools</h3>
-        <p class="portal-desc">Small utilities that do one thing, entirely
-        client-side — nothing you feed them leaves your device.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-      <a class="portal" href="{{ "/blog/" | relative_url }}">
-        <span class="portal-index" aria-hidden="true">07</span>
-        <h3 class="portal-name">Blog</h3>
-        <p class="portal-desc">The write-ups behind the animations, and the
-        occasional dive into a rebuilt shell environment.</p>
-        <span class="portal-cta" aria-hidden="true">→</span>
-      </a>
-    </div>
-  </section>
-</nav>
-
-<script>
-  /*
-   * The hero field: markers drifting along faint curves, coloured cold to warm
-   * along the x axis. Each curve carries its own marker — circle, square,
-   * triangle, diamond — so the field reads two ways at once: the series
-   * markers of a multi-series plot, and a scatter of game pieces. Both halves
-   * of the site in one picture. Pure canvas, no libraries.
-   *
-   * Four of the sky's stars are real destinations — see .home-stars in the
-   * markup. A canvas cannot hold focusable links, so those four are genuine
-   * anchors layered on top; placeStars() pins each one to the same curves the
-   * ambient markers ride and colours it along the same cold-to-warm axis.
-   *
-   * Colours come from --field-cold / --field-warm so both themes work, and the
-   * script re-reads them when the theme toggle flips data-theme. With
-   * prefers-reduced-motion the field still draws — once, as a still.
-   */
-  (function () {
-    var canvas = document.getElementById("home-field");
-    if (!canvas || !canvas.getContext) return;
-    var ctx = canvas.getContext("2d");
-    var panel = canvas.parentElement;
-    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    var W = 0, H = 0, dpr = 1;
-    var cold = [116, 184, 255], warm = [242, 177, 52];
-    var running = false, rafId = 0, t0 = 0;
-
-    function parseHex(v) {
-      var m = /^#([0-9a-f]{6})$/i.exec((v || "").trim());
-      if (!m) return null;
-      var n = parseInt(m[1], 16);
-      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-    }
-
-    function readColors() {
-      var cs = getComputedStyle(document.documentElement);
-      cold = parseHex(cs.getPropertyValue("--field-cold")) || cold;
-      warm = parseHex(cs.getPropertyValue("--field-warm")) || warm;
-    }
-
-    function lerpColor(x) {
-      var r = Math.round(cold[0] + (warm[0] - cold[0]) * x);
-      var g = Math.round(cold[1] + (warm[1] - cold[1]) * x);
-      var b = Math.round(cold[2] + (warm[2] - cold[2]) * x);
-      return "rgb(" + r + "," + g + "," + b + ")";
-    }
-
-    /* Curves live in normalised 0..1 space so a resize never rebuilds them. */
-    var K = 4, curves = [], points = [];
-
-    function makeField() {
-      curves = [];
-      for (var k = 0; k < K; k++) {
-        curves.push({
-          base: 0.18 + (0.64 * k) / (K - 1) + (Math.random() - 0.5) * 0.06,
-          a1: 0.03 + Math.random() * 0.05,
-          f1: 3 + Math.random() * 3,
-          p1: Math.random() * Math.PI * 2,
-          a2: 0.015 + Math.random() * 0.03,
-          f2: 7 + Math.random() * 5,
-          p2: Math.random() * Math.PI * 2
-        });
-      }
-      points = [];
-      var n = Math.max(40, Math.min(130, Math.round((W * H) / (dpr * dpr * 14000))));
-      for (var i = 0; i < n; i++) {
-        points.push({
-          k: i % K,
-          x: Math.random() * 1.1 - 0.05,
-          jitter: (Math.random() - 0.5) * 0.035,
-          wob: Math.random() * Math.PI * 2,
-          ws: 0.3 + Math.random() * 0.5,
-          speed: 0.006 + Math.random() * 0.01,
-          r: 1.2 + Math.random() * 1.6,
-          bright: Math.random() < 0.12
-        });
-      }
-    }
-
-    function curveY(c, x) {
-      return c.base + c.a1 * Math.sin(x * c.f1 + c.p1) + c.a2 * Math.sin(x * c.f2 + c.p2);
-    }
-
-    /* One marker path per curve. The non-circles are drawn a touch larger so
-       all four shapes carry the same visual weight at the same r. */
-    function markerPath(shape, cx, cy, r) {
-      ctx.beginPath();
-      if (shape === 1) {
-        ctx.rect(cx - r, cy - r, r * 2, r * 2);
-      } else if (shape === 2) {
-        ctx.moveTo(cx, cy - r * 1.25);
-        ctx.lineTo(cx + r * 1.15, cy + r * 0.95);
-        ctx.lineTo(cx - r * 1.15, cy + r * 0.95);
-        ctx.closePath();
-      } else if (shape === 3) {
-        ctx.moveTo(cx, cy - r * 1.35);
-        ctx.lineTo(cx + r * 1.35, cy);
-        ctx.lineTo(cx, cy + r * 1.35);
-        ctx.lineTo(cx - r * 1.35, cy);
-        ctx.closePath();
-      } else {
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      }
-    }
-
-    /*
-     * The featured stars. Fixed stars in a drifting sky: each sits at a chosen
-     * x on one of the field's curves rather than riding along, because a link
-     * that wanders is a link you cannot click. Two coordinate sets — a phone
-     * hero is mostly text from halfway down, so the narrow set keeps to the
-     * upper curves. Labels flip to the left near the right edge so the pill
-     * never leaves the panel.
-     */
-    var starEls = document.querySelectorAll(".home-star");
-    var starSpots = [
-      { k: 0, x: 0.28, nk: 0, nx: 0.20 }, /* Starrydata */
-      { k: 1, x: 0.55, nk: 1, nx: 0.42 }, /* Life Journey */
-      { k: 2, x: 0.74, nk: 0, nx: 0.65 }, /* StarryDigitizer */
-      { k: 0, x: 0.86, nk: 1, nx: 0.85 }  /* World Express */
-    ];
-
-    function placeStars() {
-      if (!curves.length || !starEls.length) return;
-      var narrow = panel.clientWidth < 600;
-      for (var i = 0; i < starEls.length && i < starSpots.length; i++) {
-        var s = starSpots[i];
-        var k = narrow ? s.nk : s.k;
-        var x = narrow ? s.nx : s.x;
-        var el = starEls[i];
-        el.style.left = (x * 100) + "%";
-        el.style.top = (curveY(curves[k], x) * 100) + "%";
-        el.style.setProperty("--star-col", lerpColor(x));
-        el.classList.toggle("home-star-flip", x > 0.55);
-      }
-    }
-
-    function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var w = panel.clientWidth, h = panel.clientHeight;
-      if (!w || !h) return;
-      W = Math.round(w * dpr);
-      H = Math.round(h * dpr);
-      canvas.width = W;
-      canvas.height = H;
-      if (!points.length) makeField();
-      placeStars();
-    }
-
-    function draw(t) {
-      ctx.clearRect(0, 0, W, H);
-
-      /* The curves themselves, barely there. */
-      var grad = ctx.createLinearGradient(0, 0, W, 0);
-      grad.addColorStop(0, lerpColor(0));
-      grad.addColorStop(1, lerpColor(1));
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = dpr;
-      ctx.globalAlpha = 0.09;
-      for (var k = 0; k < K; k++) {
-        ctx.beginPath();
-        for (var s = 0; s <= 72; s++) {
-          var x = s / 72;
-          var y = curveY(curves[k], x);
-          if (s === 0) ctx.moveTo(x * W, y * H);
-          else ctx.lineTo(x * W, y * H);
-        }
-        ctx.stroke();
-      }
-
-      /* The markers. */
-      for (var i = 0; i < points.length; i++) {
-        var p = points[i];
-        var px = p.x;
-        var py = curveY(curves[p.k], px) + p.jitter +
-                 Math.sin(t * p.ws + p.wob) * 0.006;
-        var cx = px * W, cy = py * H;
-        var col = lerpColor(Math.max(0, Math.min(1, px)));
-        ctx.globalAlpha = p.bright ? 0.85 : 0.4;
-        ctx.fillStyle = col;
-        markerPath(p.k, cx, cy, p.r * dpr);
-        ctx.fill();
-        if (p.bright) {
-          ctx.globalAlpha = 0.25;
-          ctx.strokeStyle = col;
-          ctx.lineWidth = dpr;
-          markerPath(p.k, cx, cy, (p.r + 3) * dpr);
-          ctx.stroke();
-        }
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    function step(now) {
-      if (!running) return;
-      if (!t0) t0 = now;
-      var t = (now - t0) / 1000;
-      for (var i = 0; i < points.length; i++) {
-        var p = points[i];
-        p.x += p.speed / 60;
-        if (p.x > 1.05) p.x = -0.05;
-      }
-      draw(t);
-      rafId = requestAnimationFrame(step);
-    }
-
-    function start() {
-      if (running || reduced.matches || document.hidden) return;
-      running = true;
-      rafId = requestAnimationFrame(step);
-    }
-
-    function stop() {
-      running = false;
-      if (rafId) cancelAnimationFrame(rafId);
-    }
-
-    function still() { draw(0); }
-
-    readColors();
-    resize();
-    if (reduced.matches) still(); else start();
-
-    if (window.ResizeObserver) {
-      new ResizeObserver(function () {
-        resize();
-        if (!running) still();
-      }).observe(panel);
-    } else {
-      window.addEventListener("resize", function () {
-        resize();
-        if (!running) still();
-      });
-    }
-
-    /* Theme flips: the toggle writes data-theme, the OS writes a media event.
-       The featured stars re-place too — their colour rides the same axis. */
-    new MutationObserver(function () {
-      readColors();
-      placeStars();
-      if (!running) still();
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    var osDark = window.matchMedia("(prefers-color-scheme: dark)");
-    if (osDark.addEventListener) osDark.addEventListener("change", function () {
-      readColors();
-      placeStars();
-      if (!running) still();
-    });
-
-    if (reduced.addEventListener) reduced.addEventListener("change", function () {
-      if (reduced.matches) { stop(); still(); } else start();
-    });
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) stop(); else start();
-    });
-  })();
-
-  /*
-   * Portal tilt: the panels lean toward the pointer and carry a specular
-   * highlight where it sits. Only for fine pointers that can hover, and never
-   * when reduced motion is asked for — everyone else gets the flat panel.
-   */
-  (function () {
-    var fine = window.matchMedia("(hover: hover) and (pointer: fine)");
-    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    var portals = document.querySelectorAll(".portal");
-    Array.prototype.forEach.call(portals, function (el) {
-      el.addEventListener("pointermove", function (e) {
-        if (!fine.matches || reduced.matches) return;
-        var r = el.getBoundingClientRect();
-        var px = (e.clientX - r.left) / r.width;
-        var py = (e.clientY - r.top) / r.height;
-        el.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
-        el.style.setProperty("--my", (py * 100).toFixed(1) + "%");
-        el.style.setProperty("--ry", ((px - 0.5) * 4).toFixed(2) + "deg");
-        el.style.setProperty("--rx", ((0.5 - py) * 4).toFixed(2) + "deg");
-      });
-      el.addEventListener("pointerleave", function () {
-        el.style.setProperty("--rx", "0deg");
-        el.style.setProperty("--ry", "0deg");
-      });
-    });
-  })();
-</script>
