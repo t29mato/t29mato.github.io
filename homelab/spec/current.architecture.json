@@ -5,13 +5,13 @@
     "title": "Homelab — four Mac minis on one switch",
     "locale": "en",
     "quality_profile": "showcase",
-    "viewBox": [980, 760],
+    "viewBox": [1040, 780],
     "views": [
       {
         "id": "today",
         "label": "What is running today",
-        "focus": ["air-1", "sw-1", "mini-1"],
-        "note": "One provisioned host. Sessions reach mini-1 by SSH across the wired segment."
+        "focus": ["air-1", "gw-1", "sw-1", "mini-1"],
+        "note": "One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-1 across the wired segment."
       },
       {
         "id": "when-full",
@@ -22,18 +22,20 @@
     ]
   },
   "components": [
-    { "id": "air-1", "type": "external", "label": "air-1", "sublabel": "MacBook Air (M1)", "tag": "workstation", "pos": [60, 316], "size": [160, 68] },
-    { "id": "sw-1", "type": "cloud", "label": "sw-1", "sublabel": "8-port Gigabit switch", "tag": "LSW4-GT-8NS/WH", "pos": [370, 316], "size": [170, 68] },
-    { "id": "mini-1", "type": "backend", "label": "mini-1", "sublabel": "Ubuntu 24.04 LTS", "tag": "up", "pos": [720, 100], "size": [170, 68] },
-    { "id": "mini-2", "type": "backend", "label": "mini-2", "sublabel": "no OS installed", "tag": "planned", "pos": [720, 244], "size": [170, 68] },
-    { "id": "mini-3", "type": "backend", "label": "mini-3", "sublabel": "no OS installed", "tag": "planned", "pos": [720, 388], "size": [170, 68] },
-    { "id": "mini-4", "type": "backend", "label": "mini-4", "sublabel": "no OS installed", "tag": "planned", "pos": [720, 532], "size": [170, 68] }
+    { "id": "air-1", "type": "external", "label": "air-1", "sublabel": "MacBook Air (M1)", "tag": "workstation", "pos": [60, 100], "size": [170, 68] },
+    { "id": "gw-1", "type": "cloud", "label": "gw-1", "sublabel": "Wi-Fi 6 router", "tag": "DHCP reservations", "pos": [60, 350], "size": [170, 68] },
+    { "id": "sw-1", "type": "cloud", "label": "sw-1", "sublabel": "8-port Gigabit switch", "tag": "LSW4-GT-8NS/WH", "pos": [420, 350], "size": [170, 68] },
+    { "id": "mini-1", "type": "backend", "label": "mini-1", "sublabel": "Ubuntu 24.04 LTS", "tag": "up", "pos": [790, 100], "size": [170, 68] },
+    { "id": "mini-2", "type": "backend", "label": "mini-2", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 260], "size": [170, 68] },
+    { "id": "mini-3", "type": "backend", "label": "mini-3", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 420], "size": [170, 68] },
+    { "id": "mini-4", "type": "backend", "label": "mini-4", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 580], "size": [170, 68] }
   ],
   "boundaries": [
     { "kind": "region", "label": "Wired segment", "wraps": ["sw-1", "mini-1", "mini-2", "mini-3", "mini-4"] }
   ],
   "connections": [
-    { "id": "air-to-switch", "from": "air-1", "to": "sw-1", "label": "SSH", "variant": "emphasis" },
+    { "id": "air-to-gateway", "from": "air-1", "to": "gw-1", "label": "Wi-Fi 6", "variant": "emphasis", "labelDy": 24 },
+    { "id": "gateway-to-switch", "from": "gw-1", "to": "sw-1", "label": "1000BASE-T", "variant": "emphasis" },
     { "id": "switch-to-mini-1", "from": "sw-1", "to": "mini-1", "label": "1000BASE-T" },
     { "id": "switch-to-mini-2", "from": "sw-1", "to": "mini-2", "variant": "dashed" },
     { "id": "switch-to-mini-3", "from": "sw-1", "to": "mini-3", "variant": "dashed" },
@@ -41,7 +43,7 @@
   ],
   "cards": [
     { "dot": "cyan", "title": "On every mini", "items": ["Ubuntu 24.04 LTS server install", "OpenSSH server, key auth from air-1", "Node.js via nvm, then the Claude Code CLI"] },
-    { "dot": "emerald", "title": "How it is worked", "items": ["One agent session per host — that ratio is the point", "herdr manages the terminals across hosts", "Repositories cloned per host under ~/repos; a shared NFS mount is still only a candidate"] },
-    { "dot": "rose", "title": "Physical and published", "items": ["Mid-2011 thermals want open air, so the units sit side by side and are never stacked", "Hosts appear here under logical names only", "No address, hostname or key material is published"] }
+    { "dot": "emerald", "title": "How it is worked", "items": ["One agent session per host — that ratio is the point", "herdr manages the terminals across hosts", "Every host keeps a fixed address by DHCP reservation on gw-1, so a reinstall comes back where it was"] },
+    { "dot": "rose", "title": "Physical and published", "items": ["Mid-2011 thermals want open air, so the units sit side by side and are never stacked", "Hosts appear here under logical names only", "The switch is named because an unmanaged switch has no address and no firmware to attack; the router's model is not, because it does"] }
   ]
 }

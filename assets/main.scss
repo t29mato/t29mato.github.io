@@ -1013,11 +1013,13 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
 .lab-pane-open { flex: none; }
 
 /* The diagram pans, zooms and scrolls inside itself, so the height is set
-   here and never derived from content — an auto-height frame would collapse. */
+   here and never derived from content — an auto-height frame would collapse.
+   It is deliberately close to a full screen: the topology is what this page
+   is, and everything under it is the caption. */
 .lab-pane-frame {
   display: block;
   width: 100%;
-  height: clamp(22rem, 60vh, 38rem);
+  height: clamp(26rem, 82vh, 58rem);
   border: 0;
   background: var(--bg);
 }

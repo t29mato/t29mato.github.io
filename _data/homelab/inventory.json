@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-02",
+  "updated_at": "2026-09-03",
   "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. One host is provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
@@ -8,6 +8,22 @@
       "ram": "8 GB",
       "os": "macOS",
       "role": "workstation — drives every session",
+      "status": "up"
+    },
+    {
+      "id": "gw-1",
+      "hardware": "Wi-Fi 6 router",
+      "ram": "-",
+      "os": "-",
+      "role": "LAN uplink, Wi-Fi, DHCP reservations",
+      "status": "up"
+    },
+    {
+      "id": "sw-1",
+      "hardware": "Buffalo LSW4-GT-8NS/WH",
+      "ram": "-",
+      "os": "-",
+      "role": "8-port unmanaged Gigabit switch",
       "status": "up"
     },
     {
@@ -41,19 +57,12 @@
       "os": "-",
       "role": "SSH node, one agent session",
       "status": "planned"
-    },
-    {
-      "id": "sw-1",
-      "hardware": "Buffalo LSW4-GT-8NS/WH",
-      "ram": "-",
-      "os": "-",
-      "role": "8-port unmanaged Gigabit switch",
-      "status": "up"
     }
   ],
   "network": {
-    "topology": "One wired segment: every mini goes to sw-1 over 1000BASE-T, and sessions reach them from air-1 by SSH.",
-    "disclosure": "Addresses, hostnames and key material are deliberately not published here."
+    "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and every mini goes to sw-1 over 1000BASE-T; sessions leave air-1 and reach them by SSH.",
+    "addressing": "Every host holds a fixed address by DHCP reservation on gw-1, keyed to its MAC, so a reinstall comes back on the address it left on. One source of truth, and nothing to configure on the host.",
+    "disclosure": "Addresses, hostnames and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both."
   },
   "stack": [
     {

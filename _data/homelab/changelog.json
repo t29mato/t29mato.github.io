@@ -1,5 +1,11 @@
 [
   {
+    "date": "2026-09-03",
+    "title": "The router joins the drawing",
+    "body": "gw-1 was always there and the diagram was quietly pretending otherwise — air-1 appeared to reach the switch directly. It now shows the real path: Wi-Fi to the router, a wired uplink to the switch, and the minis behind that. Addressing moved to DHCP reservations on gw-1 so a reinstalled mini comes back where it was.",
+    "delta": "/homelab/changes/2026-09-03/"
+  },
+  {
     "date": "2026-09-02",
     "title": "The lab gets a status page",
     "body": "First published inventory: mini-1 provisioned and reachable, mini-2 through mini-4 racked but not yet installed, sw-1 wiring them together. The topology diagram and this log start here, so the first entry has nothing to diff against.",

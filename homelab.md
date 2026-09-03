@@ -33,6 +33,7 @@ reachable from outside the LAN.
 </figure>
 
 <p class="tty-out tty-dim lab-note">{{ site.data.homelab.inventory.network.topology }}<br>
+{{ site.data.homelab.inventory.network.addressing }}<br>
 {{ site.data.homelab.inventory.network.disclosure }}</p>
 
 {% include tty-prompt.html cwd="~/lab" cmd="hosts" %}

@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "compare",
+  "type": "architecture",
+  "comparatorVersion": 1,
+  "canonicalVersion": 1,
+  "completeness": "complete",
+  "proofLevel": "authored",
+  "base": {
+    "title": "Homelab — four Mac minis on one switch",
+    "rawSha256": "303d73286dcc3a44e9aacd23137fcd5fd286b44ae14636f590f6c73e3ba3d87e",
+    "semanticSha256": "1bac9074ea39e0b20c7336c209237644378a64aa2f257cb4490175eff40a46ff",
+    "bytes": 2961
+  },
+  "head": {
+    "title": "Homelab — four Mac minis on one switch",
+    "rawSha256": "594665b2f1597f0a85c30a0f6bbc3d7c5af5f11c58214990995a2c603317c5a0",
+    "semanticSha256": "ee7a331c1a13fd2725d6487ef96720a12e1faf7579c24ed68094109367bd19dd",
+    "bytes": 3367
+  },
+  "summary": {
+    "components": {
+      "added": 1,
+      "changed": 0,
+      "evidenceChanged": 0,
+      "removed": 0,
+      "moved": 6
+    },
+    "connections": {
+      "added": 2,
+      "changed": 0,
+      "removed": 1,
+      "rerouted": 0
+    },
+    "boundaries": {
+      "added": 0,
+      "changed": 0,
+      "removed": 0,
+      "geometryChanged": 0
+    },
+    "presentationChanged": true,
+    "provenanceChanged": false
+  },
+  "changes": {
+    "components": [
+      {
+        "id": "air-1",
+        "baseLabel": "air-1",
+        "headLabel": "air-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos",
+          "/size"
+        ]
+      },
+      {
+        "id": "gw-1",
+        "headLabel": "gw-1",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "mini-1",
+        "baseLabel": "mini-1",
+        "headLabel": "mini-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-2",
+        "baseLabel": "mini-2",
+        "headLabel": "mini-2",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-3",
+        "baseLabel": "mini-3",
+        "headLabel": "mini-3",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-4",
+        "baseLabel": "mini-4",
+        "headLabel": "mini-4",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "sw-1",
+        "baseLabel": "sw-1",
+        "headLabel": "sw-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "id": "air-to-gateway",
+        "head": {
+          "from": "air-1",
+          "to": "gw-1",
+          "label": "Wi-Fi 6"
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "air-to-switch",
+        "base": {
+          "from": "air-1",
+          "to": "sw-1",
+          "label": "SSH"
+        },
+        "status": "removed",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "gateway-to-switch",
+        "head": {
+          "from": "gw-1",
+          "to": "sw-1",
+          "label": "1000BASE-T"
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      }
+    ],
+    "boundaries": []
+  },
+  "identity": {
+    "components": "components[].id",
+    "connections": "connections[].id (required)",
+    "boundaries": "boundaries[].kind + boundaries[].label (derived)"
+  },
+  "view": {
+    "visualPreset": "classic"
+  },
+  "limitations": [
+    "Authored Architecture IR only; no runtime impact, causality, risk, or mergeability is inferred.",
+    "Boundary identity is conservatively derived from kind + label."
+  ],
+  "artifact": {
+    "sha256": "a85f46442e87719b391f4e97ed0626b04d4152d78c2bd4ea0e3d677ad23b032c",
+    "bytes": 2011654
+  },
+  "validation": {
+    "checksPassed": 28,
+    "checkCount": 28,
+    "baseComposition": "pass",
+    "headComposition": "pass"
+  }
+}

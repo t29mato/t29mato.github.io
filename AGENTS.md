@@ -124,7 +124,10 @@ The full viewer, cards and all, stays one click away at `/homelab/topology/`.
    ```
 
    Strip the web font from the delta page too:
-   `node _scripts/strip-webfont.mjs homelab/changes/<today>/index.html`.
+   `node _scripts/strip-webfont.mjs homelab/changes/<today>/index.html`. A
+   delta page carries its before/after snapshots inside `<iframe srcdoc>`,
+   where the font links are HTML-escaped but just as live; the script handles
+   both encodings and is safe to re-run.
 
    A delta page is ~2 MB, so generate one for a real structural change and
    not for a wording fix.
@@ -140,7 +143,15 @@ The page is world-readable, and the lab is a home. None of the following
 belongs in the inventory, the diagram, the changelog or the commit message:
 
 - IP addresses, MAC addresses, real hostnames, SSID or router details. Hosts
-  appear under logical names only (`mini-1`, `sw-1`, `air-1`).
+  appear under logical names only (`mini-1`, `sw-1`, `air-1`, `gw-1`).
+- The router's make, model or firmware version. Naming the switch is fine —
+  an unmanaged switch has no address, no admin page and no firmware to
+  attack. A router has all three, so its model is a shopping list of CVEs to
+  try against whoever does get onto the LAN. Publish the role
+  ("Wi-Fi 6 router"), never the product.
+- Addressing values. Describing the *scheme* — DHCP reservations on the
+  router, keyed to MAC — is useful and safe. The subnet, the ranges and the
+  individual addresses are not.
 - SSH configuration detail, public keys, tokens, or anything that names a
   remote-access path into the LAN.
 - Anything with real-time resolution. The page states a date and moves in
