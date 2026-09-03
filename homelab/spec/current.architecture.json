@@ -10,8 +10,8 @@
       {
         "id": "today",
         "label": "What is running today",
-        "focus": ["air-1", "gw-1", "sw-1", "mini-1"],
-        "note": "One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-1 across the wired segment."
+        "focus": ["air-1", "gw-1", "sw-1", "mini-2"],
+        "note": "One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-2 across the wired segment, at an address gw-1 holds for it."
       },
       {
         "id": "when-full",
@@ -25,8 +25,8 @@
     { "id": "air-1", "type": "external", "label": "air-1", "sublabel": "MacBook Air (M1)", "tag": "workstation", "pos": [60, 100], "size": [170, 68] },
     { "id": "gw-1", "type": "cloud", "label": "gw-1", "sublabel": "Wi-Fi 6 router", "tag": "DHCP reservations", "pos": [60, 350], "size": [170, 68] },
     { "id": "sw-1", "type": "cloud", "label": "sw-1", "sublabel": "8-port Gigabit switch", "tag": "LSW4-GT-8NS/WH", "pos": [420, 350], "size": [170, 68] },
-    { "id": "mini-1", "type": "backend", "label": "mini-1", "sublabel": "Ubuntu 24.04 LTS", "tag": "up", "pos": [790, 100], "size": [170, 68] },
-    { "id": "mini-2", "type": "backend", "label": "mini-2", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 260], "size": [170, 68] },
+    { "id": "mini-1", "type": "backend", "label": "mini-1", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 100], "size": [170, 68] },
+    { "id": "mini-2", "type": "backend", "label": "mini-2", "sublabel": "Ubuntu 24.04 LTS", "tag": "up", "pos": [790, 260], "size": [170, 68] },
     { "id": "mini-3", "type": "backend", "label": "mini-3", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 420], "size": [170, 68] },
     { "id": "mini-4", "type": "backend", "label": "mini-4", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 580], "size": [170, 68] }
   ],
@@ -36,8 +36,8 @@
   "connections": [
     { "id": "air-to-gateway", "from": "air-1", "to": "gw-1", "label": "Wi-Fi 6", "variant": "emphasis", "labelDy": 24 },
     { "id": "gateway-to-switch", "from": "gw-1", "to": "sw-1", "label": "1000BASE-T", "variant": "emphasis" },
-    { "id": "switch-to-mini-1", "from": "sw-1", "to": "mini-1", "label": "1000BASE-T" },
-    { "id": "switch-to-mini-2", "from": "sw-1", "to": "mini-2", "variant": "dashed" },
+    { "id": "switch-to-mini-1", "from": "sw-1", "to": "mini-1", "variant": "dashed" },
+    { "id": "switch-to-mini-2", "from": "sw-1", "to": "mini-2" },
     { "id": "switch-to-mini-3", "from": "sw-1", "to": "mini-3", "variant": "dashed" },
     { "id": "switch-to-mini-4", "from": "sw-1", "to": "mini-4", "variant": "dashed" }
   ],

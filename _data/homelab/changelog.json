@@ -1,8 +1,8 @@
 [
   {
     "date": "2026-09-03",
-    "title": "The router joins the drawing",
-    "body": "gw-1 was always there and the diagram was quietly pretending otherwise — air-1 appeared to reach the switch directly. It now shows the real path: Wi-Fi to the router, a wired uplink to the switch, and the minis behind that. Addressing moved to DHCP reservations on gw-1 so a reinstalled mini comes back where it was.",
+    "title": "The router joins the drawing, and addressing is settled",
+    "body": "gw-1 was always in the path and the diagram quietly pretended otherwise — air-1 appeared to reach the switch directly. It now shows the real route: Wi-Fi to the router, a wired uplink to the switch, the minis behind that. Addressing is settled at the same time: gw-1 now holds a reservation per mini, and the first one is live. Correcting a claim from yesterday, too — the provisioned host is mini-2, not mini-1; mini-1 is still bare.",
     "delta": "/homelab/changes/2026-09-03/"
   },
   {

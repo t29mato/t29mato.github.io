@@ -15,21 +15,21 @@
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "rawSha256": "594665b2f1597f0a85c30a0f6bbc3d7c5af5f11c58214990995a2c603317c5a0",
-    "semanticSha256": "ee7a331c1a13fd2725d6487ef96720a12e1faf7579c24ed68094109367bd19dd",
-    "bytes": 3367
+    "rawSha256": "4472dbe0b8289c38029b257e4f12110889335aac9ebd1268968d0b795b09d9ad",
+    "semanticSha256": "e1b3d80639b844417d175aa6d944c42f45f8b71b656eec89730f7d4fe60e576f",
+    "bytes": 3377
   },
   "summary": {
     "components": {
       "added": 1,
-      "changed": 0,
+      "changed": 2,
       "evidenceChanged": 0,
       "removed": 0,
-      "moved": 6
+      "moved": 4
     },
     "connections": {
       "added": 2,
-      "changed": 0,
+      "changed": 2,
       "removed": 1,
       "rerouted": 0
     },
@@ -70,24 +70,30 @@
         "id": "mini-1",
         "baseLabel": "mini-1",
         "headLabel": "mini-1",
-        "status": "moved",
+        "status": "changed",
         "classifications": [
-          "geometry"
+          "geometry",
+          "semantic"
         ],
         "changedFields": [
-          "/pos"
+          "/pos",
+          "/sublabel",
+          "/tag"
         ]
       },
       {
         "id": "mini-2",
         "baseLabel": "mini-2",
         "headLabel": "mini-2",
-        "status": "moved",
+        "status": "changed",
         "classifications": [
-          "geometry"
+          "geometry",
+          "semantic"
         ],
         "changedFields": [
-          "/pos"
+          "/pos",
+          "/sublabel",
+          "/tag"
         ]
       },
       {
@@ -166,6 +172,47 @@
           "topology"
         ],
         "changedFields": []
+      },
+      {
+        "id": "switch-to-mini-1",
+        "base": {
+          "from": "sw-1",
+          "to": "mini-1",
+          "label": "1000BASE-T"
+        },
+        "head": {
+          "from": "sw-1",
+          "to": "mini-1",
+          "label": ""
+        },
+        "status": "changed",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": [
+          "/label",
+          "/variant"
+        ]
+      },
+      {
+        "id": "switch-to-mini-2",
+        "base": {
+          "from": "sw-1",
+          "to": "mini-2",
+          "label": ""
+        },
+        "head": {
+          "from": "sw-1",
+          "to": "mini-2",
+          "label": ""
+        },
+        "status": "changed",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": [
+          "/variant"
+        ]
       }
     ],
     "boundaries": []
@@ -183,8 +230,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "a85f46442e87719b391f4e97ed0626b04d4152d78c2bd4ea0e3d677ad23b032c",
-    "bytes": 2011654
+    "sha256": "87c3a7d0c6583841ff5103201753d47c751dcbbc54be75aa7ffe623329ca23e7",
+    "bytes": 2013274
   },
   "validation": {
     "checksPassed": 28,
