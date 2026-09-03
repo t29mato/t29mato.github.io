@@ -15,27 +15,27 @@
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "rawSha256": "4472dbe0b8289c38029b257e4f12110889335aac9ebd1268968d0b795b09d9ad",
-    "semanticSha256": "e1b3d80639b844417d175aa6d944c42f45f8b71b656eec89730f7d4fe60e576f",
-    "bytes": 3377
+    "rawSha256": "4c78672c6bd4689f45a83d5841e08969a1c15ebc4ac7399cb3b2ec2137c40e8d",
+    "semanticSha256": "e27dc0aa6f37070c791a34de6f7abf11c483c212b03591fcee87591d40acd68d",
+    "bytes": 6172
   },
   "summary": {
     "components": {
-      "added": 1,
+      "added": 4,
       "changed": 2,
       "evidenceChanged": 0,
       "removed": 0,
       "moved": 4
     },
     "connections": {
-      "added": 2,
+      "added": 5,
       "changed": 2,
       "removed": 1,
       "rerouted": 0
     },
     "boundaries": {
       "added": 0,
-      "changed": 0,
+      "changed": 1,
       "removed": 0,
       "geometryChanged": 0
     },
@@ -56,6 +56,24 @@
           "/pos",
           "/size"
         ]
+      },
+      {
+        "id": "cam-1",
+        "headLabel": "cam-1",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "cam-2",
+        "headLabel": "cam-2",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
       },
       {
         "id": "gw-1",
@@ -121,6 +139,15 @@
         ]
       },
       {
+        "id": "pi-1",
+        "headLabel": "pi-1",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
         "id": "sw-1",
         "baseLabel": "sw-1",
         "headLabel": "sw-1",
@@ -174,6 +201,32 @@
         "changedFields": []
       },
       {
+        "id": "switch-to-cam-1",
+        "head": {
+          "from": "sw-1",
+          "to": "cam-1",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "switch-to-cam-2",
+        "head": {
+          "from": "sw-1",
+          "to": "cam-2",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
         "id": "switch-to-mini-1",
         "base": {
           "from": "sw-1",
@@ -213,9 +266,35 @@
         "changedFields": [
           "/variant"
         ]
+      },
+      {
+        "id": "switch-to-pi-1",
+        "head": {
+          "from": "sw-1",
+          "to": "pi-1",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
       }
     ],
-    "boundaries": []
+    "boundaries": [
+      {
+        "key": "region:Wired segment",
+        "kind": "region",
+        "label": "Wired segment",
+        "status": "changed",
+        "classifications": [
+          "scope"
+        ],
+        "changedFields": [
+          "/wraps"
+        ]
+      }
+    ]
   },
   "identity": {
     "components": "components[].id",
@@ -230,8 +309,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "87c3a7d0c6583841ff5103201753d47c751dcbbc54be75aa7ffe623329ca23e7",
-    "bytes": 2013274
+    "sha256": "c91067dc926b6e98feb76b141df6ac6118469bcd6b9e5cece58ad63d53a09a12",
+    "bytes": 2032687
   },
   "validation": {
     "checksPassed": 28,

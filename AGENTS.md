@@ -132,11 +132,12 @@ The full viewer, cards and all, stays one click away at `/homelab/topology/`.
    A delta page is ~2 MB, so generate one for a real structural change and
    not for a wording fix.
 
-   History snapshots are per publishing *day*, not per edit. A second change
-   on the same day does not get a second delta: re-run the same `compare`,
-   with the same base, over the updated spec, and extend that day's changelog
-   entry. The reader gets one honest "what changed today" either way, and the
-   repo does not collect a 2 MB page per keystroke.
+   History snapshots are per publishing *day*, not per edit — and so are
+   deltas. Several changes on the same day may each get their own changelog
+   entry, but they share one delta page: re-run the same `compare`, with the
+   same base, over the updated spec, and point every topology-touching entry
+   from that day at it. The reader still gets an honest "what changed today",
+   and the repo does not collect a 2 MB page per edit.
 
 **Component and connection ids are permanent.** `compare` matches on
 `components[].id` and `connections[].id`, so renaming an id reads as "one

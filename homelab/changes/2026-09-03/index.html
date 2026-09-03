@@ -4821,9 +4821,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 @media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
-<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · AUTHORED SNAPSHOTS</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">Homelab — four Mac minis on one switch → Homelab — four Mac minis on one switch</p></div><div class="metrics"><div class="metric add"><strong>3</strong><span>ADDED</span></div><div class="metric remove"><strong>1</strong><span>REMOVED</span></div><div class="metric change"><strong>4</strong><span>CHANGED</span></div></div></header>
+<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · AUTHORED SNAPSHOTS</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">Homelab — four Mac minis on one switch → Homelab — four Mac minis on one switch</p></div><div class="metrics"><div class="metric add"><strong>9</strong><span>ADDED</span></div><div class="metric remove"><strong>1</strong><span>REMOVED</span></div><div class="metric change"><strong>5</strong><span>CHANGED</span></div></div></header>
 <div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
-<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false">Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · 12 authored changes</div></nav>
+<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false">Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · 19 authored changes</div></nav>
 <section class="canvas" data-view="base" hidden><iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot; data-theme=&quot;dark&quot; data-preset=&quot;classic&quot;&gt;
 &lt;head&gt;
@@ -19597,7 +19597,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-"></iframe></section><section class="canvas" data-view="delta"><svg viewBox="0 0 1064 804" role="img" lang="en" aria-labelledby="delta-head-archify-diagram-title delta-head-archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+"></iframe></section><section class="canvas" data-view="delta"><svg viewBox="0 0 1104 824" role="img" lang="en" aria-labelledby="delta-head-archify-diagram-title delta-head-archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
         <title id="delta-head-archify-diagram-title">Homelab — four Mac minis on one switch</title>
         <desc id="delta-head-archify-diagram-description">An architecture diagram generated by Archify.</desc>
         <!-- Definitions -->
@@ -19623,10 +19623,10 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <rect width="100%" height="100%" fill="url(#delta-head-grid)" />
 
         <!-- Baseline boundary frame phantoms -->
-
+<rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Wired segment" x="340" y="70" width="580" height="550" rx="12" class="c-region" stroke-width="1" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-key="region:Wired segment"/>
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Wired segment" x="390" y="70" width="600" height="598" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Wired segment" x="150" y="20" width="860" height="708" rx="12" class="c-region" stroke-width="1" data-delta-state="changed" data-delta-classifications="scope" data-delta-boundary-key="region:Wired segment"/>
 
         <!-- Baseline relationship phantoms -->
 
@@ -19637,16 +19637,25 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         </g>
 
 
+
+
+
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="air-1" data-edge-to="gw-1" data-edge-label="Wi-Fi 6" data-edge-key="0" data-edge-id="air-to-gateway" data-composition-points="145,168;145,350" d="M 145 168 L 145 350" class="a-emphasis" stroke-width="1.8" marker-end="url(#delta-head-arrowhead-emphasis)" data-delta-state="added" data-delta-classifications="topology"/>
-        <path data-edge-from="gw-1" data-edge-to="sw-1" data-edge-label="1000BASE-T" data-edge-key="1" data-edge-id="gateway-to-switch" data-composition-points="230,384;420,384" d="M 230 384 L 420 384" class="a-emphasis" stroke-width="1.8" marker-end="url(#delta-head-arrowhead-emphasis)" data-delta-state="added" data-delta-classifications="topology"/>
-        <path data-edge-from="sw-1" data-edge-to="mini-1" data-edge-key="2" data-edge-id="switch-to-mini-1" data-composition-points="590,366;690,366;690,134;790,134" d="M 590 366 L 682 366 Q 690 366 690 358 L 690 142 Q 690 134 698 134 L 790 134" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="changed" data-delta-classifications="semantic"/>
-        <path data-edge-from="sw-1" data-edge-to="mini-2" data-edge-key="3" data-edge-id="switch-to-mini-2" data-composition-points="590,378;690,378;690,294;790,294" d="M 590 378 L 682 378 Q 690 378 690 370 L 690 302 Q 690 294 698 294 L 790 294" class="a-default" stroke-width="1.5" marker-end="url(#delta-head-arrowhead)" data-delta-state="changed" data-delta-classifications="semantic"/>
-        <path data-edge-from="sw-1" data-edge-to="mini-3" data-edge-key="4" data-edge-id="switch-to-mini-3" data-composition-points="590,390;690,390;690,454;790,454" d="M 590 390 L 682 390 Q 690 390 690 398 L 690 446 Q 690 454 698 454 L 790 454" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="same"/>
-        <path data-edge-from="sw-1" data-edge-to="mini-4" data-edge-key="5" data-edge-id="switch-to-mini-4" data-composition-points="590,402;690,402;690,614;790,614" d="M 590 402 L 682 402 Q 690 402 690 410 L 690 606 Q 690 614 698 614 L 790 614" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="same"/>
+        <path data-edge-from="air-1" data-edge-to="gw-1" data-edge-label="Wi-Fi 6" data-edge-key="0" data-edge-id="air-to-gateway" data-composition-points="145,158;145,330" d="M 145 158 L 145 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#delta-head-arrowhead-emphasis)" data-delta-state="added" data-delta-classifications="topology"/>
+        <path data-edge-from="gw-1" data-edge-to="sw-1" data-edge-label="1000BASE-T" data-edge-key="1" data-edge-id="gateway-to-switch" data-composition-points="230,364;420,364" d="M 230 364 L 420 364" class="a-emphasis" stroke-width="1.8" marker-end="url(#delta-head-arrowhead-emphasis)" data-delta-state="added" data-delta-classifications="topology"/>
+        <path data-edge-from="sw-1" data-edge-to="cam-1" data-edge-key="2" data-edge-id="switch-to-cam-1" data-composition-points="505,398;505,519;525,519;525,640" d="M 505 398 L 505 511 Q 505 519 513 519 L 517 519 Q 525 519 525 527 L 525 640" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="added" data-delta-classifications="topology"/>
+        <path data-edge-from="sw-1" data-edge-to="cam-2" data-edge-key="3" data-edge-id="switch-to-cam-2" data-composition-points="519,398;519,519;785,519;785,640" d="M 519 398 L 519 511 Q 519 519 527 519 L 777 519 Q 785 519 785 527 L 785 640" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="added" data-delta-classifications="topology"/>
+        <path data-edge-from="sw-1" data-edge-to="mini-1" data-edge-key="4" data-edge-id="switch-to-mini-1" data-composition-points="590,346;700,346;700,84;810,84" d="M 590 346 L 692 346 Q 700 346 700 338 L 700 92 Q 700 84 708 84 L 810 84" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="changed" data-delta-classifications="semantic"/>
+        <path data-edge-from="sw-1" data-edge-to="mini-2" data-edge-key="5" data-edge-id="switch-to-mini-2" data-composition-points="590,358;700,358;700,214;810,214" d="M 590 358 L 692 358 Q 700 358 700 350 L 700 222 Q 700 214 708 214 L 810 214" class="a-default" stroke-width="1.5" marker-end="url(#delta-head-arrowhead)" data-delta-state="changed" data-delta-classifications="semantic"/>
+        <path data-edge-from="sw-1" data-edge-to="mini-3" data-edge-key="6" data-edge-id="switch-to-mini-3" data-composition-points="590,370;700,370;700,344;810,344" d="M 590 370 L 692 370 Q 700 370 700 362 L 700 352 Q 700 344 708 344 L 810 344" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="same"/>
+        <path data-edge-from="sw-1" data-edge-to="mini-4" data-edge-key="7" data-edge-id="switch-to-mini-4" data-composition-points="590,382;700,382;700,474;810,474" d="M 590 382 L 692 382 Q 700 382 700 390 L 700 466 Q 700 474 708 474 L 810 474" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="same"/>
+        <path data-edge-from="sw-1" data-edge-to="pi-1" data-edge-key="8" data-edge-id="switch-to-pi-1" data-composition-points="491,398;491,519;265,519;265,640" d="M 491 398 L 491 511 Q 491 519 483 519 L 273 519 Q 265 519 265 527 L 265 640" class="a-dashed" stroke-width="1.5" marker-end="url(#delta-head-arrowhead-dashed)" data-delta-state="added" data-delta-classifications="topology"/>
 
         <!-- Baseline boundary label phantoms (below current components) -->
-
+<g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Wired segment">
+          <rect data-graph-role="structural-frame-label-mask" x="344" y="80" width="80.2" height="16" rx="3" class="c-mask" data-delta-state="moved-from" data-delta-classifications="scope" data-delta-boundary-state="moved-from" data-delta-boundary-mask-key="region:Wired segment"/>
+          <text data-boundary-label="" x="348" y="93" class="t-cloud" font-size="9" font-weight="600" data-delta-state="moved-from" data-delta-boundary-state="moved-from" data-delta-boundary-key="region:Wired segment">Wired segment</text>
+        </g>
 
         <!-- Baseline removed and move-from component phantoms -->
 <g id="delta-base-node-air-1" data-node-id="air-1" data-node-label="air-1" role="group" aria-label="air-1, MacBook Air (M1), Architecture component" data-node-kind="external" data-node-sublabel="MacBook Air (M1)" data-node-tag="workstation" data-node-context="Architecture component" data-delta-state="moved-from" data-delta-classifications="geometry">
@@ -19732,112 +19741,159 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         <!-- Components -->
         <g id="delta-head-node-air-1" data-node-id="air-1" data-node-label="air-1" role="group" aria-label="air-1, MacBook Air (M1), Architecture component" data-node-kind="external" data-node-sublabel="MacBook Air (M1)" data-node-tag="workstation" data-node-context="Architecture component" data-delta-state="moved" data-delta-classifications="geometry">
           <title>air-1 · MacBook Air (M1) · Architecture component · workstation</title>
-          <rect x="60" y="100" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="60" y="100" width="170" height="68" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(66 106) scale(0.6875)">
+          <rect x="60" y="90" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="60" y="90" width="170" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(66 96) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="145" y="132" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">air-1</text>
-        <text data-detail="context" x="145" y="148" class="t-muted" font-size="9" text-anchor="middle">MacBook Air (M1)</text>
-        <text data-detail="fine" x="145" y="160" class="t-external" font-size="7" text-anchor="middle">workstation</text>
+          <text data-node-label="" data-detail-anchor="" x="145" y="122" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">air-1</text>
+        <text data-detail="context" x="145" y="138" class="t-muted" font-size="9" text-anchor="middle">MacBook Air (M1)</text>
+        <text data-detail="fine" x="145" y="150" class="t-external" font-size="7" text-anchor="middle">workstation</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="221" cy="109" r="8"/><text x="221" y="112" text-anchor="middle">↔</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="221" cy="99" r="8"/><text x="221" y="102" text-anchor="middle">↔</text></g>
+        </g>
+
+        <g id="delta-head-node-cam-1" data-node-id="cam-1" data-node-label="cam-1" role="group" aria-label="cam-1, wired camera, Wired segment" data-node-kind="external" data-node-sublabel="wired camera" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="added" data-delta-classifications="semantic">
+          <title>cam-1 · wired camera · Wired segment · planned</title>
+          <rect x="440" y="640" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="440" y="640" width="170" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(446 646) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="525" y="672" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">cam-1</text>
+        <text data-detail="context" x="525" y="688" class="t-muted" font-size="9" text-anchor="middle">wired camera</text>
+        <text data-detail="fine" x="525" y="700" class="t-external" font-size="7" text-anchor="middle">planned</text>
+
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="601" cy="649" r="8"/><text x="601" y="652" text-anchor="middle">+</text></g>
+        </g>
+
+        <g id="delta-head-node-cam-2" data-node-id="cam-2" data-node-label="cam-2" role="group" aria-label="cam-2, wired camera, Wired segment" data-node-kind="external" data-node-sublabel="wired camera" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="added" data-delta-classifications="semantic">
+          <title>cam-2 · wired camera · Wired segment · planned</title>
+          <rect x="700" y="640" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="700" y="640" width="170" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(706 646) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="785" y="672" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">cam-2</text>
+        <text data-detail="context" x="785" y="688" class="t-muted" font-size="9" text-anchor="middle">wired camera</text>
+        <text data-detail="fine" x="785" y="700" class="t-external" font-size="7" text-anchor="middle">planned</text>
+
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="861" cy="649" r="8"/><text x="861" y="652" text-anchor="middle">+</text></g>
         </g>
 
         <g id="delta-head-node-gw-1" data-node-id="gw-1" data-node-label="gw-1" role="group" aria-label="gw-1, Wi-Fi 6 router, Architecture component" data-node-kind="cloud" data-node-sublabel="Wi-Fi 6 router" data-node-tag="DHCP reservations" data-node-context="Architecture component" data-delta-state="added" data-delta-classifications="semantic">
           <title>gw-1 · Wi-Fi 6 router · Architecture component · DHCP reservations</title>
-          <rect x="60" y="350" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="60" y="350" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(66 356) scale(0.6875)">
+          <rect x="60" y="330" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="60" y="330" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(66 336) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="145" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">gw-1</text>
-        <text data-detail="context" x="145" y="398" class="t-muted" font-size="9" text-anchor="middle">Wi-Fi 6 router</text>
-        <text data-detail="fine" x="145" y="410" class="t-cloud" font-size="7" text-anchor="middle">DHCP reservations</text>
+          <text data-node-label="" data-detail-anchor="" x="145" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">gw-1</text>
+        <text data-detail="context" x="145" y="378" class="t-muted" font-size="9" text-anchor="middle">Wi-Fi 6 router</text>
+        <text data-detail="fine" x="145" y="390" class="t-cloud" font-size="7" text-anchor="middle">DHCP reservations</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="221" cy="359" r="8"/><text x="221" y="362" text-anchor="middle">+</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="221" cy="339" r="8"/><text x="221" y="342" text-anchor="middle">+</text></g>
         </g>
 
         <g id="delta-head-node-mini-1" data-node-id="mini-1" data-node-label="mini-1" role="group" aria-label="mini-1, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="changed" data-delta-classifications="geometry,semantic">
           <title>mini-1 · no OS installed · Wired segment · planned</title>
-          <rect x="790" y="100" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="790" y="100" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(796 106) scale(0.6875)">
+          <rect x="810" y="50" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="810" y="50" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(816 56) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="132" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-1</text>
-        <text data-detail="context" x="875" y="148" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
-        <text data-detail="fine" x="875" y="160" class="t-backend" font-size="7" text-anchor="middle">planned</text>
+          <text data-node-label="" data-detail-anchor="" x="895" y="82" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-1</text>
+        <text data-detail="context" x="895" y="98" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
+        <text data-detail="fine" x="895" y="110" class="t-backend" font-size="7" text-anchor="middle">planned</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="951" cy="109" r="8"/><text x="951" y="112" text-anchor="middle">~</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="971" cy="59" r="8"/><text x="971" y="62" text-anchor="middle">~</text></g>
         </g>
 
         <g id="delta-head-node-mini-2" data-node-id="mini-2" data-node-label="mini-2" role="group" aria-label="mini-2, Ubuntu 24.04 LTS, Wired segment" data-node-kind="backend" data-node-sublabel="Ubuntu 24.04 LTS" data-node-tag="up" data-node-context="Wired segment" data-delta-state="changed" data-delta-classifications="geometry,semantic">
           <title>mini-2 · Ubuntu 24.04 LTS · Wired segment · up</title>
-          <rect x="790" y="260" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="790" y="260" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(796 266) scale(0.6875)">
+          <rect x="810" y="180" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="810" y="180" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(816 186) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="292" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-2</text>
-        <text data-detail="context" x="875" y="308" class="t-muted" font-size="9" text-anchor="middle">Ubuntu 24.04 LTS</text>
-        <text data-detail="fine" x="875" y="320" class="t-backend" font-size="7" text-anchor="middle">up</text>
+          <text data-node-label="" data-detail-anchor="" x="895" y="212" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-2</text>
+        <text data-detail="context" x="895" y="228" class="t-muted" font-size="9" text-anchor="middle">Ubuntu 24.04 LTS</text>
+        <text data-detail="fine" x="895" y="240" class="t-backend" font-size="7" text-anchor="middle">up</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="951" cy="269" r="8"/><text x="951" y="272" text-anchor="middle">~</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="971" cy="189" r="8"/><text x="971" y="192" text-anchor="middle">~</text></g>
         </g>
 
         <g id="delta-head-node-mini-3" data-node-id="mini-3" data-node-label="mini-3" role="group" aria-label="mini-3, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="moved" data-delta-classifications="geometry">
           <title>mini-3 · no OS installed · Wired segment · planned</title>
-          <rect x="790" y="420" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="790" y="420" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(796 426) scale(0.6875)">
+          <rect x="810" y="310" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="810" y="310" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(816 316) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="452" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-3</text>
-        <text data-detail="context" x="875" y="468" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
-        <text data-detail="fine" x="875" y="480" class="t-backend" font-size="7" text-anchor="middle">planned</text>
+          <text data-node-label="" data-detail-anchor="" x="895" y="342" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-3</text>
+        <text data-detail="context" x="895" y="358" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
+        <text data-detail="fine" x="895" y="370" class="t-backend" font-size="7" text-anchor="middle">planned</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="951" cy="429" r="8"/><text x="951" y="432" text-anchor="middle">↔</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="971" cy="319" r="8"/><text x="971" y="322" text-anchor="middle">↔</text></g>
         </g>
 
         <g id="delta-head-node-mini-4" data-node-id="mini-4" data-node-label="mini-4" role="group" aria-label="mini-4, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="moved" data-delta-classifications="geometry">
           <title>mini-4 · no OS installed · Wired segment · planned</title>
-          <rect x="790" y="580" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="790" y="580" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(796 586) scale(0.6875)">
+          <rect x="810" y="440" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="810" y="440" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(816 446) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="875" y="612" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-4</text>
-        <text data-detail="context" x="875" y="628" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
-        <text data-detail="fine" x="875" y="640" class="t-backend" font-size="7" text-anchor="middle">planned</text>
+          <text data-node-label="" data-detail-anchor="" x="895" y="472" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-4</text>
+        <text data-detail="context" x="895" y="488" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
+        <text data-detail="fine" x="895" y="500" class="t-backend" font-size="7" text-anchor="middle">planned</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="951" cy="589" r="8"/><text x="951" y="592" text-anchor="middle">↔</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="971" cy="449" r="8"/><text x="971" y="452" text-anchor="middle">↔</text></g>
+        </g>
+
+        <g id="delta-head-node-pi-1" data-node-id="pi-1" data-node-label="pi-1" role="group" aria-label="pi-1, Raspberry Pi 3B, Wired segment" data-node-kind="backend" data-node-sublabel="Raspberry Pi 3B" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="added" data-delta-classifications="semantic">
+          <title>pi-1 · Raspberry Pi 3B · Wired segment · planned</title>
+          <rect x="180" y="640" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="180" y="640" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(186 646) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="265" y="672" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">pi-1</text>
+        <text data-detail="context" x="265" y="688" class="t-muted" font-size="9" text-anchor="middle">Raspberry Pi 3B</text>
+        <text data-detail="fine" x="265" y="700" class="t-backend" font-size="7" text-anchor="middle">planned</text>
+
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="341" cy="649" r="8"/><text x="341" y="652" text-anchor="middle">+</text></g>
         </g>
 
         <g id="delta-head-node-sw-1" data-node-id="sw-1" data-node-label="sw-1" role="group" aria-label="sw-1, 8-port Gigabit switch, Wired segment" data-node-kind="cloud" data-node-sublabel="8-port Gigabit switch" data-node-tag="LSW4-GT-8NS/WH" data-node-context="Wired segment" data-delta-state="moved" data-delta-classifications="geometry">
           <title>sw-1 · 8-port Gigabit switch · Wired segment · LSW4-GT-8NS/WH</title>
-          <rect x="420" y="350" width="170" height="68" rx="6" class="c-mask"/>
-          <rect x="420" y="350" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(426 356) scale(0.6875)">
+          <rect x="420" y="330" width="170" height="68" rx="6" class="c-mask"/>
+          <rect x="420" y="330" width="170" height="68" rx="6" class="c-cloud" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(426 336) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="505" y="382" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">sw-1</text>
-        <text data-detail="context" x="505" y="398" class="t-muted" font-size="9" text-anchor="middle">8-port Gigabit switch</text>
-        <text data-detail="fine" x="505" y="410" class="t-cloud" font-size="7" text-anchor="middle">LSW4-GT-8NS/WH</text>
+          <text data-node-label="" data-detail-anchor="" x="505" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">sw-1</text>
+        <text data-detail="context" x="505" y="378" class="t-muted" font-size="9" text-anchor="middle">8-port Gigabit switch</text>
+        <text data-detail="fine" x="505" y="390" class="t-cloud" font-size="7" text-anchor="middle">LSW4-GT-8NS/WH</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="581" cy="359" r="8"/><text x="581" y="362" text-anchor="middle">↔</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="581" cy="339" r="8"/><text x="581" y="342" text-anchor="middle">↔</text></g>
         </g>
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="air-1" data-edge-to="gw-1" data-edge-label="Wi-Fi 6" data-edge-key="0" data-edge-id="air-to-gateway" data-delta-state="added" data-delta-classifications="topology">
-          <rect x="123.2" y="172" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="145" y="182" class="t-backend" font-size="8" text-anchor="middle">Wi-Fi 6</text>
+          <rect x="123.2" y="162" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="145" y="172" class="t-backend" font-size="8" text-anchor="middle">Wi-Fi 6</text>
         </g>
         <g data-detail="context" data-edge-from="gw-1" data-edge-to="sw-1" data-edge-label="1000BASE-T" data-edge-key="1" data-edge-id="gateway-to-switch" data-delta-state="added" data-delta-classifications="topology">
-          <rect x="296" y="364" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="325" y="374" class="t-backend" font-size="8" text-anchor="middle">1000BASE-T</text>
+          <rect x="296" y="368" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="325" y="378" class="t-backend" font-size="8" text-anchor="middle">1000BASE-T</text>
         </g>
+
+
+
 
 
 
@@ -19845,34 +19901,37 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
         <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Wired segment">
-          <rect data-graph-role="structural-frame-label-mask" x="394" y="80" width="80.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="398" y="93" class="t-cloud" font-size="9" font-weight="600">Wired segment</text>
+          <rect data-graph-role="structural-frame-label-mask" x="154" y="30" width="80.2" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="158" y="43" class="t-cloud" font-size="9" font-weight="600" data-delta-state="changed" data-delta-boundary-state="changed" data-delta-boundary-key="region:Wired segment">Wired segment</text>
         </g>
 
         <!-- Delta relationship symbols -->
 <text class="delta-edge-marker" data-delta-state="removed" data-edge-id="air-to-switch" x="229" y="343" aria-hidden="true">−</text>
-<text class="delta-edge-marker" data-delta-state="added" data-edge-id="air-to-gateway" x="154" y="161" aria-hidden="true">+</text>
-<text class="delta-edge-marker" data-delta-state="added" data-edge-id="gateway-to-switch" x="239" y="377" aria-hidden="true">+</text>
-<text class="delta-edge-marker" data-delta-state="changed" data-edge-id="switch-to-mini-1" x="599" y="359" aria-hidden="true">~</text>
-<text class="delta-edge-marker" data-delta-state="changed" data-edge-id="switch-to-mini-2" x="599" y="371" aria-hidden="true">~</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="air-to-gateway" x="154" y="151" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="gateway-to-switch" x="239" y="357" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="switch-to-cam-1" x="514" y="391" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="switch-to-cam-2" x="528" y="391" aria-hidden="true">+</text>
+<text class="delta-edge-marker" data-delta-state="changed" data-edge-id="switch-to-mini-1" x="599" y="339" aria-hidden="true">~</text>
+<text class="delta-edge-marker" data-delta-state="changed" data-edge-id="switch-to-mini-2" x="599" y="351" aria-hidden="true">~</text>
+<text class="delta-edge-marker" data-delta-state="added" data-edge-id="switch-to-pi-1" x="500" y="391" aria-hidden="true">+</text>
 
         <!-- Delta boundary symbols -->
-
+<text class="delta-boundary-marker" data-delta-state="changed" x="908" y="86" text-anchor="middle" aria-hidden="true">~</text>
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
-          <text x="40" y="744" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="40" data-legend-baseline="764" data-legend-width="78">
-            <rect x="40" y="755" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="62" y="764" class="t-muted" font-size="10" font-weight="500">Backend</text>
+          <text x="40" y="764" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="40" data-legend-baseline="784" data-legend-width="78">
+            <rect x="40" y="775" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
+            <text x="62" y="784" class="t-muted" font-size="10" font-weight="500">Backend</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud" data-legend-x="140" data-legend-baseline="764" data-legend-width="68">
-            <rect x="140" y="755" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="162" y="764" class="t-muted" font-size="10" font-weight="500">Cloud</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud" data-legend-x="140" data-legend-baseline="784" data-legend-width="68">
+            <rect x="140" y="775" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
+            <text x="162" y="784" class="t-muted" font-size="10" font-weight="500">Cloud</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="230" data-legend-baseline="764" data-legend-width="83">
-            <rect x="230" y="755" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="252" y="764" class="t-muted" font-size="10" font-weight="500">External</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="230" data-legend-baseline="784" data-legend-width="83">
+            <rect x="230" y="775" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
+            <text x="252" y="784" class="t-muted" font-size="10" font-weight="500">External</text>
           </g>
         </g>
       </svg></section><section class="canvas" data-view="head" hidden><iframe class="snapshot-frame" title="After architecture explorer" srcdoc="&lt;!DOCTYPE html&gt;
@@ -24830,7 +24889,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
       &lt;/div&gt;
     &lt;/div&gt;
 
-    &lt;script id=&quot;archify-guided-views-data&quot; type=&quot;application/json&quot;&gt;[{&quot;id&quot;:&quot;today&quot;,&quot;label&quot;:&quot;What is running today&quot;,&quot;focus&quot;:[&quot;air-1&quot;,&quot;gw-1&quot;,&quot;sw-1&quot;,&quot;mini-2&quot;],&quot;note&quot;:&quot;One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-2 across the wired segment, at an address gw-1 holds for it.&quot;},{&quot;id&quot;:&quot;when-full&quot;,&quot;label&quot;:&quot;When the rack is full&quot;,&quot;focus&quot;:[&quot;sw-1&quot;,&quot;mini-1&quot;,&quot;mini-2&quot;,&quot;mini-3&quot;,&quot;mini-4&quot;],&quot;note&quot;:&quot;The other three minis are hardware waiting for an OS. The wiring for them already exists.&quot;}]&lt;/script&gt;
+    &lt;script id=&quot;archify-guided-views-data&quot; type=&quot;application/json&quot;&gt;[{&quot;id&quot;:&quot;today&quot;,&quot;label&quot;:&quot;What is running today&quot;,&quot;focus&quot;:[&quot;air-1&quot;,&quot;gw-1&quot;,&quot;sw-1&quot;,&quot;mini-2&quot;],&quot;note&quot;:&quot;One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-2 across the wired segment, at an address gw-1 holds for it.&quot;},{&quot;id&quot;:&quot;when-full&quot;,&quot;label&quot;:&quot;When the rack is full&quot;,&quot;focus&quot;:[&quot;sw-1&quot;,&quot;mini-1&quot;,&quot;mini-2&quot;,&quot;mini-3&quot;,&quot;mini-4&quot;],&quot;note&quot;:&quot;Three minis are hardware waiting for an OS. The wiring for them already exists.&quot;},{&quot;id&quot;:&quot;watching&quot;,&quot;label&quot;:&quot;Watching the room&quot;,&quot;focus&quot;:[&quot;sw-1&quot;,&quot;pi-1&quot;,&quot;cam-1&quot;,&quot;cam-2&quot;],&quot;note&quot;:&quot;Two cameras recorded on a mini, and a Pi that streams the room rather than recording it. Together they fill the switch.&quot;}]&lt;/script&gt;
 
     &lt;script id=&quot;archify-i18n-data&quot; type=&quot;application/json&quot;&gt;{&quot;locale&quot;:&quot;en&quot;,&quot;messages&quot;:{&quot;viewer.kind.frontend&quot;:&quot;Frontend&quot;,&quot;viewer.kind.backend&quot;:&quot;Backend&quot;,&quot;viewer.kind.database&quot;:&quot;Database&quot;,&quot;viewer.kind.cloud&quot;:&quot;Cloud&quot;,&quot;viewer.kind.security&quot;:&quot;Security&quot;,&quot;viewer.kind.messagebus&quot;:&quot;Message bus&quot;,&quot;viewer.kind.external&quot;:&quot;External&quot;,&quot;viewer.kind.neutral&quot;:&quot;Neutral&quot;,&quot;viewer.kind.node&quot;:&quot;Node&quot;,&quot;viewer.kind.start&quot;:&quot;Start&quot;,&quot;viewer.kind.active&quot;:&quot;Active&quot;,&quot;viewer.kind.waiting&quot;:&quot;Waiting&quot;,&quot;viewer.kind.decision&quot;:&quot;Decision&quot;,&quot;viewer.kind.success&quot;:&quot;Success&quot;,&quot;viewer.kind.failure&quot;:&quot;Failure&quot;,&quot;viewer.toolbar.actions&quot;:&quot;Diagram actions&quot;,&quot;viewer.theme.toggle.title&quot;:&quot;Toggle theme (T)&quot;,&quot;viewer.theme.toggle&quot;:&quot;Toggle color theme&quot;,&quot;viewer.theme.dark&quot;:&quot;Dark&quot;,&quot;viewer.theme.light&quot;:&quot;Light&quot;,&quot;viewer.preset.choose.title&quot;:&quot;Choose visual style (S cycles)&quot;,&quot;viewer.preset.choose&quot;:&quot;Choose visual style&quot;,&quot;viewer.preset.style&quot;:&quot;Style&quot;,&quot;viewer.preset.menu&quot;:&quot;Visual style&quot;,&quot;viewer.preset.identity&quot;:&quot;Visual identity&quot;,&quot;viewer.preset.cycles&quot;:&quot;S cycles&quot;,&quot;viewer.preset.classic&quot;:&quot;Classic&quot;,&quot;viewer.preset.classic.short&quot;:&quot;Classic&quot;,&quot;viewer.preset.classic.hint&quot;:&quot;Stable technical default&quot;,&quot;viewer.preset.flow&quot;:&quot;Signal Flow&quot;,&quot;viewer.preset.flow.short&quot;:&quot;Flow&quot;,&quot;viewer.preset.flow.hint&quot;:&quot;Motion-forward presentation&quot;,&quot;viewer.preset.blueprint&quot;:&quot;Blueprint&quot;,&quot;viewer.preset.blueprint.hint&quot;:&quot;Engineering review&quot;,&quot;viewer.preset.editorial&quot;:&quot;Editorial&quot;,&quot;viewer.preset.editorial.hint&quot;:&quot;Publication and launch notes&quot;,&quot;viewer.preset.badge.signalFlow&quot;:&quot;SIGNAL FLOW&quot;,&quot;viewer.preset.badge.blueprint&quot;:&quot;BLUEPRINT / REV 01&quot;,&quot;viewer.preset.badge.editorial&quot;:&quot;EDITORIAL / FIELD NOTE&quot;,&quot;viewer.preset.badge.editorialPlate&quot;:&quot;ARCHIFY / PLATE 04&quot;,&quot;viewer.preset.current&quot;:&quot;Visual style: {style}. Choose visual style&quot;,&quot;viewer.motion.live&quot;:&quot;Live&quot;,&quot;viewer.motion.still&quot;:&quot;Still&quot;,&quot;viewer.motion.pause&quot;:&quot;Pause motion&quot;,&quot;viewer.motion.resume&quot;:&quot;Resume motion&quot;,&quot;viewer.motion.reduced&quot;:&quot;Motion paused by reduced-motion preference&quot;,&quot;viewer.motion.hidden&quot;:&quot;Motion paused while this page is hidden&quot;,&quot;viewer.motion.yielding&quot;:&quot;Pause motion; currently yielding to {owner}&quot;,&quot;viewer.motion.yielding.title&quot;:&quot;Live preview enabled · yielding to {owner}&quot;,&quot;viewer.owner.story&quot;:&quot;the guided story&quot;,&quot;viewer.owner.chapter&quot;:&quot;the active chapter&quot;,&quot;viewer.owner.chapterPreview&quot;:&quot;the chapter delta preview&quot;,&quot;viewer.owner.handoff&quot;:&quot;the chapter handoff&quot;,&quot;viewer.owner.route&quot;:&quot;Route Probe&quot;,&quot;viewer.owner.lens&quot;:&quot;Semantic Lens&quot;,&quot;viewer.owner.relationship&quot;:&quot;Relationship Preview&quot;,&quot;viewer.owner.intent&quot;:&quot;Intent Trace&quot;,&quot;viewer.owner.focus&quot;:&quot;semantic focus&quot;,&quot;viewer.owner.legend&quot;:&quot;legend preview&quot;,&quot;viewer.owner.reader&quot;:&quot;reader interaction&quot;,&quot;viewer.present.enter&quot;:&quot;Enter presentation stage&quot;,&quot;viewer.present.enter.title&quot;:&quot;Presentation stage (F)&quot;,&quot;viewer.present.exit&quot;:&quot;Exit presentation stage&quot;,&quot;viewer.present.exit.title&quot;:&quot;Exit presentation stage (F or Escape)&quot;,&quot;viewer.present.present&quot;:&quot;Present&quot;,&quot;viewer.present.exit.label&quot;:&quot;Exit&quot;,&quot;viewer.export.button&quot;:&quot;Export&quot;,&quot;viewer.export.button.title&quot;:&quot;Export diagram (E)&quot;,&quot;viewer.export.diagram&quot;:&quot;Export diagram&quot;,&quot;viewer.export.menu&quot;:&quot;Export&quot;,&quot;viewer.export.subtitle&quot;:&quot;Portable, clean outputs&quot;,&quot;viewer.export.share&quot;:&quot;Share&quot;,&quot;viewer.export.shareCard&quot;:&quot;Share Card&quot;,&quot;viewer.export.routeShareCard&quot;:&quot;Route Share Card&quot;,&quot;viewer.export.reachShareCard&quot;:&quot;Reach Share Card&quot;,&quot;viewer.export.copyShareCard&quot;:&quot;Copy Share Card&quot;,&quot;viewer.export.copyDiagram&quot;:&quot;Copy diagram&quot;,&quot;viewer.export.clipboardPng&quot;:&quot;PNG to clipboard&quot;,&quot;viewer.export.raster&quot;:&quot;Raster images&quot;,&quot;viewer.export.image&quot;:&quot;Image&quot;,&quot;viewer.export.lossless&quot;:&quot;Lossless image&quot;,&quot;viewer.export.compact&quot;:&quot;Compact image&quot;,&quot;viewer.export.modern&quot;:&quot;Modern image&quot;,&quot;viewer.export.vectorMotion&quot;:&quot;Vector and motion&quot;,&quot;viewer.export.vectorMotion.heading&quot;:&quot;Vector \u0026 motion&quot;,&quot;viewer.export.editable&quot;:&quot;Editable vector&quot;,&quot;viewer.export.motion6s&quot;:&quot;6s motion&quot;,&quot;viewer.export.unsupported&quot;:&quot;Not supported by this browser&quot;,&quot;viewer.export.clipboardUnsupported&quot;:&quot;Clipboard image write not supported by this browser&quot;,&quot;viewer.export.clipboardUnsupported.period&quot;:&quot;Clipboard image write not supported by this browser.&quot;,&quot;viewer.export.clipboardUnsupported.short&quot;:&quot;Clipboard image write not supported in this browser.&quot;,&quot;viewer.export.motionUnavailable&quot;:&quot;Motion capture unavailable in this browser&quot;,&quot;viewer.export.webmUnavailable&quot;:&quot;WebM unavailable in this browser&quot;,&quot;viewer.export.failed&quot;:&quot;Export failed: {message}&quot;,&quot;viewer.export.unknownVariant&quot;:&quot;Unknown Share Card variant: {variant}&quot;,&quot;viewer.export.routeRequired&quot;:&quot;Trace a route before exporting a Route Share Card&quot;,&quot;viewer.export.reachRequired&quot;:&quot;Trace authored reach before exporting a Reach Share Card&quot;,&quot;viewer.export.unknown&quot;:&quot;unknown&quot;,&quot;viewer.export.routeFailed&quot;:&quot;Route Share Card export failed: {message}&quot;,&quot;viewer.export.reachFailed&quot;:&quot;Reach Share Card export failed: {message}&quot;,&quot;viewer.export.copyFailed&quot;:&quot;Copy failed: {message}&quot;,&quot;viewer.export.copiedPng&quot;:&quot;Copied PNG to clipboard&quot;,&quot;viewer.export.copiedShare&quot;:&quot;Copied Share Card&quot;,&quot;viewer.export.downloadedShare&quot;:&quot;Downloaded Share Card&quot;,&quot;viewer.export.downloadedRoute&quot;:&quot;Downloaded Route Share Card&quot;,&quot;viewer.export.downloadedReach&quot;:&quot;Downloaded Reach Share Card&quot;,&quot;viewer.export.downloadedWebm&quot;:&quot;Downloaded WebM&quot;,&quot;viewer.export.recording&quot;:&quot;Recording 6 seconds of motion…&quot;,&quot;viewer.export.card.routeSummary.one&quot;:&quot;Route: {source} → {target} · {count} directed hop&quot;,&quot;viewer.export.card.routeSummary.other&quot;:&quot;Route: {source} → {target} · {count} directed hops&quot;,&quot;viewer.export.card.reachSummary&quot;:&quot;Authored {direction} from {origin} · {nodes} · {links} · max {hops}&quot;,&quot;viewer.export.card.node.one&quot;:&quot;{count} node&quot;,&quot;viewer.export.card.node.other&quot;:&quot;{count} nodes&quot;,&quot;viewer.export.card.link.one&quot;:&quot;{count} link&quot;,&quot;viewer.export.card.link.other&quot;:&quot;{count} links&quot;,&quot;viewer.export.card.hop.one&quot;:&quot;{count} hop&quot;,&quot;viewer.export.card.hop.other&quot;:&quot;{count} hops&quot;,&quot;viewer.export.card.routeBadge&quot;:&quot;ARCHIFY · ROUTE · {hops}&quot;,&quot;viewer.export.card.reachBadge&quot;:&quot;ARCHIFY · {direction} REACH&quot;,&quot;viewer.export.card.defaultBadge&quot;:&quot;ARCHIFY · {preset} · {theme}&quot;,&quot;viewer.export.direction.upstream&quot;:&quot;Upstream&quot;,&quot;viewer.export.direction.downstream&quot;:&quot;Downstream&quot;,&quot;viewer.export.error.canvasUnavailable&quot;:&quot;Canvas unavailable for {label}&quot;,&quot;viewer.export.error.contextUnavailable&quot;:&quot;2D canvas context unavailable for {label}&quot;,&quot;viewer.export.error.toBlobUnavailable&quot;:&quot;canvas.toBlob unavailable for {label}&quot;,&quot;viewer.export.error.toBlobNull&quot;:&quot;canvas.toBlob returned no data for {label}&quot;,&quot;viewer.export.error.variantsCombined&quot;:&quot;Share Card variants cannot be combined&quot;,&quot;viewer.export.error.viewerState&quot;:&quot;Share Card export could not remove temporary viewer state&quot;,&quot;viewer.export.error.routeState&quot;:&quot;Route Card export could not preserve the resolved route safely&quot;,&quot;viewer.export.error.reachState&quot;:&quot;Reach Card export could not preserve authored reach safely&quot;,&quot;viewer.export.error.webmRequirements&quot;:&quot;WebM motion export requires a trace animation and browser MediaRecorder support&quot;,&quot;viewer.export.error.mediaRecorder&quot;:&quot;MediaRecorder failed&quot;,&quot;viewer.export.error.emptyWebm&quot;:&quot;MediaRecorder produced an empty WebM&quot;,&quot;viewer.export.error.webmBackground&quot;:&quot;SVG background could not be loaded for WebM export&quot;,&quot;viewer.guided.region&quot;:&quot;Guided diagram views&quot;,&quot;viewer.guided.previous&quot;:&quot;Previous guided view&quot;,&quot;viewer.guided.previous.title&quot;:&quot;Previous guided view ([)&quot;,&quot;viewer.guided.next&quot;:&quot;Next guided view&quot;,&quot;viewer.guided.next.title&quot;:&quot;Next guided view (])&quot;,&quot;viewer.guided.views&quot;:&quot;Guided views&quot;,&quot;viewer.guided.explore&quot;:&quot;Explore this system&quot;,&quot;viewer.guided.intro&quot;:&quot;Step through curated paths without changing the source diagram.&quot;,&quot;viewer.guided.trail&quot;:&quot;Story trail&quot;,&quot;viewer.guided.beat&quot;:&quot;Beat&quot;,&quot;viewer.guided.nextBeat&quot;:&quot;Next&quot;,&quot;viewer.guided.play&quot;:&quot;Play guided story&quot;,&quot;viewer.guided.play.title&quot;:&quot;Play guided story (P)&quot;,&quot;viewer.guided.pause&quot;:&quot;Pause guided story&quot;,&quot;viewer.guided.pause.title&quot;:&quot;Pause guided story (P)&quot;,&quot;viewer.guided.replay&quot;:&quot;Replay guided story&quot;,&quot;viewer.guided.replay.title&quot;:&quot;Replay guided story (P)&quot;,&quot;viewer.guided.playStory&quot;:&quot;Play story&quot;,&quot;viewer.guided.pauseStory&quot;:&quot;Pause&quot;,&quot;viewer.guided.replayStory&quot;:&quot;Replay story&quot;,&quot;viewer.guided.motionUnavailable&quot;:&quot;Story playback unavailable while motion is Still&quot;,&quot;viewer.guided.enableMotion&quot;:&quot;Switch motion to Live to play the guided story&quot;,&quot;viewer.guided.selectBeatLink&quot;:&quot;Select a Story Beat to copy its exact link&quot;,&quot;viewer.guided.copyMoment&quot;:&quot;Copy moment&quot;,&quot;viewer.guided.momentCopied&quot;:&quot;Moment link copied&quot;,&quot;viewer.guided.momentCopyFailed&quot;:&quot;Could not copy story moment link&quot;,&quot;viewer.guided.copied&quot;:&quot;Copied&quot;,&quot;viewer.guided.copyFailed&quot;:&quot;Copy failed&quot;,&quot;viewer.guided.showAll&quot;:&quot;Show all&quot;,&quot;viewer.guided.showAll.aria&quot;:&quot;Show entire diagram&quot;,&quot;viewer.guided.chapters&quot;:&quot;Story chapters&quot;,&quot;viewer.guided.storyTrail&quot;:&quot;Story trail for {label}: {count} beats&quot;,&quot;viewer.guided.chapter.open&quot;:&quot;Open chapter {index} of {total}: {label}, {count} stops&quot;,&quot;viewer.guided.chapter.current&quot;:&quot;Current chapter {index} of {total}: {label}, {count} stops&quot;,&quot;viewer.guided.chapter.selectedNodes&quot;:&quot;{count} selected nodes&quot;,&quot;viewer.guided.chapter.stops&quot;:&quot;{count} stops&quot;,&quot;viewer.guided.chapter.stop.one&quot;:&quot;{count} stop&quot;,&quot;viewer.guided.chapter.stop.other&quot;:&quot;{count} stops&quot;,&quot;viewer.guided.chapter.current.title&quot;:&quot;{label} — current chapter, {count} stops&quot;,&quot;viewer.guided.chapter.delta.expanded&quot;:&quot;{stay} stay, {enter} enter, {leave} leave&quot;,&quot;viewer.guided.chapter.delta.aria&quot;:&quot;Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}&quot;,&quot;viewer.guided.chapter.delta.title&quot;:&quot;{label} — {delta} chapter focus&quot;,&quot;viewer.guided.handoff&quot;:&quot;{from} → {to} · via {label}&quot;,&quot;viewer.guided.share.chapter&quot;:&quot;Chapter {index} / {total}&quot;,&quot;viewer.guided.share.initial&quot;:&quot;Chapter 01 / 01&quot;,&quot;viewer.guided.share.default&quot;:&quot;Guided chapter&quot;,&quot;viewer.guided.state.ready&quot;:&quot;Ready&quot;,&quot;viewer.guided.state.playing&quot;:&quot;Playing&quot;,&quot;viewer.guided.state.settled&quot;:&quot;Settled&quot;,&quot;viewer.guided.state.paused&quot;:&quot;Paused&quot;,&quot;viewer.guided.state.pinned&quot;:&quot;Pinned&quot;,&quot;viewer.guided.state.still&quot;:&quot;Still&quot;,&quot;viewer.guided.share.step&quot;:&quot;Step {index} / {total} · {label}&quot;,&quot;viewer.guided.share.staticMoment&quot;:&quot;{step} · Static moment&quot;,&quot;viewer.guided.share.complete&quot;:&quot;{count} steps complete · {note}&quot;,&quot;viewer.guided.share.settled&quot;:&quot;Path settled for reading.&quot;,&quot;viewer.guided.share.staticPath&quot;:&quot;{count} steps · Static path&quot;,&quot;viewer.guided.share.ready&quot;:&quot;{count} steps · Ready&quot;,&quot;viewer.guided.share.aria&quot;:&quot;{state} chapter {index} of {total}: {label}. {beat}. {route}&quot;,&quot;viewer.guided.beat.start&quot;:&quot;Beat {index} / {total} · {label} · starting point&quot;,&quot;viewer.guided.beat.forward&quot;:&quot;Beat {index} / {total} · {from} → {to}&quot;,&quot;viewer.guided.beat.reverse&quot;:&quot;Beat {index} / {total} · {from} → {to} · reverse authored link&quot;,&quot;viewer.guided.beat.multiple&quot;:&quot;Beat {index} / {total} · {from} ⇄ {to} · {count} authored links&quot;,&quot;viewer.guided.beat.group&quot;:&quot;Beat {index} / {total} · {from} · {to} · grouped · no direct link&quot;,&quot;viewer.guided.beat.aria.prefix&quot;:&quot;Story beat {index} of {total}: {label}. &quot;,&quot;viewer.guided.beat.aria.start&quot;:&quot;Starting point.&quot;,&quot;viewer.guided.beat.aria.forward&quot;:&quot;From {from} through one authored forward relationship.&quot;,&quot;viewer.guided.beat.aria.reverse&quot;:&quot;From {from}; the authored relationship points from {to} to {from}.&quot;,&quot;viewer.guided.beat.aria.multiple&quot;:&quot;From {from} through {count} authored relationships; shown without arbitrary motion.&quot;,&quot;viewer.guided.beat.aria.group&quot;:&quot;Grouped from {from} with no direct authored relationship.&quot;,&quot;viewer.guided.caption.start&quot;:&quot;Starting point&quot;,&quot;viewer.guided.caption.grouped&quot;:&quot;Grouped transition · no direct authored link&quot;,&quot;viewer.guided.caption.more&quot;:&quot; +{count} more&quot;,&quot;viewer.guided.caption.reverse&quot;:&quot;Reverse authored relationship&quot;,&quot;viewer.guided.caption.relationships&quot;:&quot;{count} authored relationships&quot;,&quot;viewer.guided.caption.relationship&quot;:&quot;Authored relationship&quot;,&quot;viewer.guided.caption.direction&quot;:&quot;authored direction: {from} → {to}&quot;,&quot;viewer.guided.caption.starting&quot;:&quot;Authored starting point&quot;,&quot;viewer.guided.beatLink&quot;:&quot;Copy link to current story moment: Beat {index} of {total}: {label}&quot;,&quot;viewer.guided.noStory&quot;:&quot;This diagram has no authored guided story.&quot;,&quot;viewer.guide.eyebrow&quot;:&quot;Diagram guide&quot;,&quot;viewer.guide.close&quot;:&quot;Close diagram guide&quot;,&quot;viewer.guide.inspecting&quot;:&quot;Inspecting compiled semantics&quot;,&quot;viewer.guide.actions&quot;:&quot;Diagram exploration actions&quot;,&quot;viewer.guide.find&quot;:&quot;Find any node&quot;,&quot;viewer.guide.find.hint&quot;:&quot;Search labels, responsibilities, kinds, and stable IDs.&quot;,&quot;viewer.guide.route&quot;:&quot;Trace a route&quot;,&quot;viewer.guide.route.aria&quot;:&quot;Trace a directed route&quot;,&quot;viewer.guide.route.hint&quot;:&quot;Ask how two semantic nodes connect in authored direction.&quot;,&quot;viewer.guide.map&quot;:&quot;See the whole system&quot;,&quot;viewer.guide.map.hint&quot;:&quot;Open Semantic Radar with a live viewport and stable nodes.&quot;,&quot;viewer.guide.lens&quot;:&quot;Compare semantic kinds&quot;,&quot;viewer.guide.lens.hint&quot;:&quot;Count roles, reveal their traffic, and compare direct authored links.&quot;,&quot;viewer.guide.story&quot;:&quot;Play the guided story&quot;,&quot;viewer.guide.story.hint&quot;:&quot;Walk the authored chapters and real relationships.&quot;,&quot;viewer.guide.present&quot;:&quot;Enter Presentation Stage&quot;,&quot;viewer.guide.present.hint&quot;:&quot;Give the live diagram the viewport without changing export.&quot;,&quot;viewer.guide.shortcuts&quot;:&quot;Additional keyboard shortcuts&quot;,&quot;viewer.guide.shortcut.export&quot;:&quot;Export&quot;,&quot;viewer.guide.shortcut.theme&quot;:&quot;Theme&quot;,&quot;viewer.guide.shortcut.style&quot;:&quot;Style&quot;,&quot;viewer.guide.shortcut.reset&quot;:&quot;Reset&quot;,&quot;viewer.guide.shortcut.zoomIn&quot;:&quot;Zoom in&quot;,&quot;viewer.guide.shortcut.zoomOut&quot;:&quot;Zoom out&quot;,&quot;viewer.guide.shortcut.close&quot;:&quot;Close&quot;,&quot;viewer.guide.facts&quot;:&quot;{nodes} · {relationships} · {views}&quot;,&quot;viewer.guide.fact.node.one&quot;:&quot;{count} semantic node&quot;,&quot;viewer.guide.fact.node.other&quot;:&quot;{count} semantic nodes&quot;,&quot;viewer.guide.fact.relationship.one&quot;:&quot;{count} relationship&quot;,&quot;viewer.guide.fact.relationship.other&quot;:&quot;{count} relationships&quot;,&quot;viewer.guide.fact.view.one&quot;:&quot;{count} guided view&quot;,&quot;viewer.guide.fact.view.other&quot;:&quot;{count} guided views&quot;,&quot;viewer.guide.story.available.one&quot;:&quot;Walk {count} authored chapter and its real relationships.&quot;,&quot;viewer.guide.story.available.other&quot;:&quot;Walk {count} authored chapters and their real relationships.&quot;,&quot;viewer.guide.story.unavailable&quot;:&quot;No authored guided story in this diagram.&quot;,&quot;viewer.guide.open&quot;:&quot;Open diagram guide&quot;,&quot;viewer.guide.noStory&quot;:&quot;This diagram has no authored guided story.&quot;,&quot;viewer.finder.title&quot;:&quot;Find a node&quot;,&quot;viewer.finder.close&quot;:&quot;Close node finder&quot;,&quot;viewer.finder.placeholder&quot;:&quot;Search labels or IDs&quot;,&quot;viewer.finder.search&quot;:&quot;Search diagram nodes&quot;,&quot;viewer.finder.results&quot;:&quot;Diagram nodes&quot;,&quot;viewer.finder.empty&quot;:&quot;No matching nodes&quot;,&quot;viewer.finder.result.focus&quot;:&quot;Focus {label}&quot;,&quot;viewer.finder.result.routeStart&quot;:&quot;Choose {label} as route start&quot;,&quot;viewer.finder.result.routeTarget&quot;:&quot;Choose {label} as route destination, {links}&quot;,&quot;viewer.finder.status.empty&quot;:&quot;No matching nodes&quot;,&quot;viewer.finder.status.count.one&quot;:&quot;{count} matching node&quot;,&quot;viewer.finder.status.count.other&quot;:&quot;{count} matching nodes&quot;,&quot;viewer.finder.noun.nodes&quot;:&quot;nodes&quot;,&quot;viewer.finder.link.one&quot;:&quot;{count} link&quot;,&quot;viewer.finder.link.other&quot;:&quot;{count} links&quot;,&quot;viewer.finder.result.focus.one&quot;:&quot;Focus {label}, {count} related connection&quot;,&quot;viewer.finder.result.focus.other&quot;:&quot;Focus {label}, {count} related connections&quot;,&quot;viewer.finder.status.filtered&quot;:&quot;{visible} of {available} {noun}&quot;,&quot;viewer.finder.status.all&quot;:&quot;{available} {noun}&quot;,&quot;viewer.passport.eyebrow&quot;:&quot;Semantic passport&quot;,&quot;viewer.passport.metadata&quot;:&quot;Node metadata&quot;,&quot;viewer.passport.evidence&quot;:&quot;Verified source evidence&quot;,&quot;viewer.passport.verified&quot;:&quot;Verified source&quot;,&quot;viewer.passport.reach&quot;:&quot;Authored reach&quot;,&quot;viewer.passport.reach.trace&quot;:&quot;Trace authored reachability&quot;,&quot;viewer.passport.upstream&quot;:&quot;Upstream&quot;,&quot;viewer.passport.downstream&quot;:&quot;Downstream&quot;,&quot;viewer.passport.upstream.trace&quot;:&quot;Trace upstream authored reachability&quot;,&quot;viewer.passport.downstream.trace&quot;:&quot;Trace downstream authored reachability&quot;,&quot;viewer.passport.close&quot;:&quot;Close semantic passport&quot;,&quot;viewer.passport.copy&quot;:&quot;Copy link&quot;,&quot;viewer.passport.copy.focus&quot;:&quot;Copy link to focused node&quot;,&quot;viewer.passport.relations&quot;:&quot;Relations&quot;,&quot;viewer.passport.relations.show&quot;:&quot;Show connected relationships&quot;,&quot;viewer.passport.relations.hide&quot;:&quot;Hide connected relationships&quot;,&quot;viewer.passport.relations.list&quot;:&quot;Connected relationships&quot;,&quot;viewer.passport.copyRelation&quot;:&quot;Copy relation&quot;,&quot;viewer.passport.copyNode&quot;:&quot;Copy node&quot;,&quot;viewer.passport.copyPinned&quot;:&quot;Copy link to pinned relationship&quot;,&quot;viewer.passport.copySource&quot;:&quot;Copy link to source node&quot;,&quot;viewer.passport.copy.focused.success&quot;:&quot;Focused node link copied&quot;,&quot;viewer.passport.copy.pinned.success&quot;:&quot;Pinned relationship link copied&quot;,&quot;viewer.passport.copy.focused.failed&quot;:&quot;Could not copy focused node link&quot;,&quot;viewer.passport.copy.pinned.failed&quot;:&quot;Could not copy pinned relationship link&quot;,&quot;viewer.passport.relationship.none&quot;:&quot;No connected relationships&quot;,&quot;viewer.passport.relationship.count.one&quot;:&quot;{count} relation&quot;,&quot;viewer.passport.relationship.count.other&quot;:&quot;{count} relations&quot;,&quot;viewer.passport.relationship.show.one&quot;:&quot;Show {count} connected relationship&quot;,&quot;viewer.passport.relationship.show.other&quot;:&quot;Show {count} connected relationships&quot;,&quot;viewer.passport.relationship.summary&quot;:&quot;{out} outgoing · {in} incoming{loops}&quot;,&quot;viewer.passport.relationship.loops&quot;:&quot; · {count} loop&quot;,&quot;viewer.passport.relationship.explorer&quot;:&quot;Direct relationship explorer&quot;,&quot;viewer.passport.relationship.help&quot;:&quot;Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.&quot;,&quot;viewer.passport.relationship.loopsBack&quot;:&quot;loops back&quot;,&quot;viewer.passport.relationship.connectsTo&quot;:&quot;connects to&quot;,&quot;viewer.passport.relationship.connectsFrom&quot;:&quot;connects from&quot;,&quot;viewer.passport.relationship.pinned&quot;:&quot;Pinned relationship · {from} → {to} · {label}&quot;,&quot;viewer.passport.relationship.inspect&quot;:&quot;Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.&quot;,&quot;viewer.passport.relationship.group.out&quot;:&quot;Outgoing&quot;,&quot;viewer.passport.relationship.group.in&quot;:&quot;Incoming&quot;,&quot;viewer.passport.relationship.group.loop&quot;:&quot;Self loops&quot;,&quot;viewer.passport.relationship.row&quot;:&quot;{group}: {relationship}, {neighbor}&quot;,&quot;viewer.passport.relationship.direction.out&quot;:&quot;OUT →&quot;,&quot;viewer.passport.relationship.direction.in&quot;:&quot;← IN&quot;,&quot;viewer.passport.relationship.direction.loop&quot;:&quot;LOOP&quot;,&quot;viewer.passport.sourceCount.one&quot;:&quot;{count} verified source reference&quot;,&quot;viewer.passport.sourceCount.other&quot;:&quot;{count} verified source references&quot;,&quot;viewer.passport.sourceMarker&quot;:&quot;SRC&quot;,&quot;viewer.passport.beacon.one&quot;:&quot;{count} verified source; focus this node to inspect&quot;,&quot;viewer.passport.beacon.other&quot;:&quot;{count} verified sources; focus this node to inspect&quot;,&quot;viewer.passport.repository.open&quot;:&quot;Open verified repository revision {revision}&quot;,&quot;viewer.passport.source.open&quot;:&quot;Open verified source {path} at revision {revision}&quot;,&quot;viewer.passport.source.openLink&quot;:&quot;Open ↗&quot;,&quot;viewer.passport.reach.upstream.one&quot;:&quot;Trace {count} upstream authored node&quot;,&quot;viewer.passport.reach.upstream.other&quot;:&quot;Trace {count} upstream authored nodes&quot;,&quot;viewer.passport.reach.downstream.one&quot;:&quot;Trace {count} downstream authored node&quot;,&quot;viewer.passport.reach.downstream.other&quot;:&quot;Trace {count} downstream authored nodes&quot;,&quot;viewer.passport.reach.noUpstream&quot;:&quot;No upstream authored nodes&quot;,&quot;viewer.passport.reach.noDownstream&quot;:&quot;No downstream authored nodes&quot;,&quot;viewer.passport.reach.status&quot;:&quot;{direction} · {nodes} nodes · {links} links · max {hops} hops&quot;,&quot;viewer.route.eyebrow&quot;:&quot;Route probe&quot;,&quot;viewer.route.start&quot;:&quot;Choose a start node&quot;,&quot;viewer.route.start.find&quot;:&quot;Find start&quot;,&quot;viewer.route.start.find.aria&quot;:&quot;Find a route start&quot;,&quot;viewer.route.copy&quot;:&quot;Copy link&quot;,&quot;viewer.route.copy.aria&quot;:&quot;Copy link to traced route&quot;,&quot;viewer.route.clear&quot;:&quot;Clear&quot;,&quot;viewer.route.clear.aria&quot;:&quot;Clear route probe&quot;,&quot;viewer.route.traced&quot;:&quot;Traced route&quot;,&quot;viewer.route.pickTwo&quot;:&quot;Pick two semantic nodes on the diagram&quot;,&quot;viewer.route.pickOne&quot;:&quot;Pick a semantic node on the diagram&quot;,&quot;viewer.route.controls&quot;:&quot;Route journey controls&quot;,&quot;viewer.route.previous&quot;:&quot;Previous route position&quot;,&quot;viewer.route.play&quot;:&quot;Play route journey&quot;,&quot;viewer.route.pause&quot;:&quot;Pause route journey&quot;,&quot;viewer.route.replay&quot;:&quot;Replay route journey&quot;,&quot;viewer.route.next&quot;:&quot;Next route position&quot;,&quot;viewer.route.journey&quot;:&quot;Journey&quot;,&quot;viewer.route.pause.label&quot;:&quot;Pause&quot;,&quot;viewer.route.replay.label&quot;:&quot;Replay&quot;,&quot;viewer.route.overview&quot;:&quot;Overview&quot;,&quot;viewer.route.overview.aria&quot;:&quot;Show complete route overview&quot;,&quot;viewer.route.instructions&quot;:&quot;Choose the source, then the destination. Direction matters.&quot;,&quot;viewer.route.destination&quot;:&quot;Choose a destination from {label}&quot;,&quot;viewer.route.destination.find&quot;:&quot;Find target&quot;,&quot;viewer.route.destination.find.aria&quot;:&quot;Find a reachable route destination&quot;,&quot;viewer.route.differentDestination&quot;:&quot;Choose a different destination&quot;,&quot;viewer.route.distinct&quot;:&quot;A route needs two distinct semantic nodes.&quot;,&quot;viewer.route.unreachable&quot;:&quot;No directed route to {label}&quot;,&quot;viewer.route.unreachable.detail&quot;:&quot;{target} is not reachable from {source}. Pick a highlighted destination.&quot;,&quot;viewer.route.start.instructions&quot;:&quot;Select the source. The next step will reveal only directed destinations.&quot;,&quot;viewer.route.copy.success&quot;:&quot;Traced route link copied&quot;,&quot;viewer.route.copy.failed&quot;:&quot;Could not copy traced route link&quot;,&quot;viewer.route.position&quot;:&quot;Route position {index} of {total}: {label}&quot;,&quot;viewer.route.step&quot;:&quot;Step {index} of {total} · {phase} · {label}&quot;,&quot;viewer.route.motionRequired&quot;:&quot;Automatic journey requires Live motion&quot;,&quot;viewer.route.trigger.clear&quot;:&quot;Clear traced route&quot;,&quot;viewer.route.overview.status&quot;:&quot;{nodes} · {hops} · shortest authored route&quot;,&quot;viewer.route.overview.node.one&quot;:&quot;{count} node&quot;,&quot;viewer.route.overview.node.other&quot;:&quot;{count} nodes&quot;,&quot;viewer.route.overview.hop.one&quot;:&quot;{count} directed hop&quot;,&quot;viewer.route.overview.hop.other&quot;:&quot;{count} directed hops&quot;,&quot;viewer.route.phase.playing&quot;:&quot;Playing&quot;,&quot;viewer.route.phase.complete&quot;:&quot;Complete&quot;,&quot;viewer.route.phase.inspecting&quot;:&quot;Inspecting&quot;,&quot;viewer.route.destination.count.one&quot;:&quot;{count} directed destination available. Pick a highlighted node.&quot;,&quot;viewer.route.destination.count.other&quot;:&quot;{count} directed destinations available. Pick a highlighted node.&quot;,&quot;viewer.route.noOutgoing&quot;:&quot;No outgoing route starts here. Clear and choose another source.&quot;,&quot;viewer.route.result.title&quot;:&quot;{source} to {target}&quot;,&quot;viewer.route.finder.source.title&quot;:&quot;Choose route start&quot;,&quot;viewer.route.finder.source.placeholder&quot;:&quot;Search route sources&quot;,&quot;viewer.route.finder.source.empty&quot;:&quot;No matching route sources&quot;,&quot;viewer.route.finder.source.results&quot;:&quot;Nodes that can start a route&quot;,&quot;viewer.route.finder.source.noun&quot;:&quot;route sources&quot;,&quot;viewer.route.finder.source.badge&quot;:&quot;start&quot;,&quot;viewer.route.finder.target.title&quot;:&quot;Destination from {label}&quot;,&quot;viewer.route.finder.target.placeholder&quot;:&quot;Search reachable destinations&quot;,&quot;viewer.route.finder.target.empty&quot;:&quot;No matching reachable destinations&quot;,&quot;viewer.route.finder.target.results&quot;:&quot;Reachable route destinations&quot;,&quot;viewer.route.finder.target.noun&quot;:&quot;reachable destinations&quot;,&quot;viewer.route.hop.one&quot;:&quot;{count} hop&quot;,&quot;viewer.route.hop.other&quot;:&quot;{count} hops&quot;,&quot;viewer.lens.eyebrow&quot;:&quot;Semantic lens&quot;,&quot;viewer.lens.title&quot;:&quot;Compare system roles&quot;,&quot;viewer.lens.close&quot;:&quot;Close semantic lens&quot;,&quot;viewer.lens.instruction&quot;:&quot;Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.&quot;,&quot;viewer.lens.kinds&quot;:&quot;Semantic kinds&quot;,&quot;viewer.lens.choose&quot;:&quot;Choose a kind to inspect its nodes and touching relationships.&quot;,&quot;viewer.lens.copy&quot;:&quot;Copy link to semantic lens&quot;,&quot;viewer.lens.clear&quot;:&quot;Clear semantic lens&quot;,&quot;viewer.lens.open&quot;:&quot;Open semantic lens&quot;,&quot;viewer.lens.openActive&quot;:&quot;Open active semantic lens&quot;,&quot;viewer.lens.legend&quot;:&quot;Semantic legend&quot;,&quot;viewer.lens.legend.inspect.one&quot;:&quot;Inspect {label}, {count} node&quot;,&quot;viewer.lens.legend.inspect.other&quot;:&quot;Inspect {label}, {count} nodes&quot;,&quot;viewer.lens.kind.count.one&quot;:&quot;{label}, {count} node&quot;,&quot;viewer.lens.kind.count.other&quot;:&quot;{label}, {count} nodes&quot;,&quot;viewer.lens.compare.one&quot;:&quot;{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship&quot;,&quot;viewer.lens.compare.other&quot;:&quot;{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships&quot;,&quot;viewer.lens.single&quot;:&quot;{nodes} · {relationships} · connected peers remain visible&quot;,&quot;viewer.lens.node.one&quot;:&quot;{count} {label} node&quot;,&quot;viewer.lens.node.other&quot;:&quot;{count} {label} nodes&quot;,&quot;viewer.lens.relationship.one&quot;:&quot;{count} touching relationship&quot;,&quot;viewer.lens.relationship.other&quot;:&quot;{count} touching relationships&quot;,&quot;viewer.radar.title&quot;:&quot;Semantic radar&quot;,&quot;viewer.radar.building&quot;:&quot;Building overview&quot;,&quot;viewer.radar.openFull&quot;:&quot;Open full semantic radar&quot;,&quot;viewer.radar.open&quot;:&quot;Open radar&quot;,&quot;viewer.radar.close&quot;:&quot;Close semantic radar&quot;,&quot;viewer.radar.surface&quot;:&quot;Diagram overview. Click a node to focus it, or use arrow keys to pan.&quot;,&quot;viewer.radar.click&quot;:&quot;Click node&quot;,&quot;viewer.radar.drag&quot;:&quot;Drag to pan&quot;,&quot;viewer.radar.space&quot;:&quot;Semantic radar needs more MAP space.&quot;,&quot;viewer.radar.nodes&quot;:&quot;Semantic diagram radar nodes&quot;,&quot;viewer.radar.focus&quot;:&quot;Focus {label} from Semantic Radar&quot;,&quot;viewer.radar.status&quot;:&quot;{count} nodes · {viewport}&quot;,&quot;viewer.radar.fullMap&quot;:&quot;{count} nodes · full map&quot;,&quot;viewer.radar.compacted&quot;:&quot;Radar compacted to avoid covering the Semantic Passport or MAP controls.&quot;,&quot;viewer.radar.cancelWaiting&quot;:&quot;Cancel semantic radar waiting for more MAP space&quot;,&quot;viewer.radar.needsSpace&quot;:&quot;Semantic radar needs more visible MAP space&quot;,&quot;viewer.radar.viewport.full&quot;:&quot;full map&quot;,&quot;viewer.radar.viewport.width&quot;:&quot;{percent}% width&quot;,&quot;viewer.radar.viewport.scale&quot;:&quot;{percent}% viewport&quot;,&quot;viewer.nav.controls&quot;:&quot;Diagram view controls&quot;,&quot;viewer.nav.route&quot;:&quot;Trace a directed route&quot;,&quot;viewer.nav.route.title&quot;:&quot;Trace route (R)&quot;,&quot;viewer.nav.route.short&quot;:&quot;PATH&quot;,&quot;viewer.nav.radar&quot;:&quot;Open semantic radar&quot;,&quot;viewer.nav.radar.title&quot;:&quot;Semantic radar (M)&quot;,&quot;viewer.nav.radar.short&quot;:&quot;MAP&quot;,&quot;viewer.nav.lens&quot;:&quot;Open semantic lens&quot;,&quot;viewer.nav.lens.title&quot;:&quot;Semantic lens (L)&quot;,&quot;viewer.nav.lens.short&quot;:&quot;LENS&quot;,&quot;viewer.nav.find&quot;:&quot;Find a node&quot;,&quot;viewer.nav.find.title&quot;:&quot;Find a node (/)&quot;,&quot;viewer.nav.guide&quot;:&quot;Open diagram guide&quot;,&quot;viewer.nav.guide.title&quot;:&quot;Diagram guide (?)&quot;,&quot;viewer.nav.zoomOut&quot;:&quot;Zoom out&quot;,&quot;viewer.nav.zoomOut.title&quot;:&quot;Zoom out (-)&quot;,&quot;viewer.nav.reset&quot;:&quot;Reset diagram view&quot;,&quot;viewer.nav.reset.title&quot;:&quot;Reset view (0)&quot;,&quot;viewer.nav.read&quot;:&quot;READ&quot;,&quot;viewer.nav.zoomIn&quot;:&quot;Zoom in&quot;,&quot;viewer.nav.zoomIn.title&quot;:&quot;Zoom in (+)&quot;,&quot;viewer.nav.camera&quot;:&quot;{hint}. Reset diagram view&quot;,&quot;viewer.nav.camera.title&quot;:&quot;{semantic}{hint} · reset view (0)&quot;,&quot;viewer.nav.camera.semantic&quot;:&quot;Semantic camera active · &quot;,&quot;viewer.nav.level.map&quot;:&quot;MAP&quot;,&quot;viewer.nav.level.read&quot;:&quot;READ&quot;,&quot;viewer.nav.level.full&quot;:&quot;FULL&quot;,&quot;viewer.nav.level.auto&quot;:&quot;AUTO&quot;,&quot;viewer.nav.detail.map&quot;:&quot;Zoom in to reveal relationship labels and node context&quot;,&quot;viewer.nav.detail.read&quot;:&quot;Zoom in again to reveal tags and annotations&quot;,&quot;viewer.nav.detail.full&quot;:&quot;Full diagram detail&quot;,&quot;viewer.intent.summary&quot;:&quot;{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.&quot;,&quot;viewer.intent.loops&quot;:&quot;, {count} self loop&quot;,&quot;viewer.common.copied&quot;:&quot;Copied&quot;,&quot;viewer.common.copyFailed&quot;:&quot;Copy failed&quot;,&quot;viewer.common.copyLink&quot;:&quot;Copy link&quot;,&quot;viewer.common.clear&quot;:&quot;Clear&quot;,&quot;viewer.common.close&quot;:&quot;Close&quot;}}&lt;/script&gt;
     &lt;div class=&quot;guided-views no-print&quot; id=&quot;guided-views&quot; hidden aria-label=&quot;Guided diagram views&quot;&gt;
@@ -24875,7 +24934,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     &lt;!-- Main Diagram --&gt;
     &lt;div class=&quot;diagram-container&quot; data-detail-level=&quot;read&quot;
          data-preset-badge-editorial-plate=&quot;ARCHIFY / PLATE 04&quot;&gt;
-      &lt;svg viewBox=&quot;0 0 1040 780&quot; role=&quot;img&quot; lang=&quot;en&quot; aria-labelledby=&quot;archify-diagram-title archify-diagram-description&quot; data-preset=&quot;classic&quot; data-quality-profile=&quot;showcase&quot;&gt;
+      &lt;svg viewBox=&quot;0 0 1080 800&quot; role=&quot;img&quot; lang=&quot;en&quot; aria-labelledby=&quot;archify-diagram-title archify-diagram-description&quot; data-preset=&quot;classic&quot; data-quality-profile=&quot;showcase&quot;&gt;
         &lt;title id=&quot;archify-diagram-title&quot;&gt;Homelab — four Mac minis on one switch&lt;/title&gt;
         &lt;desc id=&quot;archify-diagram-description&quot;&gt;An architecture diagram generated by Archify.&lt;/desc&gt;
         &lt;!-- Definitions --&gt;
@@ -24901,111 +24960,155 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         &lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;url(#grid)&quot; /&gt;
 
         &lt;!-- Boundaries (behind everything) --&gt;
-        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Wired segment&quot; x=&quot;390&quot; y=&quot;70&quot; width=&quot;600&quot; height=&quot;598&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
+        &lt;rect data-graph-role=&quot;structural-frame&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-label=&quot;Wired segment&quot; x=&quot;150&quot; y=&quot;20&quot; width=&quot;860&quot; height=&quot;708&quot; rx=&quot;12&quot; class=&quot;c-region&quot; stroke-width=&quot;1&quot;/&gt;
 
         &lt;!-- Connection paths (before components for correct z-order) --&gt;
-        &lt;path data-edge-from=&quot;air-1&quot; data-edge-to=&quot;gw-1&quot; data-edge-label=&quot;Wi-Fi 6&quot; data-edge-key=&quot;0&quot; data-edge-id=&quot;air-to-gateway&quot; data-composition-points=&quot;145,168;145,350&quot; d=&quot;M 145 168 L 145 350&quot; class=&quot;a-emphasis&quot; stroke-width=&quot;1.8&quot; marker-end=&quot;url(#arrowhead-emphasis)&quot;/&gt;
-        &lt;path data-edge-from=&quot;gw-1&quot; data-edge-to=&quot;sw-1&quot; data-edge-label=&quot;1000BASE-T&quot; data-edge-key=&quot;1&quot; data-edge-id=&quot;gateway-to-switch&quot; data-composition-points=&quot;230,384;420,384&quot; d=&quot;M 230 384 L 420 384&quot; class=&quot;a-emphasis&quot; stroke-width=&quot;1.8&quot; marker-end=&quot;url(#arrowhead-emphasis)&quot;/&gt;
-        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-1&quot; data-edge-key=&quot;2&quot; data-edge-id=&quot;switch-to-mini-1&quot; data-composition-points=&quot;590,366;690,366;690,134;790,134&quot; d=&quot;M 590 366 L 682 366 Q 690 366 690 358 L 690 142 Q 690 134 698 134 L 790 134&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
-        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-2&quot; data-edge-key=&quot;3&quot; data-edge-id=&quot;switch-to-mini-2&quot; data-composition-points=&quot;590,378;690,378;690,294;790,294&quot; d=&quot;M 590 378 L 682 378 Q 690 378 690 370 L 690 302 Q 690 294 698 294 L 790 294&quot; class=&quot;a-default&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead)&quot;/&gt;
-        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-3&quot; data-edge-key=&quot;4&quot; data-edge-id=&quot;switch-to-mini-3&quot; data-composition-points=&quot;590,390;690,390;690,454;790,454&quot; d=&quot;M 590 390 L 682 390 Q 690 390 690 398 L 690 446 Q 690 454 698 454 L 790 454&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
-        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-4&quot; data-edge-key=&quot;5&quot; data-edge-id=&quot;switch-to-mini-4&quot; data-composition-points=&quot;590,402;690,402;690,614;790,614&quot; d=&quot;M 590 402 L 682 402 Q 690 402 690 410 L 690 606 Q 690 614 698 614 L 790 614&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;air-1&quot; data-edge-to=&quot;gw-1&quot; data-edge-label=&quot;Wi-Fi 6&quot; data-edge-key=&quot;0&quot; data-edge-id=&quot;air-to-gateway&quot; data-composition-points=&quot;145,158;145,330&quot; d=&quot;M 145 158 L 145 330&quot; class=&quot;a-emphasis&quot; stroke-width=&quot;1.8&quot; marker-end=&quot;url(#arrowhead-emphasis)&quot;/&gt;
+        &lt;path data-edge-from=&quot;gw-1&quot; data-edge-to=&quot;sw-1&quot; data-edge-label=&quot;1000BASE-T&quot; data-edge-key=&quot;1&quot; data-edge-id=&quot;gateway-to-switch&quot; data-composition-points=&quot;230,364;420,364&quot; d=&quot;M 230 364 L 420 364&quot; class=&quot;a-emphasis&quot; stroke-width=&quot;1.8&quot; marker-end=&quot;url(#arrowhead-emphasis)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;cam-1&quot; data-edge-key=&quot;2&quot; data-edge-id=&quot;switch-to-cam-1&quot; data-composition-points=&quot;505,398;505,519;525,519;525,640&quot; d=&quot;M 505 398 L 505 511 Q 505 519 513 519 L 517 519 Q 525 519 525 527 L 525 640&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;cam-2&quot; data-edge-key=&quot;3&quot; data-edge-id=&quot;switch-to-cam-2&quot; data-composition-points=&quot;519,398;519,519;785,519;785,640&quot; d=&quot;M 519 398 L 519 511 Q 519 519 527 519 L 777 519 Q 785 519 785 527 L 785 640&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-1&quot; data-edge-key=&quot;4&quot; data-edge-id=&quot;switch-to-mini-1&quot; data-composition-points=&quot;590,346;700,346;700,84;810,84&quot; d=&quot;M 590 346 L 692 346 Q 700 346 700 338 L 700 92 Q 700 84 708 84 L 810 84&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-2&quot; data-edge-key=&quot;5&quot; data-edge-id=&quot;switch-to-mini-2&quot; data-composition-points=&quot;590,358;700,358;700,214;810,214&quot; d=&quot;M 590 358 L 692 358 Q 700 358 700 350 L 700 222 Q 700 214 708 214 L 810 214&quot; class=&quot;a-default&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-3&quot; data-edge-key=&quot;6&quot; data-edge-id=&quot;switch-to-mini-3&quot; data-composition-points=&quot;590,370;700,370;700,344;810,344&quot; d=&quot;M 590 370 L 692 370 Q 700 370 700 362 L 700 352 Q 700 344 708 344 L 810 344&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;mini-4&quot; data-edge-key=&quot;7&quot; data-edge-id=&quot;switch-to-mini-4&quot; data-composition-points=&quot;590,382;700,382;700,474;810,474&quot; d=&quot;M 590 382 L 692 382 Q 700 382 700 390 L 700 466 Q 700 474 708 474 L 810 474&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
+        &lt;path data-edge-from=&quot;sw-1&quot; data-edge-to=&quot;pi-1&quot; data-edge-key=&quot;8&quot; data-edge-id=&quot;switch-to-pi-1&quot; data-composition-points=&quot;491,398;491,519;265,519;265,640&quot; d=&quot;M 491 398 L 491 511 Q 491 519 483 519 L 273 519 Q 265 519 265 527 L 265 640&quot; class=&quot;a-dashed&quot; stroke-width=&quot;1.5&quot; marker-end=&quot;url(#arrowhead-dashed)&quot;/&gt;
 
         &lt;!-- Components --&gt;
         &lt;g id=&quot;node-air-1&quot; data-node-id=&quot;air-1&quot; data-node-label=&quot;air-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus air-1, MacBook Air (M1), Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;MacBook Air (M1)&quot; data-node-tag=&quot;workstation&quot; data-node-context=&quot;Architecture component&quot;&gt;
           &lt;title&gt;air-1 · MacBook Air (M1) · Architecture component · workstation&lt;/title&gt;
-          &lt;rect x=&quot;60&quot; y=&quot;100&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;60&quot; y=&quot;100&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-external&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(66 106) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;60&quot; y=&quot;90&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;60&quot; y=&quot;90&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-external&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(66 96) scale(0.6875)&quot;&gt;
             &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
             &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;145&quot; y=&quot;132&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;air-1&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;145&quot; y=&quot;148&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;MacBook Air (M1)&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;145&quot; y=&quot;160&quot; class=&quot;t-external&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;workstation&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;145&quot; y=&quot;122&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;air-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;145&quot; y=&quot;138&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;MacBook Air (M1)&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;145&quot; y=&quot;150&quot; class=&quot;t-external&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;workstation&lt;/text&gt;
+        &lt;/g&gt;
+
+        &lt;g id=&quot;node-cam-1&quot; data-node-id=&quot;cam-1&quot; data-node-label=&quot;cam-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus cam-1, wired camera, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;wired camera&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
+          &lt;title&gt;cam-1 · wired camera · Wired segment · planned&lt;/title&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;440&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-external&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(446 646) scale(0.6875)&quot;&gt;
+            &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
+            &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
+          &lt;/g&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;525&quot; y=&quot;672&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;cam-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;525&quot; y=&quot;688&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;wired camera&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;525&quot; y=&quot;700&quot; class=&quot;t-external&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+        &lt;/g&gt;
+
+        &lt;g id=&quot;node-cam-2&quot; data-node-id=&quot;cam-2&quot; data-node-label=&quot;cam-2&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus cam-2, wired camera, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;external&quot; data-node-sublabel=&quot;wired camera&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
+          &lt;title&gt;cam-2 · wired camera · Wired segment · planned&lt;/title&gt;
+          &lt;rect x=&quot;700&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;700&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-external&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;external&quot; class=&quot;semantic-sigil s-external&quot; transform=&quot;translate(706 646) scale(0.6875)&quot;&gt;
+            &lt;rect x=&quot;2.5&quot; y=&quot;5&quot; width=&quot;8.5&quot; height=&quot;8&quot; rx=&quot;1.5&quot;/&gt;
+            &lt;path d=&quot;M8 2.5h5.5V8M13.5 2.5 7.5 8.5&quot;/&gt;
+          &lt;/g&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;785&quot; y=&quot;672&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;cam-2&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;785&quot; y=&quot;688&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;wired camera&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;785&quot; y=&quot;700&quot; class=&quot;t-external&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-gw-1&quot; data-node-id=&quot;gw-1&quot; data-node-label=&quot;gw-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus gw-1, Wi-Fi 6 router, Architecture component&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;Wi-Fi 6 router&quot; data-node-tag=&quot;DHCP reservations&quot; data-node-context=&quot;Architecture component&quot;&gt;
           &lt;title&gt;gw-1 · Wi-Fi 6 router · Architecture component · DHCP reservations&lt;/title&gt;
-          &lt;rect x=&quot;60&quot; y=&quot;350&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;60&quot; y=&quot;350&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(66 356) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;60&quot; y=&quot;330&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;60&quot; y=&quot;330&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(66 336) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;145&quot; y=&quot;382&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;gw-1&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;145&quot; y=&quot;398&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Wi-Fi 6 router&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;145&quot; y=&quot;410&quot; class=&quot;t-cloud&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;DHCP reservations&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;145&quot; y=&quot;362&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;gw-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;145&quot; y=&quot;378&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Wi-Fi 6 router&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;145&quot; y=&quot;390&quot; class=&quot;t-cloud&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;DHCP reservations&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-mini-1&quot; data-node-id=&quot;mini-1&quot; data-node-label=&quot;mini-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-1, no OS installed, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;no OS installed&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
           &lt;title&gt;mini-1 · no OS installed · Wired segment · planned&lt;/title&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;100&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;100&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(796 106) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;50&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;50&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(816 56) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;875&quot; y=&quot;132&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-1&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;875&quot; y=&quot;148&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;875&quot; y=&quot;160&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;895&quot; y=&quot;82&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;895&quot; y=&quot;98&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;895&quot; y=&quot;110&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-mini-2&quot; data-node-id=&quot;mini-2&quot; data-node-label=&quot;mini-2&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-2, Ubuntu 24.04 LTS, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;Ubuntu 24.04 LTS&quot; data-node-tag=&quot;up&quot; data-node-context=&quot;Wired segment&quot;&gt;
           &lt;title&gt;mini-2 · Ubuntu 24.04 LTS · Wired segment · up&lt;/title&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;260&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;260&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(796 266) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;180&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;180&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(816 186) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;875&quot; y=&quot;292&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-2&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;875&quot; y=&quot;308&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Ubuntu 24.04 LTS&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;875&quot; y=&quot;320&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;up&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;895&quot; y=&quot;212&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-2&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;895&quot; y=&quot;228&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Ubuntu 24.04 LTS&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;895&quot; y=&quot;240&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;up&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-mini-3&quot; data-node-id=&quot;mini-3&quot; data-node-label=&quot;mini-3&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-3, no OS installed, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;no OS installed&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
           &lt;title&gt;mini-3 · no OS installed · Wired segment · planned&lt;/title&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;420&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;420&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(796 426) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;310&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;310&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(816 316) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;875&quot; y=&quot;452&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-3&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;875&quot; y=&quot;468&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;875&quot; y=&quot;480&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;895&quot; y=&quot;342&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-3&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;895&quot; y=&quot;358&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;895&quot; y=&quot;370&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-mini-4&quot; data-node-id=&quot;mini-4&quot; data-node-label=&quot;mini-4&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-4, no OS installed, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;no OS installed&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
           &lt;title&gt;mini-4 · no OS installed · Wired segment · planned&lt;/title&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;580&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;790&quot; y=&quot;580&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(796 586) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;440&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;810&quot; y=&quot;440&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(816 446) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;875&quot; y=&quot;612&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-4&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;875&quot; y=&quot;628&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;875&quot; y=&quot;640&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;895&quot; y=&quot;472&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-4&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;895&quot; y=&quot;488&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;895&quot; y=&quot;500&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+        &lt;/g&gt;
+
+        &lt;g id=&quot;node-pi-1&quot; data-node-id=&quot;pi-1&quot; data-node-label=&quot;pi-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus pi-1, Raspberry Pi 3B, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;Raspberry Pi 3B&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
+          &lt;title&gt;pi-1 · Raspberry Pi 3B · Wired segment · planned&lt;/title&gt;
+          &lt;rect x=&quot;180&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;180&quot; y=&quot;640&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(186 646) scale(0.6875)&quot;&gt;
+            &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
+          &lt;/g&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;265&quot; y=&quot;672&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;pi-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;265&quot; y=&quot;688&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Raspberry Pi 3B&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;265&quot; y=&quot;700&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-sw-1&quot; data-node-id=&quot;sw-1&quot; data-node-label=&quot;sw-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus sw-1, 8-port Gigabit switch, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;cloud&quot; data-node-sublabel=&quot;8-port Gigabit switch&quot; data-node-tag=&quot;LSW4-GT-8NS/WH&quot; data-node-context=&quot;Wired segment&quot;&gt;
           &lt;title&gt;sw-1 · 8-port Gigabit switch · Wired segment · LSW4-GT-8NS/WH&lt;/title&gt;
-          &lt;rect x=&quot;420&quot; y=&quot;350&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;rect x=&quot;420&quot; y=&quot;350&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1.5&quot;/&gt;
-          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(426 356) scale(0.6875)&quot;&gt;
+          &lt;rect x=&quot;420&quot; y=&quot;330&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;rect x=&quot;420&quot; y=&quot;330&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1.5&quot;/&gt;
+          &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;cloud&quot; class=&quot;semantic-sigil s-cloud&quot; transform=&quot;translate(426 336) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z&quot;/&gt;
           &lt;/g&gt;
-          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;505&quot; y=&quot;382&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;sw-1&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;505&quot; y=&quot;398&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;8-port Gigabit switch&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;505&quot; y=&quot;410&quot; class=&quot;t-cloud&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;LSW4-GT-8NS/WH&lt;/text&gt;
+          &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;505&quot; y=&quot;362&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;sw-1&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;505&quot; y=&quot;378&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;8-port Gigabit switch&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;505&quot; y=&quot;390&quot; class=&quot;t-cloud&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;LSW4-GT-8NS/WH&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;!-- Connection labels --&gt;
         &lt;g data-detail=&quot;context&quot; data-edge-from=&quot;air-1&quot; data-edge-to=&quot;gw-1&quot; data-edge-label=&quot;Wi-Fi 6&quot; data-edge-key=&quot;0&quot; data-edge-id=&quot;air-to-gateway&quot;&gt;
-          &lt;rect x=&quot;123.2&quot; y=&quot;172&quot; width=&quot;43.6&quot; height=&quot;14&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;text x=&quot;145&quot; y=&quot;182&quot; class=&quot;t-backend&quot; font-size=&quot;8&quot; text-anchor=&quot;middle&quot;&gt;Wi-Fi 6&lt;/text&gt;
+          &lt;rect x=&quot;123.2&quot; y=&quot;162&quot; width=&quot;43.6&quot; height=&quot;14&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;text x=&quot;145&quot; y=&quot;172&quot; class=&quot;t-backend&quot; font-size=&quot;8&quot; text-anchor=&quot;middle&quot;&gt;Wi-Fi 6&lt;/text&gt;
         &lt;/g&gt;
         &lt;g data-detail=&quot;context&quot; data-edge-from=&quot;gw-1&quot; data-edge-to=&quot;sw-1&quot; data-edge-label=&quot;1000BASE-T&quot; data-edge-key=&quot;1&quot; data-edge-id=&quot;gateway-to-switch&quot;&gt;
-          &lt;rect x=&quot;296&quot; y=&quot;364&quot; width=&quot;58&quot; height=&quot;14&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;text x=&quot;325&quot; y=&quot;374&quot; class=&quot;t-backend&quot; font-size=&quot;8&quot; text-anchor=&quot;middle&quot;&gt;1000BASE-T&lt;/text&gt;
+          &lt;rect x=&quot;296&quot; y=&quot;368&quot; width=&quot;58&quot; height=&quot;14&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;text x=&quot;325&quot; y=&quot;378&quot; class=&quot;t-backend&quot; font-size=&quot;8&quot; text-anchor=&quot;middle&quot;&gt;1000BASE-T&lt;/text&gt;
         &lt;/g&gt;
+
+
+
 
 
 
@@ -25013,24 +25116,24 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
         &lt;!-- Boundary labels (foreground masks keep routes out of titles) --&gt;
         &lt;g data-graph-role=&quot;structural-frame-label&quot; data-composition-frame-id=&quot;0&quot; data-composition-frame-kind=&quot;region&quot; data-composition-frame-label=&quot;Wired segment&quot;&gt;
-          &lt;rect data-graph-role=&quot;structural-frame-label-mask&quot; x=&quot;394&quot; y=&quot;80&quot; width=&quot;80.2&quot; height=&quot;16&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
-          &lt;text data-boundary-label=&quot;&quot; x=&quot;398&quot; y=&quot;93&quot; class=&quot;t-cloud&quot; font-size=&quot;9&quot; font-weight=&quot;600&quot;&gt;Wired segment&lt;/text&gt;
+          &lt;rect data-graph-role=&quot;structural-frame-label-mask&quot; x=&quot;154&quot; y=&quot;30&quot; width=&quot;80.2&quot; height=&quot;16&quot; rx=&quot;3&quot; class=&quot;c-mask&quot;/&gt;
+          &lt;text data-boundary-label=&quot;&quot; x=&quot;158&quot; y=&quot;43&quot; class=&quot;t-cloud&quot; font-size=&quot;9&quot; font-weight=&quot;600&quot;&gt;Wired segment&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;!-- Legend --&gt;
         &lt;g data-legend=&quot;&quot; data-legend-bridge=&quot;&quot;&gt;
-          &lt;text x=&quot;40&quot; y=&quot;744&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Legend&lt;/text&gt;
-          &lt;g data-legend-semantic-kind=&quot;backend&quot; data-legend-kind=&quot;backend&quot; data-legend-label=&quot;Backend&quot; data-legend-x=&quot;40&quot; data-legend-baseline=&quot;764&quot; data-legend-width=&quot;78&quot;&gt;
-            &lt;rect x=&quot;40&quot; y=&quot;755&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-backend&quot; stroke-width=&quot;1&quot;/&gt;
-            &lt;text x=&quot;62&quot; y=&quot;764&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;Backend&lt;/text&gt;
+          &lt;text x=&quot;40&quot; y=&quot;764&quot; class=&quot;t-primary&quot; font-size=&quot;12&quot; font-weight=&quot;650&quot;&gt;Legend&lt;/text&gt;
+          &lt;g data-legend-semantic-kind=&quot;backend&quot; data-legend-kind=&quot;backend&quot; data-legend-label=&quot;Backend&quot; data-legend-x=&quot;40&quot; data-legend-baseline=&quot;784&quot; data-legend-width=&quot;78&quot;&gt;
+            &lt;rect x=&quot;40&quot; y=&quot;775&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-backend&quot; stroke-width=&quot;1&quot;/&gt;
+            &lt;text x=&quot;62&quot; y=&quot;784&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;Backend&lt;/text&gt;
           &lt;/g&gt;
-          &lt;g data-legend-semantic-kind=&quot;cloud&quot; data-legend-kind=&quot;cloud&quot; data-legend-label=&quot;Cloud&quot; data-legend-x=&quot;140&quot; data-legend-baseline=&quot;764&quot; data-legend-width=&quot;68&quot;&gt;
-            &lt;rect x=&quot;140&quot; y=&quot;755&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1&quot;/&gt;
-            &lt;text x=&quot;162&quot; y=&quot;764&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;Cloud&lt;/text&gt;
+          &lt;g data-legend-semantic-kind=&quot;cloud&quot; data-legend-kind=&quot;cloud&quot; data-legend-label=&quot;Cloud&quot; data-legend-x=&quot;140&quot; data-legend-baseline=&quot;784&quot; data-legend-width=&quot;68&quot;&gt;
+            &lt;rect x=&quot;140&quot; y=&quot;775&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-cloud&quot; stroke-width=&quot;1&quot;/&gt;
+            &lt;text x=&quot;162&quot; y=&quot;784&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;Cloud&lt;/text&gt;
           &lt;/g&gt;
-          &lt;g data-legend-semantic-kind=&quot;external&quot; data-legend-kind=&quot;external&quot; data-legend-label=&quot;External&quot; data-legend-x=&quot;230&quot; data-legend-baseline=&quot;764&quot; data-legend-width=&quot;83&quot;&gt;
-            &lt;rect x=&quot;230&quot; y=&quot;755&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-external&quot; stroke-width=&quot;1&quot;/&gt;
-            &lt;text x=&quot;252&quot; y=&quot;764&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;External&lt;/text&gt;
+          &lt;g data-legend-semantic-kind=&quot;external&quot; data-legend-kind=&quot;external&quot; data-legend-label=&quot;External&quot; data-legend-x=&quot;230&quot; data-legend-baseline=&quot;784&quot; data-legend-width=&quot;83&quot;&gt;
+            &lt;rect x=&quot;230&quot; y=&quot;775&quot; width=&quot;16&quot; height=&quot;10&quot; rx=&quot;2.5&quot; class=&quot;c-external&quot; stroke-width=&quot;1&quot;/&gt;
+            &lt;text x=&quot;252&quot; y=&quot;784&quot; class=&quot;t-muted&quot; font-size=&quot;10&quot; font-weight=&quot;500&quot;&gt;External&lt;/text&gt;
           &lt;/g&gt;
         &lt;/g&gt;
       &lt;/svg&gt;
@@ -25251,7 +25354,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         &lt;ul&gt;
           &lt;li&gt;&amp;bull; Mid-2011 thermals want open air, so the units sit side by side and are never stacked&lt;/li&gt;
           &lt;li&gt;&amp;bull; Hosts appear here under logical names only&lt;/li&gt;
-          &lt;li&gt;&amp;bull; The switch is named because an unmanaged switch has no address and no firmware to attack; the router&amp;#39;s model is not, because it does&lt;/li&gt;
+          &lt;li&gt;&amp;bull; The switch is named because an unmanaged switch has no address and no firmware to attack; the router and the cameras are not, because they do&lt;/li&gt;
         &lt;/ul&gt;
       &lt;/div&gt;
     &lt;/div&gt;
@@ -34663,18 +34766,25 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 &lt;/body&gt;
 &lt;/html&gt;
 "></iframe></section>
-<details><summary>Exact authored changes · 12</summary><ul class="changes"><li data-change-status="added"><button class="change-row" type="button" data-change-index="0" data-change-key="component:gw-1" data-change-kind="component" data-change-id="gw-1" data-change-label="gw-1" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>gw-1</strong><code>gw-1</code><span>semantic</span><span>identity</span></button></li>
-<li data-change-status="added"><button class="change-row" type="button" data-change-index="1" data-change-key="relationship:air-to-gateway" data-change-kind="relationship" data-change-id="air-to-gateway" data-change-label="Wi-Fi 6" data-change-status="added" data-change-classifications="topology" data-change-target-signature="g:added:topology|path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>Wi-Fi 6</strong><code>air-to-gateway</code><span>topology</span><span>identity</span></button></li>
-<li data-change-status="added"><button class="change-row" type="button" data-change-index="2" data-change-key="relationship:gateway-to-switch" data-change-kind="relationship" data-change-id="gateway-to-switch" data-change-label="1000BASE-T" data-change-status="added" data-change-classifications="topology" data-change-target-signature="g:added:topology|path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>1000BASE-T</strong><code>gateway-to-switch</code><span>topology</span><span>identity</span></button></li>
-<li data-change-status="changed"><button class="change-row" type="button" data-change-index="3" data-change-key="component:mini-1" data-change-kind="component" data-change-id="mini-1" data-change-label="mini-1" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>mini-1</strong><code>mini-1</code><span>geometry, semantic</span><span>/pos, /sublabel, /tag</span></button></li>
-<li data-change-status="changed"><button class="change-row" type="button" data-change-index="4" data-change-key="component:mini-2" data-change-kind="component" data-change-id="mini-2" data-change-label="mini-2" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>mini-2</strong><code>mini-2</code><span>geometry, semantic</span><span>/pos, /sublabel, /tag</span></button></li>
-<li data-change-status="changed"><button class="change-row" type="button" data-change-index="5" data-change-key="relationship:switch-to-mini-1" data-change-kind="relationship" data-change-id="switch-to-mini-1" data-change-label="1000BASE-T" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="path:changed:semantic|text:changed:"><span class="token">~</span><span>Relationship</span><strong>1000BASE-T</strong><code>switch-to-mini-1</code><span>semantic</span><span>/label, /variant</span></button></li>
-<li data-change-status="changed"><button class="change-row" type="button" data-change-index="6" data-change-key="relationship:switch-to-mini-2" data-change-kind="relationship" data-change-id="switch-to-mini-2" data-change-label="switch-to-mini-2" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="path:changed:semantic|text:changed:"><span class="token">~</span><span>Relationship</span><strong>switch-to-mini-2</strong><code>switch-to-mini-2</code><span>semantic</span><span>/variant</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="7" data-change-key="component:air-1" data-change-kind="component" data-change-id="air-1" data-change-label="air-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>air-1</strong><code>air-1</code><span>geometry</span><span>/pos, /size</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="8" data-change-key="component:mini-3" data-change-kind="component" data-change-id="mini-3" data-change-label="mini-3" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-3</strong><code>mini-3</code><span>geometry</span><span>/pos</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="9" data-change-key="component:mini-4" data-change-kind="component" data-change-id="mini-4" data-change-label="mini-4" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-4</strong><code>mini-4</code><span>geometry</span><span>/pos</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="10" data-change-key="component:sw-1" data-change-kind="component" data-change-id="sw-1" data-change-label="sw-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>sw-1</strong><code>sw-1</code><span>geometry</span><span>/pos</span></button></li>
-<li data-change-status="removed"><button class="change-row" type="button" data-change-index="11" data-change-key="relationship:air-to-switch" data-change-kind="relationship" data-change-id="air-to-switch" data-change-label="SSH" data-change-status="removed" data-change-classifications="topology" data-change-target-signature="g:removed:topology|path:removed:topology|text:removed:"><span class="token">−</span><span>Relationship</span><strong>SSH</strong><code>air-to-switch</code><span>topology</span><span>identity</span></button></li></ul></details>
+<details><summary>Exact authored changes · 19</summary><ul class="changes"><li data-change-status="added"><button class="change-row" type="button" data-change-index="0" data-change-key="component:cam-1" data-change-kind="component" data-change-id="cam-1" data-change-label="cam-1" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>cam-1</strong><code>cam-1</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="1" data-change-key="component:cam-2" data-change-kind="component" data-change-id="cam-2" data-change-label="cam-2" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>cam-2</strong><code>cam-2</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="2" data-change-key="component:gw-1" data-change-kind="component" data-change-id="gw-1" data-change-label="gw-1" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>gw-1</strong><code>gw-1</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="3" data-change-key="component:pi-1" data-change-kind="component" data-change-id="pi-1" data-change-label="pi-1" data-change-status="added" data-change-classifications="semantic" data-change-target-signature="g:added:semantic"><span class="token">+</span><span>Component</span><strong>pi-1</strong><code>pi-1</code><span>semantic</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="4" data-change-key="relationship:air-to-gateway" data-change-kind="relationship" data-change-id="air-to-gateway" data-change-label="Wi-Fi 6" data-change-status="added" data-change-classifications="topology" data-change-target-signature="g:added:topology|path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>Wi-Fi 6</strong><code>air-to-gateway</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="5" data-change-key="relationship:gateway-to-switch" data-change-kind="relationship" data-change-id="gateway-to-switch" data-change-label="1000BASE-T" data-change-status="added" data-change-classifications="topology" data-change-target-signature="g:added:topology|path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>1000BASE-T</strong><code>gateway-to-switch</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="6" data-change-key="relationship:switch-to-cam-1" data-change-kind="relationship" data-change-id="switch-to-cam-1" data-change-label="switch-to-cam-1" data-change-status="added" data-change-classifications="topology" data-change-target-signature="path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>switch-to-cam-1</strong><code>switch-to-cam-1</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="7" data-change-key="relationship:switch-to-cam-2" data-change-kind="relationship" data-change-id="switch-to-cam-2" data-change-label="switch-to-cam-2" data-change-status="added" data-change-classifications="topology" data-change-target-signature="path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>switch-to-cam-2</strong><code>switch-to-cam-2</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="added"><button class="change-row" type="button" data-change-index="8" data-change-key="relationship:switch-to-pi-1" data-change-kind="relationship" data-change-id="switch-to-pi-1" data-change-label="switch-to-pi-1" data-change-status="added" data-change-classifications="topology" data-change-target-signature="path:added:topology|text:added:"><span class="token">+</span><span>Relationship</span><strong>switch-to-pi-1</strong><code>switch-to-pi-1</code><span>topology</span><span>identity</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="9" data-change-key="boundary:region:Wired segment" data-change-kind="boundary" data-change-id="region:Wired segment" data-change-label="Wired segment" data-change-status="changed" data-change-classifications="scope" data-change-target-signature="rect:changed:scope|rect:moved-from:scope|text:changed:|text:moved-from:"><span class="token">~</span><span>Boundary</span><strong>Wired segment</strong><code>region:Wired segment</code><span>scope</span><span>/wraps</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="10" data-change-key="component:mini-1" data-change-kind="component" data-change-id="mini-1" data-change-label="mini-1" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>mini-1</strong><code>mini-1</code><span>geometry, semantic</span><span>/pos, /sublabel, /tag</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="11" data-change-key="component:mini-2" data-change-kind="component" data-change-id="mini-2" data-change-label="mini-2" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>mini-2</strong><code>mini-2</code><span>geometry, semantic</span><span>/pos, /sublabel, /tag</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="12" data-change-key="relationship:switch-to-mini-1" data-change-kind="relationship" data-change-id="switch-to-mini-1" data-change-label="1000BASE-T" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="path:changed:semantic|text:changed:"><span class="token">~</span><span>Relationship</span><strong>1000BASE-T</strong><code>switch-to-mini-1</code><span>semantic</span><span>/label, /variant</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="13" data-change-key="relationship:switch-to-mini-2" data-change-kind="relationship" data-change-id="switch-to-mini-2" data-change-label="switch-to-mini-2" data-change-status="changed" data-change-classifications="semantic" data-change-target-signature="path:changed:semantic|text:changed:"><span class="token">~</span><span>Relationship</span><strong>switch-to-mini-2</strong><code>switch-to-mini-2</code><span>semantic</span><span>/variant</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="14" data-change-key="component:air-1" data-change-kind="component" data-change-id="air-1" data-change-label="air-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>air-1</strong><code>air-1</code><span>geometry</span><span>/pos, /size</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="15" data-change-key="component:mini-3" data-change-kind="component" data-change-id="mini-3" data-change-label="mini-3" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-3</strong><code>mini-3</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="16" data-change-key="component:mini-4" data-change-kind="component" data-change-id="mini-4" data-change-label="mini-4" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-4</strong><code>mini-4</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="17" data-change-key="component:sw-1" data-change-kind="component" data-change-id="sw-1" data-change-label="sw-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>sw-1</strong><code>sw-1</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="removed"><button class="change-row" type="button" data-change-index="18" data-change-key="relationship:air-to-switch" data-change-kind="relationship" data-change-id="air-to-switch" data-change-label="SSH" data-change-status="removed" data-change-classifications="topology" data-change-target-signature="g:removed:topology|path:removed:topology|text:removed:"><span class="token">−</span><span>Relationship</span><strong>SSH</strong><code>air-to-switch</code><span>topology</span><span>identity</span></button></li></ul></details>
 <footer class="proof-foot"><span>Stable IDs only · completeness: complete · AUTHORED SNAPSHOTS</span><span>Authored IR only · no risk or mergeability inference</span></footer></main>
 <script id="archify-compare-receipt" type="application/json">{
   "schemaVersion": 1,
@@ -34691,25 +34801,25 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "semanticSha256": "e1b3d80639b844417d175aa6d944c42f45f8b71b656eec89730f7d4fe60e576f"
+    "semanticSha256": "e27dc0aa6f37070c791a34de6f7abf11c483c212b03591fcee87591d40acd68d"
   },
   "summary": {
     "components": {
-      "added": 1,
+      "added": 4,
       "changed": 2,
       "evidenceChanged": 0,
       "removed": 0,
       "moved": 4
     },
     "connections": {
-      "added": 2,
+      "added": 5,
       "changed": 2,
       "removed": 1,
       "rerouted": 0
     },
     "boundaries": {
       "added": 0,
-      "changed": 0,
+      "changed": 1,
       "removed": 0,
       "geometryChanged": 0
     },
@@ -34730,6 +34840,24 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
           "/pos",
           "/size"
         ]
+      },
+      {
+        "id": "cam-1",
+        "headLabel": "cam-1",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "cam-2",
+        "headLabel": "cam-2",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
       },
       {
         "id": "gw-1",
@@ -34795,6 +34923,15 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         ]
       },
       {
+        "id": "pi-1",
+        "headLabel": "pi-1",
+        "status": "added",
+        "classifications": [
+          "semantic"
+        ],
+        "changedFields": []
+      },
+      {
         "id": "sw-1",
         "baseLabel": "sw-1",
         "headLabel": "sw-1",
@@ -34848,6 +34985,32 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         "changedFields": []
       },
       {
+        "id": "switch-to-cam-1",
+        "head": {
+          "from": "sw-1",
+          "to": "cam-1",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "switch-to-cam-2",
+        "head": {
+          "from": "sw-1",
+          "to": "cam-2",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
         "id": "switch-to-mini-1",
         "base": {
           "from": "sw-1",
@@ -34887,9 +35050,35 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         "changedFields": [
           "/variant"
         ]
+      },
+      {
+        "id": "switch-to-pi-1",
+        "head": {
+          "from": "sw-1",
+          "to": "pi-1",
+          "label": ""
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
       }
     ],
-    "boundaries": []
+    "boundaries": [
+      {
+        "key": "region:Wired segment",
+        "kind": "region",
+        "label": "Wired segment",
+        "status": "changed",
+        "classifications": [
+          "scope"
+        ],
+        "changedFields": [
+          "/wraps"
+        ]
+      }
+    ]
   },
   "identity": {
     "components": "components[].id",

@@ -57,10 +57,34 @@
       "os": "-",
       "role": "SSH node, one agent session",
       "status": "planned"
+    },
+    {
+      "id": "pi-1",
+      "hardware": "Raspberry Pi 3 Model B",
+      "ram": "1 GB",
+      "os": "-",
+      "role": "room monitor — USB webcam, streams rather than records",
+      "status": "planned"
+    },
+    {
+      "id": "cam-1",
+      "hardware": "Wired camera",
+      "ram": "-",
+      "os": "-",
+      "role": "RTSP source, recorded on a mini",
+      "status": "planned"
+    },
+    {
+      "id": "cam-2",
+      "hardware": "Wired camera",
+      "ram": "-",
+      "os": "-",
+      "role": "RTSP source, recorded on a mini",
+      "status": "planned"
     }
   ],
   "network": {
-    "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and every mini goes to sw-1 over 1000BASE-T; sessions leave air-1 and reach them by SSH.",
+    "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and everything else goes to sw-1 over 1000BASE-T; sessions leave air-1 and reach the minis by SSH. Eight ports: the uplink, four minis, two cameras and the monitor Pi fill every one of them.",
     "addressing": "gw-1 hands every mini a fixed address by DHCP reservation, keyed to its MAC, so a reinstall comes back on the address it left on — one source of truth, and nothing to configure on the host. The last digit of an address is the number of the mini it belongs to.",
     "disclosure": "Addresses, hostnames and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both."
   },
@@ -96,9 +120,17 @@
       "status": "considering"
     }
   ],
-  "services": [],
+  "services": [
+    {
+      "name": "Camera recording",
+      "note": "Continuous local recording on a mini, with motion clips mirrored off-site. Continuous upload is not the plan — two 2K streams would be roughly two terabytes a month.",
+      "status": "planned"
+    }
+  ],
   "house_rules": [
     "One agent session per host — that ratio is the point of the cluster, not a limitation of it.",
-    "Mid-2011 thermals were designed for open air, so the minis sit side by side and are never stacked."
+    "Mid-2011 thermals were designed for open air, so the minis sit side by side and are never stacked.",
+    "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour.",
+    "Nothing here is reachable from outside the LAN, and no port is forwarded to reach it."
   ]
 }

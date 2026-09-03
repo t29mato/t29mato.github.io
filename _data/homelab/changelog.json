@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-03",
+    "title": "Cameras, a monitor Pi, and a battery that knows its place",
+    "body": "Two wired cameras and a Raspberry Pi 3B are drawn in as planned, which is also the moment sw-1 runs out: the uplink, four minis, two cameras and the Pi are eight ports of eight. Recording will be continuous on a mini and only eventful off-site — two 2K streams uploaded around the clock would be roughly two terabytes a month. A 288 Wh station backs the router, the switch and the Pi, and deliberately not the minis, which would drain it inside an hour.",
+    "delta": "/homelab/changes/2026-09-03/"
+  },
+  {
+    "date": "2026-09-03",
     "title": "The router joins the drawing, and addressing is settled",
     "body": "gw-1 was always in the path and the diagram quietly pretended otherwise — air-1 appeared to reach the switch directly. It now shows the real route: Wi-Fi to the router, a wired uplink to the switch, the minis behind that. Addressing is settled at the same time: gw-1 now holds a reservation per mini, and the first one is live. Correcting a claim from yesterday, too — the provisioned host is mini-2, not mini-1; mini-1 is still bare.",
     "delta": "/homelab/changes/2026-09-03/"

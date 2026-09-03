@@ -5,45 +5,307 @@
     "title": "Homelab — four Mac minis on one switch",
     "locale": "en",
     "quality_profile": "showcase",
-    "viewBox": [1040, 780],
+    "viewBox": [
+      1080,
+      800
+    ],
     "views": [
       {
         "id": "today",
         "label": "What is running today",
-        "focus": ["air-1", "gw-1", "sw-1", "mini-2"],
+        "focus": [
+          "air-1",
+          "gw-1",
+          "sw-1",
+          "mini-2"
+        ],
         "note": "One provisioned host. Sessions leave air-1 over Wi-Fi and reach mini-2 across the wired segment, at an address gw-1 holds for it."
       },
       {
         "id": "when-full",
         "label": "When the rack is full",
-        "focus": ["sw-1", "mini-1", "mini-2", "mini-3", "mini-4"],
-        "note": "The other three minis are hardware waiting for an OS. The wiring for them already exists."
+        "focus": [
+          "sw-1",
+          "mini-1",
+          "mini-2",
+          "mini-3",
+          "mini-4"
+        ],
+        "note": "Three minis are hardware waiting for an OS. The wiring for them already exists."
+      },
+      {
+        "id": "watching",
+        "label": "Watching the room",
+        "focus": [
+          "sw-1",
+          "pi-1",
+          "cam-1",
+          "cam-2"
+        ],
+        "note": "Two cameras recorded on a mini, and a Pi that streams the room rather than recording it. Together they fill the switch."
       }
     ]
   },
   "components": [
-    { "id": "air-1", "type": "external", "label": "air-1", "sublabel": "MacBook Air (M1)", "tag": "workstation", "pos": [60, 100], "size": [170, 68] },
-    { "id": "gw-1", "type": "cloud", "label": "gw-1", "sublabel": "Wi-Fi 6 router", "tag": "DHCP reservations", "pos": [60, 350], "size": [170, 68] },
-    { "id": "sw-1", "type": "cloud", "label": "sw-1", "sublabel": "8-port Gigabit switch", "tag": "LSW4-GT-8NS/WH", "pos": [420, 350], "size": [170, 68] },
-    { "id": "mini-1", "type": "backend", "label": "mini-1", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 100], "size": [170, 68] },
-    { "id": "mini-2", "type": "backend", "label": "mini-2", "sublabel": "Ubuntu 24.04 LTS", "tag": "up", "pos": [790, 260], "size": [170, 68] },
-    { "id": "mini-3", "type": "backend", "label": "mini-3", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 420], "size": [170, 68] },
-    { "id": "mini-4", "type": "backend", "label": "mini-4", "sublabel": "no OS installed", "tag": "planned", "pos": [790, 580], "size": [170, 68] }
+    {
+      "id": "air-1",
+      "type": "external",
+      "label": "air-1",
+      "sublabel": "MacBook Air (M1)",
+      "tag": "workstation",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "gw-1",
+      "type": "cloud",
+      "label": "gw-1",
+      "sublabel": "Wi-Fi 6 router",
+      "tag": "DHCP reservations",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "sw-1",
+      "type": "cloud",
+      "label": "sw-1",
+      "sublabel": "8-port Gigabit switch",
+      "tag": "LSW4-GT-8NS/WH",
+      "pos": [
+        420,
+        330
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "mini-1",
+      "type": "backend",
+      "label": "mini-1",
+      "sublabel": "no OS installed",
+      "tag": "planned",
+      "pos": [
+        810,
+        50
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "mini-2",
+      "type": "backend",
+      "label": "mini-2",
+      "sublabel": "Ubuntu 24.04 LTS",
+      "tag": "up",
+      "pos": [
+        810,
+        180
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "mini-3",
+      "type": "backend",
+      "label": "mini-3",
+      "sublabel": "no OS installed",
+      "tag": "planned",
+      "pos": [
+        810,
+        310
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "mini-4",
+      "type": "backend",
+      "label": "mini-4",
+      "sublabel": "no OS installed",
+      "tag": "planned",
+      "pos": [
+        810,
+        440
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "pi-1",
+      "type": "backend",
+      "label": "pi-1",
+      "sublabel": "Raspberry Pi 3B",
+      "tag": "planned",
+      "pos": [
+        180,
+        640
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "cam-1",
+      "type": "external",
+      "label": "cam-1",
+      "sublabel": "wired camera",
+      "tag": "planned",
+      "pos": [
+        440,
+        640
+      ],
+      "size": [
+        170,
+        68
+      ]
+    },
+    {
+      "id": "cam-2",
+      "type": "external",
+      "label": "cam-2",
+      "sublabel": "wired camera",
+      "tag": "planned",
+      "pos": [
+        700,
+        640
+      ],
+      "size": [
+        170,
+        68
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Wired segment", "wraps": ["sw-1", "mini-1", "mini-2", "mini-3", "mini-4"] }
+    {
+      "kind": "region",
+      "label": "Wired segment",
+      "wraps": [
+        "sw-1",
+        "mini-1",
+        "mini-2",
+        "mini-3",
+        "mini-4",
+        "pi-1",
+        "cam-1",
+        "cam-2"
+      ]
+    }
   ],
   "connections": [
-    { "id": "air-to-gateway", "from": "air-1", "to": "gw-1", "label": "Wi-Fi 6", "variant": "emphasis", "labelDy": 24 },
-    { "id": "gateway-to-switch", "from": "gw-1", "to": "sw-1", "label": "1000BASE-T", "variant": "emphasis" },
-    { "id": "switch-to-mini-1", "from": "sw-1", "to": "mini-1", "variant": "dashed" },
-    { "id": "switch-to-mini-2", "from": "sw-1", "to": "mini-2" },
-    { "id": "switch-to-mini-3", "from": "sw-1", "to": "mini-3", "variant": "dashed" },
-    { "id": "switch-to-mini-4", "from": "sw-1", "to": "mini-4", "variant": "dashed" }
+    {
+      "id": "air-to-gateway",
+      "from": "air-1",
+      "to": "gw-1",
+      "label": "Wi-Fi 6",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gateway-to-switch",
+      "from": "gw-1",
+      "to": "sw-1",
+      "label": "1000BASE-T",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "switch-to-mini-1",
+      "from": "sw-1",
+      "to": "mini-1",
+      "variant": "dashed"
+    },
+    {
+      "id": "switch-to-mini-2",
+      "from": "sw-1",
+      "to": "mini-2"
+    },
+    {
+      "id": "switch-to-mini-3",
+      "from": "sw-1",
+      "to": "mini-3",
+      "variant": "dashed"
+    },
+    {
+      "id": "switch-to-mini-4",
+      "from": "sw-1",
+      "to": "mini-4",
+      "variant": "dashed"
+    },
+    {
+      "id": "switch-to-pi-1",
+      "from": "sw-1",
+      "to": "pi-1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "switch-to-cam-1",
+      "from": "sw-1",
+      "to": "cam-1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "switch-to-cam-2",
+      "from": "sw-1",
+      "to": "cam-2",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "On every mini", "items": ["Ubuntu 24.04 LTS server install", "OpenSSH server, key auth from air-1", "Node.js via nvm, then the Claude Code CLI"] },
-    { "dot": "emerald", "title": "How it is worked", "items": ["One agent session per host — that ratio is the point", "herdr manages the terminals across hosts", "Every host keeps a fixed address by DHCP reservation on gw-1, so a reinstall comes back where it was"] },
-    { "dot": "rose", "title": "Physical and published", "items": ["Mid-2011 thermals want open air, so the units sit side by side and are never stacked", "Hosts appear here under logical names only", "The switch is named because an unmanaged switch has no address and no firmware to attack; the router's model is not, because it does"] }
+    {
+      "dot": "cyan",
+      "title": "On every mini",
+      "items": [
+        "Ubuntu 24.04 LTS server install",
+        "OpenSSH server, key auth from air-1",
+        "Node.js via nvm, then the Claude Code CLI"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "How it is worked",
+      "items": [
+        "One agent session per host — that ratio is the point",
+        "herdr manages the terminals across hosts",
+        "Every host keeps a fixed address by DHCP reservation on gw-1, so a reinstall comes back where it was"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Physical and published",
+      "items": [
+        "Mid-2011 thermals want open air, so the units sit side by side and are never stacked",
+        "Hosts appear here under logical names only",
+        "The switch is named because an unmanaged switch has no address and no firmware to attack; the router and the cameras are not, because they do"
+      ]
+    }
   ]
 }
