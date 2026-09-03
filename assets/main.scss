@@ -976,6 +976,59 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
   font-size: 0.88em;
 }
 
+/* The topology pane. The diagram is archify's own standalone page, embedded
+   in its `?embed=1` mode rather than reimplemented here, so this is a frame
+   around someone else's document and the styling stops at its edge. The
+   title strip is the showcase pane's, because it is the same idea: a pager
+   showing what it has open. */
+.lab-pane {
+  margin: 0.15em 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  overflow: hidden;
+
+  &:hover,
+  &:focus-within { border-color: var(--border-strong); }
+}
+
+.lab-pane-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  column-gap: 2ch;
+  padding: 0.25rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.78em;
+}
+
+.lab-pane-file {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lab-pane-open { flex: none; }
+
+/* The diagram pans, zooms and scrolls inside itself, so the height is set
+   here and never derived from content — an auto-height frame would collapse. */
+.lab-pane-frame {
+  display: block;
+  width: 100%;
+  height: clamp(22rem, 60vh, 38rem);
+  border: 0;
+  background: var(--bg);
+}
+
+.lab-pane-fallback {
+  margin: 0;
+  padding: 0.9rem 0.95rem;
+  color: var(--text-dim);
+  font-size: 0.92em;
+}
+
 .lab-status {
   color: var(--text-dim);
 

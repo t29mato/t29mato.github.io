@@ -53,13 +53,20 @@ session happens to be running in the lab when something actually changes.
 | `_data/homelab/changelog.json` | The `git log` block, newest first. One entry per real change. |
 | `homelab/spec/current.architecture.json` | The archify source for the topology diagram. Published as-is next to the diagram. |
 | `homelab/spec/history/<YYYY-MM-DD>.architecture.json` | The spec as it stood before a change, kept so a delta can be computed. |
-| `homelab/topology/index.html` | Generated. Never hand-edit — regenerate it. |
+| `homelab/topology/index.html` | Generated. Never hand-edit — regenerate it. `/homelab/` embeds this exact file, so regenerating it updates the page with nothing to edit in the markup. |
+| `assets/lab.js` | Points the `/homelab/` topology frame at that file in archify's `?embed=1` mode and keeps its theme in step with the site toggle. |
 | `_scripts/strip-webfont.mjs` | Post-processing for the two generated pages above. Not site content; `_`-prefixed, so Jekyll never builds it. |
 | `homelab/changes/<YYYY-MM-DD>/index.html` | Generated delta for one dated change, when there was a topology change worth showing. |
 
 `_data/` is never published by Jekyll, so the inventory itself is not served;
 the architecture spec under `homelab/spec/` is, deliberately — it is the
 diagram's source and contains nothing that is not already on the page.
+
+The diagram opens the page, in an `<iframe>` pointed at
+`/homelab/topology/?embed=1`. `embed=1` is archify's own inline mode: it
+drops the viewer's cards and guided-view rail, which is what we want, because
+that supporting detail is already on the page as `stack.txt` and `RULES`.
+The full viewer, cards and all, stays one click away at `/homelab/topology/`.
 
 ### The update loop
 

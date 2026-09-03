@@ -17,6 +17,24 @@ reachable from outside the LAN.
 
 <p class="tty-dim lab-updated">last updated {{ site.data.homelab.inventory.updated_at }}</p>
 
+{% include tty-prompt.html cwd="~/lab" cmd="archify preview topology" %}
+
+<figure class="lab-pane">
+  <figcaption class="lab-pane-bar">
+    <span class="lab-pane-file">spec/current.architecture.json</span>
+    <a class="lab-pane-open" href="{{ "/homelab/topology/" | relative_url }}">open full &rarr;</a>
+  </figcaption>
+  <iframe class="lab-pane-frame" id="lab-topology"
+          title="Homelab topology — four Mac minis on one switch"
+          data-src="{{ "/homelab/topology/" | relative_url }}"></iframe>
+  <noscript>
+    <p class="lab-pane-fallback">The diagram is interactive and needs JavaScript. <a href="{{ "/homelab/topology/" | relative_url }}">Open it in its own page &rarr;</a></p>
+  </noscript>
+</figure>
+
+<p class="tty-out tty-dim lab-note">{{ site.data.homelab.inventory.network.topology }}<br>
+{{ site.data.homelab.inventory.network.disclosure }}</p>
+
 {% include tty-prompt.html cwd="~/lab" cmd="hosts" %}
 
 <table class="lab-hosts">
@@ -36,15 +54,6 @@ reachable from outside the LAN.
   {%- endfor %}
   </tbody>
 </table>
-
-{% include tty-prompt.html cwd="~/lab" cmd="xdg-open topology/" %}
-
-<nav class="tty-block" aria-label="Topology diagram">
-  <a class="tty-trow" href="{{ "/homelab/topology/" | relative_url }}"><span class="tty-node">topology/</span><span class="tty-desc">The wiring, drawn from <code>spec/current.architecture.json</code> — pan, zoom, trace a link, or switch the theme.</span></a>
-</nav>
-
-<p class="tty-out tty-dim lab-note">{{ site.data.homelab.inventory.network.topology }}<br>
-{{ site.data.homelab.inventory.network.disclosure }}</p>
 
 {% include tty-prompt.html cwd="~/lab" cmd="cat stack.txt" %}
 
@@ -90,8 +99,10 @@ reachable from outside the LAN.
     <p class="lab-log-head"><span class="lab-log-date">{{ entry.date }}</span><span class="lab-log-title">{{ entry.title }}</span></p>
     <p class="lab-log-body">{{ entry.body }}</p>
     {%- if entry.delta %}
-    <p class="lab-log-delta"><a href="{{ entry.delta | relative_url }}">what changed in the topology →</a></p>
+    <p class="lab-log-delta"><a href="{{ entry.delta | relative_url }}">what changed in the topology &rarr;</a></p>
     {%- endif %}
   </li>
 {%- endfor %}
 </ol>
+
+<script src="{{ "/assets/lab.js" | relative_url }}" defer></script>
