@@ -1,5 +1,11 @@
 [
   {
+    "date": "2026-09-04",
+    "title": "The cameras have no Ethernet, so the switch is not full after all",
+    "body": "Yesterday's entry said the eight ports were spoken for. They are not: the cameras turn out to have no Ethernet port — in this product line \"wired\" describes the power, not the network — so they join gw-1 over Wi-Fi and take no port at all. Six of eight are used, two are spare, and the wired segment now means only what actually reaches sw-1 over copper. Recording is stated the way it will really run: continuous to local disk, and off-site only when something happens.",
+    "delta": "/homelab/changes/2026-09-04/"
+  },
+  {
     "date": "2026-09-03",
     "title": "Cameras, a monitor Pi, and a battery that knows its place",
     "body": "Two wired cameras and a Raspberry Pi 3B are drawn in as planned, which is also the moment sw-1 runs out: the uplink, four minis, two cameras and the Pi are eight ports of eight. Recording will be continuous on a mini and only eventful off-site — two 2K streams uploaded around the clock would be roughly two terabytes a month. A 288 Wh station backs the router, the switch and the Pi, and deliberately not the minis, which would drain it inside an hour.",

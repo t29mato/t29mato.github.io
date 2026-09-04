@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "compare",
+  "type": "architecture",
+  "comparatorVersion": 1,
+  "canonicalVersion": 1,
+  "completeness": "complete",
+  "proofLevel": "authored",
+  "base": {
+    "title": "Homelab — four Mac minis on one switch",
+    "rawSha256": "4c78672c6bd4689f45a83d5841e08969a1c15ebc4ac7399cb3b2ec2137c40e8d",
+    "semanticSha256": "e27dc0aa6f37070c791a34de6f7abf11c483c212b03591fcee87591d40acd68d",
+    "bytes": 6172
+  },
+  "head": {
+    "title": "Homelab — four Mac minis on one switch",
+    "rawSha256": "959e27e7901d99197ab21bb8322f57202c9408a68e3f77a3d4ba26416d18fa60",
+    "semanticSha256": "10f0c4131f365ff05958c6b4e15153afbb48200433ed16bd1c23b79c3145bece",
+    "bytes": 6435
+  },
+  "summary": {
+    "components": {
+      "added": 0,
+      "changed": 2,
+      "evidenceChanged": 0,
+      "removed": 0,
+      "moved": 8
+    },
+    "connections": {
+      "added": 2,
+      "changed": 0,
+      "removed": 2,
+      "rerouted": 1
+    },
+    "boundaries": {
+      "added": 0,
+      "changed": 1,
+      "removed": 0,
+      "geometryChanged": 0
+    },
+    "presentationChanged": true,
+    "provenanceChanged": false
+  },
+  "changes": {
+    "components": [
+      {
+        "id": "air-1",
+        "baseLabel": "air-1",
+        "headLabel": "air-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "cam-1",
+        "baseLabel": "cam-1",
+        "headLabel": "cam-1",
+        "status": "changed",
+        "classifications": [
+          "geometry",
+          "semantic"
+        ],
+        "changedFields": [
+          "/pos",
+          "/sublabel"
+        ]
+      },
+      {
+        "id": "cam-2",
+        "baseLabel": "cam-2",
+        "headLabel": "cam-2",
+        "status": "changed",
+        "classifications": [
+          "geometry",
+          "semantic"
+        ],
+        "changedFields": [
+          "/pos",
+          "/sublabel"
+        ]
+      },
+      {
+        "id": "gw-1",
+        "baseLabel": "gw-1",
+        "headLabel": "gw-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-1",
+        "baseLabel": "mini-1",
+        "headLabel": "mini-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-2",
+        "baseLabel": "mini-2",
+        "headLabel": "mini-2",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-3",
+        "baseLabel": "mini-3",
+        "headLabel": "mini-3",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "mini-4",
+        "baseLabel": "mini-4",
+        "headLabel": "mini-4",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "pi-1",
+        "baseLabel": "pi-1",
+        "headLabel": "pi-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      },
+      {
+        "id": "sw-1",
+        "baseLabel": "sw-1",
+        "headLabel": "sw-1",
+        "status": "moved",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/pos"
+        ]
+      }
+    ],
+    "connections": [
+      {
+        "id": "cam-1-to-gateway",
+        "head": {
+          "from": "cam-1",
+          "to": "gw-1",
+          "label": "RTSP"
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "cam-2-to-gateway",
+        "head": {
+          "from": "cam-2",
+          "to": "gw-1",
+          "label": "RTSP"
+        },
+        "status": "added",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "gateway-to-switch",
+        "base": {
+          "from": "gw-1",
+          "to": "sw-1",
+          "label": "1000BASE-T"
+        },
+        "head": {
+          "from": "gw-1",
+          "to": "sw-1",
+          "label": "1000BASE-T"
+        },
+        "status": "rerouted",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/labelDy"
+        ]
+      },
+      {
+        "id": "switch-to-cam-1",
+        "base": {
+          "from": "sw-1",
+          "to": "cam-1",
+          "label": ""
+        },
+        "status": "removed",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      },
+      {
+        "id": "switch-to-cam-2",
+        "base": {
+          "from": "sw-1",
+          "to": "cam-2",
+          "label": ""
+        },
+        "status": "removed",
+        "classifications": [
+          "topology"
+        ],
+        "changedFields": []
+      }
+    ],
+    "boundaries": [
+      {
+        "key": "region:Wired segment",
+        "kind": "region",
+        "label": "Wired segment",
+        "status": "changed",
+        "classifications": [
+          "scope"
+        ],
+        "changedFields": [
+          "/wraps"
+        ]
+      }
+    ]
+  },
+  "identity": {
+    "components": "components[].id",
+    "connections": "connections[].id (required)",
+    "boundaries": "boundaries[].kind + boundaries[].label (derived)"
+  },
+  "view": {
+    "visualPreset": "classic"
+  },
+  "limitations": [
+    "Authored Architecture IR only; no runtime impact, causality, risk, or mergeability is inferred.",
+    "Boundary identity is conservatively derived from kind + label."
+  ],
+  "artifact": {
+    "sha256": "48bb7357750bad1813c8703d54dc48f6d9aeeb28a1a0195b911e07c45a1c9638",
+    "bytes": 2048469
+  },
+  "validation": {
+    "checksPassed": 28,
+    "checkCount": 28,
+    "baseComposition": "pass",
+    "headComposition": "pass"
+  }
+}

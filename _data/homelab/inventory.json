@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-03",
+  "updated_at": "2026-09-04",
   "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. One host is provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
@@ -68,23 +68,23 @@
     },
     {
       "id": "cam-1",
-      "hardware": "Wired camera",
+      "hardware": "Plug-in Wi-Fi camera",
       "ram": "-",
       "os": "-",
-      "role": "RTSP source, recorded on a mini",
+      "role": "RTSP source over Wi-Fi, recorded on a mini",
       "status": "planned"
     },
     {
       "id": "cam-2",
-      "hardware": "Wired camera",
+      "hardware": "Plug-in Wi-Fi camera",
       "ram": "-",
       "os": "-",
-      "role": "RTSP source, recorded on a mini",
+      "role": "RTSP source over Wi-Fi, recorded on a mini",
       "status": "planned"
     }
   ],
   "network": {
-    "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and everything else goes to sw-1 over 1000BASE-T; sessions leave air-1 and reach the minis by SSH. Eight ports: the uplink, four minis, two cameras and the monitor Pi fill every one of them.",
+    "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and the minis and the monitor Pi go to sw-1 over 1000BASE-T; sessions leave air-1 and reach the minis by SSH. The cameras take no switch port — they have no Ethernet, so they join gw-1 over Wi-Fi like air-1 does.",
     "addressing": "gw-1 hands every mini a fixed address by DHCP reservation, keyed to its MAC, so a reinstall comes back on the address it left on — one source of truth, and nothing to configure on the host. The last digit of an address is the number of the mini it belongs to.",
     "disclosure": "Addresses, hostnames and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both."
   },
@@ -123,7 +123,7 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "Continuous local recording on a mini, with motion clips mirrored off-site. Continuous upload is not the plan — two 2K streams would be roughly two terabytes a month.",
+      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone.",
       "status": "planned"
     }
   ],

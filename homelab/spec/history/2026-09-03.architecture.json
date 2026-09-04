@@ -6,8 +6,8 @@
     "locale": "en",
     "quality_profile": "showcase",
     "viewBox": [
-      1200,
-      760
+      1080,
+      800
     ],
     "views": [
       {
@@ -42,7 +42,7 @@
           "cam-1",
           "cam-2"
         ],
-        "note": "Two plug-in cameras on Wi-Fi, pulled by RTSP and recorded on a mini. They take no switch port at all."
+        "note": "Two cameras recorded on a mini, and a Pi that streams the room rather than recording it. Together they fill the switch."
       }
     ]
   },
@@ -54,8 +54,8 @@
       "sublabel": "MacBook Air (M1)",
       "tag": "workstation",
       "pos": [
-        320,
-        60
+        60,
+        90
       ],
       "size": [
         170,
@@ -69,8 +69,8 @@
       "sublabel": "Wi-Fi 6 router",
       "tag": "DHCP reservations",
       "pos": [
-        320,
-        300
+        60,
+        330
       ],
       "size": [
         170,
@@ -84,8 +84,8 @@
       "sublabel": "8-port Gigabit switch",
       "tag": "LSW4-GT-8NS/WH",
       "pos": [
-        640,
-        300
+        420,
+        330
       ],
       "size": [
         170,
@@ -99,8 +99,8 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
-        40
+        810,
+        50
       ],
       "size": [
         170,
@@ -114,8 +114,8 @@
       "sublabel": "Ubuntu 24.04 LTS",
       "tag": "up",
       "pos": [
-        960,
-        170
+        810,
+        180
       ],
       "size": [
         170,
@@ -129,8 +129,8 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
-        300
+        810,
+        310
       ],
       "size": [
         170,
@@ -144,8 +144,8 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
-        430
+        810,
+        440
       ],
       "size": [
         170,
@@ -159,8 +159,8 @@
       "sublabel": "Raspberry Pi 3B",
       "tag": "planned",
       "pos": [
-        640,
-        600
+        180,
+        640
       ],
       "size": [
         170,
@@ -171,11 +171,11 @@
       "id": "cam-1",
       "type": "external",
       "label": "cam-1",
-      "sublabel": "plug-in Wi-Fi camera",
+      "sublabel": "wired camera",
       "tag": "planned",
       "pos": [
-        40,
-        180
+        440,
+        640
       ],
       "size": [
         170,
@@ -186,11 +186,11 @@
       "id": "cam-2",
       "type": "external",
       "label": "cam-2",
-      "sublabel": "plug-in Wi-Fi camera",
+      "sublabel": "wired camera",
       "tag": "planned",
       "pos": [
-        40,
-        420
+        700,
+        640
       ],
       "size": [
         170,
@@ -208,7 +208,9 @@
         "mini-2",
         "mini-3",
         "mini-4",
-        "pi-1"
+        "pi-1",
+        "cam-1",
+        "cam-2"
       ]
     }
   ],
@@ -226,7 +228,8 @@
       "from": "gw-1",
       "to": "sw-1",
       "label": "1000BASE-T",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": 24
     },
     {
       "id": "switch-to-mini-1",
@@ -260,18 +263,20 @@
       "toSide": "top"
     },
     {
-      "id": "cam-1-to-gateway",
-      "from": "cam-1",
-      "to": "gw-1",
-      "label": "RTSP",
-      "variant": "dashed"
+      "id": "switch-to-cam-1",
+      "from": "sw-1",
+      "to": "cam-1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
-      "id": "cam-2-to-gateway",
-      "from": "cam-2",
-      "to": "gw-1",
-      "label": "RTSP",
-      "variant": "dashed"
+      "id": "switch-to-cam-2",
+      "from": "sw-1",
+      "to": "cam-2",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
@@ -300,15 +305,6 @@
         "Mid-2011 thermals want open air, so the units sit side by side and are never stacked",
         "Hosts appear here under logical names only",
         "The switch is named because an unmanaged switch has no address and no firmware to attack; the router and the cameras are not, because they do"
-      ]
-    },
-    {
-      "dot": "amber",
-      "title": "Watching the room",
-      "items": [
-        "Two plug-in cameras, joined over Wi-Fi rather than wired — the model has no Ethernet port",
-        "A mini pulls RTSP and records continuously to local disk",
-        "Only events leave the house: two 2K streams uploaded around the clock would be terabytes a month"
       ]
     }
   ]
