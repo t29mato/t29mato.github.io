@@ -36,10 +36,10 @@
     },
     {
       "id": "mini-2",
-      "hardware": "Mac mini (Mid 2011)",
+      "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
       "os": "Ubuntu 24.04 LTS",
-      "role": "SSH node, one agent session",
+      "role": "SSH node, one agent session, 5400rpm disk",
       "status": "up"
     },
     {
@@ -128,13 +128,13 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone. The cameras offer RTSP in their app; nobody has yet pointed ffprobe at one and got a stream back, so that is the first thing this plan has to survive.",
+      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone. The cameras offer RTSP in their app; nobody has yet pointed ffprobe at one and got a stream back, so that is the first thing this plan has to survive. Whichever mini records will need a solid-state disk first — the drives these shipped with are 5400rpm.",
       "status": "planned"
     }
   ],
   "house_rules": [
-    "One agent session per host — that ratio is the point of the cluster, not a limitation of it.",
-    "Mid-2011 thermals were designed for open air, so the minis sit side by side and are never stacked.",
+    "One agent session per host. It is not a style preference: two sessions and a browser on one mini put the load average at twice the thread count and two gigabytes into swap, on a spinning disk.",
+    "These minis were built for open air, so they sit side by side and are never stacked.",
     "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour.",
     "Nothing here is reachable from outside the LAN, and no port is forwarded to reach it."
   ]

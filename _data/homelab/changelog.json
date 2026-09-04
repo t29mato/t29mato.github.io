@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-04",
+    "title": "mini-2 is a 2012 machine with a spinning disk, and it is carrying two sessions",
+    "body": "Running on the host rather than describing it from outside turns up things the owner did not have to hand. mini-2 identifies as Macmini6,1 — a Late 2012 machine, not the 2011 the rest of the page assumes, so its row now says so and the others stay unverified until someone reads their model off the same file. Its disk is a 5400rpm APPLE HDD, and two gigabytes were paged onto it. The one-session-per-host rule was being broken at that moment by this very session, and it now says what it costs.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-04",
     "title": "A browser on the server, and the diagram stops overflowing",
     "body": "A mini can now open a page it just built, measure it and look at it — headless Chromium, no root, no display. The first thing it found was a defect: the topology page was 1221 pixels tall against a 900 pixel laptop viewport, which every composition check had passed. The drawing is flatter now and the cards say only what the diagram cannot, and it fits.",
     "delta": "/homelab/changes/2026-09-04/"
