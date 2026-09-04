@@ -123,7 +123,7 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone.",
+      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone. The cameras offer RTSP in their app; nobody has yet pointed ffprobe at one and got a stream back, so that is the first thing this plan has to survive.",
       "status": "planned"
     }
   ],
