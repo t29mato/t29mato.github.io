@@ -285,7 +285,7 @@
       "title": "Watching the room",
       "items": [
         "The cameras have no Ethernet port, so they join gw-1 over Wi-Fi and take no switch port",
-        "A mini pulls RTSP and keeps a continuous local copy; only events leave the house"
+        "A mini records only when something happens — nothing is written while the room is still"
       ]
     },
     {

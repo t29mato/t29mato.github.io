@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-04",
+    "title": "All four minis are 2012 machines, and recording waits for something to happen",
+    "body": "The owner confirms the minis are one batch, so all four rows say Late 2012 rather than one measured host and three inherited guesses. Recording drops the continuous local copy: nothing is written unless something happens. That retires the claim that the recorder needs a solid-state disk — it was 24/7 writes that made the 5400rpm drive untenable, and there are none. The cost moves to the CPU instead, because deciding that something happened means looking at the stream.",
+    "delta": "/homelab/changes/2026-09-04/"
+  },
+  {
+    "date": "2026-09-04",
     "title": "mini-2 is a 2012 machine with a spinning disk, and it is carrying two sessions",
     "body": "Running on the host rather than describing it from outside turns up things the owner did not have to hand. mini-2 identifies as Macmini6,1 — a Late 2012 machine, not the 2011 the rest of the page assumes, so its row now says so and the others stay unverified until someone reads their model off the same file. Its disk is a 5400rpm APPLE HDD, and two gigabytes were paged onto it. The one-session-per-host rule was being broken at that moment by this very session, and it now says what it costs.",
     "delta": null

@@ -15,9 +15,9 @@
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "rawSha256": "f56599e57d2e0373ebd5a5954930a9ebdc4dfdc02091220e3cee8c81a3f4ba8e",
-    "semanticSha256": "8097431e9436c8ab06b1e4e3b3b6fdf26cfd73d46b8fff36cf1f46c2dc9863eb",
-    "bytes": 5917
+    "rawSha256": "adb344a8b0c04c9152f2aa6498e4d12d06a681ad9ad6c6d942aae0a703a52646",
+    "semanticSha256": "9e7a2f85802d4c18bbc442dd6b07d0655ab165df25bf9e1f10fb6c388b53745d",
+    "bytes": 5926
   },
   "summary": {
     "components": {
@@ -291,8 +291,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "5f529b242ea7dbf2f6300efc2388024bca0ffc28101ecd37e924e3c0f620a878",
-    "bytes": 2044501
+    "sha256": "04f336edc0990a77b779a2425498876e64241a8295deb0b0da541e29e76ce913",
+    "bytes": 2044510
   },
   "validation": {
     "checksPassed": 28,

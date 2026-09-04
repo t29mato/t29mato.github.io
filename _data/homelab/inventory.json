@@ -28,7 +28,7 @@
     },
     {
       "id": "mini-1",
-      "hardware": "Mac mini (Mid 2011)",
+      "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
       "os": "-",
       "role": "SSH node, one agent session",
@@ -44,7 +44,7 @@
     },
     {
       "id": "mini-3",
-      "hardware": "Mac mini (Mid 2011)",
+      "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
       "os": "-",
       "role": "SSH node, one agent session",
@@ -52,7 +52,7 @@
     },
     {
       "id": "mini-4",
-      "hardware": "Mac mini (Mid 2011)",
+      "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
       "os": "-",
       "role": "SSH node, one agent session",
@@ -128,7 +128,7 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "A mini pulls RTSP from both cameras and records continuously to local disk. Only events leave the house — two 2K streams uploaded around the clock would be terabytes a month, and the off-site copy exists for the case where the recorder itself is gone. The cameras offer RTSP in their app; nobody has yet pointed ffprobe at one and got a stream back, so that is the first thing this plan has to survive. Whichever mini records will need a solid-state disk first — the drives these shipped with are 5400rpm.",
+      "note": "A mini records the cameras only when something happens — nothing is written while the room is still, locally or off-site. The cameras offer RTSP in their app; nobody has yet pointed ffprobe at one and got a stream back, so that is the first thing this plan has to survive. The cost then moves from the disk to the CPU: deciding that something happened means looking at the stream, and these are dual-core machines.",
       "status": "planned"
     }
   ],
