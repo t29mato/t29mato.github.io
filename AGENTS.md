@@ -57,6 +57,7 @@ session happens to be running in the lab when something actually changes.
 | `assets/lab.js` | Points the `/homelab/` topology frame at that file in archify's `?embed=1` mode and keeps its theme in step with the site toggle. |
 | `_scripts/strip-webfont.mjs` | Post-processing for the two generated pages above. Not site content; `_`-prefixed, so Jekyll never builds it. |
 | `homelab/changes/<YYYY-MM-DD>/index.html` | Generated delta for one dated change, when there was a topology change worth showing. |
+| `homelab/changes/<YYYY-MM-DD>/index.receipt.json` | Written by `compare` beside the delta. **Keep it** — it is the machine-readable count of what changed, plus the hashes it was computed from. Unlike the `visual-check` receipt, this one is provenance, not a test log. |
 
 `_data/` is never published by Jekyll, so the inventory itself is not served;
 the architecture spec under `homelab/spec/` is, deliberately — it is the
