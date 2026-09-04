@@ -159,6 +159,12 @@ This is the check that catches what `validate` cannot: whether the page
 actually fits a laptop screen. It found `scrollHeight 1221` against a 900px
 viewport once, which no amount of composition checking would have reported.
 
+Treat that as the general case, not an anecdote. Passing checks say the
+artifact is well-formed; they say nothing about what it looks like. The
+failures this catches are the ones a person would spot in five seconds and a
+test suite will pass over for years, so "all checks green" is never the
+sentence that finishes a visual change — open it.
+
 Two things about the order and the caveats:
 
 - **Run it after `strip-webfont.mjs`, never before.** Removing the web font
