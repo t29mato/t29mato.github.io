@@ -85,7 +85,7 @@
   ],
   "network": {
     "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and the minis and the monitor Pi go to sw-1 over 1000BASE-T; sessions leave air-1 and reach the minis by SSH. The cameras take no switch port — they have no Ethernet, so they join gw-1 over Wi-Fi like air-1 does.",
-    "addressing": "gw-1 hands every mini a fixed address by DHCP reservation, keyed to its MAC, so a reinstall comes back on the address it left on — one source of truth, and nothing to configure on the host. The last digit of an address is the number of the mini it belongs to.",
+    "addressing": "gw-1 holds a reservation for every host that has a job, keyed to its MAC, so a reinstall or a power cut brings it back on the address it left on — one source of truth, and nothing to configure on the host. Addresses are grouped by kind: one digit says what a host is, the next says which one it is. The recorder resolves the cameras by name anyway, so the numbers appear in exactly one place.",
     "disclosure": "Addresses, hostnames and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both."
   },
   "stack": [
