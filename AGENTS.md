@@ -187,9 +187,23 @@ mkdir -p root && for d in *.deb; do dpkg -x "$d" root/; done
 
 `dpkg -x` only unpacks; nothing is installed and no other user is affected.
 Then `LD_LIBRARY_PATH` must name both `root/usr/lib/x86_64-linux-gnu` and
-`root/lib/x86_64-linux-gnu`, which is what the wrapper script does. The
-transitive dependencies in the second half of that list are easy to miss — the
-first sixteen packages leave eight libraries still unresolved.
+`root/lib/x86_64-linux-gnu`, which is what the wrapper script does.
+
+**How many packages you need depends on which binary you run**, and the two
+Playwright ships are not interchangeable:
+
+| Binary | Direct libraries missing on a bare Ubuntu 24.04 | Packages needed |
+|---|---|---|
+| `chromium_headless_shell-*/…/headless_shell` | 12 | the first 17 above |
+| `chromium-*/…/chrome` (full) | 16 | all 27 |
+
+The full browser additionally links `libcairo`, `libpango` and `libcups`, and
+those three drag in the whole second row of that list — pixman and the xcb
+render/shm pair behind cairo, harfbuzz/fribidi/thai (and their own datrie and
+graphite2) behind pango's text shaping, avahi behind cups. `headless_shell` is
+built without them. So a list that works for one binary silently leaves the
+other eight libraries short; check with `ldd <binary> | grep 'not found'`
+rather than assuming.
 
 On macOS, none of this applies: use the system Chrome.
 
