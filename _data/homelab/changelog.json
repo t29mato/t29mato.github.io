@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-04",
+    "title": "The camera answers, and the storage problem turns out not to exist",
+    "body": "Measured rather than estimated: the stream is 1080p H.264 at about 1.3 Mbit/s with AAC audio, not the 2K the plan assumed, and the SDP's own bandwidth figure understated it tenfold. More usefully, the camera keeps its own events and a month of them is a couple of gigabytes — so the off-site copy is a rounding error rather than the terabytes this page warned about. The camera also serves two simultaneous clients, so a live view and a recorder need not compete for it.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-04",
     "title": "The camera speaks RTSP on its own",
     "body": "The open question was whether these cameras serve RTSP standalone or only through a base station that nobody here owns. They serve it: an unauthenticated OPTIONS comes back 200 OK advertising DESCRIBE, SETUP and PLAY. The recording plan survives its first real test. It has not produced a stream yet — every ordinary path answers 404 — but that is a question of finding the right URL rather than of buying hardware.",
     "delta": null
