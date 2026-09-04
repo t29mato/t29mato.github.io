@@ -30,9 +30,9 @@
       "id": "mini-1",
       "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
-      "os": "-",
-      "role": "SSH node, one agent session",
-      "status": "planned"
+      "os": "Ubuntu (desktop)",
+      "role": "SSH node, one agent session — not carrying one yet",
+      "status": "joining"
     },
     {
       "id": "mini-2",

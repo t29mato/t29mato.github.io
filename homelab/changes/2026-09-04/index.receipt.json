@@ -15,17 +15,17 @@
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "rawSha256": "adb344a8b0c04c9152f2aa6498e4d12d06a681ad9ad6c6d942aae0a703a52646",
-    "semanticSha256": "9e7a2f85802d4c18bbc442dd6b07d0655ab165df25bf9e1f10fb6c388b53745d",
-    "bytes": 5926
+    "rawSha256": "2954a5e17f55234edff6c4b84971404d7d5c60ed251f2d8e1e679544a600b342",
+    "semanticSha256": "5d0b84a138fedce2e88d42a62b1349b79bf3857064d683f99358ee3f68dff341",
+    "bytes": 5934
   },
   "summary": {
     "components": {
       "added": 0,
-      "changed": 2,
+      "changed": 3,
       "evidenceChanged": 0,
       "removed": 0,
-      "moved": 8
+      "moved": 7
     },
     "connections": {
       "added": 2,
@@ -100,12 +100,15 @@
         "id": "mini-1",
         "baseLabel": "mini-1",
         "headLabel": "mini-1",
-        "status": "moved",
+        "status": "changed",
         "classifications": [
-          "geometry"
+          "geometry",
+          "semantic"
         ],
         "changedFields": [
-          "/pos"
+          "/pos",
+          "/sublabel",
+          "/tag"
         ]
       },
       {
@@ -291,8 +294,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "04f336edc0990a77b779a2425498876e64241a8295deb0b0da541e29e76ce913",
-    "bytes": 2044510
+    "sha256": "18990bf8e4c10fb37c8855f22c9a03242a137240861210db48f7bf161146aabd",
+    "bytes": 2044716
   },
   "validation": {
     "checksPassed": 28,

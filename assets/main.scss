@@ -1036,7 +1036,8 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
 
   &[data-status="up"],
   &[data-status="in use"] { color: var(--green); }
-  &[data-status="planned"] { color: var(--amber); }
+  &[data-status="planned"],
+  &[data-status="joining"] { color: var(--amber); }
 }
 
 /* `hosts` output. The global table rule already turns any table into its own

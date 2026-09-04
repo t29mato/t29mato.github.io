@@ -4821,7 +4821,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 @media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
-<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · AUTHORED SNAPSHOTS</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">Homelab — four Mac minis on one switch → Homelab — four Mac minis on one switch</p></div><div class="metrics"><div class="metric add"><strong>2</strong><span>ADDED</span></div><div class="metric remove"><strong>2</strong><span>REMOVED</span></div><div class="metric change"><strong>3</strong><span>CHANGED</span></div></div></header>
+<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · AUTHORED SNAPSHOTS</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">Homelab — four Mac minis on one switch → Homelab — four Mac minis on one switch</p></div><div class="metrics"><div class="metric add"><strong>2</strong><span>ADDED</span></div><div class="metric remove"><strong>2</strong><span>REMOVED</span></div><div class="metric change"><strong>4</strong><span>CHANGED</span></div></div></header>
 <div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
 <nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false">Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · 17 authored changes</div></nav>
 <section class="canvas" data-view="base" hidden><iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="&lt;!DOCTYPE html&gt;
@@ -19775,7 +19775,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 
           <g class="delta-node-marker" aria-hidden="true"><circle cx="221" cy="339" r="8"/><text x="221" y="342" text-anchor="middle">↔</text></g>
         </g>
-<g id="delta-base-node-mini-1" data-node-id="mini-1" data-node-label="mini-1" role="group" aria-label="mini-1, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="moved-from" data-delta-classifications="geometry">
+<g id="delta-base-node-mini-1" data-node-id="mini-1" data-node-label="mini-1" role="group" aria-label="mini-1, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="moved-from" data-delta-classifications="geometry,semantic">
           <title>mini-1 · no OS installed · Wired segment · planned</title>
           <rect x="810" y="50" width="170" height="68" rx="6" class="c-mask"/>
           <rect x="810" y="50" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
@@ -19914,18 +19914,18 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
           <g class="delta-node-marker" aria-hidden="true"><circle cx="491" cy="209" r="8"/><text x="491" y="212" text-anchor="middle">↔</text></g>
         </g>
 
-        <g id="delta-head-node-mini-1" data-node-id="mini-1" data-node-label="mini-1" role="group" aria-label="mini-1, no OS installed, Wired segment" data-node-kind="backend" data-node-sublabel="no OS installed" data-node-tag="planned" data-node-context="Wired segment" data-delta-state="moved" data-delta-classifications="geometry">
-          <title>mini-1 · no OS installed · Wired segment · planned</title>
+        <g id="delta-head-node-mini-1" data-node-id="mini-1" data-node-label="mini-1" role="group" aria-label="mini-1, Ubuntu, desktop install, Wired segment" data-node-kind="backend" data-node-sublabel="Ubuntu, desktop install" data-node-tag="joining" data-node-context="Wired segment" data-delta-state="changed" data-delta-classifications="geometry,semantic">
+          <title>mini-1 · Ubuntu, desktop install · Wired segment · joining</title>
           <rect x="910" y="40" width="170" height="68" rx="6" class="c-mask"/>
           <rect x="910" y="40" width="170" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(916 46) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="995" y="72" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">mini-1</text>
-        <text data-detail="context" x="995" y="88" class="t-muted" font-size="9" text-anchor="middle">no OS installed</text>
-        <text data-detail="fine" x="995" y="100" class="t-backend" font-size="7" text-anchor="middle">planned</text>
+        <text data-detail="context" x="995" y="88" class="t-muted" font-size="9" text-anchor="middle">Ubuntu, desktop install</text>
+        <text data-detail="fine" x="995" y="100" class="t-backend" font-size="7" text-anchor="middle">joining</text>
 
-          <g class="delta-node-marker" aria-hidden="true"><circle cx="1071" cy="49" r="8"/><text x="1071" y="52" text-anchor="middle">↔</text></g>
+          <g class="delta-node-marker" aria-hidden="true"><circle cx="1071" cy="49" r="8"/><text x="1071" y="52" text-anchor="middle">~</text></g>
         </g>
 
         <g id="delta-head-node-mini-2" data-node-id="mini-2" data-node-label="mini-2" role="group" aria-label="mini-2, Ubuntu 24.04 LTS, Wired segment" data-node-kind="backend" data-node-sublabel="Ubuntu 24.04 LTS" data-node-tag="up" data-node-context="Wired segment" data-delta-state="moved" data-delta-classifications="geometry">
@@ -25127,16 +25127,16 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         &lt;text data-detail=&quot;fine&quot; x=&quot;415&quot; y=&quot;260&quot; class=&quot;t-cloud&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;DHCP reservations&lt;/text&gt;
         &lt;/g&gt;
 
-        &lt;g id=&quot;node-mini-1&quot; data-node-id=&quot;mini-1&quot; data-node-label=&quot;mini-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-1, no OS installed, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;no OS installed&quot; data-node-tag=&quot;planned&quot; data-node-context=&quot;Wired segment&quot;&gt;
-          &lt;title&gt;mini-1 · no OS installed · Wired segment · planned&lt;/title&gt;
+        &lt;g id=&quot;node-mini-1&quot; data-node-id=&quot;mini-1&quot; data-node-label=&quot;mini-1&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-1, Ubuntu, desktop install, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;Ubuntu, desktop install&quot; data-node-tag=&quot;joining&quot; data-node-context=&quot;Wired segment&quot;&gt;
+          &lt;title&gt;mini-1 · Ubuntu, desktop install · Wired segment · joining&lt;/title&gt;
           &lt;rect x=&quot;910&quot; y=&quot;40&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-mask&quot;/&gt;
           &lt;rect x=&quot;910&quot; y=&quot;40&quot; width=&quot;170&quot; height=&quot;68&quot; rx=&quot;6&quot; class=&quot;c-backend&quot; stroke-width=&quot;1.5&quot;/&gt;
           &lt;g aria-hidden=&quot;true&quot; data-semantic-sigil=&quot;backend&quot; class=&quot;semantic-sigil s-backend&quot; transform=&quot;translate(916 46) scale(0.6875)&quot;&gt;
             &lt;path d=&quot;M6 3 3 8l3 5M10 3l3 5-3 5&quot;/&gt;
           &lt;/g&gt;
           &lt;text data-node-label=&quot;&quot; data-detail-anchor=&quot;&quot; x=&quot;995&quot; y=&quot;72&quot; class=&quot;t-primary&quot; font-size=&quot;11&quot; font-weight=&quot;600&quot; text-anchor=&quot;middle&quot;&gt;mini-1&lt;/text&gt;
-        &lt;text data-detail=&quot;context&quot; x=&quot;995&quot; y=&quot;88&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;no OS installed&lt;/text&gt;
-        &lt;text data-detail=&quot;fine&quot; x=&quot;995&quot; y=&quot;100&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;planned&lt;/text&gt;
+        &lt;text data-detail=&quot;context&quot; x=&quot;995&quot; y=&quot;88&quot; class=&quot;t-muted&quot; font-size=&quot;9&quot; text-anchor=&quot;middle&quot;&gt;Ubuntu, desktop install&lt;/text&gt;
+        &lt;text data-detail=&quot;fine&quot; x=&quot;995&quot; y=&quot;100&quot; class=&quot;t-backend&quot; font-size=&quot;7&quot; text-anchor=&quot;middle&quot;&gt;joining&lt;/text&gt;
         &lt;/g&gt;
 
         &lt;g id=&quot;node-mini-2&quot; data-node-id=&quot;mini-2&quot; data-node-label=&quot;mini-2&quot; tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Focus mini-2, Ubuntu 24.04 LTS, Wired segment&quot; aria-pressed=&quot;false&quot; data-node-kind=&quot;backend&quot; data-node-sublabel=&quot;Ubuntu 24.04 LTS&quot; data-node-tag=&quot;up&quot; data-node-context=&quot;Wired segment&quot;&gt;
@@ -34856,9 +34856,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 <li data-change-status="changed"><button class="change-row" type="button" data-change-index="2" data-change-key="boundary:region:Wired segment" data-change-kind="boundary" data-change-id="region:Wired segment" data-change-label="Wired segment" data-change-status="changed" data-change-classifications="scope" data-change-target-signature="rect:changed:scope|rect:moved-from:scope|text:changed:|text:moved-from:"><span class="token">~</span><span>Boundary</span><strong>Wired segment</strong><code>region:Wired segment</code><span>scope</span><span>/wraps</span></button></li>
 <li data-change-status="changed"><button class="change-row" type="button" data-change-index="3" data-change-key="component:cam-1" data-change-kind="component" data-change-id="cam-1" data-change-label="cam-1" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>cam-1</strong><code>cam-1</code><span>geometry, semantic</span><span>/pos, /sublabel</span></button></li>
 <li data-change-status="changed"><button class="change-row" type="button" data-change-index="4" data-change-key="component:cam-2" data-change-kind="component" data-change-id="cam-2" data-change-label="cam-2" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>cam-2</strong><code>cam-2</code><span>geometry, semantic</span><span>/pos, /sublabel</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="5" data-change-key="component:air-1" data-change-kind="component" data-change-id="air-1" data-change-label="air-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>air-1</strong><code>air-1</code><span>geometry</span><span>/pos</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="6" data-change-key="component:gw-1" data-change-kind="component" data-change-id="gw-1" data-change-label="gw-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>gw-1</strong><code>gw-1</code><span>geometry</span><span>/pos</span></button></li>
-<li data-change-status="moved"><button class="change-row" type="button" data-change-index="7" data-change-key="component:mini-1" data-change-kind="component" data-change-id="mini-1" data-change-label="mini-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-1</strong><code>mini-1</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="changed"><button class="change-row" type="button" data-change-index="5" data-change-key="component:mini-1" data-change-kind="component" data-change-id="mini-1" data-change-label="mini-1" data-change-status="changed" data-change-classifications="geometry, semantic" data-change-target-signature="g:changed:geometry,semantic|g:moved-from:geometry,semantic"><span class="token">~</span><span>Component</span><strong>mini-1</strong><code>mini-1</code><span>geometry, semantic</span><span>/pos, /sublabel, /tag</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="6" data-change-key="component:air-1" data-change-kind="component" data-change-id="air-1" data-change-label="air-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>air-1</strong><code>air-1</code><span>geometry</span><span>/pos</span></button></li>
+<li data-change-status="moved"><button class="change-row" type="button" data-change-index="7" data-change-key="component:gw-1" data-change-kind="component" data-change-id="gw-1" data-change-label="gw-1" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>gw-1</strong><code>gw-1</code><span>geometry</span><span>/pos</span></button></li>
 <li data-change-status="moved"><button class="change-row" type="button" data-change-index="8" data-change-key="component:mini-2" data-change-kind="component" data-change-id="mini-2" data-change-label="mini-2" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-2</strong><code>mini-2</code><span>geometry</span><span>/pos</span></button></li>
 <li data-change-status="moved"><button class="change-row" type="button" data-change-index="9" data-change-key="component:mini-3" data-change-kind="component" data-change-id="mini-3" data-change-label="mini-3" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-3</strong><code>mini-3</code><span>geometry</span><span>/pos</span></button></li>
 <li data-change-status="moved"><button class="change-row" type="button" data-change-index="10" data-change-key="component:mini-4" data-change-kind="component" data-change-id="mini-4" data-change-label="mini-4" data-change-status="moved" data-change-classifications="geometry" data-change-target-signature="g:moved-from:geometry|g:moved:geometry"><span class="token">↔</span><span>Component</span><strong>mini-4</strong><code>mini-4</code><span>geometry</span><span>/pos</span></button></li>
@@ -34884,15 +34884,15 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "semanticSha256": "9e7a2f85802d4c18bbc442dd6b07d0655ab165df25bf9e1f10fb6c388b53745d"
+    "semanticSha256": "5d0b84a138fedce2e88d42a62b1349b79bf3857064d683f99358ee3f68dff341"
   },
   "summary": {
     "components": {
       "added": 0,
-      "changed": 2,
+      "changed": 3,
       "evidenceChanged": 0,
       "removed": 0,
-      "moved": 8
+      "moved": 7
     },
     "connections": {
       "added": 2,
@@ -34967,12 +34967,15 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
         "id": "mini-1",
         "baseLabel": "mini-1",
         "headLabel": "mini-1",
-        "status": "moved",
+        "status": "changed",
         "classifications": [
-          "geometry"
+          "geometry",
+          "semantic"
         ],
         "changedFields": [
-          "/pos"
+          "/pos",
+          "/sublabel",
+          "/tag"
         ]
       },
       {

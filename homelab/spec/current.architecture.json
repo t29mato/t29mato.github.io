@@ -96,8 +96,8 @@
       "id": "mini-1",
       "type": "backend",
       "label": "mini-1",
-      "sublabel": "no OS installed",
-      "tag": "planned",
+      "sublabel": "Ubuntu, desktop install",
+      "tag": "joining",
       "pos": [
         910,
         40
