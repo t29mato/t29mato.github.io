@@ -145,6 +145,54 @@ The full viewer, cards and all, stays one click away at `/homelab/topology/`.
 thing removed, another added". Give every connection an explicit `id`, and
 retire an id rather than reusing it for something else.
 
+### Checking a generated page in a real browser
+
+On the Ubuntu minis there is a headless Chromium, installed without root, at
+`~/pw-deps/bin/chrome`. Point archify at it:
+
+```bash
+export ARCHIFY_CHROME="$HOME/pw-deps/bin/chrome"
+node bin/archify.mjs visual-check <output.html> --json
+```
+
+This is the check that catches what `validate` cannot: whether the page
+actually fits a laptop screen. It found `scrollHeight 1221` against a 900px
+viewport once, which no amount of composition checking would have reported.
+
+Two things about the order and the caveats:
+
+- **Run it after `strip-webfont.mjs`, never before.** Removing the web font
+  changes the typeface and therefore every text measurement, so a pass on the
+  unstripped file says nothing about the file that gets published.
+- The wrapper passes `--no-sandbox`, because Ubuntu 24.04 restricts
+  unprivileged user namespaces through AppArmor and Chrome's zygote aborts
+  without it. That is a real reduction in isolation, and it is acceptable only
+  because what gets rendered is HTML this machine generated itself. Do not
+  point that wrapper at the open web.
+- `visual-check` writes PNGs, an `index.visual-check.json` and a contact-sheet
+  HTML beside the page. **Delete all of them** — unlike the `compare` receipt,
+  they are a test log, and the PNGs would otherwise be published.
+
+If the wrapper is missing (a fresh mini), rebuild it without root:
+
+```bash
+mkdir -p ~/pw-deps && cd ~/pw-deps
+apt-get download libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+  libatspi2.0-0t64 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+  libasound2t64 libcups2t64 libxkbcommon0 libpango-1.0-0 libcairo2 libxi6 \
+  libxrender1 libavahi-common3 libavahi-client3 libxcb-render0 libxcb-shm0 \
+  libpixman-1-0 libfribidi0 libthai0 libharfbuzz0b libdatrie1 libgraphite2-3
+mkdir -p root && for d in *.deb; do dpkg -x "$d" root/; done
+```
+
+`dpkg -x` only unpacks; nothing is installed and no other user is affected.
+Then `LD_LIBRARY_PATH` must name both `root/usr/lib/x86_64-linux-gnu` and
+`root/lib/x86_64-linux-gnu`, which is what the wrapper script does. The
+transitive dependencies in the second half of that list are easy to miss — the
+first sixteen packages leave eight libraries still unresolved.
+
+On macOS, none of this applies: use the system Chrome.
+
 ### What must never go on this page
 
 The page is world-readable, and the lab is a home. None of the following

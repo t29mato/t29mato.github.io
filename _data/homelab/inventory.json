@@ -118,6 +118,11 @@
       "name": "NFS share for ~/repos",
       "note": "Repositories are cloned per host today. A shared mount would save four clones of the same tree.",
       "status": "considering"
+    },
+    {
+      "name": "Headless Chromium",
+      "note": "A Playwright build, running without root and without a display, so an agent on a mini can open what it just built, measure the DOM and look at a screenshot. Browser work does not have to be handed back to the laptop.",
+      "status": "in use"
     }
   ],
   "services": [

@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-04",
+    "title": "A browser on the server, and the diagram stops overflowing",
+    "body": "A mini can now open a page it just built, measure it and look at it — headless Chromium, no root, no display. The first thing it found was a defect: the topology page was 1221 pixels tall against a 900 pixel laptop viewport, which every composition check had passed. The drawing is flatter now and the cards say only what the diagram cannot, and it fits.",
+    "delta": "/homelab/changes/2026-09-04/"
+  },
+  {
+    "date": "2026-09-04",
     "title": "The cameras have no Ethernet, so the switch is not full after all",
     "body": "Yesterday's entry said the eight ports were spoken for. They are not: the cameras turn out to have no Ethernet port — in this product line \"wired\" describes the power, not the network — so they join gw-1 over Wi-Fi and take no port at all. Six of eight are used, two are spare, and the wired segment now means only what actually reaches sw-1 over copper. Recording is stated the way it will really run: continuous to local disk, and off-site only when something happens.",
     "delta": "/homelab/changes/2026-09-04/"

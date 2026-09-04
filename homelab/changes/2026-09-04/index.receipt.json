@@ -15,9 +15,9 @@
   },
   "head": {
     "title": "Homelab — four Mac minis on one switch",
-    "rawSha256": "959e27e7901d99197ab21bb8322f57202c9408a68e3f77a3d4ba26416d18fa60",
-    "semanticSha256": "10f0c4131f365ff05958c6b4e15153afbb48200433ed16bd1c23b79c3145bece",
-    "bytes": 6435
+    "rawSha256": "f56599e57d2e0373ebd5a5954930a9ebdc4dfdc02091220e3cee8c81a3f4ba8e",
+    "semanticSha256": "8097431e9436c8ab06b1e4e3b3b6fdf26cfd73d46b8fff36cf1f46c2dc9863eb",
+    "bytes": 5917
   },
   "summary": {
     "components": {
@@ -31,7 +31,7 @@
       "added": 2,
       "changed": 0,
       "removed": 2,
-      "rerouted": 1
+      "rerouted": 2
     },
     "boundaries": {
       "added": 0,
@@ -171,11 +171,31 @@
     ],
     "connections": [
       {
+        "id": "air-to-gateway",
+        "base": {
+          "from": "air-1",
+          "to": "gw-1",
+          "label": "Wi-Fi 6"
+        },
+        "head": {
+          "from": "air-1",
+          "to": "gw-1",
+          "label": "Wi-Fi 6"
+        },
+        "status": "rerouted",
+        "classifications": [
+          "geometry"
+        ],
+        "changedFields": [
+          "/labelDy"
+        ]
+      },
+      {
         "id": "cam-1-to-gateway",
         "head": {
           "from": "cam-1",
           "to": "gw-1",
-          "label": "RTSP"
+          "label": ""
         },
         "status": "added",
         "classifications": [
@@ -188,7 +208,7 @@
         "head": {
           "from": "cam-2",
           "to": "gw-1",
-          "label": "RTSP"
+          "label": ""
         },
         "status": "added",
         "classifications": [
@@ -271,8 +291,8 @@
     "Boundary identity is conservatively derived from kind + label."
   ],
   "artifact": {
-    "sha256": "48bb7357750bad1813c8703d54dc48f6d9aeeb28a1a0195b911e07c45a1c9638",
-    "bytes": 2048469
+    "sha256": "5f529b242ea7dbf2f6300efc2388024bca0ffc28101ecd37e924e3c0f620a878",
+    "bytes": 2044501
   },
   "validation": {
     "checksPassed": 28,

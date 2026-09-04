@@ -6,8 +6,8 @@
     "locale": "en",
     "quality_profile": "showcase",
     "viewBox": [
-      1200,
-      760
+      1150,
+      560
     ],
     "views": [
       {
@@ -54,8 +54,8 @@
       "sublabel": "MacBook Air (M1)",
       "tag": "workstation",
       "pos": [
-        320,
-        60
+        40,
+        340
       ],
       "size": [
         170,
@@ -69,8 +69,8 @@
       "sublabel": "Wi-Fi 6 router",
       "tag": "DHCP reservations",
       "pos": [
-        320,
-        300
+        330,
+        200
       ],
       "size": [
         170,
@@ -84,8 +84,8 @@
       "sublabel": "8-port Gigabit switch",
       "tag": "LSW4-GT-8NS/WH",
       "pos": [
-        640,
-        300
+        620,
+        200
       ],
       "size": [
         170,
@@ -99,7 +99,7 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
+        910,
         40
       ],
       "size": [
@@ -114,8 +114,8 @@
       "sublabel": "Ubuntu 24.04 LTS",
       "tag": "up",
       "pos": [
-        960,
-        170
+        910,
+        165
       ],
       "size": [
         170,
@@ -129,8 +129,8 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
-        300
+        910,
+        290
       ],
       "size": [
         170,
@@ -144,8 +144,8 @@
       "sublabel": "no OS installed",
       "tag": "planned",
       "pos": [
-        960,
-        430
+        910,
+        415
       ],
       "size": [
         170,
@@ -159,8 +159,8 @@
       "sublabel": "Raspberry Pi 3B",
       "tag": "planned",
       "pos": [
-        640,
-        600
+        620,
+        420
       ],
       "size": [
         170,
@@ -175,7 +175,7 @@
       "tag": "planned",
       "pos": [
         40,
-        180
+        60
       ],
       "size": [
         170,
@@ -190,7 +190,7 @@
       "tag": "planned",
       "pos": [
         40,
-        420
+        200
       ],
       "size": [
         170,
@@ -218,8 +218,7 @@
       "from": "air-1",
       "to": "gw-1",
       "label": "Wi-Fi 6",
-      "variant": "emphasis",
-      "labelDy": 24
+      "variant": "emphasis"
     },
     {
       "id": "gateway-to-switch",
@@ -263,14 +262,12 @@
       "id": "cam-1-to-gateway",
       "from": "cam-1",
       "to": "gw-1",
-      "label": "RTSP",
       "variant": "dashed"
     },
     {
       "id": "cam-2-to-gateway",
       "from": "cam-2",
       "to": "gw-1",
-      "label": "RTSP",
       "variant": "dashed"
     }
   ],
@@ -279,36 +276,24 @@
       "dot": "cyan",
       "title": "On every mini",
       "items": [
-        "Ubuntu 24.04 LTS server install",
-        "OpenSSH server, key auth from air-1",
-        "Node.js via nvm, then the Claude Code CLI"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "How it is worked",
-      "items": [
-        "One agent session per host — that ratio is the point",
-        "herdr manages the terminals across hosts",
-        "Every host keeps a fixed address by DHCP reservation on gw-1, so a reinstall comes back where it was"
-      ]
-    },
-    {
-      "dot": "rose",
-      "title": "Physical and published",
-      "items": [
-        "Mid-2011 thermals want open air, so the units sit side by side and are never stacked",
-        "Hosts appear here under logical names only",
-        "The switch is named because an unmanaged switch has no address and no firmware to attack; the router and the cameras are not, because they do"
+        "Ubuntu 24.04 LTS, OpenSSH with key auth from air-1, Node via nvm, then the Claude Code CLI",
+        "One agent session per host, and a fixed address gw-1 hands back after every reinstall"
       ]
     },
     {
       "dot": "amber",
       "title": "Watching the room",
       "items": [
-        "Two plug-in cameras, joined over Wi-Fi rather than wired — the model has no Ethernet port",
-        "A mini pulls RTSP and records continuously to local disk",
-        "Only events leave the house: two 2K streams uploaded around the clock would be terabytes a month"
+        "The cameras have no Ethernet port, so they join gw-1 over Wi-Fi and take no switch port",
+        "A mini pulls RTSP and keeps a continuous local copy; only events leave the house"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Published with care",
+      "items": [
+        "Hosts appear under logical names only — no address, hostname or key material",
+        "The switch is named because it has no address, no admin page and no firmware; the router and the cameras are not"
       ]
     }
   ]
