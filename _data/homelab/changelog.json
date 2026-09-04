@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-04",
+    "title": "The camera speaks RTSP on its own",
+    "body": "The open question was whether these cameras serve RTSP standalone or only through a base station that nobody here owns. They serve it: an unauthenticated OPTIONS comes back 200 OK advertising DESCRIBE, SETUP and PLAY. The recording plan survives its first real test. It has not produced a stream yet — every ordinary path answers 404 — but that is a question of finding the right URL rather than of buying hardware.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-04",
     "title": "mini-1 turns out to have a desktop on it",
     "body": "mini-1 is not bare after all — it is running Ubuntu, but the desktop edition rather than server. That is two problems on a machine meant to carry an agent session: a graphical session holds on to memory that is already scarce here, and the desktop edition ships without an SSH server, so there is nothing to connect to yet. It is marked joining rather than up until there is.",
     "delta": "/homelab/changes/2026-09-04/"
