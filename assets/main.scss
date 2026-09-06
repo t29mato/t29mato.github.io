@@ -959,7 +959,8 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
 .post-committers { color: var(--text-dim); font-size: 0.88em; }
 
 /* ==========================================================================
-   Homelab — the status page (homelab.md, _data/homelab/)
+   Homelab — the status page (homelab.md, _data/homelab/), and the few
+   pieces of it privacy.md borrows
    --------------------------------------------------------------------------
    Every block on that page is one command's output, so the styling job here
    is to keep each block reading as output rather than as a component: a
