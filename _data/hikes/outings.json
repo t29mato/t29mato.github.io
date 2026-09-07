@@ -12,7 +12,7 @@
   "ski": 25,
   "turned_back": 1,
   "overseas": 2,
-  "hyaku_done": 13
+  "hyaku_done": 12
  },
  "hyaku": {
   "naeba": {
@@ -73,11 +73,6 @@
   "kobushi": {
    "date": "2025-05-04",
    "outing": "2025-05-04_yamareco_8128527",
-   "times": 1
-  },
-  "myoko": {
-   "date": "2026-02-01",
-   "outing": "2026-02-01_yamareco_9245120",
    "times": 1
   }
  },
@@ -407,12 +402,8 @@
    "links": {
     "yamareco": "https://www.yamareco.com/modules/yamareco/detail-9245120.html"
    },
-   "peaks": [
-    "myoko"
-   ],
-   "peak_dist": {
-    "myoko": 896
-   },
+   "peaks": [],
+   "peak_dist": {},
    "peak": [
     36.8881,
     138.10405
@@ -897,7 +888,7 @@
   {
    "id": "2025-09-24_yamareco_8735406",
    "date": "2025-09-24",
-   "en": "Unnamed outing",
+   "en": "Coastal hills near Agadir (Morocco)",
    "jp": "NO NAME",
    "sport": "hike",
    "sport_source": "guess",
@@ -2753,13 +2744,13 @@
   {
    "id": "2024-11-03_yamareco_7437714",
    "date": "2024-11-03",
-   "en": "Bulguksa, Mt. Toham (Gyeongju)",
+   "en": "Bukkokuji trail (Mt. Gozen)",
    "jp": "仏国寺",
    "sport": "hike",
    "sport_source": "guess",
    "status": "summited",
    "region": "kanto",
-   "summit_m": 745,
+   "summit_m": 350,
    "max_ele": 353,
    "km": 4.1,
    "gain": 217,
