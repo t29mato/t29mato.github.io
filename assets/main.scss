@@ -1100,6 +1100,32 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
 /* Unknown gets no colour, by the same rule the statuses follow. */
 .lab-live-empty { color: var(--text-dim); }
 
+/* The healthy majority, folded into one line.
+
+   Green, and quiet about it: the summary is the only row most days, and it is
+   there to be counted rather than read. Opening it costs a click and gives
+   back the full list, so nothing is hidden — the rows that are fine simply
+   stop competing for the attention the exceptions need. */
+.lab-live-fine {
+  margin: 0.15rem 0 0;
+
+  > summary {
+    padding: 0.2rem 0;
+    color: var(--green);
+    font-size: 0.92em;
+    cursor: pointer;
+
+    /* The disclosure triangle is furniture, not content, so it is dimmed to
+       the same weight as the rest of the page's punctuation. */
+    &::marker { color: var(--text-dim); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  }
+
+  /* Indented under the summary that owns them, so an opened list reads as its
+     detail and not as a second band. */
+  > .lab-live-grid { padding-left: 2ch; }
+}
+
 /* The row's own columns, on the same grammar: a name that holds its width so
    the status words line up under each other, prose that takes what is left,
    and the attribution last and dim, because who saw it is the least of what

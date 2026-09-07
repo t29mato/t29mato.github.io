@@ -18,6 +18,12 @@
  * 3. Degrade to nothing. Without JavaScript the band renders one line of text
  *    saying where the live view is, and the hand-written page below is
  *    untouched and complete on its own.
+ * 4. Show what is wrong, and count what is not. Two machines make eleven rows
+ *    and four will make twenty, nearly all of them permanently green — and a
+ *    list that is always green teaches the eye to skip the band, which is the
+ *    same as having no band. So anything not `up` is a row, and everything
+ *    that is collapses into one line you can open. Nothing is hidden; the
+ *    healthy majority just stops competing with the exception for attention.
  */
 (function () {
   var root = document.getElementById("lab-live");
@@ -34,10 +40,23 @@
 
   var body = document.createElement("ul");
   body.className = "lab-live-grid";
+
+  /* <details> rather than a button and a flag: the open/closed state is the
+     element's own, so it survives every refresh without this file tracking it,
+     and it is keyboard-reachable without any of that being written here. */
+  var fine = document.createElement("details");
+  fine.className = "lab-live-fine";
+  var fineSummary = document.createElement("summary");
+  var fineList = document.createElement("ul");
+  fineList.className = "lab-live-grid";
+  fine.appendChild(fineSummary);
+  fine.appendChild(fineList);
+
   var foot = document.createElement("p");
   foot.className = "lab-live-foot tty-dim";
   root.textContent = "";
   root.appendChild(body);
+  root.appendChild(fine);
   root.appendChild(foot);
 
   /* Seconds, as a terminal would print them: short, and never more precise
@@ -109,15 +128,42 @@
     return li;
   }
 
+  /* Worst first. `unknown` outranks `up` deliberately — not knowing is a thing
+     to look at, and it is the state a subject takes when the only host that
+     could see it went quiet. The endpoint returns them in id order and keeps
+     doing so; ordering by how much attention a row deserves is a question
+     about reading, which belongs here. */
+  var RANK = { down: 3, degraded: 2, unknown: 1, up: 0 };
+
+  function summaryText(list) {
+    var names = list.map(function (s) { return s.id; });
+    var shown = names.slice(0, 4).join(", ");
+    if (names.length > 4) shown += ", +" + (names.length - 4) + " more";
+    return list.length + " up · " + shown;
+  }
+
   function render(data) {
+    var subjects = (data.subjects || []).slice().sort(function (a, b) {
+      var d = (RANK[b.state] || 0) - (RANK[a.state] || 0);
+      return d || a.id.localeCompare(b.id);
+    });
+    var wrong = subjects.filter(function (s) { return s.state !== "up"; });
+    var well = subjects.filter(function (s) { return s.state === "up"; });
+
     body.textContent = "";
-    if (!data.subjects || !data.subjects.length) {
+    fineList.textContent = "";
+
+    if (!subjects.length) {
       var li = document.createElement("li");
       li.className = "lab-live-item lab-live-empty";
       li.textContent = "no host is reporting yet — the agents that push this are not installed";
       body.appendChild(li);
+      fine.hidden = true;
     } else {
-      data.subjects.forEach(function (s) { body.appendChild(row(s)); });
+      wrong.forEach(function (s) { body.appendChild(row(s)); });
+      well.forEach(function (s) { fineList.appendChild(row(s)); });
+      fine.hidden = well.length === 0;
+      fineSummary.textContent = summaryText(well);
     }
 
     var reporters = (data.reporters || []).map(function (r) {
@@ -133,6 +179,7 @@
      being off — so the page claims only what it can defend. */
   function blind(reason) {
     body.textContent = "";
+    fine.hidden = true;
     var li = document.createElement("li");
     li.className = "lab-live-item lab-live-empty";
     li.textContent = "status is unreachable, so nothing below it is known";
