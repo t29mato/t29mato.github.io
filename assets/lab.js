@@ -1,15 +1,15 @@
 /*
  * The topology pane on /homelab/.
  *
- * The diagram is archify's own standalone page, embedded rather than copied
- * in: regenerating the artifact updates this page with nothing to edit here.
- * `?embed=1` is archify's inline mode — it drops the cards and the guided
- * view rail, which this page already says in its own words further down.
+ * The diagram is its own standalone page, embedded rather than copied in, so
+ * editing the drawing updates this page with nothing to change here.
+ * `?embed=1` is its inline mode — it drops the page's own heading and outer
+ * padding, which this page already provides.
  *
  * Two things still have to be handled from this side.
  *
- * The theme. archify resolves its own from ?theme=, then its own storage key,
- * then the OS — none of which know about this site's toggle. So the src is
+ * The theme. The frame resolves its own from ?theme=, then the OS — neither of
+ * which knows about this site's toggle. So the src is
  * not in the markup at all: it is written once, from the theme the site has
  * already resolved, and the frame therefore never paints in the wrong one.
  *

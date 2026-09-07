@@ -27,11 +27,11 @@ port is forwarded to reach anything.
 
 <p class="tty-out tty-dim lab-note">A host that stops pushing goes <span class="lab-status" data-status="unknown">unknown</span>, not <span class="lab-status" data-status="down">down</span> — and so does anything it was the only one watching. A dead observer is not evidence about the thing it was observing, and a page that prints <span class="lab-status" data-status="up">up</span> because nobody is left to contradict it would be worse than no page at all.</p>
 
-{% include tty-prompt.html cwd="~/lab" cmd="archify preview topology" %}
+{% include tty-prompt.html cwd="~/lab" cmd="open topology/index.html" %}
 
 <figure class="lab-pane">
   <figcaption class="lab-pane-bar">
-    <span class="lab-pane-file">spec/current.architecture.json</span>
+    <span class="lab-pane-file">topology/index.html</span>
     <a class="lab-pane-open" href="{{ "/homelab/topology/" | relative_url }}">open full &rarr;</a>
   </figcaption>
   <iframe class="lab-pane-frame" id="lab-topology"

@@ -1,17 +1,18 @@
-# Generated diagrams are derived files, not sources. `homelab/spec/*.json` is
-# the source; these are what archify renders from it.
+# `homelab/topology/index.html` used to be listed here as a generated file that
+# git must never merge and never diff. It is neither of those things any more:
+# it is a hand-drawn page, 19 KB of SVG that somebody laid out, and its diffs
+# are exactly what review should be reading. Nothing about it is derived.
+#
+# The delta pages below still are. They were rendered by a tool that no longer
+# runs here, and they are kept only because dated changelog entries link to
+# them — frozen, not maintained.
 #
 # -merge tells git never to attempt a textual three-way merge on them. A
 # line-level merge of two 700KB rendered documents does not produce a valid
 # page, it produces a broken one that still looks like HTML — the worst kind of
 # conflict resolution, because it can pass review.
 #
-# The correct resolution is always the same and never involves reading the
-# conflict: settle the spec, then regenerate. Nothing is lost, because nothing
-# in these files exists anywhere but in the spec.
-#
 # -diff keeps them out of diffs and `git log -p`, where a re-render shows as
 # thousands of changed lines that mean nothing.
-homelab/topology/index.html      -merge -diff
 homelab/changes/**/index.html    -merge -diff
 homelab/changes/**/*.receipt.json -diff

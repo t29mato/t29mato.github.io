@@ -51,23 +51,27 @@ session happens to be running in the lab when something actually changes.
 |---|---|
 | `_data/homelab/inventory.json` | The single source of truth for the page: hosts, network, software stack, services, house rules. `homelab.md` renders it and holds no facts of its own. |
 | `_data/homelab/changelog.json` | The `git log` block, newest first. One entry per real change. |
-| `homelab/spec/current.architecture.json` | The archify source for the topology diagram. Published as-is next to the diagram. |
-| `homelab/spec/history/<YYYY-MM-DD>.architecture.json` | The spec as it stood before a change, kept so a delta can be computed. |
-| `homelab/topology/index.html` | Generated. Never hand-edit — regenerate it. `/homelab/` embeds this exact file, so regenerating it updates the page with nothing to edit in the markup. |
-| `assets/lab.js` | Points the `/homelab/` topology frame at that file in archify's `?embed=1` mode and keeps its theme in step with the site toggle. |
-| `_scripts/strip-webfont.mjs` | Post-processing for the two generated pages above. Not site content; `_`-prefixed, so Jekyll never builds it. |
-| `homelab/changes/<YYYY-MM-DD>/index.html` | Generated delta for one dated change, when there was a topology change worth showing. |
+| `homelab/topology/index.html` | **The diagram. Hand-drawn, and a source file** — edit it directly. 19 KB of SVG laid out so no two copper runs cross, which is why it is not generated. `/homelab/` embeds this exact file. |
+| `_scripts/check-topology.mjs` | Holds the drawing against the inventory, and re-checks the rules that made it publishable. Run it after touching either. Not site content; `_`-prefixed. |
+| `assets/lab.js` | Points the `/homelab/` topology frame at that file with `?embed=1` and keeps its theme in step with the site toggle. |
+| `homelab/spec/*.json`, `homelab/changes/*`, `_scripts/strip-webfont.mjs` | **Retired.** Left in place because dated changelog entries link to the delta pages and those URLs are published. Nothing regenerates them; nothing reads the spec. Do not update the spec to match a change — it is a record of what the diagram used to be built from. |
 | `homelab/changes/<YYYY-MM-DD>/index.receipt.json` | Written by `compare` beside the delta. **Keep it** — it is the machine-readable count of what changed, plus the hashes it was computed from. Unlike the `visual-check` receipt, this one is provenance, not a test log. |
 
-`_data/` is never published by Jekyll, so the inventory itself is not served;
-the architecture spec under `homelab/spec/` is, deliberately — it is the
-diagram's source and contains nothing that is not already on the page.
+`_data/` is never published by Jekyll, so the inventory itself is not served.
 
 The diagram opens the page, in an `<iframe>` pointed at
-`/homelab/topology/?embed=1`. `embed=1` is archify's own inline mode: it
-drops the viewer's cards and guided-view rail, which is what we want, because
-that supporting detail is already on the page as `stack.txt` and `RULES`.
-The full viewer, cards and all, stays one click away at `/homelab/topology/`.
+`/homelab/topology/?embed=1`. `embed=1` is its inline mode: it drops the
+page's own heading and outer padding, because the parent already provides that
+context. The same file stands alone at `/homelab/topology/`.
+
+**It is drawn, not generated, and that is a trade with a cost.** A generated
+diagram could not disagree with its source; this one can, and there is now a
+live status band a few centimetres above it. A drawing that quietly said
+`planned` about a host the band was calling `up` would be worse than no
+drawing, because both look authoritative and only one is right. That is what
+`_scripts/check-topology.mjs` exists to prevent — it reads the statuses back
+out of the SVG and holds them against the inventory, and it fails on an
+address, an external request or a missing theme hook while it is in there.
 
 ### The update loop
 
@@ -75,95 +79,66 @@ The full viewer, cards and all, stays one click away at `/homelab/topology/`.
    `updated_at` to today.
 2. Add one entry to the top of `_data/homelab/changelog.json`: `date`,
    `title`, `body`, and `delta` (a site path, or `null`).
-3. If the *topology* changed — a host appeared, a link changed, a component
-   was added or removed — copy the previous spec into history first, then
-   edit the current one:
+3. If the *topology* changed — a host appeared, a link changed, something was
+   added or removed — **edit `homelab/topology/index.html` by hand.** It is an
+   SVG somebody laid out; there is no generator to re-run and no spec to edit
+   first. Match what is already there: a node is a `<rect class="node ...">`
+   plus its `<text class="id ...">`, a status word carries a `st-<status>`
+   class, and copper drops leave the port strip at levels chosen so that no
+   two runs cross. Keep that property — it is the reason this drawing exists
+   rather than a generated one.
+
+4. Run the check, always, whether you touched the drawing or only the
+   inventory:
 
    ```bash
-   cp homelab/spec/current.architecture.json \
-      homelab/spec/history/<previous-updated_at>.architecture.json
-   # ...now edit homelab/spec/current.architecture.json...
+   node _scripts/check-topology.mjs
    ```
 
-4. Validate, then regenerate the diagram. Both commands run from the archify
-   skill directory (`~/.agents/skills/archify`, installed with
-   `npx skills add tt-a1i/archify -g`):
+   It fails if a host's status differs between the two files, if a host is in
+   one and not the other, if an address or an external request has appeared, or
+   if the theme and embed hooks the parent page depends on have been lost.
+   Those last ones are silent in the only theme you happened to be looking at,
+   which is why a script asks and not a person.
 
-   ```bash
-   cd ~/.agents/skills/archify
-   node bin/archify.mjs validate architecture <repo>/homelab/spec/current.architecture.json --quality showcase --json
-   node bin/archify.mjs deliver  architecture <repo>/homelab/spec/current.architecture.json <repo>/homelab/topology/index.html --quality showcase --json
-   ```
-
-   Showcase acceptance means all 9 checks pass with 0 errors and 0 warnings.
-   Anything less is not ready to publish. The optional
-   `node bin/archify.mjs visual-check <output.html>` needs a local Chrome or
-   Chromium and writes an `index.visual-check.json` receipt beside the page —
-   delete that receipt, it is not site content.
-
-   Then, back in the repo, strip the web font archify links in. Every other
-   page on this site is set in the visitor's own monospace and makes no
-   third-party request; a diagram page calling Google on load would be the
-   only exception, on the one section that is about not leaking anything:
-
-   ```bash
-   node _scripts/strip-webfont.mjs homelab/topology/index.html
-   ```
-
-   The script exits non-zero if it matches nothing, so an upstream template
-   change gets noticed. Re-run `node bin/archify.mjs check <output.html>`
-   afterwards — it should still report 9/9.
-
-5. Only if the topology changed, generate the delta and point the changelog
-   entry's `delta` at it:
-
-   ```bash
-   node bin/archify.mjs compare architecture \
-     <repo>/homelab/spec/history/<previous>.architecture.json \
-     <repo>/homelab/spec/current.architecture.json \
-     <repo>/homelab/changes/<today>/index.html --quality showcase --json
-   ```
-
-   Strip the web font from the delta page too:
-   `node _scripts/strip-webfont.mjs homelab/changes/<today>/index.html`. A
-   delta page carries its before/after snapshots inside `<iframe srcdoc>`,
-   where the font links are HTML-escaped but just as live; the script handles
-   both encodings and is safe to re-run.
-
-   A delta page is ~2 MB, so generate one for a real structural change and
-   not for a wording fix.
-
-   History snapshots are per publishing *day*, not per edit — and so are
-   deltas. Several changes on the same day may each get their own changelog
-   entry, but they share one delta page: re-run the same `compare`, with the
-   same base, over the updated spec, and point every topology-touching entry
-   from that day at it. The reader still gets an honest "what changed today",
-   and the repo does not collect a 2 MB page per edit.
-
-**Component and connection ids are permanent.** `compare` matches on
-`components[].id` and `connections[].id`, so renaming an id reads as "one
-thing removed, another added". Give every connection an explicit `id`, and
-retire an id rather than reusing it for something else.
-
-### Checking a generated page in a real browser
-
-On the Ubuntu minis there is a headless Chromium, installed without root, at
-`~/pw-deps/bin/chrome`. Point archify at it:
+**Look at it, in both themes and at a phone width.** There is no headless
+Chrome on the minis, but there is a Firefox, and it screenshots without a
+display — the snap confinement means the output path has to be inside `$HOME`,
+which is the only trick to it:
 
 ```bash
-export ARCHIFY_CHROME="$HOME/pw-deps/bin/chrome"
-node bin/archify.mjs visual-check <output.html> --json
+B=file://$PWD/homelab/topology/index.html
+MOZ_HEADLESS=1 firefox --screenshot ~/shots/dark.png  --window-size=1280,900 "$B?embed=1&theme=dark"
+MOZ_HEADLESS=1 firefox --screenshot ~/shots/light.png --window-size=1280,900 "$B?embed=1&theme=light"
+MOZ_HEADLESS=1 firefox --screenshot ~/shots/narrow.png --window-size=390,780 "$B?embed=1&theme=dark"
 ```
 
-This is the check that catches what `validate` cannot: whether the page
-actually fits a laptop screen. It found `scrollHeight 1221` against a 900px
-viewport once, which no amount of composition checking would have reported.
+Passing checks say the file is well-formed; they say nothing about whether the
+labels collide. That is a failure a person spots in five seconds and a test
+suite passes over for years, so "the check is green" is never the sentence
+that finishes a change to this drawing.
 
-Treat that as the general case, not an anecdote. Passing checks say the
-artifact is well-formed; they say nothing about what it looks like. The
-failures this catches are the ones a person would spot in five seconds and a
-test suite will pass over for years, so "all checks green" is never the
-sentence that finishes a visual change — open it.
+**At 390px the drawing scrolls sideways inside its own box rather than
+reflowing.** That is the same thing `.lab-hosts` does with a wide table on this
+site, and it is deliberate: losing the alignment would cost more than losing
+the width.
+
+### Rendering a page in a real browser, on a machine with no screen
+
+The snap Firefox above is the short route and needs nothing installed. What it
+will not do is write outside `$HOME`, which is confinement and not a bug — a
+screenshot path under `/tmp` fails by hanging until it is killed, with no error
+worth reading. That cost an afternoon once; put the output in `~/shots`.
+
+A headless Chromium is the alternative when a page needs Chrome's engine
+specifically, unpacked without root at `~/pw-deps/bin/chrome`.
+
+Whichever engine: passing checks say a file is well-formed and say nothing
+about what it looks like. Colliding labels, a drawing that overflows a laptop
+viewport, a palette that only resolves in the theme the author was using — all
+of these pass every check and are obvious in five seconds to anyone who opens
+the page. "The check is green" is never the sentence that finishes a visual
+change.
 
 Two things about the order and the caveats:
 
@@ -279,13 +254,15 @@ once. Two rules keep that from hurting, and they follow from one observation:
 **the only files here that cannot be merged are the ones that never needed to
 be.**
 
-**1. Whoever changes the spec regenerates the diagram, in the same commit.**
-Never regenerate from a spec change someone else made and you have not pulled.
-`.gitattributes` marks the rendered pages `-merge`, so git will refuse to
-interleave two renders rather than quietly producing a broken one. When a
-conflict does land on them, do not read it: take the spec you want, run
-`deliver` and `compare` again, and commit the result. Nothing is lost, because
-nothing in those files exists anywhere except in the spec.
+**1. Whoever changes a host's status changes both files, in the same commit.**
+The inventory and the drawing say the same thing twice, and a commit that
+moves only one of them is how they start disagreeing. `check-topology.mjs` is
+what stops that reaching main, but it only helps if it is run — and it is
+cheaper to keep the pair together than to fix a split later.
+
+The drawing is a normal text file now: it merges, and its conflicts are worth
+reading. That is a change from when it was rendered, when the only correct
+resolution was to throw the conflict away and re-render.
 
 **2. Rebase, do not merge.**
 
