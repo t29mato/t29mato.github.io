@@ -182,11 +182,36 @@ function region(c) {
 
 // The highest known peak named in a title wins; ASCII keywords match
 // case-insensitively so "azumaya san" and "Mt. Nasudake" resolve too.
-function resolveName(title) {
-  let best = null;
+//
+// A keyword is a plain substring, and Japanese peak names nest: 経ヶ岳 sits
+// inside 八経ヶ岳, 剣山 inside 八剣山, 男体山 inside 筑波山(男体山). Left alone,
+// the inner name wins whenever it happens to be the taller mountain, and the
+// outing is filed under a peak 200 km away. Two guards, in this order:
+// a matched keyword that is contained in another matched keyword is dropped,
+// and a `not` pattern on the entry cancels it for that title outright — the
+// same shape hyakumeizan.json already uses for 小仙丈ヶ岳 / 仙丈ヶ岳.
+// A third guard, for the keywords that carry a `hyaku` id and so have a known
+// summit point: 大岳 is Hakkoda's, but it is also the name of a peak in
+// Niigata, and no `not` pattern can separate them because the title says
+// nothing else. A day whose track sits 300 km from the mountain is not that
+// mountain, so the match is dropped and the build reports the outing as
+// UNNAMED — which is the honest answer, and the one the update loop expects.
+const HYAKU_BY_ID = Object.fromEntries(hyaku.map((p) => [p.id, p]));
+const NAME_MAX_KM = 30;
+
+function resolveName(title, centroid) {
+  const matched = [];
   for (const [kw, v] of Object.entries(names)) {
     const hit = /^[\x00-\x7f]+$/.test(kw) ? title.toLowerCase().includes(kw.toLowerCase()) : title.includes(kw);
-    if (hit && (!best || v.m > best.m)) best = { kw, ...v };
+    if (!hit || (v.not || []).some((x) => title.includes(x))) continue;
+    const p = v.hyaku && HYAKU_BY_ID[v.hyaku];
+    if (p && centroid && haversine(centroid, [p.lat, p.lon]) > NAME_MAX_KM * 1000) continue;
+    matched.push({ kw, ...v });
+  }
+  let best = null;
+  for (const m of matched) {
+    if (matched.some((o) => o.kw !== m.kw && o.kw.includes(m.kw))) continue;
+    if (!best || m.m > best.m) best = m;
   }
   return best;
 }
@@ -225,7 +250,7 @@ const built = outings.map((o) => {
   // Primary track: the file with the most points (a merged Strava upload beats a split one).
   const primary = o.files.reduce((a, b) => (b.pts.length > a.pts.length ? b : a));
   const titles = o.files.map((f) => f.title);
-  const named = o.files.map((f) => resolveName(f.title)).filter(Boolean);
+  const named = o.files.map((f) => resolveName(f.title, f.st.centroid)).filter(Boolean);
   const name = named.length ? named.reduce((a, b) => (b.m > a.m ? b : a)) : null;
   const id = `${o.date}_${primary.source}_${primary.id}`;
   const ov = overrides[id] || overrides[o.date] || {};

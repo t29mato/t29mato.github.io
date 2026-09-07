@@ -1,5 +1,5 @@
 {
-  "_comment": "Peak keywords found in YAMAP / Yamareco / Strava titles, resolved to the English name the site prints. The build script scans each title for these keywords and names the outing after the highest one it finds; a title with no keyword falls back to `unnamed` and is listed by the script so an entry can be added here. `m` is the usual published summit height. `hyaku` ties the keyword to _data/hikes/hyakumeizan.json.",
+  "_comment": "Peak keywords found in YAMAP / Yamareco / Strava titles, resolved to the English name the site prints. The build script scans each title for these keywords and names the outing after the highest one it finds; a title with no keyword falls back to `unnamed` and is listed by the script so an entry can be added here. `m` is the usual published summit height. `hyaku` ties the keyword to _data/hikes/hyakumeizan.json. `not` lists words that cancel the keyword for that title, because Japanese peak names nest (経ヶ岳 inside 八経ヶ岳, 剣山 inside 八剣山, 男体山 inside 筑波山(男体山)) and the inner name wins whenever it is the taller mountain.",
   "peaks": {
     "筑波山": {
       "en": "Mt. Tsukuba",
@@ -190,7 +190,9 @@
     "男体山": {
       "en": "Mt. Nantai",
       "m": 2486,
-      "hyaku": "nantai"
+      "hyaku": "nantai",
+      "not": ["筑波山"],
+      "_why": "Tsukuba's own twin peaks are 男体山 and 女体山, so YAMAP titles read 筑波山(男体山). Without this, a 877 m walk near home was filed as Nikko's 2486 m Nantai."
     },
     "日光白根山": {
       "en": "Mt. Nikko-Shirane",
@@ -298,6 +300,11 @@
       "en": "Mt. Hakkoda (O-dake)",
       "m": 1585,
       "hyaku": "hakkoda"
+    },
+    "長峰": {
+      "en": "Mt. Sumon (O-dake)",
+      "m": 1432,
+      "_why": "守門岳 also has a 大岳, and YAMAP titles the winter line up it 長峰・大岳 — 長峰 is the ridge it climbs. Keyed on 長峰 because 大岳 alone is Hakkoda's above, 300 km away."
     },
     "十勝岳": {
       "en": "Mt. Tokachi",
@@ -436,9 +443,17 @@
       "m": 2034,
       "hyaku": "utsukushigahara"
     },
+    "富士山": {
+      "en": "Mt. Fuji",
+      "m": 3776,
+      "hyaku": "fuji"
+    },
     "経ヶ岳": {
-      "en": "Mt. Kyogatake",
-      "m": 2296
+      "en": "Mt. Fuji",
+      "m": 3776,
+      "hyaku": "fuji",
+      "not": ["八経ヶ岳", "仏経ヶ岳"],
+      "_why": "経ヶ岳 is one of Fuji's 八神峰, and YAMAP puts it in the title of a Yoshida-route day. Both 経ヶ岳 outings here start at the Subaru Line fifth station (2305 m) and top out on the crater rim, so the keyword means Fuji on this site. Nagano's own 経ヶ岳 (2296 m) has not been walked; give it its own keyword — 大泉所岳 or the like — if it ever is, because a bare 経ヶ岳 cannot tell the two apart."
     },
     "諏訪山": {
       "en": "Mt. Suwa",
@@ -462,7 +477,9 @@
     "剣山": {
       "en": "Mt. Tsurugi (Shikoku)",
       "m": 1955,
-      "hyaku": "tsurugi"
+      "hyaku": "tsurugi",
+      "not": ["八剣山"],
+      "_why": "八剣山 is an alias of 八経ヶ岳 on the Omine ridge; the substring would otherwise move a Nara day to Shikoku."
     },
     "石鎚山": {
       "en": "Mt. Ishizuchi",
