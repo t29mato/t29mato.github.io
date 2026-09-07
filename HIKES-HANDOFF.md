@@ -38,20 +38,28 @@ session state that AGENTS.md deliberately does not carry.
   once, ~9 files each, decoding via Write + base64 -d) worked; their spill
   files collided, so verify each GPX's first <time> against its file name
   date afterwards (script used: date within ±1 day, md5 uniqueness).
-- Not on the map (Strava-only, no GPX on disk) — thirteen; the build lists
-  them all. Four hikes/ski days (2021-11-03 and 2023-11-03 Mt. Takao,
-  2026-01-10 Lunch Hike, 2026-02-15 Mt. Teine Neopara) and nine trail runs
-  (2022-02-23 Mt. Tsukuba, 2022-03-25, 2022-04-11, 2023-10-29 and 2023-11-05
-  Morning Run, 2022-11-03 Miyagase Dam, 2022-11-27 Karuizawa, 2024-02-04
-  Ushiku swamp, 2026-04-03 PROJECT 461). All thirteen are in the Drive
-  "Strava GPX" folder; drop them in `_gpx/strava/` under their Drive names
-  and rebuild — nothing else is needed.
-- **rclone cannot fetch them.** The `gdrive:` remote on mini-1 is scoped
-  `drive.file`, so it only sees files it created itself: `rclone backend
-  copyid` returns 404 for every one of these. The Drive MCP can read them,
-  but it returns base64 into the context and these are 12.7 MB — the
-  2026-04-03 run alone is 7.6 MB. Moving them is a job for a machine with
-  the Drive UI, not for a session.
+- Everything Strava has is now on disk: 20 files under `_gpx/strava/`, and the
+  build reports no STRAVA-ONLY days. The GPX in the repo is ~51 MB after this.
+- **Fetching from Drive: use the `gdrive-ro` rclone remote.** `gdrive:` is
+  scoped `drive.file` and sees only what rclone itself created, so every
+  `rclone backend copyid` against these folders returns 404. `gdrive-ro` was
+  added with `scope=drive.readonly` and works:
+
+  ```bash
+  rclone backend copyid gdrive-ro: <driveFileId> "_gpx/strava/<name>.gpx"
+  ```
+
+  Get the ids from the Drive MCP (`search_files` with
+  `parentId = '<folder>' and mimeType = 'application/gpx+xml'`) and copy with
+  rclone. Do not download through the MCP: it returns base64 into the context,
+  and these files run to 7.6 MB each.
+
+  Setting it up is the headless rclone flow — `rclone authorize "drive"
+  --drive-scope=drive.readonly` on a machine with a browser, then the token
+  onto mini-1. **Single-quote the token when pasting it.** Unquoted, the shell
+  strips the JSON's double quotes and rclone fails with `invalid character 'a'
+  looking for beginning of object key string`, which does not sound like a
+  quoting problem at all.
 - Summit points in hyakumeizan.json are approximate (mine, ~1 km) except the
   ones corrected from tracks: amagi, asama (Maekake), hiragatake, makihata,
   echigo-koma. The build reports any name-matched peak >800 m from its point.
