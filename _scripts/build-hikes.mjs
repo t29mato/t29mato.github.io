@@ -303,6 +303,11 @@ const built = outings.map((o) => {
   };
 });
 
+// Overrides may drop a recording that is not an outing (a 300 m stroll).
+const kept = built.filter((o) => !(overrides[o.id] && overrides[o.id].skip));
+if (kept.length !== built.length) console.log(`skipped by override: ${built.filter((o) => !kept.includes(o)).map((o) => o.id).join(", ")}`);
+built.length = 0; built.push(...kept);
+
 // One outing per (peak, first date) for the checklist; later repeats are listed too.
 const done = {};
 for (const o of built) for (const pid of o.peaks) {
