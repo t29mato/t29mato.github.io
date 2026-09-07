@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homelab topology — the shelf, in elevation</title>
+<script>
+// Resolve embed + theme before first paint. Precedence: ?theme= on load,
+// then data-theme on <html> (the parent may set it later — watched below),
+// then prefers-color-scheme. Dark unless something says otherwise.
+(function () {
+  var d = document.documentElement, q;
+  try { q = new URLSearchParams(location.search); } catch (_) { return; }
+  if (q.get('embed') === '1') d.setAttribute('data-embed', '1');
+  var t = q.get('theme');
+  if (t === 'dark' || t === 'light') d.setAttribute('data-theme', t);
+})();
+</script>
+<style>
+  :root {
+    --bg:#0b0f0c; --surface:#131c15; --surface-2:#16241a;
+    --border:#263329; --border-strong:#3a4a3e;
+    --text:#c8d2c8; --text-dim:#8a978c; --heading:#e4ebe4;
+    --accent:#7fc7d9; --green:#7ddb8a; --amber:#e5b567; --danger:#ffb4ab;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:#f2f4ef; --surface:#e2e8dc; --surface-2:#dfe8db;
+      --border:#c9d1c4; --border-strong:#a9b4a2;
+      --text:#23301f; --text-dim:#5f6a5c; --heading:#16200f;
+      --accent:#0c6a85; --green:#196e2a; --amber:#8a5e08; --danger:#b3261e;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#f2f4ef; --surface:#e2e8dc; --surface-2:#dfe8db;
+    --border:#c9d1c4; --border-strong:#a9b4a2;
+    --text:#23301f; --text-dim:#5f6a5c; --heading:#16200f;
+    --accent:#0c6a85; --green:#196e2a; --amber:#8a5e08; --danger:#b3261e;
+    color-scheme: light;
+  }
+
+  html, body { margin:0; background:var(--bg); color:var(--text); }
+  body {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 14px; line-height: 1.5;
+    padding: 20px 16px 28px;
+    overflow-x: hidden;
+  }
+  header { max-width: 1000px; margin: 0 auto 14px; }
+  h1 { font-size: 15px; font-weight: 600; color: var(--heading); margin: 0 0 2px; letter-spacing: 0; }
+  h1 .dim, p.dim { color: var(--text-dim); font-weight: 400; }
+  p.dim { margin: 0; font-size: 13px; }
+  .stage { max-width: 1000px; margin: 0 auto; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  svg { display: block; min-width: 760px; width: 100%; height: auto; margin: 0 auto; }
+
+  :root[data-embed="1"] body { padding: 0; }
+  :root[data-embed="1"] header { display: none; }
+  :root[data-embed="1"] .stage { max-width: none; }
+  :root[data-embed="1"] svg { max-height: 100vh; }
+
+  /* --- drawing --- */
+  svg text { font-family: inherit; }
+  .n  { font-size: 11px; fill: var(--heading); }
+  .b  { font-size: 10px; fill: var(--text); }
+  .t  { font-size: 9.5px; fill: var(--text-dim); }
+  .s  { font-size: 8.5px; fill: var(--text-dim); }
+  .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  .up      { fill: var(--green); }
+  .planned { fill: var(--amber); }
+  .down    { fill: var(--danger); }
+  .unknown { fill: var(--text-dim); }
+
+  .wood   { fill: var(--border-strong); }
+  .box    { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.2; }
+  .box.pl { stroke-dasharray: 3 3; }
+  .screen { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
+  .port-used  { fill: var(--accent); }
+  .port-spare { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1; }
+  .eth   { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; }
+  .eth.pl { stroke-dasharray: 4 3; }
+  .wifi  { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 1.5 4; stroke-linecap: round; }
+  .pwr   { fill: none; stroke: var(--text-dim); stroke-width: 1.1; stroke-linecap: round; }
+  .pwr.pl { stroke-dasharray: 3 3; }
+  .batt  { fill: none; stroke: var(--heading); stroke-width: 1.2; stroke-dasharray: 6 4; }
+  .ant   { stroke: var(--border-strong); stroke-width: 1.4; stroke-linecap: round; }
+  .anttip{ fill: var(--border-strong); }
+  .lens  { fill: var(--bg); stroke: var(--border-strong); stroke-width: 1; }
+  .led   { fill: var(--green); }
+  .strip { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1; }
+  .jack  { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>topology <span class="dim">· the shelf, in elevation</span></h1>
+  <p class="dim">Drawn as it stands in the room. The dashed box is what the battery keeps alive.</p>
+</header>
+
+<div class="stage">
+<svg viewBox="0 0 1000 470" role="img"
+     aria-labelledby="ttl dsc"
+     aria-label="Homelab elevation. A two-shelf rack. Upper shelf, on a 288 Wh LiFePO4 station: the station itself, pi-1 (planned), sw-1 an 8-port unmanaged switch with 6 ports used and 2 spare, and gw-1 the Wi-Fi 6 router. Lower shelf, on a mains strip only, never on the battery: mini-1 (up), mini-2 (up), mini-3 (planned), mini-4 (planned), side by side, never stacked. Cameras cam-1 (up) and cam-2 (planned) sit on a wall on mains and reach gw-1 over Wi-Fi; they have no Ethernet port and take no switch port. The laptop air-1 (up) reaches gw-1 over Wi-Fi 6.">
+  <title id="ttl">Homelab topology — the shelf, in elevation</title>
+  <desc id="dsc">Upper shelf on battery: station, pi-1, sw-1, gw-1. Lower shelf on mains: mini-1 to mini-4 side by side. Cameras and laptop on Wi-Fi.</desc>
+
+  <!-- ===== the wall: two plug-in cameras, on mains, on Wi-Fi ===== -->
+  <g id="cam-1">
+    <rect class="box" x="36" y="62" width="16" height="22" rx="1"/>
+    <line x1="41" y1="69" x2="41" y2="77" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <line x1="47" y1="69" x2="47" y2="77" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <line x1="44" y1="60" x2="44" y2="62" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <circle class="box" cx="44" cy="50" r="10"/>
+    <circle class="lens" cx="44" cy="50" r="4"/>
+    <text class="s" x="44" y="94" text-anchor="middle">mains</text>
+    <text class="n" x="62" y="56">cam-1 <tspan class="up">· up</tspan></text>
+    <text class="t" x="62" y="68">RTSP over Wi-Fi</text>
+    <text class="t" x="62" y="80">no Ethernet port → no switch port</text>
+    <text class="t" x="62" y="92">recorded on mini-1</text>
+  </g>
+  <g id="cam-2">
+    <rect class="box pl" x="262" y="62" width="16" height="22" rx="1"/>
+    <line x1="267" y1="69" x2="267" y2="77" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <line x1="273" y1="69" x2="273" y2="77" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <line x1="270" y1="60" x2="270" y2="62" stroke="var(--border-strong)" stroke-width="1.2"/>
+    <circle class="box pl" cx="270" cy="50" r="10"/>
+    <circle class="lens" cx="270" cy="50" r="4"/>
+    <text class="s" x="270" y="94" text-anchor="middle">mains</text>
+    <text class="n" x="288" y="56">cam-2 <tspan class="planned">· planned</tspan></text>
+    <text class="t" x="288" y="68">RTSP over Wi-Fi</text>
+    <text class="t" x="288" y="80">no Ethernet port → no switch port</text>
+    <text class="t" x="288" y="92">recorded on a mini</text>
+  </g>
+
+  <!-- ===== elsewhere in the room: the laptop ===== -->
+  <g id="air-1">
+    <rect class="box" x="742" y="36" width="136" height="58" rx="3"/>
+    <rect class="screen" x="748" y="42" width="124" height="46" rx="1"/>
+    <rect class="box" x="726" y="96" width="168" height="7" rx="2"/>
+    <text class="n" x="724" y="120">air-1 <tspan class="up">· up</tspan></text>
+    <text class="t" x="724" y="132">MacBook Air M1 · 8 GB · macOS</text>
+    <text class="t" x="724" y="144">workstation — drives every session</text>
+  </g>
+
+  <!-- ===== radio: dotted, because there is no cable ===== -->
+  <path class="wifi" d="M54 44 C200 -4 440 30 514 146"/>
+  <path class="wifi" d="M280 44 C360 0 520 20 516 146"/>
+  <path class="wifi" d="M740 70 C690 72 640 96 616 146"/>
+  <text class="t halo" x="160" y="16">Wi-Fi</text>
+  <text class="t halo" x="380" y="14">Wi-Fi</text>
+  <text class="t halo" x="690" y="62" text-anchor="middle">Wi-Fi 6</text>
+
+  <!-- ===== the rack: two shelves and their sides ===== -->
+  <rect class="wood" x="22" y="116" width="3" height="224"/>
+  <rect class="wood" x="975" y="116" width="3" height="224"/>
+
+  <!-- battery coverage: the spine of the piece -->
+  <rect class="batt" x="34" y="116" width="606" height="110" rx="2"/>
+  <text class="b halo" x="42" y="130">on battery · 288 Wh LiFePO4 → gw-1, sw-1, pi-1 stay up through a power cut</text>
+
+  <!-- power cords from the station, laid along the shelf (drawn first: they run behind the gear) -->
+  <path class="pwr pl" d="M214 206 H242"/>
+  <path class="pwr"    d="M214 208 H340"/>
+  <path class="pwr"    d="M214 210 H500"/>
+
+  <!-- upper shelf plank -->
+  <rect class="wood" x="24" y="212" width="952" height="6"/>
+
+  <!-- the station -->
+  <g id="station">
+    <rect class="box" x="44" y="138" width="170" height="74" rx="3"/>
+    <rect class="screen" x="54" y="146" width="150" height="16" rx="1"/>
+    <text class="n" x="129" y="158" text-anchor="middle">288 Wh</text>
+    <text class="t" x="129" y="180" text-anchor="middle">LiFePO4 station</text>
+    <text class="t" x="129" y="194" text-anchor="middle">AC out ×3 → pi-1 · sw-1 · gw-1</text>
+    <rect x="186" y="200" width="6" height="6" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1"/>
+    <rect x="196" y="200" width="6" height="6" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1"/>
+    <rect x="206" y="200" width="6" height="6" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1"/>
+  </g>
+
+  <!-- pi-1 -->
+  <g id="pi-1">
+    <text class="n" x="222" y="142">pi-1 <tspan class="planned">· planned</tspan></text>
+    <text class="t" x="222" y="154">Pi 3 Model B · 1 GB</text>
+    <text class="t" x="222" y="166">room monitor</text>
+    <text class="t" x="222" y="178">USB webcam</text>
+    <text class="t" x="222" y="190">streams, not records</text>
+    <rect class="box pl" x="242" y="196" width="70" height="16" rx="2"/>
+  </g>
+
+  <!-- sw-1 with its real port strip -->
+  <g id="sw-1">
+    <text class="n" x="340" y="142">sw-1 <tspan class="up">· up</tspan></text>
+    <text class="t" x="340" y="154">Buffalo LSW4-GT-8NS/WH</text>
+    <text class="t" x="340" y="166">8-port unmanaged Gigabit</text>
+    <text class="t" x="340" y="178">6 ports used · 2 spare</text>
+    <rect class="box" x="340" y="186" width="120" height="26" rx="2"/>
+    <rect class="port-used"  x="348" y="199" width="10" height="8" rx="1"><title>port 1 · pi-1</title></rect>
+    <rect class="port-used"  x="362" y="199" width="10" height="8" rx="1"><title>port 2 · mini-1</title></rect>
+    <rect class="port-used"  x="376" y="199" width="10" height="8" rx="1"><title>port 3 · mini-2</title></rect>
+    <rect class="port-used"  x="390" y="199" width="10" height="8" rx="1"><title>port 4 · mini-3</title></rect>
+    <rect class="port-used"  x="404" y="199" width="10" height="8" rx="1"><title>port 5 · mini-4</title></rect>
+    <rect class="port-spare" x="418" y="199" width="10" height="8" rx="1"><title>port 6 · spare</title></rect>
+    <rect class="port-spare" x="432" y="199" width="10" height="8" rx="1"><title>port 7 · spare</title></rect>
+    <rect class="port-used"  x="446" y="199" width="10" height="8" rx="1"><title>port 8 · uplink to gw-1</title></rect>
+    <text class="s" x="348" y="196">1</text>
+    <text class="s" x="456" y="196" text-anchor="end">8</text>
+  </g>
+
+  <!-- gw-1 -->
+  <g id="gw-1">
+    <line class="ant" x1="520" y1="180" x2="516" y2="150"/>
+    <line class="ant" x1="610" y1="180" x2="614" y2="150"/>
+    <circle class="anttip" cx="516" cy="148" r="2.5"/>
+    <circle class="anttip" cx="614" cy="148" r="2.5"/>
+    <rect class="box" x="500" y="180" width="130" height="32" rx="3"/>
+    <text class="n" x="565" y="200" text-anchor="middle">gw-1 <tspan class="up">· up</tspan></text>
+    <text class="t" x="646" y="168">Wi-Fi 6 router</text>
+    <text class="t" x="646" y="180">LAN uplink · Wi-Fi · DHCP reservations</text>
+    <path class="pwr" d="M630 207 H688"/>
+    <rect class="jack" x="688" y="200" width="12" height="12" rx="1"/>
+    <text class="t" x="708" y="210">uplink · nothing inbound, no port forwarded</text>
+  </g>
+
+  <!-- ===== cables leaving the port strip: over the shelf edge, gathered, then fanned ===== -->
+  <path class="eth pl" d="M353 208 V228 Q353 236 345 236 H322 Q314 236 314 228 V206"><title>sw-1 port 1 → pi-1</title></path>
+  <path class="eth"    d="M451 208 V228 Q451 236 459 236 H490 Q498 236 498 228 V204"><title>sw-1 port 8 → gw-1</title></path>
+  <path class="eth"    d="M367 208 V226 C367 286 372 244 372 304"><title>sw-1 port 2 → mini-1</title></path>
+  <path class="eth"    d="M381 208 V230 C381 290 528 244 528 304"><title>sw-1 port 3 → mini-2</title></path>
+  <path class="eth pl" d="M395 208 V234 C395 294 684 244 684 304"><title>sw-1 port 4 → mini-3</title></path>
+  <path class="eth pl" d="M409 208 V238 C409 298 840 244 840 304"><title>sw-1 port 5 → mini-4</title></path>
+  <text class="t halo" x="600" y="266">1000BASE-T · the wired segment</text>
+
+  <!-- ===== lower shelf: four minis, side by side, on mains ===== -->
+  <path class="pwr"    d="M482 330 V346"/>
+  <path class="pwr"    d="M638 330 V346"/>
+  <path class="pwr pl" d="M794 330 V346"/>
+  <path class="pwr pl" d="M950 330 V346"/>
+
+  <g id="mini-1">
+    <rect class="box" x="352" y="304" width="146" height="26" rx="4"/>
+    <circle class="led" cx="486" cy="322" r="1.5"/>
+    <text class="n" x="425" y="376" text-anchor="middle">mini-1 <tspan class="up">· up</tspan></text>
+    <text class="t" x="425" y="388" text-anchor="middle">Mac mini Mid 2011 · 8 GB</text>
+    <text class="t" x="425" y="400" text-anchor="middle">Ubuntu 24.04 LTS</text>
+    <text class="t" x="425" y="412" text-anchor="middle">main: agent session</text>
+    <text class="t" x="425" y="424" text-anchor="middle">camera recorder · labstat</text>
+    <text class="t" x="425" y="436" text-anchor="middle">Prometheus · Grafana</text>
+  </g>
+  <g id="mini-2">
+    <rect class="box" x="508" y="304" width="146" height="26" rx="4"/>
+    <circle class="led" cx="642" cy="322" r="1.5"/>
+    <text class="n" x="581" y="376" text-anchor="middle">mini-2 <tspan class="up">· up</tspan></text>
+    <text class="t" x="581" y="388" text-anchor="middle">Mac mini Late 2012 · 8 GB</text>
+    <text class="t" x="581" y="400" text-anchor="middle">Ubuntu 24.04 LTS</text>
+    <text class="t" x="581" y="412" text-anchor="middle">SSH node · agent session</text>
+    <text class="t" x="581" y="424" text-anchor="middle">metrics exporter</text>
+    <text class="t" x="581" y="436" text-anchor="middle">status reporter</text>
+  </g>
+  <g id="mini-3">
+    <rect class="box pl" x="664" y="304" width="146" height="26" rx="4"/>
+    <text class="n" x="737" y="376" text-anchor="middle">mini-3 <tspan class="planned">· planned</tspan></text>
+    <text class="t" x="737" y="388" text-anchor="middle">Mac mini Late 2012 · 8 GB</text>
+    <text class="t" x="737" y="400" text-anchor="middle">no OS yet</text>
+    <text class="t" x="737" y="412" text-anchor="middle">SSH node · agent session</text>
+  </g>
+  <g id="mini-4">
+    <rect class="box pl" x="820" y="304" width="146" height="26" rx="4"/>
+    <text class="n" x="893" y="376" text-anchor="middle">mini-4 <tspan class="planned">· planned</tspan></text>
+    <text class="t" x="893" y="388" text-anchor="middle">Mac mini Late 2012 · 8 GB</text>
+    <text class="t" x="893" y="400" text-anchor="middle">no OS yet</text>
+    <text class="t" x="893" y="412" text-anchor="middle">SSH node · agent session</text>
+  </g>
+
+  <!-- lower shelf plank, then the mains strip beneath it -->
+  <rect class="wood" x="24" y="330" width="952" height="6"/>
+  <rect class="strip" x="348" y="346" width="622" height="10" rx="1"/>
+  <text class="b" x="42" y="352">mains strip · not on the battery</text>
+  <text class="t" x="42" y="364">four minis under load would empty it inside an hour</text>
+  <text class="t" x="352" y="458">all four: same 5400 rpm spinning disk · side by side, never stacked — they were built for open air</text>
+
+  <!-- ===== key, on the wall of the empty bay ===== -->
+  <g id="key">
+    <line class="eth"  x1="44" y1="258" x2="84" y2="258"/>
+    <text class="t" x="92" y="261">1000BASE-T · wired segment</text>
+    <line class="wifi" x1="44" y1="274" x2="84" y2="274"/>
+    <text class="t" x="92" y="277">Wi-Fi · no cable, no switch port</text>
+    <line class="pwr"  x1="44" y1="290" x2="84" y2="290"/>
+    <text class="t" x="92" y="293">power</text>
+    <rect class="box pl" x="44" y="301" width="40" height="9" rx="1"/>
+    <text class="t" x="92" y="309">dashed · <tspan class="planned">planned</tspan>, not yet in the room</text>
+    <text class="t" x="44" y="325">sw-1 ports: 1 pi-1 · 2–5 mini-1…4 · 8 uplink · 6–7 spare</text>
+  </g>
+</svg>
+</div>
+
+<script>
+// Keep the document's color-scheme in step with whatever decides the theme,
+// including a data-theme the parent page sets on <html> after load.
+(function () {
+  var d = document.documentElement;
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  function resolved() {
+    var a = d.getAttribute('data-theme');
+    if (a === 'dark' || a === 'light') return a;
+    return (mq && mq.matches) ? 'light' : 'dark';
+  }
+  function apply() {
+    var r = resolved();
+    if (d.style.colorScheme !== r) d.style.colorScheme = r;
+  }
+  apply();
+  if (window.MutationObserver) {
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        if (muts[i].attributeName === 'data-theme') { apply(); return; }
+      }
+    }).observe(d, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+  if (mq) {
+    if (mq.addEventListener) mq.addEventListener('change', apply);
+    else if (mq.addListener) mq.addListener(apply);
+  }
+})();
+</script>
+</body>
+</html>

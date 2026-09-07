@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homelab topology</title>
+<script>
+/* Before first paint: honour ?theme= and ?embed=1. A data-theme the parent
+   sets on <html> (now or later) always wins over the query string. */
+(function () {
+  var d = document.documentElement, q;
+  try { q = new URLSearchParams(location.search); } catch (e) { q = { get: function () { return null; } }; }
+  var t = q.get('theme');
+  if ((t === 'dark' || t === 'light') && !d.hasAttribute('data-theme')) d.setAttribute('data-theme', t);
+  if (q.get('embed') === '1') d.setAttribute('data-embed', '1');
+})();
+</script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0f0c; --surface: #131c15; --surface-2: #16241a;
+    --border: #263329; --border-strong: #3a4a3e;
+    --text: #c8d2c8; --text-dim: #8a978c; --heading: #e4ebe4;
+    --accent: #7fc7d9; --green: #7ddb8a; --amber: #e5b567; --danger: #ffb4ab;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f2f4ef; --surface: #e2e8dc; --surface-2: #dfe8db;
+    --border: #c9d1c4; --border-strong: #a9b4a2;
+    --text: #23301f; --text-dim: #5f6a5c; --heading: #16200f;
+    --accent: #0c6a85; --green: #196e2a; --amber: #8a5e08; --danger: #b3261e;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #f2f4ef; --surface: #e2e8dc; --surface-2: #dfe8db;
+      --border: #c9d1c4; --border-strong: #a9b4a2;
+      --text: #23301f; --text-dim: #5f6a5c; --heading: #16200f;
+      --accent: #0c6a85; --green: #196e2a; --amber: #8a5e08; --danger: #b3261e;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 13px; line-height: 1.35;
+    font-variant-ligatures: none;
+    padding: 1.25rem 1rem 1.5rem;
+    max-width: 100%; overflow-x: hidden;
+  }
+  main { max-width: 60rem; margin: 0 auto; }
+  .chrome h1 { font-size: 1em; font-weight: normal; margin: 0 0 1rem; color: var(--heading); }
+  .chrome h1 .prompt { color: var(--text-dim); }
+  .chrome p { margin: 0 0 1rem; color: var(--text-dim); }
+  .scroll { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+  pre {
+    margin: 0; font: inherit; font-size: 1em; line-height: 1.35;
+    color: var(--text); white-space: pre; tab-size: 4;
+  }
+  /* colour carries exactly two meanings: host status, and copper vs air */
+  .id { color: var(--heading); }
+  .dim, .unknown { color: var(--text-dim); }
+  .air { color: var(--accent); }
+  .up { color: var(--green); }
+  .planned { color: var(--amber); }
+  .down { color: var(--danger); }
+  pre ::selection, pre::selection { background: var(--border-strong); color: var(--heading); }
+
+  html[data-embed] body { padding: 0; }
+  html[data-embed] .chrome { display: none; }
+  html[data-embed] main { max-width: none; }
+  @media (max-width: 480px) { body { font-size: 12px; } }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="chrome">
+    <h1><span class="prompt">~/lab $</span> cat topology.txt</h1>
+    <p>a text schematic of the lab, 80 columns wide. select all and paste it into a terminal; it survives.</p>
+  </header>
+
+  <div class="scroll"><pre id="topo" aria-hidden="true"><noscript>      HOST    HARDWARE                RAM   OS                STATUS   POWER
+      air-1   MacBook Air (M1)        8 GB  macOS             up       internal
+        ┆     workstation — drives every session
+        ┆ Wi-Fi 6            cam-1    RTSP → mini-1           up       wall
+        ┆                    cam-2    RTSP → a mini           planned  wall
+        ┆                      ┆ Wi-Fi — no Ethernet port
+┌───────┴──────────────────────┴───────────────────────────────────────────────┐
+│ gw-1   Wi-Fi 6 router                                       up       battery │
+│        LAN uplink · Wi-Fi · DHCP reservations                                │
+└─┬────────────────────────────────────────────────────────────────────────────┘
+  │ 1000BASE-T
+┌─┴────────────────────────────────────────────────────────────────────────────┐
+│ sw-1   Buffalo LSW4-GT-8NS/WH                               up       battery │
+│        8-port unmanaged Gigabit switch                                       │
+├─┬────────────────────────────────────────────────────────────────────────────┘
+│ ├── gw-1    uplink
+│ ├── mini-1  Mac mini (Mid 2011)     8 GB  Ubuntu 24.04 LTS  up       wall
+│ │   main · agent session · camera recorder · Prometheus · Grafana · labstat
+│ ├── mini-2  Mac mini (Late 2012)    8 GB  Ubuntu 24.04 LTS  up       wall
+│ │   SSH node · agent session · metrics exporter · status reporter
+│ ├── mini-3  Mac mini (Late 2012)    8 GB  -                 planned  wall
+│ │   SSH node · agent session
+│ ├── mini-4  Mac mini (Late 2012)    8 GB  -                 planned  wall
+│ │   SSH node · agent session
+│ ├── pi-1    Raspberry Pi 3 Model B  1 GB  -                 planned  battery
+│ │   room monitor · USB webcam · streams rather than records
+│ ├   spare
+│ ├   spare
+└─┘
+
+── 1000BASE-T   ┄┄ Wi-Fi   up · planned · down · unknown
+battery = 288 Wh LiFePO4 station: it backs gw-1, sw-1 and pi-1 — deliberately
+not the minis.
+cam-1 and cam-2 have no Ethernet port; in that product line "wired" means the
+power lead. They take no switch port.
+every mini has the same 5400 rpm spinning disk. one agent session per host.</noscript></pre></div>
+
+  <!-- the same facts as a table, for screen readers; the drawing above is aria-hidden -->
+  <table class="sr-only" id="topo-table">
+    <caption>Homelab topology: hosts, hardware, status, power source and network link.</caption>
+    <thead><tr><th>host</th><th>hardware</th><th>RAM</th><th>OS</th><th>role</th><th>status</th><th>power</th><th>link</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">air-1</th><td>MacBook Air (M1)</td><td>8 GB</td><td>macOS</td><td>workstation — drives every session</td><td>up</td><td>internal</td><td>Wi-Fi 6 to gw-1</td></tr>
+      <tr><th scope="row">gw-1</th><td>Wi-Fi 6 router</td><td>-</td><td>-</td><td>LAN uplink · Wi-Fi · DHCP reservations</td><td>up</td><td>battery</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">sw-1</th><td>Buffalo LSW4-GT-8NS/WH</td><td>-</td><td>-</td><td>8-port unmanaged Gigabit switch</td><td>up</td><td>battery</td><td>1000BASE-T to gw-1; 6 of 8 ports used</td></tr>
+      <tr><th scope="row">mini-1</th><td>Mac mini (Mid 2011)</td><td>8 GB</td><td>Ubuntu 24.04 LTS</td><td>main · agent session · camera recorder · Prometheus · Grafana · labstat</td><td>up</td><td>wall</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">mini-2</th><td>Mac mini (Late 2012)</td><td>8 GB</td><td>Ubuntu 24.04 LTS</td><td>SSH node · agent session · metrics exporter · status reporter</td><td>up</td><td>wall</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">mini-3</th><td>Mac mini (Late 2012)</td><td>8 GB</td><td>-</td><td>SSH node · agent session</td><td>planned</td><td>wall</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">mini-4</th><td>Mac mini (Late 2012)</td><td>8 GB</td><td>-</td><td>SSH node · agent session</td><td>planned</td><td>wall</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">pi-1</th><td>Raspberry Pi 3 Model B</td><td>1 GB</td><td>-</td><td>room monitor · USB webcam · streams rather than records</td><td>planned</td><td>battery</td><td>1000BASE-T to sw-1</td></tr>
+      <tr><th scope="row">cam-1</th><td>Plug-in Wi-Fi camera</td><td>-</td><td>-</td><td>RTSP → mini-1</td><td>up</td><td>wall</td><td>Wi-Fi to gw-1 (no Ethernet port)</td></tr>
+      <tr><th scope="row">cam-2</th><td>Plug-in Wi-Fi camera</td><td>-</td><td>-</td><td>RTSP → a mini</td><td>planned</td><td>wall</td><td>Wi-Fi to gw-1 (no Ethernet port)</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<script>
+/* homelab topology — a text schematic laid out on a character grid.
+   Everything below is generated from DATA; the grid guarantees alignment. */
+var DATA = [
+  {id:'air-1',  hw:'MacBook Air (M1)',       ram:'8 GB', os:'macOS',            role:'workstation — drives every session', status:'up',      power:'internal', link:'Wi-Fi 6 to gw-1'},
+  {id:'gw-1',   hw:'Wi-Fi 6 router',         ram:'',     os:'',                 role:'LAN uplink · Wi-Fi · DHCP reservations', status:'up', power:'battery', link:'1000BASE-T to sw-1'},
+  {id:'sw-1',   hw:'Buffalo LSW4-GT-8NS/WH', ram:'',     os:'',                 role:'8-port unmanaged Gigabit switch', status:'up', power:'battery', link:'1000BASE-T to gw-1; 6 of 8 ports used'},
+  {id:'mini-1', hw:'Mac mini (Mid 2011)',    ram:'8 GB', os:'Ubuntu 24.04 LTS', role:'main · agent session · camera recorder · Prometheus · Grafana · labstat', status:'up', power:'wall', link:'1000BASE-T to sw-1'},
+  {id:'mini-2', hw:'Mac mini (Late 2012)',   ram:'8 GB', os:'Ubuntu 24.04 LTS', role:'SSH node · agent session · metrics exporter · status reporter', status:'up', power:'wall', link:'1000BASE-T to sw-1'},
+  {id:'mini-3', hw:'Mac mini (Late 2012)',   ram:'8 GB', os:'-',                role:'SSH node · agent session', status:'planned', power:'wall', link:'1000BASE-T to sw-1'},
+  {id:'mini-4', hw:'Mac mini (Late 2012)',   ram:'8 GB', os:'-',                role:'SSH node · agent session', status:'planned', power:'wall', link:'1000BASE-T to sw-1'},
+  {id:'pi-1',   hw:'Raspberry Pi 3 Model B', ram:'1 GB', os:'-',                role:'room monitor · USB webcam · streams rather than records', status:'planned', power:'battery', link:'1000BASE-T to sw-1'},
+  {id:'cam-1',  hw:'Plug-in Wi-Fi camera',   ram:'',     os:'',                 role:'RTSP → mini-1', status:'up',      power:'wall', link:'Wi-Fi to gw-1 (no Ethernet port)'},
+  {id:'cam-2',  hw:'Plug-in Wi-Fi camera',   ram:'',     os:'',                 role:'RTSP → a mini', status:'planned', power:'wall', link:'Wi-Fi to gw-1 (no Ethernet port)'}
+];
+var H = {}; DATA.forEach(function (h) { H[h.id] = h; });
+var WIRED = ['mini-1', 'mini-2', 'mini-3', 'mini-4', 'pi-1'];   // the wired segment, one switch port each
+var SWITCH_PORTS = 8;
+var POWER_LONG = { internal: 'internal battery', battery: 'on battery', wall: 'wall power' };
+var NOTES = [
+  'battery = 288 Wh LiFePO4 station: it backs gw-1, sw-1 and pi-1 — deliberately not the minis.',
+  'cam-1 and cam-2 have no Ethernet port; in that product line "wired" means the power lead. They take no switch port.',
+  'every mini has the same 5400 rpm spinning disk. one agent session per host.'
+];
+var V = '┆', HD = '┄';   // air (Wi-Fi) runs: dashed. copper runs: solid.
+
+/* ---- character grid ---- */
+function Grid() { this.rows = []; }
+Grid.prototype.put = function (x, y, text, cls) {
+  while (this.rows.length <= y) this.rows.push([]);
+  var r = this.rows[y];
+  for (var i = 0; i < text.length; i++) r[x + i] = { ch: text.charAt(i), cls: cls || '' };
+};
+Grid.prototype.puts = function (x, y, segs) {
+  for (var i = 0; i < segs.length; i++) { this.put(x, y, segs[i][0], segs[i][1]); x += segs[i][0].length; }
+  return x;
+};
+Grid.prototype.hline = function (x1, x2, y, ch) { for (var x = x1; x <= x2; x++) this.put(x, y, ch); };
+Grid.prototype.empty = function (x, y) { var r = this.rows[y]; return !r || !r[x] || r[x].ch === ' '; };
+Grid.prototype.text = function () {
+  return this.rows.map(function (r) {
+    var s = ''; for (var x = 0; x < r.length; x++) s += r[x] ? r[x].ch : ' ';
+    return s.replace(/\s+$/, '');
+  }).join('\n');
+};
+Grid.prototype.html = function () {
+  var esc = function (s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  return this.rows.map(function (r) {
+    var out = '', run = '', cls = '';
+    var flush = function () { if (!run) return; out += cls ? '<span class="' + cls + '">' + esc(run) + '</span>' : esc(run); run = ''; };
+    var last = r.length; while (last > 0 && (!r[last - 1] || r[last - 1].ch === ' ')) last--;
+    for (var x = 0; x < last; x++) {
+      var c = r[x] || { ch: ' ', cls: '' };
+      if (c.cls !== cls) { flush(); cls = c.cls; }
+      run += c.ch;
+    }
+    flush();
+    return out;
+  }).join('\n');
+};
+function wrap(text, width) {
+  var words = text.split(' '), lines = [], cur = '';
+  for (var i = 0; i < words.length; i++) {
+    var w = words[i];
+    if (!cur) cur = w;
+    else if (cur.length + 1 + w.length <= width) cur += ' ' + w;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function boxTop(g, y, R, drops) {
+  g.put(0, y, '┌'); g.hline(1, R - 1, y, '─'); g.put(R, y, '┐');
+  drops.forEach(function (d) { g.put(d, y, '┴'); });
+}
+function boxBottom(g, y, R, corner) {   // '└' closes the box, '├' continues into a port list; the drop is always at x=2
+  g.put(0, y, corner); g.hline(1, R - 1, y, '─'); g.put(2, y, '┬'); g.put(R, y, '┘');
+}
+function legend(g, y, W) {
+  var media = [['── 1000BASE-T', ''], ['   ', ''], [HD + HD + ' Wi-Fi', 'air']];
+  var states = [['up', 'up'], [' · ', 'dim'], ['planned', 'planned'], [' · ', 'dim'], ['down', 'down'], [' · ', 'dim'], ['unknown', 'unknown']];
+  if (W >= 60) { g.puts(0, y, media.concat([['   ', '']], states)); y++; }
+  else { g.puts(0, y, media); y++; g.puts(0, y, states); y++; }
+  NOTES.forEach(function (n) { wrap(n, W).forEach(function (line) { g.put(0, y, line, 'dim'); y++; }); });
+  return y;
+}
+
+/* ---- wide: a fixed 80-column print, one row per host plus its role ---- */
+function layoutWide() {
+  var W = 80, R = W - 1, g = new Grid(), y = 0;
+  var C = { id: 6, hw: 14, ram: 38, os: 44, st: 62, pw: 71 };
+  function cols(y, h) {
+    g.put(C.id, y, h.id, 'id');
+    if (h.hw) g.put(C.hw, y, h.hw);
+    if (h.ram) g.put(C.ram, y, h.ram);
+    if (h.os) g.put(C.os, y, h.os, h.os === '-' ? 'dim' : '');
+    g.put(C.st, y, h.status, h.status);
+    g.put(C.pw, y, h.power);
+  }
+  function box(y, h, drops) {
+    boxTop(g, y, R, drops); y++;
+    g.put(0, y, '│'); g.put(2, y, h.id, 'id'); g.put(9, y, h.hw);
+    g.put(C.st, y, h.status, h.status); g.put(C.pw, y, h.power); g.put(R, y, '│'); y++;
+    g.put(0, y, '│'); g.put(9, y, h.role, 'dim'); g.put(R, y, '│'); y++;
+    return y;
+  }
+  g.put(C.id, y, 'HOST', 'dim'); g.put(C.hw, y, 'HARDWARE', 'dim'); g.put(C.ram, y, 'RAM', 'dim');
+  g.put(C.os, y, 'OS', 'dim'); g.put(C.st, y, 'STATUS', 'dim'); g.put(C.pw, y, 'POWER', 'dim'); y++;
+  var air = H['air-1'], airDrop = C.id + 2, camX = 29, camDrop = camX + 2;
+  cols(y, air); y++;
+  g.put(airDrop, y, V, 'air'); g.put(C.hw, y, air.role, 'dim'); y++;
+  g.put(airDrop, y, V + ' Wi-Fi 6', 'air');
+  ['cam-1', 'cam-2'].forEach(function (id) {
+    var c = H[id];
+    g.put(airDrop, y, V, 'air'); g.put(camX, y, c.id, 'id'); g.put(C.ram, y, c.role);
+    g.put(C.st, y, c.status, c.status); g.put(C.pw, y, c.power); y++;
+  });
+  g.put(airDrop, y, V, 'air'); g.puts(camDrop, y, [[V + ' Wi-Fi', 'air'], [' — no Ethernet port', 'dim']]); y++;
+  y = box(y, H['gw-1'], [airDrop, camDrop]);
+  boxBottom(g, y, R, '└'); y++;
+  g.put(2, y, '│ 1000BASE-T'); y++;
+  y = box(y, H['sw-1'], [2]);
+  boxBottom(g, y, R, '├'); y++;
+  g.put(0, y, '│ ├──'); g.put(C.id, y, 'gw-1', 'id'); g.put(C.hw, y, 'uplink', 'dim'); y++;
+  var used = 1;
+  WIRED.forEach(function (id) {
+    var h = H[id];
+    g.put(0, y, '│ ├──'); cols(y, h); y++;
+    wrap(h.role, W - C.id).forEach(function (line) { g.put(0, y, '│ │'); g.put(C.id, y, line, 'dim'); y++; });
+    used++;
+  });
+  for (var p = used; p < SWITCH_PORTS; p++) { g.put(0, y, '│ ├'); g.put(C.id, y, 'spare', 'dim'); y++; }
+  g.put(0, y, '└─┘'); y += 2;
+  legend(g, y, W);
+  return g;
+}
+
+/* ---- narrow: W columns (44–60); each host folds onto several rows, text wraps at W ---- */
+function layoutNarrow(W) {
+  var R = W - 1, g = new Grid(), y = 0;
+  var C = { id: 6 };
+  function block(y, h, x, cont) {
+    if (cont) cont(y);
+    g.put(x, y, h.id, 'id'); g.put(x + 8, y, h.status, h.status); y++;
+    var meta = [];
+    if (h.hw) meta.push(h.hw);
+    if (h.ram) meta.push(h.ram);
+    if (h.os && h.os !== '-') meta.push(h.os);
+    meta.push(POWER_LONG[h.power]);
+    wrap(meta.join(' · '), W - x).concat(wrap(h.role, W - x)).forEach(function (line) {
+      if (cont) cont(y); g.put(x, y, line, 'dim'); y++;
+    });
+    return y;
+  }
+  function box(y, h, drops) {
+    boxTop(g, y, R, drops); y++;
+    g.put(0, y, '│'); g.put(2, y, h.id, 'id'); g.put(9, y, h.hw);
+    g.put(R - 1 - h.status.length, y, h.status, h.status); g.put(R, y, '│'); y++;
+    wrap(h.role + ' · ' + POWER_LONG[h.power], W - 11).forEach(function (line) {
+      g.put(0, y, '│'); g.put(9, y, line, 'dim'); g.put(R, y, '│'); y++;
+    });
+    return y;
+  }
+  var airDrop = C.id + 2, camX = C.id + 8, camDrop = camX + 2;
+  y = block(y, H['air-1'], C.id);
+  g.put(airDrop, y, V + ' Wi-Fi 6', 'air'); y++;
+  var run = function (yy) { g.put(airDrop, yy, V, 'air'); };
+  y = block(y, H['cam-1'], camX, run);
+  y = block(y, H['cam-2'], camX, run);
+  run(y); g.puts(camDrop, y, [[V + ' Wi-Fi', 'air'], [' — no Ethernet port', 'dim']]); y++;
+  y = box(y, H['gw-1'], [airDrop, camDrop]);
+  boxBottom(g, y, R, '└'); y++;
+  g.put(2, y, '│ 1000BASE-T'); y++;
+  y = box(y, H['sw-1'], [2]);
+  boxBottom(g, y, R, '├'); y++;
+  g.put(0, y, '│ ├──'); g.put(C.id, y, 'gw-1', 'id'); g.put(C.id + 8, y, 'uplink', 'dim'); y++;
+  var used = 1;
+  WIRED.forEach(function (id) {
+    var first = true;
+    y = block(y, H[id], C.id, function (yy) { g.put(0, yy, first ? '│ ├──' : '│ │'); first = false; });
+    used++;
+  });
+  for (var p = used; p < SWITCH_PORTS; p++) { g.put(0, y, '│ ├'); g.put(C.id, y, 'spare', 'dim'); y++; }
+  g.put(0, y, '└─┘'); y += 2;
+  legend(g, y, W);
+  return g;
+}
+
+(function () {
+  var d = document.documentElement;
+
+  /* theme: attribute > query (already applied) > prefers-color-scheme > dark.
+     CSS already follows the attribute and the media query; this keeps the UA's
+     colour scheme (scrollbars, selection) in step, including when the parent
+     page changes data-theme after load. */
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  function resolveTheme() {
+    var a = d.getAttribute('data-theme');
+    if (a === 'dark' || a === 'light') return a;
+    return (mq && mq.matches) ? 'light' : 'dark';
+  }
+  function applyTheme() { d.style.colorScheme = resolveTheme(); }
+  applyTheme();
+  if (window.MutationObserver) {
+    new MutationObserver(applyTheme).observe(d, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+  if (mq) { if (mq.addEventListener) mq.addEventListener('change', applyTheme); else if (mq.addListener) mq.addListener(applyTheme); }
+
+  /* layout: measure the visitor's monospace, pick a layout that fits, redraw on resize */
+  var pre = document.getElementById('topo'), box = pre.parentNode, current = '';
+  function charWidth() {
+    var probe = document.createElement('span');
+    probe.textContent = '────────────────────────────────────────'; // 40 cells
+    probe.style.position = 'absolute'; probe.style.visibility = 'hidden'; probe.style.whiteSpace = 'pre';
+    pre.appendChild(probe);
+    var w = probe.getBoundingClientRect().width / 40;
+    pre.removeChild(probe);
+    return w || 7.8;
+  }
+  function draw() {
+    var cols = Math.floor(box.clientWidth / charWidth());
+    var key = cols >= 80 ? 'wide' : 'narrow:' + Math.max(44, Math.min(60, cols));
+    if (key === current) return;
+    current = key;
+    var g = key === 'wide' ? layoutWide() : layoutNarrow(parseInt(key.slice(7), 10));
+    pre.innerHTML = g.html();
+  }
+  draw();
+  if (window.ResizeObserver) new ResizeObserver(function () { draw(); }).observe(box);
+  else window.addEventListener('resize', draw);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { current = ''; draw(); });
+})();
+</script>
+</body>
+</html>

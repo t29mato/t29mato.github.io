@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homelab · topology</title>
+<script>
+  /* Theme, before first paint. An explicit ?theme= wins and is written to
+     <html>; otherwise the attribute is left alone so a parent page can set
+     it, and CSS falls through to prefers-color-scheme with dark as the base.
+     ?embed=1 drops the page chrome: the parent already says what this is. */
+  (function () {
+    var root = document.documentElement, q;
+    try { q = new URLSearchParams(location.search); } catch (e) { return; }
+    var t = q.get("theme");
+    if (t === "dark" || t === "light") root.setAttribute("data-theme", t);
+    if (q.get("embed") === "1") root.setAttribute("data-embed", "1");
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0b0f0c; --surface: #131c15; --surface-2: #16241a;
+    --border: #263329; --border-strong: #3a4a3e;
+    --text: #c8d2c8; --text-dim: #8a978c; --heading: #e4ebe4;
+    --accent: #7fc7d9; --green: #7ddb8a; --amber: #e5b567; --danger: #ffb4ab;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f2f4ef; --surface: #e2e8dc; --surface-2: #dfe8db;
+      --border: #c9d1c4; --border-strong: #a9b4a2;
+      --text: #23301f; --text-dim: #5f6a5c; --heading: #16200f;
+      --accent: #0c6a85; --green: #196e2a; --amber: #8a5e08; --danger: #b3261e;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f4ef; --surface: #e2e8dc; --surface-2: #dfe8db;
+    --border: #c9d1c4; --border-strong: #a9b4a2;
+    --text: #23301f; --text-dim: #5f6a5c; --heading: #16200f;
+    --accent: #0c6a85; --green: #196e2a; --amber: #8a5e08; --danger: #b3261e;
+    color-scheme: light;
+  }
+
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 14px/1.5 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    overflow-x: hidden;
+  }
+  .page { max-width: 1320px; margin: 0 auto; padding: 1rem 1rem 1.5rem; }
+  :root[data-embed="1"] .page { padding: 0; max-width: none; }
+  :root[data-embed="1"] .chrome { display: none; }
+
+  h1 { font-size: 1rem; font-weight: 600; color: var(--heading); margin: 0 0 .2rem; }
+  h1::before { content: "~/lab $ "; color: var(--text-dim); font-weight: 400; }
+  .lede { margin: 0 0 .9rem; color: var(--text-dim); font-size: .9em; }
+
+  /* The drawing scrolls inside its own box; the page never does. */
+  .scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  svg.topo { display: block; width: 100%; min-width: 1240px; height: auto; }
+
+  /* SVG vocabulary. Every colour is a token so the two themes share one drawing. */
+  svg.topo text { font-family: inherit; font-size: 10px; fill: var(--text); }
+  .id   { font-size: 11px; font-weight: 600; fill: var(--heading); }
+  .dim  { fill: var(--text-dim); }
+  .hd   { fill: var(--text-dim); letter-spacing: .06em; }
+  .st-up      { fill: var(--green); }
+  .st-planned { fill: var(--amber); }
+  .node    { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1; shape-rendering: crispEdges; }
+  .node.planned { fill: var(--bg); stroke: var(--border-strong); stroke-dasharray: 4 3; }
+  .planned-text { fill: var(--text-dim); }
+  .outside { fill: none; stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 1 3; shape-rendering: crispEdges; }
+  .switch  { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1; shape-rendering: crispEdges; }
+
+  /* Copper: a run with length, ending in a jack. */
+  .cu { fill: none; stroke: var(--text-dim); stroke-width: 2; shape-rendering: crispEdges; }
+  .jack { fill: var(--text-dim); shape-rendering: crispEdges; }
+  .jack.empty { fill: var(--bg); stroke: var(--text-dim); stroke-width: 1.5; }
+
+  /* Ports on sw-1. In use = filled; the word beside each colour is in the legend and the tally. */
+  .port { stroke: var(--border-strong); stroke-width: 1; shape-rendering: crispEdges; }
+  .port.up       { fill: var(--green); }
+  .port.reserved { fill: var(--amber); }
+  .port.spare    { fill: var(--bg); }
+  .port-n { font-size: 8px; fill: var(--bg); font-weight: 600; }
+  .port.spare + .port-n { fill: var(--text-dim); }
+
+  /* The air: a field, not a line. */
+  .air-dot { fill: var(--border-strong); }
+  .air-edge { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+  .rf { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; }
+  .rf.planned { stroke: var(--amber); stroke-dasharray: 2 3; }
+  .rf.r1 { opacity: 1 } .rf.r2 { opacity: .6 } .rf.r3 { opacity: .3 }
+
+  /* One-way traffic to and from outside. */
+  .out { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .m-accent { fill: var(--accent); }
+  .in-try { fill: none; stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 2 3; }
+  .in-stop { stroke: var(--heading); stroke-width: 2; shape-rendering: crispEdges; }
+  .batt { font-size: 9px; fill: var(--accent); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .out { animation: flow 3.2s linear infinite; }
+    @keyframes flow { from { stroke-dashoffset: 16 } to { stroke-dashoffset: 0 } }
+    .rf.live { animation: breathe 4.8s ease-in-out infinite; }
+    .rf.live.r2 { animation-delay: .5s } .rf.live.r3 { animation-delay: 1s }
+    @keyframes breathe { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+  }
+
+  .legend { list-style: none; margin: .6rem 0 0; padding: .5rem .75rem 0;
+            border-top: 1px solid var(--border); font-size: .82em; color: var(--text-dim);
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: .1rem 2ch; }
+  .legend b { font-weight: 400; color: var(--text); }
+  .legend .g { display: inline-block; min-width: 5ch; color: var(--text); }
+  .legend .up { color: var(--green) } .legend .planned { color: var(--amber) }
+  .foot { margin: .9rem 0 0; color: var(--text-dim); font-size: .82em; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="chrome">
+    <h1>topology</h1>
+    <p class="lede">the path a packet takes, left to right: workstation → the air → the uplink → the wired segment → the hosts. logical names only.</p>
+  </header>
+
+  <div class="scroll">
+  <svg class="topo" viewBox="0 0 1320 466" role="img"
+       aria-label="Homelab topology. air-1, a MacBook Air, and two Wi-Fi cameras reach gw-1 over the air; only gw-1 has a copper run, 1000BASE-T, into port 1 of sw-1, an 8-port unmanaged switch. Ports 2 to 6 run copper to mini-1, mini-2, mini-3, mini-4 and pi-1; ports 7 and 8 are spare. mini-1 and mini-2 are up; mini-3, mini-4, pi-1 and cam-2 are planned. Every host pushes a heartbeat out through gw-1 to a public endpoint; nothing inbound is accepted and no port is forwarded. gw-1, sw-1 and pi-1 are on a 288 Wh battery station; the minis are not.">
+    <title>homelab topology — signal flow from air-1 to the hosts</title>
+    <desc>Copper links are solid lines ending in a square jack. Wi-Fi is a dotted field with radio arcs and no line. Dashed boxes are planned hosts whose switch port is already reserved.</desc>
+    <defs>
+      <pattern id="airdots" width="10" height="10" patternUnits="userSpaceOnUse">
+        <circle class="air-dot" cx="5" cy="5" r=".9"/>
+      </pattern>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path class="m-accent" d="M0,0 L10,5 L0,10 z"/>
+      </marker>
+    </defs>
+
+    <!-- layer headings -->
+    <text class="hd" x="24" y="22">wireless side</text>
+    <text class="hd" x="188" y="22">the air · Wi-Fi 6</text>
+    <text class="hd" x="384" y="22">uplink</text>
+    <text class="hd" x="800" y="22">wired segment · 1000BASE-T</text>
+    <text class="hd" x="612" y="330">hosts</text>
+
+    <!-- the air: a field with no lines through it -->
+    <rect x="188" y="36" width="184" height="410" fill="url(#airdots)"/>
+    <line class="air-edge" x1="188" y1="36" x2="188" y2="446"/>
+    <line class="air-edge" x1="372" y1="36" x2="372" y2="446"/>
+    <text class="dim" x="196" y="340">cameras have no Ethernet</text>
+    <text class="dim" x="196" y="352">port: they never see sw-1</text>
+
+    <!-- cam-1 (up) -->
+    <rect class="node" x="24" y="60" width="152" height="72"/>
+    <text class="id" x="32" y="76">cam-1</text>
+    <text class="st-up" x="168" y="76" text-anchor="end">up</text>
+    <text x="32" y="92">plug-in Wi-Fi camera</text>
+    <text class="dim" x="32" y="106">RTSP · no Ethernet</text>
+    <text class="dim" x="32" y="120">recorded on mini-1</text>
+    <path class="rf live r1" d="M185.9,86.1 A14,14 0 0 1 185.9,105.9"/>
+    <path class="rf live r2" d="M194.4,77.6 A26,26 0 0 1 194.4,114.4"/>
+    <path class="rf live r3" d="M202.9,69.1 A38,38 0 0 1 202.9,122.9"/>
+    <text class="dim" x="224" y="100">rtsp →</text>
+
+    <!-- air-1 (up) -->
+    <rect class="node" x="24" y="240" width="152" height="82"/>
+    <text class="id" x="32" y="256">air-1</text>
+    <text class="st-up" x="168" y="256" text-anchor="end">up</text>
+    <text x="32" y="272">MacBook Air (M1)</text>
+    <text class="dim" x="32" y="286">8 GB · macOS</text>
+    <text class="dim" x="32" y="300">workstation —</text>
+    <text class="dim" x="32" y="314">drives every session</text>
+    <path class="rf live r1" d="M185.9,271.1 A14,14 0 0 1 185.9,290.9"/>
+    <path class="rf live r2" d="M194.4,262.6 A26,26 0 0 1 194.4,299.4"/>
+    <path class="rf live r3" d="M202.9,254.1 A38,38 0 0 1 202.9,307.9"/>
+    <text x="224" y="285">sessions →</text>
+
+    <!-- cam-2 (planned) -->
+    <rect class="node planned" x="24" y="364" width="152" height="72"/>
+    <text class="id planned-text" x="32" y="380">cam-2</text>
+    <text class="st-planned" x="168" y="380" text-anchor="end">planned</text>
+    <text class="planned-text" x="32" y="396">plug-in Wi-Fi camera</text>
+    <text class="dim" x="32" y="410">RTSP · no Ethernet</text>
+    <text class="dim" x="32" y="424">recorded on a mini</text>
+    <path class="rf planned r1" d="M185.9,390.1 A14,14 0 0 1 185.9,409.9"/>
+    <path class="rf planned r2" d="M194.4,381.6 A26,26 0 0 1 194.4,418.4"/>
+    <path class="rf planned r3" d="M202.9,372.1 A38,38 0 0 1 202.9,426.9"/>
+    <text class="dim" x="224" y="404">rtsp →</text>
+
+    <!-- gw-1 hears the air on its left edge -->
+    <path class="rf live r1" d="M374.1,290.9 A14,14 0 0 1 374.1,271.1"/>
+    <path class="rf live r2" d="M365.6,299.4 A26,26 0 0 1 365.6,262.6"/>
+    <path class="rf live r3" d="M357.1,307.9 A38,38 0 0 1 357.1,254.1"/>
+
+    <!-- outside -->
+    <rect class="outside" x="384" y="44" width="144" height="52"/>
+    <text class="dim" x="392" y="66">outside the LAN</text>
+    <text x="392" y="82">public endpoint</text>
+
+    <!-- out: heartbeats, one way -->
+    <path class="out" d="M512,240 L512,102" marker-end="url(#arr)"/>
+    <text class="dim" x="524" y="150">out · heartbeats</text>
+    <text class="dim" x="524" y="164">every host pushes</text>
+    <text class="dim" x="524" y="178">nothing comes back</text>
+    <!-- in: nothing -->
+    <path class="in-try" d="M412,98 L412,164"/>
+    <line class="in-stop" x1="400" y1="166" x2="424" y2="166"/>
+    <text class="dim" x="396" y="186">in · nothing</text>
+    <text class="dim" x="396" y="200">no port forwarded</text>
+
+    <!-- gw-1 -->
+    <rect class="node" x="384" y="240" width="144" height="82"/>
+    <text class="id" x="392" y="256">gw-1</text>
+    <text class="st-up" x="428" y="256">up</text>
+    <text class="batt" x="520" y="256" text-anchor="end">batt</text>
+    <text x="392" y="272">Wi-Fi 6 router</text>
+    <text class="dim" x="392" y="286">LAN uplink · Wi-Fi</text>
+    <text class="dim" x="392" y="300">DHCP reservations</text>
+
+    <!-- copper: gw-1 → sw-1 port 1 -->
+    <path class="cu" d="M528,281 L856,281 L856,258"/>
+    <rect class="jack" x="524" y="277" width="8" height="8"/>
+    <text class="dim" x="692" y="274" text-anchor="middle">1000BASE-T</text>
+
+    <!-- sw-1 with its eight ports -->
+    <rect class="switch" x="800" y="186" width="350" height="74"/>
+    <text class="id" x="810" y="204">sw-1</text>
+    <text class="st-up" x="846" y="204">up</text>
+    <text class="batt" x="870" y="204">batt</text>
+    <text class="dim" x="1140" y="204" text-anchor="end">1 uplink · 2–6 hosts · 7–8 spare</text>
+    <text x="810" y="220">Buffalo LSW4-GT-8NS/WH · 8-port unmanaged Gigabit</text>
+    <g>
+      <rect class="port up"       x="844"  y="242" width="24" height="16"/><text class="port-n" x="856"  y="254" text-anchor="middle">1</text>
+      <rect class="port up"       x="878"  y="242" width="24" height="16"/><text class="port-n" x="890"  y="254" text-anchor="middle">2</text>
+      <rect class="port up"       x="912"  y="242" width="24" height="16"/><text class="port-n" x="924"  y="254" text-anchor="middle">3</text>
+      <rect class="port reserved" x="946"  y="242" width="24" height="16"/><text class="port-n" x="958"  y="254" text-anchor="middle">4</text>
+      <rect class="port reserved" x="980"  y="242" width="24" height="16"/><text class="port-n" x="992"  y="254" text-anchor="middle">5</text>
+      <rect class="port reserved" x="1014" y="242" width="24" height="16"/><text class="port-n" x="1026" y="254" text-anchor="middle">6</text>
+      <rect class="port spare"    x="1048" y="242" width="24" height="16"/><text class="port-n" x="1060" y="254" text-anchor="middle">7</text>
+      <rect class="port spare"    x="1082" y="242" width="24" height="16"/><text class="port-n" x="1094" y="254" text-anchor="middle">8</text>
+    </g>
+
+    <!-- copper drops: ports 2–6 → hosts. Levels ordered so nothing crosses. -->
+    <path class="cu" d="M890,258  L890,294  L678,294  L678,336"/>
+    <path class="cu" d="M924,258  L924,308  L818,308  L818,336"/>
+    <path class="cu" d="M958,258  L958,336"/>
+    <path class="cu" d="M992,258  L992,308  L1098,308 L1098,336"/>
+    <path class="cu" d="M1026,258 L1026,294 L1238,294 L1238,336"/>
+    <rect class="jack"       x="674"  y="332" width="8" height="8"/>
+    <rect class="jack"       x="814"  y="332" width="8" height="8"/>
+    <rect class="jack empty" x="954"  y="332" width="8" height="8"/>
+    <rect class="jack empty" x="1094" y="332" width="8" height="8"/>
+    <rect class="jack empty" x="1234" y="332" width="8" height="8"/>
+
+    <!-- mini-1 -->
+    <rect class="node" x="612" y="336" width="132" height="110"/>
+    <text class="id" x="618" y="352">mini-1</text>
+    <text class="st-up" x="738" y="352" text-anchor="end">up</text>
+    <text x="618" y="368">Mac mini</text>
+    <text class="dim" x="618" y="382">Mid 2011 · 8 GB</text>
+    <text class="dim" x="618" y="396">Ubuntu 24.04 LTS</text>
+    <text x="618" y="412">agent · cam recorder</text>
+    <text x="618" y="426">prometheus · grafana</text>
+    <text x="618" y="440">labstat</text>
+
+    <!-- mini-2 -->
+    <rect class="node" x="752" y="336" width="132" height="110"/>
+    <text class="id" x="758" y="352">mini-2</text>
+    <text class="st-up" x="878" y="352" text-anchor="end">up</text>
+    <text x="758" y="368">Mac mini</text>
+    <text class="dim" x="758" y="382">Late 2012 · 8 GB</text>
+    <text class="dim" x="758" y="396">Ubuntu 24.04 LTS</text>
+    <text x="758" y="412">ssh · agent session</text>
+    <text x="758" y="426">exporter · reporter</text>
+
+    <!-- mini-3 (planned) -->
+    <rect class="node planned" x="892" y="336" width="132" height="110"/>
+    <text class="id planned-text" x="898" y="352">mini-3</text>
+    <text class="st-planned" x="1018" y="352" text-anchor="end">planned</text>
+    <text class="planned-text" x="898" y="368">Mac mini</text>
+    <text class="dim" x="898" y="382">Late 2012 · 8 GB</text>
+    <text class="dim" x="898" y="396">no OS yet</text>
+    <text class="planned-text" x="898" y="412">ssh · agent session</text>
+    <text class="dim" x="898" y="426">port 4 reserved</text>
+
+    <!-- mini-4 (planned) -->
+    <rect class="node planned" x="1032" y="336" width="132" height="110"/>
+    <text class="id planned-text" x="1038" y="352">mini-4</text>
+    <text class="st-planned" x="1158" y="352" text-anchor="end">planned</text>
+    <text class="planned-text" x="1038" y="368">Mac mini</text>
+    <text class="dim" x="1038" y="382">Late 2012 · 8 GB</text>
+    <text class="dim" x="1038" y="396">no OS yet</text>
+    <text class="planned-text" x="1038" y="412">ssh · agent session</text>
+    <text class="dim" x="1038" y="426">port 5 reserved</text>
+
+    <!-- pi-1 (planned) -->
+    <rect class="node planned" x="1172" y="336" width="132" height="110"/>
+    <text class="id planned-text" x="1178" y="352">pi-1</text>
+    <text class="st-planned" x="1298" y="352" text-anchor="end">planned</text>
+    <text class="batt" x="1236" y="352" text-anchor="end">batt</text>
+    <text class="planned-text" x="1178" y="368">Raspberry Pi 3 B</text>
+    <text class="dim" x="1178" y="382">1 GB · no OS yet</text>
+    <text class="planned-text" x="1178" y="398">room monitor</text>
+    <text class="planned-text" x="1178" y="412">usb webcam · streams</text>
+    <text class="dim" x="1178" y="426">port 6 reserved</text>
+  </svg>
+  </div>
+
+  <ul class="legend">
+    <li><span class="g">━━■</span> copper, 1000BASE-T: a run that ends in a jack. <b>□</b> jack waiting for a machine.</li>
+    <li><span class="g">)))</span> the air, Wi-Fi: a field, never a line — nothing here takes a switch port.</li>
+    <li><span class="g">▮ ▯</span> sw-1 port: <span class="up">green = up</span>, <span class="planned">amber = reserved</span>, hollow = spare. 6 of 8 used.</li>
+    <li><span class="g">╌╌</span> dashed box = <span class="planned">planned</span>: wiring in place, host not yet.</li>
+    <li><span class="g">batt</span> on the 288 Wh LiFePO4 station: gw-1, sw-1, pi-1 — deliberately not the minis.</li>
+    <li><span class="g">→</span> status leaves outward only; no host accepts a connection from outside the LAN.</li>
+  </ul>
+
+  <p class="chrome foot">Each host pushes its own heartbeat to a public endpoint, so the page that reports a failure is not inside the thing that failed. No addresses, names or SSIDs appear here on purpose.</p>
+</div>
+
+<script>
+  /* Keep the resolved scheme in step with whoever owns <html data-theme>:
+     the query string on load, or a parent page setting it later. The
+     stylesheet is attribute-driven, so this only has to mirror the answer
+     into color-scheme (scrollbars, form chrome) and never repaints by hand. */
+  (function () {
+    var root = document.documentElement;
+    var mq = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)");
+    function resolve() {
+      var t = root.getAttribute("data-theme");
+      if (t !== "dark" && t !== "light") t = (mq && mq.matches) ? "light" : "dark";
+      root.style.colorScheme = t;
+    }
+    resolve();
+    if (window.MutationObserver) {
+      new MutationObserver(resolve).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    }
+    if (mq && mq.addEventListener) mq.addEventListener("change", resolve);
+    else if (mq && mq.addListener) mq.addListener(resolve);
+  })();
+</script>
+</body>
+</html>
