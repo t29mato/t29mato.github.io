@@ -136,9 +136,14 @@
       (o.status === "turned back" ? '<span class="hike-fail">turned back</span> ' : "") +
       '<span class="hike-src">' + srcs + '</span></p>' +
       profileSvg(o) +
-      '<p class="tty-dim hike-sel-stats">' + o.km + ' km · +' + o.gain + ' m · ' + fmtHours(o.hours) +
-      (o.max_ele ? ' · high point ' + o.max_ele + ' m' : "") +
-      (o.peaks.length ? ' · 100 famous: ' + o.peaks.join(", ") : "") + '</p>';
+      // Joined rather than concatenated: a Yamareco export can carry no <time>
+      // at all, and a bare fmtHours("") used to leave a separator with nothing
+      // on either side of it.
+      '<p class="tty-dim hike-sel-stats">' + [
+        o.km + ' km', '+' + o.gain + ' m', fmtHours(o.hours),
+        o.max_ele ? 'high point ' + o.max_ele + ' m' : "",
+        o.peaks.length ? '100 famous: ' + o.peaks.join(", ") : ""
+      ].filter(Boolean).join(' · ') + '</p>';
     document.querySelectorAll(".hike-list li").forEach(function (li) {
       li.classList.toggle("cur", li.getAttribute("data-id") === id);
     });
