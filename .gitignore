@@ -9,5 +9,8 @@ _site
 .idea
 .vercel
 
-# Raw GPX exports (YAMAP / Strava / Yamareco). Never published; _scripts/build-hikes.mjs reads them.
-_gpx/
+# Raw GPX exports (YAMAP / Strava / Yamareco) are committed, so any machine
+# that clones this repo can run _scripts/build-hikes.mjs without first
+# fetching 25 MB out of Drive. `_gpx` is underscore-prefixed, so Jekyll never
+# builds or serves it — it lives in the repo the way _data/ does, not on the
+# site.
