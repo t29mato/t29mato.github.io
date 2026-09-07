@@ -10,9 +10,9 @@
   },
   "first": "2021-08-07",
   "last": "2026-02-22",
-  "hike": 60,
+  "hike": 59,
   "ski": 34,
-  "run": 1,
+  "run": 2,
   "turned_back": 1,
   "overseas": 6,
   "hyaku_done": 45
@@ -8412,7 +8412,7 @@
    "en": "Mt. Gozen",
    "jp": "Gozenyama trail run 10k",
    "sport": "run",
-   "sport_source": "title",
+   "sport_source": "strava-index",
    "status": "summited",
    "region": "kanto",
    "summit_m": 350,
@@ -8423,10 +8423,12 @@
    "points": 1518,
    "files": 1,
    "sources": [
-    "yamap"
+    "yamap",
+    "strava"
    ],
    "links": {
-    "yamap": "https://yamap.com/activities/14192823"
+    "yamap": "https://yamap.com/activities/14192823",
+    "strava": "https://www.strava.com/activities/6222299991"
    },
    "peaks": [],
    "peak_dist": {},
@@ -8726,8 +8728,8 @@
    "date": "2021-10-16",
    "en": "Hitachi Alps (Mt. Takasuzu)",
    "jp": "羽黒山・神峰山・御岩山・高鈴山・真弓山・風神山",
-   "sport": "hike",
-   "sport_source": "guess",
+   "sport": "run",
+   "sport_source": "strava-index",
    "status": "summited",
    "region": "kanto",
    "summit_m": 623,
@@ -8738,10 +8740,12 @@
    "points": 1447,
    "files": 1,
    "sources": [
-    "yamap"
+    "yamap",
+    "strava"
    ],
    "links": {
-    "yamap": "https://yamap.com/activities/13722451"
+    "yamap": "https://yamap.com/activities/13722451",
+    "strava": "https://www.strava.com/activities/6119196683"
    },
    "peaks": [],
    "peak_dist": {},

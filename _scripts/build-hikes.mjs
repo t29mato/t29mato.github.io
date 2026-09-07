@@ -14,7 +14,7 @@
  *   _data/hikes/overrides.json   optional per-outing corrections (sport, en, status)
  *
  * File names carry the facts: every export is {date}_{title}_{id}.gpx, and the
- * Strava ones are {date}_{Hike|BCSki}_{title}_{id}.gpx. The title inside the
+ * Strava ones are {date}_{Hike|BCSki|TrailRun}_{title}_{id}.gpx. The title inside the
  * GPX is usually just "track", so the file name is the source of truth for
  * the name and the id, and the id is what the service links are built from.
  *
@@ -102,7 +102,7 @@ function parseName(source, file) {
   if (!m) return null;
   let title = m[2], type = null;
   if (source === "strava") {
-    const t = /^(Hike|BCSki|Run)_(.+)$/.exec(title);
+    const t = /^(Hike|BCSki|TrailRun|Run)_(.+)$/.exec(title);
     if (t) { type = t[1]; title = t[2]; }
   }
   return { date: m[1], title, id: m[3], type };
@@ -267,7 +267,10 @@ const built = outings.map((o) => {
   // trail run. A run named in the title beats the seasonal guess, and a
   // Strava "Run" type that the file name calls BCSki stays a ski day.
   const runTitle = titles.some((t) => /trail ?run|トレラン|トレイルラン/i.test(t));
-  if (stravaType) { sport = /ski/i.test(stravaType) ? "ski" : /^run$/i.test(stravaType) ? "run" : "hike"; if (!o.files.some((f) => f.type || f.gpxType)) sportSource = "strava-index"; }
+  // `TrailRun` as well as `Run`: Strava exports the sport as TrailRun, and an
+  // unanchored /run/ would be wrong the other way round — a BCSki day titled
+  // "Morning Run" is still a ski day, which is why only the type is read here.
+  if (stravaType) { sport = /ski/i.test(stravaType) ? "ski" : /^(trail)?run$/i.test(stravaType) ? "run" : "hike"; if (!o.files.some((f) => f.type || f.gpxType)) sportSource = "strava-index"; }
   else if (runTitle) { sport = "run"; sportSource = "title"; }
   else if (titles.some((t) => /BC|スキー|ski/i.test(t))) { sport = "ski"; sportSource = "title"; }
   else {
