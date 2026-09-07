@@ -25,6 +25,10 @@ is not much of it.
     <span class="lab-desc">The form on <a href="{{ "/contact/" | relative_url }}">/contact/</a> posts your name, email and message through Web3Forms, which relays it to my inbox. Send it only if you are happy for it to pass through a third party on the way.</span>
   </li>
   <li>
+    <span class="lab-key">Map tiles</span>
+    <span class="lab-desc">The map on <a href="{{ "/hikes/" | relative_url }}">/hikes/</a> draws its background from CARTO's free basemap, so opening that page fetches tile images from CARTO's servers: they see your address, the tile coordinates, and the page that asked. The tracks, peaks and the map library itself are served from here. Every other page on this site makes no third-party request.</span>
+  </li>
+  <li>
     <span class="lab-key">Hosting</span>
     <span class="lab-desc">GitHub Pages serves these files, so GitHub sees the ordinary web-server record of the request: address, time, page.</span>
   </li>

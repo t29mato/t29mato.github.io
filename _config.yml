@@ -52,6 +52,7 @@ header_pages:
   - games.md
   - tools.md
   - homelab.md
+  - hikes.md
   - contact.md
 
 collections:

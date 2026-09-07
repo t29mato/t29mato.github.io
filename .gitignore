@@ -5,3 +5,6 @@ _site
 vendor
 .idea
 .vercel
+
+# Raw GPX exports (YAMAP / Strava / Yamareco). Never published; _scripts/build-hikes.mjs reads them.
+_gpx/
