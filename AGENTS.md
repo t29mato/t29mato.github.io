@@ -213,6 +213,65 @@ rather than assuming.
 
 On macOS, none of this applies: use the system Chrome.
 
+### The live status band
+
+`/homelab/` is hand-written and ships with the build, with one exception: the
+band under the intro, which is the lab as it is right now.
+
+| File | What it is |
+|---|---|
+| `api/status.js` | A Vercel serverless function. `POST` takes a heartbeat from one reporter inside the lab (bearer token); `GET` returns the merged public view. Excluded from the Jekyll build in `_config.yml` — without that, Jekyll copies it into `_site` and serves its source at the same path, which both publishes the source and shadows the function. |
+| `assets/lab-status.js` | Reads that endpoint and renders the band. Polls every 15s, and only while the tab is visible. |
+| `.lab-live*` in `assets/main.scss` | Its styles. `.lab-status` is shared with the hand-written tables below, so both use one vocabulary of states. |
+| `status_endpoint:` in `_config.yml` | Where the band fetches from. Unset means "this origin", which is right on Vercel. **GitHub Pages has no serverless functions**, so a copy served from there needs the absolute Vercel URL here — otherwise the band reads a 404 as "the lab is unreachable", which is the wrong answer delivered convincingly. |
+
+The other half does not live in this repo. `~/labstat/` on mini-1 is the
+reporter: it queries that machine's Prometheus for host facts, asks systemd
+about the user units Prometheus cannot see, and posts the result every minute.
+Its `etc/labstat.conf` holds the ingest token at mode 600 and is never
+committed. See `~/labstat/README.md` on that machine.
+
+**It is pushed, never scraped, and that is the whole design.** A status view
+served from inside the lab renders "the lab is unreachable" as a spinner: the
+observer must not be inside the thing observed. So each host posts outward on
+its own timer, the edge holds the last thing it said, and the page reads only
+that. The house rule about inbound connections stays exactly true — nothing in
+the lab accepts a connection and no port is forwarded.
+
+**Absence is the signal.** Nothing has to report that a host died; its beat
+stops. A reporter silent for three of its own intervals goes `stale`, and every
+subject it was the sole observer of becomes `unknown` — deliberately not
+`down`, because a dead observer is not evidence about what it was observing.
+Where two reporters watch the same subject, a live observation beats a stale
+one and the worse state wins, so a camera one host cannot reach is never
+painted green by a host that can.
+
+**pi-1 is the right primary reporter, once it exists.** The battery backs
+gw-1, sw-1 and pi-1 and deliberately not the minis, so in a power cut pi-1 is
+the only host still up with a network — it can report "power cut, minis down"
+where a mini-based watchdog would just go silent along with everything else.
+
+Known and unfixed: if the uplink or gw-1 goes, nothing can push, and from
+outside that is indistinguishable from the whole lab being off. Closing it
+needs a second observer outside the house. Until then the page says `unknown`,
+which is the honest answer.
+
+`vercel.json` sends `X-Robots-Tag: noindex` on everything it serves. The site
+is published from GitHub Pages and this deployment is a second public copy of
+it; `jekyll-seo-tag` already puts a canonical pointing at `t29mato.github.io`
+on every page, but canonical is a hint and this is not. Only the Vercel copy is
+affected — GitHub Pages never reads this file.
+
+`vercel.json` also pins `"regions": ["hnd1"]`. The Upstash database is in Tokyo and
+Vercel defaults functions to `iad1`, so without this every Redis command
+crossed the Pacific and back — twice per read, because a view is `KEYS` then
+`MGET`. It is not a comment-friendly file (the schema rejects unknown keys, so
+that one line has to be explained here instead).
+
+Environment, set in the Vercel project and nowhere in this repo:
+`KV_REST_API_URL` and `KV_REST_API_TOKEN` (Upstash Redis REST), and
+`HOMELAB_INGEST_TOKEN`, the shared secret every reporter sends.
+
 ### Working on this repo from more than one machine
 
 Every mini gets its own clone, and more than one agent session may be awake at
@@ -268,10 +327,19 @@ belongs in the inventory, the diagram, the changelog or the commit message:
   individual addresses are not.
 - SSH configuration detail, public keys, tokens, or anything that names a
   remote-access path into the LAN.
-- Anything with real-time resolution. The page states a date and moves in
-  days; it is not a live dashboard, because "what is up right now" is also
-  "whether anyone is home right now". During a long absence, do not update
-  it at all rather than publishing a fresher timestamp.
+- **Anything that answers "is anyone home right now".** This used to be
+  written as a blanket ban on real-time resolution, and the live status band
+  narrows it rather than lifting it — the reasoning was never about freshness,
+  it was about occupancy, and freshness was standing in for it. What a machine
+  is doing (up, down, disk, load, whether an upload succeeded) is about the
+  hardware. **How recently a camera saw something is about a person**, so
+  camera event recency and event counts are not published, and
+  `api/status.js` enforces that with a field whitelist rather than leaving it
+  to whoever writes the next reporter. The same test applies to anything added
+  later: if the number changes because somebody walked through a room, it does
+  not go on the endpoint. The hand-written parts of the page still state a date
+  and still move in days, and during a long absence it is still better not to
+  update them at all than to publish a fresher timestamp.
 - Photographs that place the hardware in an identifiable home.
 
 ## Keeping the hikes page current (`/hikes/`)

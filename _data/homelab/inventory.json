@@ -1,6 +1,6 @@
 {
   "updated_at": "2026-09-07",
-  "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. One host is provisioned so far; the rest are hardware waiting for an OS.",
+  "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. Two hosts are provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
       "id": "air-1",
@@ -30,16 +30,16 @@
       "id": "mini-1",
       "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
-      "os": "Ubuntu (desktop)",
-      "role": "SSH node, one agent session — not carrying one yet",
-      "status": "joining"
+      "os": "Ubuntu 24.04 LTS (desktop edition, boots to multi-user)",
+      "role": "main machine — agent session, camera recorder, Prometheus, Grafana, labstat",
+      "status": "up"
     },
     {
       "id": "mini-2",
       "hardware": "Mac mini (Late 2012)",
       "ram": "8 GB",
-      "os": "Ubuntu 24.04 LTS",
-      "role": "SSH node, one agent session, 5400rpm disk",
+      "os": "Ubuntu 24.04 LTS (running a desktop session)",
+      "role": "SSH node, one agent session, metrics exporter, status reporter",
       "status": "up"
     },
     {
@@ -71,8 +71,8 @@
       "hardware": "Plug-in Wi-Fi camera",
       "ram": "-",
       "os": "-",
-      "role": "RTSP source over Wi-Fi, recorded on a mini",
-      "status": "planned"
+      "role": "RTSP source over Wi-Fi, recorded on mini-1",
+      "status": "up"
     },
     {
       "id": "cam-2",
@@ -115,6 +115,31 @@
       "status": "in use"
     },
     {
+      "name": "Prometheus + node_exporter",
+      "note": "Running on mini-1, scraping every 15s and keeping 90 days. It is the collector, not the page: it lives inside the LAN, so it cannot be what reports that the LAN is unreachable. Its own first finding was that mini-2 answered ping and SSH but had no exporter on it — a target that had never existed, showing as an outage. It has one now, so both provisioned minis are measured.",
+      "status": "in use"
+    },
+    {
+      "name": "Grafana",
+      "note": "Unpacked under ~/monitoring beside Prometheus and run as a user unit, so nothing is installed system-wide and nothing needs root. Its data source and its one dashboard are provisioned from files rather than clicked in, so the install is reproducible — eleven panels chosen for these machines rather than the two-hundred-panel community dashboard, on the grounds that a screen showing every metric shows none of them. It answers on the LAN only, and deliberately is not what reports on the lab from outside: a dashboard served from mini-1 cannot tell anyone that mini-1 is down. Its version and usage reporting are off — the same standard the public site holds itself to about calling third parties.",
+      "status": "in use"
+    },
+    {
+      "name": "ollama",
+      "note": "A local model runtime on mini-1, resident at about half a gigabyte. Written down because it is half a gigabyte: an inventory that lists the services somebody meant to run and omits the ones that are actually holding memory is not an inventory.",
+      "status": "in use"
+    },
+    {
+      "name": "labstat",
+      "note": "The reporter behind the status band, running on both provisioned minis. Each measures itself from /proc and asks systemd about its own services, because a machine that can only describe itself by asking another machine goes quiet about itself the moment that machine dies. Beyond itself, mini-1 reports what its Prometheus knows, and probes a host on another port before agreeing it is gone — the difference between a machine that is missing and one whose exporter was never installed is worth a trip across the room.",
+      "status": "in use"
+    },
+    {
+      "name": "camrec",
+      "note": "Event recording on mini-1. The camera serves RTSP only while it has an event, so the stream's existence is the trigger and there is no detector to tune: ffmpeg opens its input before its output, so the 404 between events writes nothing and the disk stays asleep. Events are filed under the camera, mirrored off-site, and only then deleted locally.",
+      "status": "in use"
+    },
+    {
       "name": "NFS share for ~/repos",
       "note": "Repositories are cloned per host today. A shared mount would save four clones of the same tree.",
       "status": "considering"
@@ -128,19 +153,27 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "The camera detects and records its own events, so a mini does not have to watch a stream to decide what matters. A month of events is a couple of gigabytes per camera, which is the number that decides everything else: mirroring that off-site costs almost nothing, where the continuous upload originally imagined would have run to terabytes. The off-site half now works — a file put on a mini arrives in cloud storage — and what remains is getting the events off the camera and onto the mini.",
-      "status": "planned"
+      "note": "End to end: the camera detects its own event and opens its stream, mini-1 records whatever answers, and the clip is mirrored off-site and pruned locally only once it is confirmed there. The first real event was 66 seconds and 12.1 MB, uploaded in 12. Events are filed by camera and date rather than by recorder — a recorder can be replaced, and the second camera has to land somewhere that does not collide.",
+      "status": "in use"
     },
     {
       "name": "Live view wall",
       "note": "Every camera on one screen, deliberately not running unless someone is looking. The camera serves at least two simultaneous RTSP clients — measured, not assumed — so watching and recording do not have to compete.",
       "status": "planned"
+    },
+    {
+      "name": "Lab status",
+      "note": "The one live thing on the public page. mini-1 pushes a heartbeat outward every minute — what Prometheus already knows about each host, plus the state of the services on it — and the page reads that and never the LAN. Absence is the signal, so nothing has to report that a host died: its beat simply stops, and what it was the sole observer of goes unknown rather than down. It is live: both minis push once a minute and the page reads it from anywhere. Two reporters may describe the same host, which is wanted rather than tolerated — the endpoint keeps the worse of two live observations, so an exporter that has died on a machine that has not shows as degraded from outside and up from inside, and the page prints the true one.",
+      "status": "in use"
     }
   ],
   "house_rules": [
+    "mini-1 is the main machine: the agent session, the recorder and the monitoring all live there. That is a decision about today rather than a design — the monitoring hub sharing a host with an agent session is exactly how a monitor ends up reporting latency it caused itself, on a spinning disk especially. When mini-3 has an OS, the hub belongs there, on a host carrying no session.",
+    "Every mini here has the same 5400rpm spinning disk. It was once written down as a fact about mini-2 alone, which read as though there were a faster one to move work to. There is not.",
     "One agent session per host. It is not a style preference: two sessions and a browser on one mini put the load average at twice the thread count and two gigabytes into swap, on a spinning disk.",
     "These minis were built for open air, so they sit side by side and are never stacked.",
     "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour.",
-    "Nothing here is reachable from outside the LAN, and no port is forwarded to reach it."
+    "Nothing here accepts a connection from outside the LAN, and no port is forwarded to reach it. Status leaves the other way — pushed out, never pulled in — so the page that reports a failure is not inside the thing that failed.",
+    "Addresses live on the router as DHCP reservations and in one mode-600 config on the recorder. Nothing pushed to the public endpoint may carry one: the endpoint publishes a whitelist of fields, so a host that starts sending its address just gets the field dropped."
   ]
 }

@@ -11,11 +11,21 @@ tty_cmd: cat STATUS.md
 <p class="page-intro" markdown="1">
 {{ site.data.homelab.inventory.blurb }}
 **Written by hand from a machine inside the lab**, so it moves in days and
-not seconds — nothing here is scraped live, and nothing on this page is
-reachable from outside the LAN.
+not seconds. The one exception is the status band below, which is the lab as
+it is right now — and it gets here by being *pushed out*: nothing on this page
+is scraped, nothing in the lab accepts a connection from outside it, and no
+port is forwarded to reach anything.
 </p>
 
 <p class="tty-dim lab-updated">last updated {{ site.data.homelab.inventory.updated_at }}</p>
+
+{% include tty-prompt.html cwd="~/lab" cmd="watch -n15 labstat" %}
+
+<div class="lab-live" id="lab-live" data-endpoint="{{ site.status_endpoint | default: '/api/status' | relative_url }}">
+  <p class="tty-out tty-dim lab-live-fallback">The status band is live and needs JavaScript. The rest of this page is written by hand and is complete without it.</p>
+</div>
+
+<p class="tty-out tty-dim lab-note">A host that stops pushing goes <span class="lab-status" data-status="unknown">unknown</span>, not <span class="lab-status" data-status="down">down</span> — and so does anything it was the only one watching. A dead observer is not evidence about the thing it was observing, and a page that prints <span class="lab-status" data-status="up">up</span> because nobody is left to contradict it would be worse than no page at all.</p>
 
 {% include tty-prompt.html cwd="~/lab" cmd="archify preview topology" %}
 
@@ -107,3 +117,4 @@ reachable from outside the LAN.
 </ol>
 
 <script src="{{ "/assets/lab.js" | relative_url }}" defer></script>
+<script src="{{ "/assets/lab-status.js" | relative_url }}" defer></script>

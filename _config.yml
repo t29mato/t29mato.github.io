@@ -32,6 +32,13 @@ url: "https://t29mato.github.io" # the base hostname & protocol for your site, e
 # twitter_username: jekyllrb
 github_username:  t29mato
 
+# Where /homelab/'s live status band fetches from. Leave it unset and the page
+# asks its own origin, which is right when the site is served from Vercel.
+# GitHub Pages has no serverless functions, so a copy served from there needs
+# the absolute URL of the Vercel deployment here or the band reads 404 as "the
+# lab is unreachable" — which is exactly the wrong answer, and a convincing one.
+status_endpoint: "https://t29matogithubio.vercel.app/api/status"
+
 # Build settings
 theme: minima
 timezone: Asia/Tokyo
@@ -124,3 +131,8 @@ exclude:
   # Session handoff for the hikes page: state, open items, gotchas. For
   # whoever continues the work, not for the site.
   - HIKES-HANDOFF.md
+  # Vercel serverless functions, not site content. Jekyll would otherwise copy
+  # api/status.js into _site and serve its source at that exact path, which
+  # both publishes the source and shadows the function that should answer
+  # there.
+  - api/

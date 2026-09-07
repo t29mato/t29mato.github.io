@@ -14,3 +14,7 @@ _site
 # fetching 25 MB out of Drive. `_gpx` is underscore-prefixed, so Jekyll never
 # builds or serves it — it lives in the repo the way _data/ does, not on the
 # site.
+# Written by `vercel link`: .env.local holds a VERCEL_OIDC_TOKEN, and `vercel
+# env pull` writes real project secrets into the same shape. The CLI added the
+# glob itself — it stays.
+.env*

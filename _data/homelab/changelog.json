@@ -1,6 +1,24 @@
 [
   {
     "date": "2026-09-07",
+    "title": "mini-2 is measured at last, and mini-1 is named the main machine",
+    "body": "node_exporter is on mini-2, so the target that had been reporting an outage since it was written down is finally answering, and both provisioned minis are on the graphs. Grafana got a dashboard to go with them — eleven panels chosen for these machines rather than the two-hundred-panel community one, because a screen showing every metric shows none of them. The panel that earns its place is CPU waiting on disk. Naming mini-1 the main machine meant measuring rather than assuming, and two things written here turned out to be wrong. Both minis have the same 5400rpm spinning disk; that had been recorded as a fact about mini-2 alone, which read as though there were a faster machine to move work to. And the desktop session, noted on the third as mini-1\u0027s problem, is running on mini-2 — mini-1 boots to multi-user and sits at 1.5 GB, while mini-2 idles at 4.3 GB with a load of 2. The decision survived the measurements, but not for the reasons that were on this page. mini-2 reports for itself now too, and its first minute of doing so was worth the install: a load of ten against four cores, five processes blocked on disk and 2.7 GB in swap — the house rule about one agent session per host, being broken, in the exact shape the rule predicted.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-07",
+    "title": "The pulse is real, and the lab has a dashboard again",
+    "body": "The status endpoint is provisioned and mini-1 has been pushing to it once a minute since. Two things were wrong the moment it was live and only visible because it was. The function had been placed in Virginia while its database sits in Tokyo, so every read crossed the Pacific twice — a view is KEYS then MGET — and it is pinned to the same region as its data now. The cache was worse: stale-while-revalidate let a sixty-second-old copy be served, and because a payload's ages are computed when it is generated, a stale copy under-reports silence by exactly its own age. A dead reporter could have read as healthy for four minutes against a three-minute window, so the window that the whole design rests on was quietly the least trustworthy number on the page. Grafana, downloaded a while ago and never unpacked, now runs beside Prometheus with its data source provisioned from a file. It stays on the LAN on purpose. Reporting on the lab from outside is a different job, and it belongs to the thing that is not inside the lab.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-07",
+    "title": "The recording loop closes, and the page gets a pulse",
+    "body": "The other half is done: the camera opened its stream, mini-1 recorded 66 seconds of it, and the clip is off-site with a matching MD5 — nothing in that chain is a plan any more. With a second camera coming, the archive was re-keyed at the same time. It was filed under the recorder's hostname, which is the one identity in the picture that can be replaced; it is now filed by camera and date, so cam-2 lands beside cam-1 instead of on top of it, and the recorder's name moved into the metadata where it belongs. What starts now is the status band at the top of this page. It is pushed, not scraped, and that is not a convenience: a status view served from inside the lab would render \"the lab is unreachable\" as a spinner. Prometheus has been scraping here for a while and its first real finding is the shape of the problem — mini-2 answers ping and SSH, but its exporter target has been down since it was written down, because nothing was ever installed to answer it. The collector inside was reporting an outage that was really a typo, and nobody was looking. The reporter that pushes all this now runs on mini-1 once a minute, and it probes a host on another port before agreeing that it is gone — so mini-2 reads as degraded, with the reason, rather than as down. What is left is provisioning the endpoint it posts to.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-07",
     "title": "A file put on a mini now arrives in cloud storage",
     "body": "The off-site half of the recording plan works end to end. It took longer than the engineering: the client secret is shown once and never again, and a wrong one fails as \"invalid_client\" long after the consent screen has already said yes, which sends you looking in the wrong place. Publishing the OAuth client also required a privacy policy, so the site has one now — overdue anyway, given the analytics and the contact form. What remains is the other half: getting events off the camera and onto a mini.",
     "delta": null

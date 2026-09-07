@@ -1,0 +1,22 @@
+# What `vercel deploy` must not upload.
+#
+# The CLI uploads the working directory, not the git tree, so .gitignore does
+# not apply here — anything left out has to be named again. Two of these are
+# not merely wasteful:
+#
+#   .env*      `vercel link` writes .env.local with a VERCEL_OIDC_TOKEN in it,
+#              and `vercel env pull` fills the same file with real project
+#              secrets. Uploading a credential back to the deployment that
+#              issued it is not a disaster, but there is no reason to.
+#   _gpx/      ~25 MB of raw GPX exports. Jekyll never builds them (underscore
+#              prefix) and /hikes/ is built from them ahead of time, so they
+#              would be uploaded on every deploy to be ignored on arrival.
+.env*
+_gpx/
+
+# Build products and local installs. Vercel makes its own.
+_site/
+.jekyll-cache/
+.sass-cache/
+vendor/
+node_modules/

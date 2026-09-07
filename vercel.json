@@ -5,5 +5,12 @@
   "buildCommand": "bundle exec jekyll build",
   "outputDirectory": "_site",
   "build": { "env": { "PAGES_REPO_NWO": "t29mato/t29mato.github.io" } },
+  "regions": ["hnd1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+    }
+  ],
   "github": { "enabled": false }
 }
