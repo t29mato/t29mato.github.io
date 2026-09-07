@@ -50,6 +50,8 @@ $mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --code-bg: #10170f;
   --shadow: rgba(0, 0, 0, 0.55);
   --scanline: rgba(0, 0, 0, 0.07);
+  /* /hikes/: the one topo tile set, turned to night by a filter. */
+  --tile-filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.9) saturate(0.5);
 }
 
 @mixin theme-light {
@@ -77,6 +79,7 @@ $mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --shadow: rgba(15, 23, 42, 0.12);
   /* Scanlines are a dark-phosphor thing; transparent lines paint nothing. */
   --scanline: transparent;
+  --tile-filter: none;
 }
 
 :root { @include theme-dark; }
@@ -1334,6 +1337,7 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
     a { color: var(--text-dim); }
   }
   .leaflet-container { font-family: inherit; }
+  .leaflet-tile-pane { filter: var(--tile-filter); }
 }
 
 .hike-tip {

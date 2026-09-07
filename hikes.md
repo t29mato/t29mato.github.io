@@ -3,7 +3,7 @@ layout: page
 title: Hikes
 permalink: /hikes/
 tty_cwd: ~/hikes
-tty_cmd: atlas --tiles carto
+tty_cmd: atlas --tiles opentopomap
 ---
 
 {%- assign H = site.data.hikes.outings -%}
@@ -42,7 +42,7 @@ tty_cmd: atlas --tiles carto
   </noscript>
 </figure>
 
-<p class="tty-out tty-dim lab-note">Map tiles come from CARTO and are the only thing on this site that is fetched from a third party; the tracks themselves are served from here. <a href="{{ "/privacy/" | relative_url }}">Privacy</a> says what that means.</p>
+<p class="tty-out tty-dim lab-note">Map tiles come from OpenTopoMap and are the only thing on this site that is fetched from a third party; the tracks themselves are served from here. <a href="{{ "/privacy/" | relative_url }}">Privacy</a> says what that means.</p>
 
 <div class="hike-row">
 <div class="hike-sel">

@@ -26,7 +26,7 @@ is not much of it.
   </li>
   <li>
     <span class="lab-key">Map tiles</span>
-    <span class="lab-desc">The map on <a href="{{ "/hikes/" | relative_url }}">/hikes/</a> draws its background from CARTO's free basemap, so opening that page fetches tile images from CARTO's servers: they see your address, the tile coordinates, and the page that asked. The tracks, peaks and the map library itself are served from here. Every other page on this site makes no third-party request.</span>
+    <span class="lab-desc">The map on <a href="{{ "/hikes/" | relative_url }}">/hikes/</a> draws its background from OpenTopoMap, so opening that page fetches tile images from OpenTopoMap's servers: they see your address, the tile coordinates, and the page that asked. The tracks, peaks and the map library itself are served from here. Every other page on this site makes no third-party request.</span>
   </li>
   <li>
     <span class="lab-key">Hosting</span>

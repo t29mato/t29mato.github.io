@@ -2,14 +2,13 @@
  * The map on /hikes/.
  *
  * Leaflet is vendored (assets/vendor/leaflet/), so the only requests that
- * leave this site are the CARTO basemap tiles. Everything else — tracks,
+ * leave this site are the OpenTopoMap basemap tiles. Everything else — tracks,
  * peaks, the 100 famous mountains — comes from assets/hikes/tracks.json,
  * written by _scripts/build-hikes.mjs.
  *
  * Colours are read from the site's own custom properties at draw time and
  * re-read when the theme toggle flips data-theme, so the map follows the
- * site instead of carrying a palette of its own. The basemap swaps between
- * CARTO's light and dark styles the same way.
+ * site instead of carrying a palette of its own.
  */
 (function () {
   var mapEl = document.getElementById("hike-map");
@@ -31,23 +30,18 @@
   }
 
   var JAPAN = [[30.0, 128.5], [45.7, 146.0]];
-  var TILE = {
-    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-  };
+  // OpenTopoMap: relief, contours, kanji and romaji labels, no key. The dark
+  // theme is the same tiles through a filter (--tile-filter in main.scss),
+  // so a theme flip repaints nothing but the vectors.
+  var TILE = "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png";
 
   var map = L.map(mapEl, { zoomControl: false, attributionControl: true, worldCopyJump: true });
   map.attributionControl.setPrefix("");
   L.control.zoom({ position: "topleft" }).addTo(map);
-  var tiles = null;
-  function basemap() {
-    if (tiles) map.removeLayer(tiles);
-    tiles = L.tileLayer(TILE[theme()], {
-      subdomains: "abcd", maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" rel="noopener">CARTO</a>'
-    }).addTo(map);
-  }
-  basemap();
+  L.tileLayer(TILE, {
+    subdomains: "abc", maxZoom: 17,
+    attribution: 'map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors, SRTM · style &copy; <a href="https://opentopomap.org" rel="noopener">OpenTopoMap</a> (CC-BY-SA)'
+  }).addTo(map);
   map.fitBounds(JAPAN);
 
   var state = { view: "tracks", layers: { hike: true, ski: true, hyaku: false }, selected: null };
@@ -194,8 +188,8 @@
       mapEl.innerHTML = '<p class="lab-pane-fallback">Could not load tracks.json.</p>';
     });
 
-  // Follow the site toggle: swap the basemap and repaint the vectors.
-  function sync() { basemap(); if (data) draw(); }
+  // Follow the site toggle: the tiles are filtered by CSS, the vectors are repainted.
+  function sync() { if (data) draw(); }
   if (window.MutationObserver) {
     new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
   }
