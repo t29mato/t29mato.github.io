@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-04",
+  "updated_at": "2026-09-07",
   "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. One host is provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
@@ -128,7 +128,7 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "The camera detects and records its own events, so a mini does not have to watch a stream to decide what matters. A month of events is a couple of gigabytes per camera, which is the number that decides everything else: mirroring that off-site costs almost nothing, where the continuous upload originally imagined would have run to terabytes.",
+      "note": "The camera detects and records its own events, so a mini does not have to watch a stream to decide what matters. A month of events is a couple of gigabytes per camera, which is the number that decides everything else: mirroring that off-site costs almost nothing, where the continuous upload originally imagined would have run to terabytes. The off-site half now works — a file put on a mini arrives in cloud storage — and what remains is getting the events off the camera and onto the mini.",
       "status": "planned"
     },
     {
