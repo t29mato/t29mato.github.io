@@ -320,21 +320,30 @@ p.tty-out { font-weight: 400; }
   padding-bottom: 0.45rem;
 }
 
+/* The session name and the window list are one run of text, not two flex
+   columns. As flex siblings, every line the list wrapped onto began under the
+   list's own left edge — indented past [mato-site] — which threw away about
+   110 px of a 390 px screen on every line after the first, and put the list on
+   six lines there. Wrapping as text starts each line at the margin instead:
+   six lines become four, and no width loses a line to the change. The theme
+   key stays a flex sibling, so it keeps its corner. */
+.tty-windows {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.6;
+}
+
 .tty-session {
-  flex: none;
+  margin-right: 1.1em;
   color: var(--green);
   font-weight: 700;
 }
 
-.tty-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 1.1em;
-  row-gap: 0.15em;
-  min-width: 0;
-}
+.tty-tabs { display: inline; }
 
 .tty-tab {
+  display: inline-block;
+  margin-right: 1.1em;
   color: var(--text-dim);
   text-decoration: none;
   white-space: nowrap;

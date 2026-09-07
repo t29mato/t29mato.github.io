@@ -2,7 +2,9 @@
   Overrides minima's header.html. The header is the session's window list,
   tmux-style: every page in `header_pages` is a numbered window, home is
   window 0, and the current one carries the star. No hamburger — a window
-  list that wraps is more terminal than a menu that hides.
+  list that wraps is more terminal than a menu that hides. The session name
+  and the windows share one .tty-windows text flow, so a line the list wraps
+  onto starts at the margin instead of hanging under [mato-site].
 
   A post belongs to the blog window even though its URL is not /blog/, so the
   loop checks the collection as well as the URL.
@@ -12,9 +14,10 @@
 {%- endcomment -%}
 <header class="site-header" role="banner">
   <div class="wrapper tty-topbar">
-    <span class="tty-session">[mato-site]</span>
+    <div class="tty-windows">
+      <span class="tty-session">[mato-site]</span>
 
-    <nav class="tty-tabs" aria-label="Site">
+      <nav class="tty-tabs" aria-label="Site">
       <a class="tty-tab" href="{{ "/" | relative_url }}"
          {%- if page.url == "/" %} aria-current="page"{% endif %}>
         <span class="tty-tab-index">0:</span>home{% if page.url == "/" %}<span aria-hidden="true">*</span>{% endif %}</a>
@@ -34,7 +37,8 @@
         <span class="tty-tab-index">{{ forloop.index }}:</span>{{ my_page.title | downcase | escape }}{% if is_current %}<span aria-hidden="true">*</span>{% endif %}</a>
         {%- endif -%}
       {%- endfor -%}
-    </nav>
+      </nav>
+    </div>
 
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch between light and dark" title="Switch between light and dark">
       <span class="theme-icon theme-icon-sun" aria-hidden="true">☀</span>
