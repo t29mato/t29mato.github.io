@@ -274,6 +274,46 @@ belongs in the inventory, the diagram, the changelog or the commit message:
   it at all rather than publishing a fresher timestamp.
 - Photographs that place the hardware in an identifiable home.
 
+## Keeping the hikes page current (`/hikes/`)
+
+`/hikes/` draws every recorded outing on a map and keeps the checklist of
+Fukada's 100 famous mountains. Like `/homelab/`, it is rendered from data
+files and holds no facts of its own.
+
+### Where the truth lives
+
+| File | What it is |
+|---|---|
+| `_gpx/{yamap,strava,yamareco}/*.gpx` | The raw exports, named `{date}_{title}_{id}.gpx` (Strava: `{date}_{Hike\|BCSki}_{title}_{id}.gpx`). **Git-ignored** and never published; the id in the name is what the service links are built from. Yamareco tracks are public at `https://www.yamareco.com/modules/yamareco/track-{id}.gpx` and need no login. |
+| `_data/hikes/names.json` | Peak keyword -> English name and summit height. The build names an outing after the highest keyword found in its titles; an unnamed outing is listed by the build so an entry can be added. |
+| `_data/hikes/hyakumeizan.json` | The 100 famous mountains with approximate summit points (from the tracks where a summit has been reached; `not` patterns stop `小仙丈ヶ岳` reading as `仙丈ヶ岳`). |
+| `_data/hikes/strava-index.json` | Every Strava export by id/date/type, so a same-day outing gets its Strava link and sport even when that GPX is not on disk. |
+| `_data/hikes/overrides.json` | Per-outing corrections (`sport`, `en`, `status`), keyed by outing id or date. Applied last. |
+| `_data/hikes/outings.json` | **Generated.** The index Liquid renders. |
+| `assets/hikes/tracks.json` | **Generated.** What the map fetches: simplified tracks, high points, elevation profiles, the 100 peaks with done/to-go. |
+
+### The update loop
+
+1. Drop the new export into `_gpx/<source>/` with the file name convention
+   above. Nothing else needs a date bump: the build stamps `updated_at`.
+2. `node _scripts/build-hikes.mjs` — no dependencies. Read its report:
+   `UNNAMED` rows want a keyword in `names.json`; `SPORT GUESSED` rows are
+   winter days without a Strava type, corrected in `overrides.json` if the
+   guess is wrong; `PEAK MATCHED BY NAME BUT >800 m` means a summit point in
+   `hyakumeizan.json` is off and should be moved to the track's high point.
+3. Commit the two generated files with the data edits. The raw GPX stays out.
+
+Sport comes from Strava's `<type>` when the day has a Strava file or an index
+entry; otherwise a winter day on a snow-country mountain is guessed as
+backcountry ski and reported. The word is always `backcountry ski`, never
+`ski`: a groomed slope is not a mountain. A title containing `撤退` marks the
+day `turned back`, which draws the red ring and never credits a summit.
+
+A famous mountain counts as done when a track passes within 500 m of its
+summit point and reaches within 150 m of its height, or within 2.5 km when
+the title names the peak. The page is the only place on this site that
+fetches from a third party (OpenTopoMap tiles); `/privacy/` says so.
+
 ## Other notes
 
 - The top page (`index.md`) is composed of `_includes/*.md` files (projects, publications, presentations, etc.). This portfolio section is independent from blog posts (`_posts`), so adding an article does not require touching these include files.

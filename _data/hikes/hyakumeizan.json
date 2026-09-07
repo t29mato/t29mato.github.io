@@ -1,105 +1,1009 @@
 {
   "_comment": "Fukada Kyuya's 100 Famous Japanese Mountains. Summit heights are the usual published figures; coordinates are approximate summit positions (within about a kilometre) used to match GPX tracks, not survey data. `done` is computed by _scripts/build-hikes.mjs from the tracks and written to outings.json, never by hand here.",
   "peaks": [
-    { "id": "rishiri",       "jp": "利尻山",           "en": "Mt. Rishiri",          "m": 1721, "lat": 45.178, "lon": 141.242, "region": "hokkaido" },
-    { "id": "rausu",         "jp": "羅臼岳",           "en": "Mt. Rausu",            "m": 1661, "lat": 44.076, "lon": 145.123, "region": "hokkaido" },
-    { "id": "shari",         "jp": "斜里岳",           "en": "Mt. Shari",            "m": 1547, "lat": 43.766, "lon": 144.718, "region": "hokkaido" },
-    { "id": "meakan",        "jp": "阿寒岳",           "en": "Mt. Meakan",           "m": 1499, "lat": 43.386, "lon": 144.008, "region": "hokkaido", "aliases": ["雌阿寒岳"] },
-    { "id": "asahi",         "jp": "大雪山",           "en": "Mt. Asahi (Daisetsuzan)", "m": 2291, "lat": 43.663, "lon": 142.854, "region": "hokkaido", "aliases": ["旭岳"] },
-    { "id": "tomuraushi",    "jp": "トムラウシ山",     "en": "Mt. Tomuraushi",       "m": 2141, "lat": 43.527, "lon": 142.848, "region": "hokkaido" },
-    { "id": "tokachi",       "jp": "十勝岳",           "en": "Mt. Tokachi",          "m": 2077, "lat": 43.418, "lon": 142.686, "region": "hokkaido" },
-    { "id": "poroshiri",     "jp": "幌尻岳",           "en": "Mt. Poroshiri",        "m": 2052, "lat": 42.718, "lon": 142.682, "region": "hokkaido" },
-    { "id": "yotei",         "jp": "後方羊蹄山",       "en": "Mt. Yotei",            "m": 1898, "lat": 42.827, "lon": 140.811, "region": "hokkaido", "aliases": ["羊蹄山"] },
-    { "id": "iwaki",         "jp": "岩木山",           "en": "Mt. Iwaki",            "m": 1625, "lat": 40.656, "lon": 140.303, "region": "tohoku" },
-    { "id": "hakkoda",       "jp": "八甲田山",         "en": "Mt. Hakkoda",          "m": 1585, "lat": 40.659, "lon": 140.878, "region": "tohoku", "aliases": ["大岳"] },
-    { "id": "hachimantai",   "jp": "八幡平",           "en": "Hachimantai",          "m": 1613, "lat": 39.958, "lon": 140.854, "region": "tohoku" },
-    { "id": "iwate",         "jp": "岩手山",           "en": "Mt. Iwate",            "m": 2038, "lat": 39.853, "lon": 141.001, "region": "tohoku" },
-    { "id": "hayachine",     "jp": "早池峰山",         "en": "Mt. Hayachine",        "m": 1917, "lat": 39.558, "lon": 141.489, "region": "tohoku" },
-    { "id": "chokai",        "jp": "鳥海山",           "en": "Mt. Chokai",           "m": 2236, "lat": 39.099, "lon": 140.049, "region": "tohoku" },
-    { "id": "gassan",        "jp": "月山",             "en": "Mt. Gassan",           "m": 1984, "lat": 38.549, "lon": 140.027, "region": "tohoku" },
-    { "id": "asahi-dewa",    "jp": "朝日岳",           "en": "Mt. Asahi (Dewa)",     "m": 1870, "lat": 38.264, "lon": 139.920, "region": "tohoku", "aliases": ["大朝日岳"] },
-    { "id": "zao",           "jp": "蔵王山",           "en": "Mt. Zao",              "m": 1841, "lat": 38.144, "lon": 140.440, "region": "tohoku", "aliases": ["熊野岳"] },
-    { "id": "iide",          "jp": "飯豊山",           "en": "Mt. Iide",             "m": 2105, "lat": 37.855, "lon": 139.712, "region": "tohoku" },
-    { "id": "azuma",         "jp": "吾妻山",           "en": "Mt. Azuma",            "m": 2035, "lat": 37.735, "lon": 140.143, "region": "tohoku", "aliases": ["西吾妻山"] },
-    { "id": "adatara",       "jp": "安達太良山",       "en": "Mt. Adatara",          "m": 1700, "lat": 37.622, "lon": 140.287, "region": "tohoku" },
-    { "id": "bandai",        "jp": "磐梯山",           "en": "Mt. Bandai",           "m": 1816, "lat": 37.601, "lon": 140.072, "region": "tohoku" },
-    { "id": "aizu-koma",     "jp": "会津駒ヶ岳",       "en": "Mt. Aizu-Koma",        "m": 2133, "lat": 37.036, "lon": 139.359, "region": "tohoku" },
-    { "id": "nasu",          "jp": "那須岳",           "en": "Mt. Nasu",             "m": 1915, "lat": 37.125, "lon": 139.963, "region": "kanto", "aliases": ["茶臼岳"] },
-    { "id": "echigo-koma",   "jp": "越後駒ヶ岳",       "en": "Mt. Echigo-Koma",      "m": 2003, "lat": 37.109, "lon": 139.031, "region": "joetsu" },
-    { "id": "hiragatake",    "jp": "平ヶ岳",           "en": "Mt. Hiragatake",       "m": 2141, "lat": 37.021, "lon": 139.173, "region": "joetsu" },
-    { "id": "makihata",      "jp": "巻機山",           "en": "Mt. Makihata",         "m": 1967, "lat": 37.017, "lon": 138.966, "region": "joetsu" },
-    { "id": "hiuchi",        "jp": "燧ヶ岳",           "en": "Mt. Hiuchi",           "m": 2356, "lat": 36.955, "lon": 139.285, "region": "joetsu", "aliases": ["柴安嵓"] },
-    { "id": "shibutsu",      "jp": "至仏山",           "en": "Mt. Shibutsu",         "m": 2228, "lat": 36.904, "lon": 139.173, "region": "joetsu" },
-    { "id": "tanigawa",      "jp": "谷川岳",           "en": "Mt. Tanigawa",         "m": 1977, "lat": 36.837, "lon": 138.930, "region": "joetsu", "aliases": ["トマの耳", "オキの耳"] },
-    { "id": "amakazari",     "jp": "雨飾山",           "en": "Mt. Amakazari",        "m": 1963, "lat": 36.906, "lon": 137.963, "region": "joetsu" },
-    { "id": "naeba",         "jp": "苗場山",           "en": "Mt. Naeba",            "m": 2145, "lat": 36.846, "lon": 138.690, "region": "joetsu" },
-    { "id": "myoko",         "jp": "妙高山",           "en": "Mt. Myoko",            "m": 2454, "lat": 36.891, "lon": 138.114, "region": "joetsu" },
-    { "id": "hiuchi-niigata","jp": "火打山",           "en": "Mt. Hiuchi (Niigata)", "m": 2462, "lat": 36.922, "lon": 138.062, "region": "joetsu" },
-    { "id": "takatsuma",     "jp": "高妻山",           "en": "Mt. Takatsuma",        "m": 2353, "lat": 36.795, "lon": 138.040, "region": "joetsu" },
-    { "id": "nantai",        "jp": "男体山",           "en": "Mt. Nantai",           "m": 2486, "lat": 36.765, "lon": 139.491, "region": "kanto" },
-    { "id": "nikko-shirane", "jp": "日光白根山",       "en": "Mt. Nikko-Shirane",    "m": 2578, "lat": 36.799, "lon": 139.376, "region": "kanto", "aliases": ["奥白根山"] },
-    { "id": "sukai",         "jp": "皇海山",           "en": "Mt. Sukai",            "m": 2144, "lat": 36.686, "lon": 139.335, "region": "kanto" },
-    { "id": "hotaka-gunma",  "jp": "武尊山",           "en": "Mt. Hotaka (Gunma)",   "m": 2158, "lat": 36.806, "lon": 139.132, "region": "joetsu" },
-    { "id": "akagi",         "jp": "赤城山",           "en": "Mt. Akagi",            "m": 1828, "lat": 36.560, "lon": 139.193, "region": "kanto", "aliases": ["黒檜山"] },
-    { "id": "kusatsu-shirane","jp": "草津白根山",      "en": "Mt. Kusatsu-Shirane",  "m": 2171, "lat": 36.644, "lon": 138.528, "region": "kanto", "aliases": ["本白根山"] },
-    { "id": "azumaya",       "jp": "四阿山",           "en": "Mt. Azumaya",          "m": 2354, "lat": 36.542, "lon": 138.410, "region": "chubu" },
-    { "id": "asama",         "jp": "浅間山",           "en": "Mt. Asama",            "m": 2568, "lat": 36.406, "lon": 138.523, "region": "chubu", "aliases": ["前掛山"], "note": "The crater summit is closed; Maekake-yama is the accepted top." },
-    { "id": "tsukuba",       "jp": "筑波山",           "en": "Mt. Tsukuba",          "m": 877,  "lat": 36.225, "lon": 140.106, "region": "kanto" },
-    { "id": "shirouma",      "jp": "白馬岳",           "en": "Mt. Shirouma",         "m": 2932, "lat": 36.758, "lon": 137.759, "region": "chubu" },
-    { "id": "goryu",         "jp": "五竜岳",           "en": "Mt. Goryu",            "m": 2814, "lat": 36.660, "lon": 137.751, "region": "chubu" },
-    { "id": "kashimayari",   "jp": "鹿島槍ヶ岳",       "en": "Mt. Kashimayari",      "m": 2889, "lat": 36.623, "lon": 137.746, "region": "chubu" },
-    { "id": "tsurugi-tateyama","jp": "剱岳",           "en": "Mt. Tsurugi (Tateyama)","m": 2999, "lat": 36.623, "lon": 137.617, "region": "chubu" },
-    { "id": "tateyama",      "jp": "立山",             "en": "Mt. Tateyama",         "m": 3015, "lat": 36.575, "lon": 137.620, "region": "chubu", "aliases": ["大汝山", "雄山"] },
-    { "id": "yakushi",       "jp": "薬師岳",           "en": "Mt. Yakushi",          "m": 2926, "lat": 36.470, "lon": 137.544, "region": "chubu" },
-    { "id": "kurobegoro",    "jp": "黒部五郎岳",       "en": "Mt. Kurobegoro",       "m": 2840, "lat": 36.400, "lon": 137.531, "region": "chubu" },
-    { "id": "suisho",        "jp": "水晶岳",           "en": "Mt. Suisho",           "m": 2986, "lat": 36.412, "lon": 137.593, "region": "chubu", "aliases": ["黒岳"] },
-    { "id": "washiba",       "jp": "鷲羽岳",           "en": "Mt. Washiba",          "m": 2924, "lat": 36.397, "lon": 137.601, "region": "chubu" },
-    { "id": "yari",          "jp": "槍ヶ岳",           "en": "Mt. Yari",             "m": 3180, "lat": 36.342, "lon": 137.647, "region": "chubu" },
-    { "id": "hotaka",        "jp": "穂高岳",           "en": "Mt. Hotaka",           "m": 3190, "lat": 36.289, "lon": 137.648, "region": "chubu", "aliases": ["奥穂高岳"] },
-    { "id": "jonen",         "jp": "常念岳",           "en": "Mt. Jonen",            "m": 2857, "lat": 36.325, "lon": 137.727, "region": "chubu" },
-    { "id": "kasa",          "jp": "笠ヶ岳",           "en": "Mt. Kasa",             "m": 2898, "lat": 36.318, "lon": 137.555, "region": "chubu" },
-    { "id": "yake",          "jp": "焼岳",             "en": "Mt. Yake",             "m": 2455, "lat": 36.227, "lon": 137.587, "region": "chubu" },
-    { "id": "norikura",      "jp": "乗鞍岳",           "en": "Mt. Norikura",         "m": 3026, "lat": 36.107, "lon": 137.553, "region": "chubu", "aliases": ["剣ヶ峰"] },
-    { "id": "ontake",        "jp": "御嶽山",           "en": "Mt. Ontake",           "m": 3067, "lat": 35.893, "lon": 137.480, "region": "chubu" },
-    { "id": "utsukushigahara","jp": "美ヶ原",          "en": "Utsukushigahara",      "m": 2034, "lat": 36.231, "lon": 138.112, "region": "chubu", "aliases": ["王ヶ頭"] },
-    { "id": "kirigamine",    "jp": "霧ヶ峰",           "en": "Kirigamine",           "m": 1925, "lat": 36.103, "lon": 138.196, "region": "chubu", "aliases": ["車山"] },
-    { "id": "tateshina",     "jp": "蓼科山",           "en": "Mt. Tateshina",        "m": 2531, "lat": 36.103, "lon": 138.296, "region": "chubu" },
-    { "id": "yatsugatake",   "jp": "八ヶ岳",           "en": "Yatsugatake",          "m": 2899, "lat": 35.971, "lon": 138.370, "region": "chubu", "aliases": ["赤岳"] },
-    { "id": "ryokami",       "jp": "両神山",           "en": "Mt. Ryokami",          "m": 1723, "lat": 36.028, "lon": 138.840, "region": "kanto" },
-    { "id": "kumotori",      "jp": "雲取山",           "en": "Mt. Kumotori",         "m": 2017, "lat": 35.856, "lon": 138.944, "region": "kanto" },
-    { "id": "kobushi",       "jp": "甲武信ヶ岳",       "en": "Mt. Kobushi",          "m": 2475, "lat": 35.909, "lon": 138.724, "region": "kanto" },
-    { "id": "kinpu",         "jp": "金峰山",           "en": "Mt. Kinpu",            "m": 2599, "lat": 35.872, "lon": 138.628, "region": "kanto" },
-    { "id": "mizugaki",      "jp": "瑞牆山",           "en": "Mt. Mizugaki",         "m": 2230, "lat": 35.892, "lon": 138.591, "region": "kanto" },
-    { "id": "daibosatsu",    "jp": "大菩薩嶺",         "en": "Mt. Daibosatsu",       "m": 2057, "lat": 35.748, "lon": 138.847, "region": "kanto" },
-    { "id": "tanzawa",       "jp": "丹沢山",           "en": "Mt. Tanzawa",          "m": 1567, "lat": 35.474, "lon": 139.164, "region": "kanto", "note": "Not the Tanzawa Oyama; that is a different mountain." },
-    { "id": "fuji",          "jp": "富士山",           "en": "Mt. Fuji",             "m": 3776, "lat": 35.361, "lon": 138.727, "region": "chubu" },
-    { "id": "amagi",         "jp": "天城山",           "en": "Mt. Amagi",            "m": 1406, "lat": 34.861, "lon": 138.990, "region": "chubu", "aliases": ["万三郎岳"] },
-    { "id": "kiso-koma",     "jp": "木曽駒ヶ岳",       "en": "Mt. Kiso-Koma",        "m": 2956, "lat": 35.789, "lon": 137.804, "region": "chubu" },
-    { "id": "utsugi",        "jp": "空木岳",           "en": "Mt. Utsugi",           "m": 2864, "lat": 35.716, "lon": 137.815, "region": "chubu" },
-    { "id": "ena",           "jp": "恵那山",           "en": "Mt. Ena",              "m": 2191, "lat": 35.443, "lon": 137.594, "region": "chubu" },
-    { "id": "kaikoma",       "jp": "甲斐駒ヶ岳",       "en": "Mt. Kaikoma",          "m": 2967, "lat": 35.757, "lon": 138.237, "region": "chubu" },
-    { "id": "senjo",         "jp": "仙丈ヶ岳",         "en": "Mt. Senjo",            "m": 3033, "lat": 35.720, "lon": 138.183, "region": "chubu" },
-    { "id": "hoo",           "jp": "鳳凰山",           "en": "Mt. Hoo",              "m": 2841, "lat": 35.700, "lon": 138.300, "region": "chubu", "aliases": ["観音岳", "地蔵岳"] },
-    { "id": "kita",          "jp": "北岳",             "en": "Mt. Kita",             "m": 3193, "lat": 35.675, "lon": 138.239, "region": "chubu" },
-    { "id": "aino",          "jp": "間ノ岳",           "en": "Mt. Aino",             "m": 3190, "lat": 35.646, "lon": 138.229, "region": "chubu" },
-    { "id": "shiomi",        "jp": "塩見岳",           "en": "Mt. Shiomi",           "m": 3047, "lat": 35.573, "lon": 138.184, "region": "chubu" },
-    { "id": "warusawa",      "jp": "悪沢岳",           "en": "Mt. Warusawa",         "m": 3141, "lat": 35.501, "lon": 138.182, "region": "chubu", "aliases": ["荒川岳", "東岳"] },
-    { "id": "akaishi",       "jp": "赤石岳",           "en": "Mt. Akaishi",          "m": 3121, "lat": 35.462, "lon": 138.158, "region": "chubu" },
-    { "id": "hijiri",        "jp": "聖岳",             "en": "Mt. Hijiri",           "m": 3013, "lat": 35.412, "lon": 138.135, "region": "chubu" },
-    { "id": "tekari",        "jp": "光岳",             "en": "Mt. Tekari",           "m": 2592, "lat": 35.340, "lon": 138.076, "region": "chubu" },
-    { "id": "haku",          "jp": "白山",             "en": "Mt. Haku",             "m": 2702, "lat": 36.155, "lon": 136.771, "region": "chubu", "aliases": ["御前峰"] },
-    { "id": "arashima",      "jp": "荒島岳",           "en": "Mt. Arashima",         "m": 1523, "lat": 35.933, "lon": 136.605, "region": "chubu" },
-    { "id": "ibuki",         "jp": "伊吹山",           "en": "Mt. Ibuki",            "m": 1377, "lat": 35.418, "lon": 136.406, "region": "kansai" },
-    { "id": "odaigahara",    "jp": "大台ヶ原山",       "en": "Odaigahara",           "m": 1695, "lat": 34.188, "lon": 136.106, "region": "kansai", "aliases": ["日出ヶ岳"] },
-    { "id": "omine",         "jp": "大峰山",           "en": "Mt. Omine",            "m": 1915, "lat": 34.171, "lon": 135.907, "region": "kansai", "aliases": ["八経ヶ岳"] },
-    { "id": "daisen",        "jp": "大山",             "en": "Mt. Daisen",           "m": 1729, "lat": 35.371, "lon": 133.546, "region": "west", "note": "Hoki Daisen in Tottori; the Kanto Oyama of the same kanji is not this peak." },
-    { "id": "tsurugi",       "jp": "剣山",             "en": "Mt. Tsurugi (Shikoku)","m": 1955, "lat": 33.854, "lon": 134.094, "region": "west" },
-    { "id": "ishizuchi",     "jp": "石鎚山",           "en": "Mt. Ishizuchi",        "m": 1982, "lat": 33.767, "lon": 133.115, "region": "west", "aliases": ["天狗岳"] },
-    { "id": "kuju",          "jp": "九重山",           "en": "Mt. Kuju",             "m": 1791, "lat": 33.086, "lon": 131.243, "region": "kyushu", "aliases": ["久住山", "中岳"] },
-    { "id": "sobo",          "jp": "祖母山",           "en": "Mt. Sobo",             "m": 1756, "lat": 32.826, "lon": 131.347, "region": "kyushu" },
-    { "id": "aso",           "jp": "阿蘇山",           "en": "Mt. Aso",              "m": 1592, "lat": 32.884, "lon": 131.104, "region": "kyushu", "aliases": ["高岳"] },
-    { "id": "kirishima",     "jp": "霧島山",           "en": "Mt. Kirishima",        "m": 1700, "lat": 31.934, "lon": 130.862, "region": "kyushu", "aliases": ["韓国岳"] },
-    { "id": "kaimon",        "jp": "開聞岳",           "en": "Mt. Kaimon",           "m": 924,  "lat": 31.180, "lon": 130.528, "region": "kyushu" },
-    { "id": "miyanoura",     "jp": "宮之浦岳",         "en": "Mt. Miyanoura",        "m": 1936, "lat": 30.336, "lon": 130.504, "region": "kyushu" }
+    {
+      "id": "rishiri",
+      "jp": "利尻山",
+      "en": "Mt. Rishiri",
+      "m": 1721,
+      "lat": 45.178,
+      "lon": 141.242,
+      "region": "hokkaido"
+    },
+    {
+      "id": "rausu",
+      "jp": "羅臼岳",
+      "en": "Mt. Rausu",
+      "m": 1661,
+      "lat": 44.076,
+      "lon": 145.123,
+      "region": "hokkaido"
+    },
+    {
+      "id": "shari",
+      "jp": "斜里岳",
+      "en": "Mt. Shari",
+      "m": 1547,
+      "lat": 43.766,
+      "lon": 144.718,
+      "region": "hokkaido"
+    },
+    {
+      "id": "meakan",
+      "jp": "阿寒岳",
+      "en": "Mt. Meakan",
+      "m": 1499,
+      "lat": 43.386,
+      "lon": 144.008,
+      "region": "hokkaido",
+      "aliases": [
+        "雌阿寒岳"
+      ]
+    },
+    {
+      "id": "asahi",
+      "jp": "大雪山",
+      "en": "Mt. Asahi (Daisetsuzan)",
+      "m": 2291,
+      "lat": 43.663,
+      "lon": 142.854,
+      "region": "hokkaido",
+      "aliases": [
+        "旭岳"
+      ]
+    },
+    {
+      "id": "tomuraushi",
+      "jp": "トムラウシ山",
+      "en": "Mt. Tomuraushi",
+      "m": 2141,
+      "lat": 43.527,
+      "lon": 142.848,
+      "region": "hokkaido"
+    },
+    {
+      "id": "tokachi",
+      "jp": "十勝岳",
+      "en": "Mt. Tokachi",
+      "m": 2077,
+      "lat": 43.418,
+      "lon": 142.686,
+      "region": "hokkaido"
+    },
+    {
+      "id": "poroshiri",
+      "jp": "幌尻岳",
+      "en": "Mt. Poroshiri",
+      "m": 2052,
+      "lat": 42.718,
+      "lon": 142.682,
+      "region": "hokkaido"
+    },
+    {
+      "id": "yotei",
+      "jp": "後方羊蹄山",
+      "en": "Mt. Yotei",
+      "m": 1898,
+      "lat": 42.827,
+      "lon": 140.811,
+      "region": "hokkaido",
+      "aliases": [
+        "羊蹄山"
+      ]
+    },
+    {
+      "id": "iwaki",
+      "jp": "岩木山",
+      "en": "Mt. Iwaki",
+      "m": 1625,
+      "lat": 40.656,
+      "lon": 140.303,
+      "region": "tohoku"
+    },
+    {
+      "id": "hakkoda",
+      "jp": "八甲田山",
+      "en": "Mt. Hakkoda",
+      "m": 1585,
+      "lat": 40.659,
+      "lon": 140.878,
+      "region": "tohoku",
+      "aliases": [
+        "大岳"
+      ]
+    },
+    {
+      "id": "hachimantai",
+      "jp": "八幡平",
+      "en": "Hachimantai",
+      "m": 1613,
+      "lat": 39.958,
+      "lon": 140.854,
+      "region": "tohoku"
+    },
+    {
+      "id": "iwate",
+      "jp": "岩手山",
+      "en": "Mt. Iwate",
+      "m": 2038,
+      "lat": 39.853,
+      "lon": 141.001,
+      "region": "tohoku"
+    },
+    {
+      "id": "hayachine",
+      "jp": "早池峰山",
+      "en": "Mt. Hayachine",
+      "m": 1917,
+      "lat": 39.558,
+      "lon": 141.489,
+      "region": "tohoku"
+    },
+    {
+      "id": "chokai",
+      "jp": "鳥海山",
+      "en": "Mt. Chokai",
+      "m": 2236,
+      "lat": 39.099,
+      "lon": 140.049,
+      "region": "tohoku"
+    },
+    {
+      "id": "gassan",
+      "jp": "月山",
+      "en": "Mt. Gassan",
+      "m": 1984,
+      "lat": 38.549,
+      "lon": 140.027,
+      "region": "tohoku"
+    },
+    {
+      "id": "asahi-dewa",
+      "jp": "朝日岳",
+      "en": "Mt. Asahi (Dewa)",
+      "m": 1870,
+      "lat": 38.264,
+      "lon": 139.92,
+      "region": "tohoku",
+      "aliases": [
+        "大朝日岳"
+      ]
+    },
+    {
+      "id": "zao",
+      "jp": "蔵王山",
+      "en": "Mt. Zao",
+      "m": 1841,
+      "lat": 38.144,
+      "lon": 140.44,
+      "region": "tohoku",
+      "aliases": [
+        "熊野岳"
+      ]
+    },
+    {
+      "id": "iide",
+      "jp": "飯豊山",
+      "en": "Mt. Iide",
+      "m": 2105,
+      "lat": 37.855,
+      "lon": 139.712,
+      "region": "tohoku"
+    },
+    {
+      "id": "azuma",
+      "jp": "吾妻山",
+      "en": "Mt. Azuma",
+      "m": 2035,
+      "lat": 37.735,
+      "lon": 140.143,
+      "region": "tohoku",
+      "aliases": [
+        "西吾妻山"
+      ]
+    },
+    {
+      "id": "adatara",
+      "jp": "安達太良山",
+      "en": "Mt. Adatara",
+      "m": 1700,
+      "lat": 37.622,
+      "lon": 140.287,
+      "region": "tohoku"
+    },
+    {
+      "id": "bandai",
+      "jp": "磐梯山",
+      "en": "Mt. Bandai",
+      "m": 1816,
+      "lat": 37.601,
+      "lon": 140.072,
+      "region": "tohoku"
+    },
+    {
+      "id": "aizu-koma",
+      "jp": "会津駒ヶ岳",
+      "en": "Mt. Aizu-Koma",
+      "m": 2133,
+      "lat": 37.036,
+      "lon": 139.359,
+      "region": "tohoku"
+    },
+    {
+      "id": "nasu",
+      "jp": "那須岳",
+      "en": "Mt. Nasu",
+      "m": 1915,
+      "lat": 37.125,
+      "lon": 139.963,
+      "region": "kanto",
+      "aliases": [
+        "茶臼岳"
+      ]
+    },
+    {
+      "id": "echigo-koma",
+      "jp": "越後駒ヶ岳",
+      "en": "Mt. Echigo-Koma",
+      "m": 2003,
+      "lat": 37.1225,
+      "lon": 139.075,
+      "region": "joetsu"
+    },
+    {
+      "id": "hiragatake",
+      "jp": "平ヶ岳",
+      "en": "Mt. Hiragatake",
+      "m": 2141,
+      "lat": 37.0021,
+      "lon": 139.171,
+      "region": "joetsu"
+    },
+    {
+      "id": "makihata",
+      "jp": "巻機山",
+      "en": "Mt. Makihata",
+      "m": 1967,
+      "lat": 36.982,
+      "lon": 138.9695,
+      "region": "joetsu"
+    },
+    {
+      "id": "hiuchi",
+      "jp": "燧ヶ岳",
+      "en": "Mt. Hiuchi",
+      "m": 2356,
+      "lat": 36.955,
+      "lon": 139.285,
+      "region": "joetsu",
+      "aliases": [
+        "柴安嵓"
+      ]
+    },
+    {
+      "id": "shibutsu",
+      "jp": "至仏山",
+      "en": "Mt. Shibutsu",
+      "m": 2228,
+      "lat": 36.904,
+      "lon": 139.173,
+      "region": "joetsu"
+    },
+    {
+      "id": "tanigawa",
+      "jp": "谷川岳",
+      "en": "Mt. Tanigawa",
+      "m": 1977,
+      "lat": 36.837,
+      "lon": 138.93,
+      "region": "joetsu",
+      "aliases": [
+        "トマの耳",
+        "オキの耳"
+      ]
+    },
+    {
+      "id": "amakazari",
+      "jp": "雨飾山",
+      "en": "Mt. Amakazari",
+      "m": 1963,
+      "lat": 36.906,
+      "lon": 137.963,
+      "region": "joetsu"
+    },
+    {
+      "id": "naeba",
+      "jp": "苗場山",
+      "en": "Mt. Naeba",
+      "m": 2145,
+      "lat": 36.846,
+      "lon": 138.69,
+      "region": "joetsu"
+    },
+    {
+      "id": "myoko",
+      "jp": "妙高山",
+      "en": "Mt. Myoko",
+      "m": 2454,
+      "lat": 36.891,
+      "lon": 138.114,
+      "region": "joetsu"
+    },
+    {
+      "id": "hiuchi-niigata",
+      "jp": "火打山",
+      "en": "Mt. Hiuchi (Niigata)",
+      "m": 2462,
+      "lat": 36.922,
+      "lon": 138.062,
+      "region": "joetsu"
+    },
+    {
+      "id": "takatsuma",
+      "jp": "高妻山",
+      "en": "Mt. Takatsuma",
+      "m": 2353,
+      "lat": 36.795,
+      "lon": 138.04,
+      "region": "joetsu"
+    },
+    {
+      "id": "nantai",
+      "jp": "男体山",
+      "en": "Mt. Nantai",
+      "m": 2486,
+      "lat": 36.765,
+      "lon": 139.491,
+      "region": "kanto"
+    },
+    {
+      "id": "nikko-shirane",
+      "jp": "日光白根山",
+      "en": "Mt. Nikko-Shirane",
+      "m": 2578,
+      "lat": 36.799,
+      "lon": 139.376,
+      "region": "kanto",
+      "aliases": [
+        "奥白根山"
+      ]
+    },
+    {
+      "id": "sukai",
+      "jp": "皇海山",
+      "en": "Mt. Sukai",
+      "m": 2144,
+      "lat": 36.686,
+      "lon": 139.335,
+      "region": "kanto"
+    },
+    {
+      "id": "hotaka-gunma",
+      "jp": "武尊山",
+      "en": "Mt. Hotaka (Gunma)",
+      "m": 2158,
+      "lat": 36.806,
+      "lon": 139.132,
+      "region": "joetsu"
+    },
+    {
+      "id": "akagi",
+      "jp": "赤城山",
+      "en": "Mt. Akagi",
+      "m": 1828,
+      "lat": 36.56,
+      "lon": 139.193,
+      "region": "kanto",
+      "aliases": [
+        "黒檜山"
+      ]
+    },
+    {
+      "id": "kusatsu-shirane",
+      "jp": "草津白根山",
+      "en": "Mt. Kusatsu-Shirane",
+      "m": 2171,
+      "lat": 36.644,
+      "lon": 138.528,
+      "region": "kanto",
+      "aliases": [
+        "本白根山"
+      ]
+    },
+    {
+      "id": "azumaya",
+      "jp": "四阿山",
+      "en": "Mt. Azumaya",
+      "m": 2354,
+      "lat": 36.542,
+      "lon": 138.41,
+      "region": "chubu"
+    },
+    {
+      "id": "asama",
+      "jp": "浅間山",
+      "en": "Mt. Asama",
+      "m": 2568,
+      "lat": 36.4038,
+      "lon": 138.5133,
+      "region": "chubu",
+      "aliases": [
+        "前掛山"
+      ],
+      "note": "The crater summit is closed; Maekake-yama (2,524 m) is the accepted top and the point used here."
+    },
+    {
+      "id": "tsukuba",
+      "jp": "筑波山",
+      "en": "Mt. Tsukuba",
+      "m": 877,
+      "lat": 36.225,
+      "lon": 140.106,
+      "region": "kanto"
+    },
+    {
+      "id": "shirouma",
+      "jp": "白馬岳",
+      "en": "Mt. Shirouma",
+      "m": 2932,
+      "lat": 36.758,
+      "lon": 137.759,
+      "region": "chubu"
+    },
+    {
+      "id": "goryu",
+      "jp": "五竜岳",
+      "en": "Mt. Goryu",
+      "m": 2814,
+      "lat": 36.66,
+      "lon": 137.751,
+      "region": "chubu"
+    },
+    {
+      "id": "kashimayari",
+      "jp": "鹿島槍ヶ岳",
+      "en": "Mt. Kashimayari",
+      "m": 2889,
+      "lat": 36.623,
+      "lon": 137.746,
+      "region": "chubu"
+    },
+    {
+      "id": "tsurugi-tateyama",
+      "jp": "剱岳",
+      "en": "Mt. Tsurugi (Tateyama)",
+      "m": 2999,
+      "lat": 36.623,
+      "lon": 137.617,
+      "region": "chubu"
+    },
+    {
+      "id": "tateyama",
+      "jp": "立山",
+      "en": "Mt. Tateyama",
+      "m": 3015,
+      "lat": 36.575,
+      "lon": 137.62,
+      "region": "chubu",
+      "aliases": [
+        "大汝山",
+        "雄山"
+      ]
+    },
+    {
+      "id": "yakushi",
+      "jp": "薬師岳",
+      "en": "Mt. Yakushi",
+      "m": 2926,
+      "lat": 36.47,
+      "lon": 137.544,
+      "region": "chubu"
+    },
+    {
+      "id": "kurobegoro",
+      "jp": "黒部五郎岳",
+      "en": "Mt. Kurobegoro",
+      "m": 2840,
+      "lat": 36.4,
+      "lon": 137.531,
+      "region": "chubu"
+    },
+    {
+      "id": "suisho",
+      "jp": "水晶岳",
+      "en": "Mt. Suisho",
+      "m": 2986,
+      "lat": 36.412,
+      "lon": 137.593,
+      "region": "chubu",
+      "aliases": [
+        "黒岳"
+      ]
+    },
+    {
+      "id": "washiba",
+      "jp": "鷲羽岳",
+      "en": "Mt. Washiba",
+      "m": 2924,
+      "lat": 36.397,
+      "lon": 137.601,
+      "region": "chubu"
+    },
+    {
+      "id": "yari",
+      "jp": "槍ヶ岳",
+      "en": "Mt. Yari",
+      "m": 3180,
+      "lat": 36.342,
+      "lon": 137.647,
+      "region": "chubu"
+    },
+    {
+      "id": "hotaka",
+      "jp": "穂高岳",
+      "en": "Mt. Hotaka",
+      "m": 3190,
+      "lat": 36.289,
+      "lon": 137.648,
+      "region": "chubu",
+      "aliases": [
+        "奥穂高岳"
+      ]
+    },
+    {
+      "id": "jonen",
+      "jp": "常念岳",
+      "en": "Mt. Jonen",
+      "m": 2857,
+      "lat": 36.325,
+      "lon": 137.727,
+      "region": "chubu"
+    },
+    {
+      "id": "kasa",
+      "jp": "笠ヶ岳",
+      "en": "Mt. Kasa",
+      "m": 2898,
+      "lat": 36.318,
+      "lon": 137.555,
+      "region": "chubu"
+    },
+    {
+      "id": "yake",
+      "jp": "焼岳",
+      "en": "Mt. Yake",
+      "m": 2455,
+      "lat": 36.227,
+      "lon": 137.587,
+      "region": "chubu"
+    },
+    {
+      "id": "norikura",
+      "jp": "乗鞍岳",
+      "en": "Mt. Norikura",
+      "m": 3026,
+      "lat": 36.107,
+      "lon": 137.553,
+      "region": "chubu",
+      "aliases": [
+        "剣ヶ峰"
+      ]
+    },
+    {
+      "id": "ontake",
+      "jp": "御嶽山",
+      "en": "Mt. Ontake",
+      "m": 3067,
+      "lat": 35.893,
+      "lon": 137.48,
+      "region": "chubu"
+    },
+    {
+      "id": "utsukushigahara",
+      "jp": "美ヶ原",
+      "en": "Utsukushigahara",
+      "m": 2034,
+      "lat": 36.231,
+      "lon": 138.112,
+      "region": "chubu",
+      "aliases": [
+        "王ヶ頭"
+      ]
+    },
+    {
+      "id": "kirigamine",
+      "jp": "霧ヶ峰",
+      "en": "Kirigamine",
+      "m": 1925,
+      "lat": 36.103,
+      "lon": 138.196,
+      "region": "chubu",
+      "aliases": [
+        "車山"
+      ]
+    },
+    {
+      "id": "tateshina",
+      "jp": "蓼科山",
+      "en": "Mt. Tateshina",
+      "m": 2531,
+      "lat": 36.103,
+      "lon": 138.296,
+      "region": "chubu"
+    },
+    {
+      "id": "yatsugatake",
+      "jp": "八ヶ岳",
+      "en": "Yatsugatake",
+      "m": 2899,
+      "lat": 35.971,
+      "lon": 138.37,
+      "region": "chubu",
+      "aliases": [
+        "赤岳"
+      ]
+    },
+    {
+      "id": "ryokami",
+      "jp": "両神山",
+      "en": "Mt. Ryokami",
+      "m": 1723,
+      "lat": 36.028,
+      "lon": 138.84,
+      "region": "kanto"
+    },
+    {
+      "id": "kumotori",
+      "jp": "雲取山",
+      "en": "Mt. Kumotori",
+      "m": 2017,
+      "lat": 35.856,
+      "lon": 138.944,
+      "region": "kanto"
+    },
+    {
+      "id": "kobushi",
+      "jp": "甲武信ヶ岳",
+      "en": "Mt. Kobushi",
+      "m": 2475,
+      "lat": 35.909,
+      "lon": 138.724,
+      "region": "kanto"
+    },
+    {
+      "id": "kinpu",
+      "jp": "金峰山",
+      "en": "Mt. Kinpu",
+      "m": 2599,
+      "lat": 35.872,
+      "lon": 138.628,
+      "region": "kanto"
+    },
+    {
+      "id": "mizugaki",
+      "jp": "瑞牆山",
+      "en": "Mt. Mizugaki",
+      "m": 2230,
+      "lat": 35.892,
+      "lon": 138.591,
+      "region": "kanto"
+    },
+    {
+      "id": "daibosatsu",
+      "jp": "大菩薩嶺",
+      "en": "Mt. Daibosatsu",
+      "m": 2057,
+      "lat": 35.748,
+      "lon": 138.847,
+      "region": "kanto"
+    },
+    {
+      "id": "tanzawa",
+      "jp": "丹沢山",
+      "en": "Mt. Tanzawa",
+      "m": 1567,
+      "lat": 35.474,
+      "lon": 139.164,
+      "region": "kanto",
+      "note": "Not the Tanzawa Oyama; that is a different mountain."
+    },
+    {
+      "id": "fuji",
+      "jp": "富士山",
+      "en": "Mt. Fuji",
+      "m": 3776,
+      "lat": 35.361,
+      "lon": 138.727,
+      "region": "chubu"
+    },
+    {
+      "id": "amagi",
+      "jp": "天城山",
+      "en": "Mt. Amagi",
+      "m": 1406,
+      "lat": 34.8635,
+      "lon": 138.9999,
+      "region": "chubu",
+      "aliases": [
+        "万三郎岳"
+      ]
+    },
+    {
+      "id": "kiso-koma",
+      "jp": "木曽駒ヶ岳",
+      "en": "Mt. Kiso-Koma",
+      "m": 2956,
+      "lat": 35.789,
+      "lon": 137.804,
+      "region": "chubu"
+    },
+    {
+      "id": "utsugi",
+      "jp": "空木岳",
+      "en": "Mt. Utsugi",
+      "m": 2864,
+      "lat": 35.716,
+      "lon": 137.815,
+      "region": "chubu"
+    },
+    {
+      "id": "ena",
+      "jp": "恵那山",
+      "en": "Mt. Ena",
+      "m": 2191,
+      "lat": 35.443,
+      "lon": 137.594,
+      "region": "chubu"
+    },
+    {
+      "id": "kaikoma",
+      "jp": "甲斐駒ヶ岳",
+      "en": "Mt. Kaikoma",
+      "m": 2967,
+      "lat": 35.757,
+      "lon": 138.237,
+      "region": "chubu"
+    },
+    {
+      "id": "senjo",
+      "jp": "仙丈ヶ岳",
+      "en": "Mt. Senjo",
+      "m": 3033,
+      "lat": 35.72,
+      "lon": 138.183,
+      "region": "chubu",
+      "not": [
+        "小仙丈"
+      ]
+    },
+    {
+      "id": "hoo",
+      "jp": "鳳凰山",
+      "en": "Mt. Hoo",
+      "m": 2841,
+      "lat": 35.7,
+      "lon": 138.3,
+      "region": "chubu",
+      "aliases": [
+        "観音岳",
+        "地蔵岳"
+      ]
+    },
+    {
+      "id": "kita",
+      "jp": "北岳",
+      "en": "Mt. Kita",
+      "m": 3193,
+      "lat": 35.675,
+      "lon": 138.239,
+      "region": "chubu"
+    },
+    {
+      "id": "aino",
+      "jp": "間ノ岳",
+      "en": "Mt. Aino",
+      "m": 3190,
+      "lat": 35.646,
+      "lon": 138.229,
+      "region": "chubu"
+    },
+    {
+      "id": "shiomi",
+      "jp": "塩見岳",
+      "en": "Mt. Shiomi",
+      "m": 3047,
+      "lat": 35.573,
+      "lon": 138.184,
+      "region": "chubu"
+    },
+    {
+      "id": "warusawa",
+      "jp": "悪沢岳",
+      "en": "Mt. Warusawa",
+      "m": 3141,
+      "lat": 35.501,
+      "lon": 138.182,
+      "region": "chubu",
+      "aliases": [
+        "荒川岳",
+        "東岳"
+      ]
+    },
+    {
+      "id": "akaishi",
+      "jp": "赤石岳",
+      "en": "Mt. Akaishi",
+      "m": 3121,
+      "lat": 35.462,
+      "lon": 138.158,
+      "region": "chubu"
+    },
+    {
+      "id": "hijiri",
+      "jp": "聖岳",
+      "en": "Mt. Hijiri",
+      "m": 3013,
+      "lat": 35.412,
+      "lon": 138.135,
+      "region": "chubu"
+    },
+    {
+      "id": "tekari",
+      "jp": "光岳",
+      "en": "Mt. Tekari",
+      "m": 2592,
+      "lat": 35.34,
+      "lon": 138.076,
+      "region": "chubu"
+    },
+    {
+      "id": "haku",
+      "jp": "白山",
+      "en": "Mt. Haku",
+      "m": 2702,
+      "lat": 36.155,
+      "lon": 136.771,
+      "region": "chubu",
+      "aliases": [
+        "御前峰"
+      ]
+    },
+    {
+      "id": "arashima",
+      "jp": "荒島岳",
+      "en": "Mt. Arashima",
+      "m": 1523,
+      "lat": 35.933,
+      "lon": 136.605,
+      "region": "chubu"
+    },
+    {
+      "id": "ibuki",
+      "jp": "伊吹山",
+      "en": "Mt. Ibuki",
+      "m": 1377,
+      "lat": 35.418,
+      "lon": 136.406,
+      "region": "kansai"
+    },
+    {
+      "id": "odaigahara",
+      "jp": "大台ヶ原山",
+      "en": "Odaigahara",
+      "m": 1695,
+      "lat": 34.188,
+      "lon": 136.106,
+      "region": "kansai",
+      "aliases": [
+        "日出ヶ岳"
+      ]
+    },
+    {
+      "id": "omine",
+      "jp": "大峰山",
+      "en": "Mt. Omine",
+      "m": 1915,
+      "lat": 34.171,
+      "lon": 135.907,
+      "region": "kansai",
+      "aliases": [
+        "八経ヶ岳"
+      ]
+    },
+    {
+      "id": "daisen",
+      "jp": "大山",
+      "en": "Mt. Daisen",
+      "m": 1729,
+      "lat": 35.371,
+      "lon": 133.546,
+      "region": "west",
+      "note": "Hoki Daisen in Tottori; the Kanto Oyama of the same kanji is not this peak."
+    },
+    {
+      "id": "tsurugi",
+      "jp": "剣山",
+      "en": "Mt. Tsurugi (Shikoku)",
+      "m": 1955,
+      "lat": 33.854,
+      "lon": 134.094,
+      "region": "west"
+    },
+    {
+      "id": "ishizuchi",
+      "jp": "石鎚山",
+      "en": "Mt. Ishizuchi",
+      "m": 1982,
+      "lat": 33.767,
+      "lon": 133.115,
+      "region": "west",
+      "aliases": [
+        "天狗岳"
+      ]
+    },
+    {
+      "id": "kuju",
+      "jp": "九重山",
+      "en": "Mt. Kuju",
+      "m": 1791,
+      "lat": 33.086,
+      "lon": 131.243,
+      "region": "kyushu",
+      "aliases": [
+        "久住山",
+        "中岳"
+      ]
+    },
+    {
+      "id": "sobo",
+      "jp": "祖母山",
+      "en": "Mt. Sobo",
+      "m": 1756,
+      "lat": 32.826,
+      "lon": 131.347,
+      "region": "kyushu"
+    },
+    {
+      "id": "aso",
+      "jp": "阿蘇山",
+      "en": "Mt. Aso",
+      "m": 1592,
+      "lat": 32.884,
+      "lon": 131.104,
+      "region": "kyushu",
+      "aliases": [
+        "高岳"
+      ]
+    },
+    {
+      "id": "kirishima",
+      "jp": "霧島山",
+      "en": "Mt. Kirishima",
+      "m": 1700,
+      "lat": 31.934,
+      "lon": 130.862,
+      "region": "kyushu",
+      "aliases": [
+        "韓国岳"
+      ]
+    },
+    {
+      "id": "kaimon",
+      "jp": "開聞岳",
+      "en": "Mt. Kaimon",
+      "m": 924,
+      "lat": 31.18,
+      "lon": 130.528,
+      "region": "kyushu"
+    },
+    {
+      "id": "miyanoura",
+      "jp": "宮之浦岳",
+      "en": "Mt. Miyanoura",
+      "m": 1936,
+      "lat": 30.336,
+      "lon": 130.504,
+      "region": "kyushu"
+    }
   ]
 }

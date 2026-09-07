@@ -33,6 +33,10 @@ const names = JSON.parse(fs.readFileSync(path.join(DATA, "names.json"), "utf8"))
 const hyaku = JSON.parse(fs.readFileSync(path.join(DATA, "hyakumeizan.json"), "utf8")).peaks;
 const overridesPath = path.join(DATA, "overrides.json");
 const overrides = fs.existsSync(overridesPath) ? JSON.parse(fs.readFileSync(overridesPath, "utf8")) : {};
+// Every Strava export by id/date/type, so a day recorded by Strava as well
+// still gets its link and sport when only the YAMAP or Yamareco file is here.
+const stravaIndexPath = path.join(DATA, "strava-index.json");
+const stravaIndex = fs.existsSync(stravaIndexPath) ? JSON.parse(fs.readFileSync(stravaIndexPath, "utf8")).activities : [];
 
 const SOURCES = ["yamap", "strava", "yamareco"];
 const LINK = {
@@ -213,8 +217,11 @@ for (const f of files) {
 }
 outings.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
+const loadedStrava = new Set(files.filter((f) => f.source === "strava").map((f) => f.id));
 const unnamed = [], guessed = [];
 const built = outings.map((o) => {
+  // Strava exports for this day that are not on disk: link + type only.
+  const extra = stravaIndex.filter((a) => a.date === o.date && !loadedStrava.has(a.id));
   // Primary track: the file with the most points (a merged Strava upload beats a split one).
   const primary = o.files.reduce((a, b) => (b.pts.length > a.pts.length ? b : a));
   const titles = o.files.map((f) => f.title);
@@ -230,12 +237,17 @@ const built = outings.map((o) => {
   // Sport: Strava's own type when present, a BC/ski word in a title, else a
   // seasonal guess that the report lists for correction.
   let sport = null, sportSource = "strava";
-  const stravaType = o.files.map((f) => f.type || f.gpxType).find(Boolean);
-  if (stravaType) sport = /ski/i.test(stravaType) ? "ski" : "hike";
+  const stravaType = o.files.map((f) => f.type || f.gpxType).find(Boolean) || (extra[0] && extra[0].type);
+  if (stravaType) { sport = /ski/i.test(stravaType) ? "ski" : "hike"; if (!o.files.some((f) => f.type || f.gpxType)) sportSource = "strava-index"; }
   else if (titles.some((t) => /BC|スキー|ski/i.test(t))) { sport = "ski"; sportSource = "title"; }
   else {
+    // A winter day on a snow-country mountain is a ski day until told
+    // otherwise; April only counts high up, and the west never guesses.
     const month = +o.date.slice(5, 7);
-    sport = month <= 4 || month === 12 ? "ski" : "hike";
+    const snowCountry = ["hokkaido", "tohoku", "joetsu", "chubu", "kanto"].includes(reg);
+    const high = (name ? name.m : st.max_ele) || 0;
+    const winter = month === 12 || month <= 3;
+    sport = snowCountry && high >= 1000 && (winter || (month === 4 && high >= 1800)) ? "ski" : "hike";
     sportSource = "guess";
     if (sport === "ski") guessed.push(`${id}  ${titles.join(" / ")}`);
   }
@@ -252,6 +264,7 @@ const built = outings.map((o) => {
   const links = {};
   const sources = [];
   for (const f of o.files) { if (!links[f.source]) { links[f.source] = LINK[f.source](f.id); sources.push(f.source); } }
+  if (extra.length && !links.strava) { links.strava = LINK.strava(extra[0].id); sources.push("strava"); }
 
   // Hyakumeizan: the track has to pass within a kilometre of the summit point
   // and get within 300 m of its height. A name match alone widens the radius
@@ -260,7 +273,10 @@ const built = outings.map((o) => {
   if (status !== "turned back") {
     for (const p of hyaku) {
       const d = minDistToTrack(primary.pts, p.lat, p.lon);
-      const nameHit = named.some((n) => n.hyaku === p.id) || titles.some((t) => (p.aliases || []).concat(p.jp).some((a) => t.includes(a)));
+      // A title naming the peak widens the radius; a `not` pattern (小仙丈ヶ岳
+      // is not 仙丈ヶ岳) cancels the name match for that title.
+      const nameHit = named.some((n) => n.hyaku === p.id) || titles.some((t) =>
+        (p.aliases || []).concat(p.jp).some((a) => t.includes(a)) && !(p.not || []).some((x) => t.includes(x)));
       const closeEnough = d < 500 || (nameHit && d < 2500);
       const highEnough = st.max_ele != null && st.max_ele >= p.m - 150;
       if (closeEnough && highEnough) peaks.push({ id: p.id, d: Math.round(d) });
@@ -323,5 +339,7 @@ console.log(`${files.length} files -> ${built.length} outings; ${summary.hike} h
 console.log(`tracks.json ${(fs.statSync(OUT_TRACKS).size / 1024).toFixed(0)} KB`);
 if (unnamed.length) console.log(`\nUNNAMED (add a keyword to names.json or an override):\n  ${unnamed.join("\n  ")}`);
 if (guessed.length) console.log(`\nSPORT GUESSED as backcountry ski from the month (confirm or override):\n  ${guessed.join("\n  ")}`);
+const untracked = stravaIndex.filter((a) => !loadedStrava.has(a.id) && !outings.some((o) => o.date === a.date));
+if (untracked.length) console.log(`\nSTRAVA-ONLY DAYS WITH NO TRACK ON DISK (not on the page until the GPX is under _gpx/strava/):\n  ${untracked.map((a) => `${a.date} ${a.type} ${a.title} (${a.id})`).join("\n  ")}`);
 const far = built.flatMap((o) => Object.entries(o.peak_dist).filter(([, d]) => d > 800).map(([p, d]) => `${o.id} ${p} ${d} m`));
 if (far.length) console.log(`\nPEAK MATCHED BY NAME BUT >800 m FROM THE SUMMIT POINT (fix the coordinate in hyakumeizan.json):\n  ${far.join("\n  ")}`);
