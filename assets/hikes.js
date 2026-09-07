@@ -1,7 +1,7 @@
 /*
  * The map on /hikes/.
  *
- * Leaflet is vendored (assets/vendor/leaflet/), so the only requests that
+ * Leaflet is vendored (assets/leaflet/), so the only requests that
  * leave this site are the OpenTopoMap basemap tiles. Everything else — tracks,
  * peaks, the 100 famous mountains — comes from assets/hikes/tracks.json,
  * written by _scripts/build-hikes.mjs.

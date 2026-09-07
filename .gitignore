@@ -2,7 +2,10 @@ _site
 .sass-cache
 .jekyll-cache
 .jekyll-metadata
-vendor
+# Anchored: bundler installs to ./vendor/bundle at the repo root. Unanchored,
+# `vendor` matches at any depth — which silently swallowed assets/vendor/leaflet/,
+# so Leaflet was never committed and /hikes/ shipped with a 404 for its map library.
+/vendor
 .idea
 .vercel
 

@@ -30,7 +30,7 @@ tty_cmd: atlas --tiles opentopomap
     <button type="button" data-fit="world">world</button></span>
 </div>
 
-<link rel="stylesheet" href="{{ "/assets/vendor/leaflet/leaflet.css" | relative_url }}">
+<link rel="stylesheet" href="{{ "/assets/leaflet/leaflet.css" | relative_url }}">
 <figure class="lab-pane hike-pane">
   <figcaption class="lab-pane-bar">
     <span class="lab-pane-file">tracks.json · {{ S.outings }} tracks · {{ S.files }} files</span>
@@ -118,5 +118,5 @@ tty_cmd: atlas --tiles opentopomap
 </ul>
 {%- endfor %}
 
-<script src="{{ "/assets/vendor/leaflet/leaflet.js" | relative_url }}" defer></script>
+<script src="{{ "/assets/leaflet/leaflet.js" | relative_url }}" defer></script>
 <script src="{{ "/assets/hikes.js" | relative_url }}" defer></script>
