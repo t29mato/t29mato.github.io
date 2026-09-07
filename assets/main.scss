@@ -1279,13 +1279,14 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
    --------------------------------------------------------------------------
    A map pane in the homelab pane's clothes, controls written as bracketed
    words, and lists shaped like every other listing on the site. Sport is
-   the one place colour carries meaning here: cyan hike, amber backcountry
-   ski, red for the day that turned back — and the word is always printed
+   the one place colour carries meaning here: cyan hike or trek, amber
+   backcountry ski, green trail run, red for the day that turned back — and the word is always printed
    next to the colour.
    ========================================================================== */
 
 .hike-hike { color: var(--accent); }
 .hike-ski { color: var(--amber); }
+.hike-run { color: var(--green); }
 .hike-fail { color: var(--danger); }
 
 .hike-ctl {

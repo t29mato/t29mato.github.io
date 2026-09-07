@@ -1,6 +1,13 @@
 {
   "_comment": "Per-outing corrections applied last by _scripts/build-hikes.mjs. Key is the outing id (date_source_recordid) or just the date. Fields: sport (hike|ski), en, status (summited|turned back), skip (true drops the outing from the page).",
-  "2025-09-24_yamareco_8735406": { "en": "Coastal hills near Agadir (Morocco)" },
-  "2023-10-05_strava_9985283585": { "en": "Afternoon hike, east Bali (Indonesia)" },
-  "2025-09-19_strava_15866726858": { "skip": true, "_why": "A 300 m evening stroll in the Black Forest near Oppenau; a recording, not an outing." }
+  "2025-09-24_yamareco_8735406": {
+    "en": "Paradise Valley (Agadir, Morocco)"
+  },
+  "2023-10-05_strava_9985283585": {
+    "en": "Afternoon hike, east Bali (Indonesia)"
+  },
+  "2025-09-19_strava_15866726858": {
+    "skip": true,
+    "_why": "A 300 m evening stroll in the Black Forest near Oppenau; a recording, not an outing."
+  }
 }

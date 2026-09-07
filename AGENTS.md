@@ -303,9 +303,11 @@ files and holds no facts of its own.
    `hyakumeizan.json` is off and should be moved to the track's high point.
 3. Commit the two generated files with the data edits. The raw GPX stays out.
 
-Sport comes from Strava's `<type>` when the day has a Strava file or an index
-entry; otherwise a winter day on a snow-country mountain is guessed as
-backcountry ski and reported. The word is always `backcountry ski`, never
+Sport is one of `hike` (walking, trekking, climbing), `ski` (printed as
+`backcountry ski`) and `run` (printed as `trail run`). It comes from Strava's
+`<type>` when the day has a Strava file or an index entry, from a `trail run`
+word in the title, otherwise a winter day on a snow-country mountain is
+guessed as backcountry ski and reported. The word is always `backcountry ski`, never
 `ski`: a groomed slope is not a mountain. A title containing `撤退` marks the
 day `turned back`, which draws the red ring and never credits a summit.
 

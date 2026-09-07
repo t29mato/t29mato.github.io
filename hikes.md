@@ -12,10 +12,10 @@ tty_cmd: atlas --tiles opentopomap
 # Hikes
 
 <p class="page-intro" markdown="1">
-{{ S.outings }} days in the mountains between {{ S.first | slice: 0, 7 }} and {{ S.last | slice: 0, 7 }}, rebuilt from {{ S.files }} GPX files that YAMAP, Strava and Yamareco recorded, drawn where they happened. <span class="hike-hike">Cyan</span> is a hike, <span class="hike-ski">amber</span> a backcountry ski; a <span class="hike-fail">red</span> ring is a day that turned back short of the summit. Every row links to the record on the app that made it.
+{{ S.outings }} days on trails between {{ S.first | slice: 0, 7 }} and {{ S.last | slice: 0, 7 }} — hikes and treks, backcountry ski, the odd trail run — rebuilt from {{ S.files }} GPX files that YAMAP, Strava and Yamareco recorded, drawn where they happened. <span class="hike-hike">Cyan</span> is a hike or trek, <span class="hike-ski">amber</span> a backcountry ski, <span class="hike-run">green</span> a trail run; a <span class="hike-fail">red</span> ring is a day that turned back short of the summit. Every row links to the record on the app that made it.
 </p>
 
-<p class="tty-dim lab-updated">last updated {{ H.updated_at }} · {{ S.hike }} hikes · {{ S.ski }} backcountry ski · {{ S.hyaku_done }} of the 100 famous mountains</p>
+<p class="tty-dim lab-updated">last updated {{ H.updated_at }} · {{ S.hike }} hikes · {{ S.ski }} backcountry ski · {{ S.run }} trail runs · {{ S.hyaku_done }} of the 100 famous mountains</p>
 
 <div class="hike-ctl" id="hike-ctl" hidden>
   <span class="hike-ctl-group"><span class="tty-dim">view:</span>
@@ -24,6 +24,7 @@ tty_cmd: atlas --tiles opentopomap
   <span class="hike-ctl-group"><span class="tty-dim">layers:</span>
     <button type="button" data-layer="hike" aria-pressed="true">hike</button>
     <button type="button" data-layer="ski" aria-pressed="true">backcountry ski</button>
+    <button type="button" data-layer="run" aria-pressed="true">trail run</button>
     <button type="button" data-layer="hyaku" aria-pressed="false">100 famous mountains</button></span>
   <span class="hike-ctl-group"><span class="tty-dim">fit:</span>
     <button type="button" data-fit="japan">japan</button>
@@ -59,7 +60,7 @@ tty_cmd: atlas --tiles opentopomap
     <span class="hike-date">{{ o.date }}</span>
     <span class="hike-name">{{ o.en }}</span>
     <span class="hike-m">{{ o.summit_m }} m</span>
-    <span class="hike-sport hike-{{ o.sport }}">{% if o.sport == "ski" %}backcountry ski{% else %}hike{% endif %}</span>
+    <span class="hike-sport hike-{{ o.sport }}">{% if o.sport == "ski" %}backcountry ski{% elsif o.sport == "run" %}trail run{% else %}hike{% endif %}</span>
     {%- if o.status == "turned back" %}<span class="hike-fail">turned back</span>{% endif %}
     <span class="hike-src">
     {%- for s in o.sources %}<a href="{{ o.links[s] }}" rel="noopener">[{{ s }}]</a>{% endfor -%}
@@ -78,7 +79,7 @@ tty_cmd: atlas --tiles opentopomap
     <span class="hike-date">{{ o.date }}</span>
     <span class="hike-name">{{ o.en }}</span>
     <span class="hike-m">{{ o.summit_m }} m</span>
-    <span class="hike-sport hike-{{ o.sport }}">{% if o.sport == "ski" %}backcountry ski{% else %}hike{% endif %}</span>
+    <span class="hike-sport hike-{{ o.sport }}">{% if o.sport == "ski" %}backcountry ski{% elsif o.sport == "run" %}trail run{% else %}hike{% endif %}</span>
     <span class="hike-src">{% for s in o.sources %}<a href="{{ o.links[s] }}" rel="noopener">[{{ s }}]</a>{% endfor %}</span>
   </li>
 {%- endif %}{% endfor %}

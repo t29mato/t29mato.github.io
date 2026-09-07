@@ -238,7 +238,12 @@ const built = outings.map((o) => {
   // seasonal guess that the report lists for correction.
   let sport = null, sportSource = "strava";
   const stravaType = o.files.map((f) => f.type || f.gpxType).find(Boolean) || (extra[0] && extra[0].type);
-  if (stravaType) { sport = /ski/i.test(stravaType) ? "ski" : "hike"; if (!o.files.some((f) => f.type || f.gpxType)) sportSource = "strava-index"; }
+  // Three sports: hike (walking, trekking, climbing), backcountry ski, and a
+  // trail run. A run named in the title beats the seasonal guess, and a
+  // Strava "Run" type that the file name calls BCSki stays a ski day.
+  const runTitle = titles.some((t) => /trail ?run|トレラン|トレイルラン/i.test(t));
+  if (stravaType) { sport = /ski/i.test(stravaType) ? "ski" : /^run$/i.test(stravaType) ? "run" : "hike"; if (!o.files.some((f) => f.type || f.gpxType)) sportSource = "strava-index"; }
+  else if (runTitle) { sport = "run"; sportSource = "title"; }
   else if (titles.some((t) => /BC|スキー|ski/i.test(t))) { sport = "ski"; sportSource = "title"; }
   else {
     // A winter day on a snow-country mountain is a ski day until told
@@ -322,6 +327,7 @@ const summary = {
   first: built[0].date, last: built[built.length - 1].date,
   hike: built.filter((o) => o.sport === "hike").length,
   ski: built.filter((o) => o.sport === "ski").length,
+  run: built.filter((o) => o.sport === "run").length,
   turned_back: built.filter((o) => o.status === "turned back").length,
   overseas: built.filter((o) => o.region === "overseas").length,
   hyaku_done: Object.keys(done).length
@@ -340,7 +346,7 @@ fs.writeFileSync(OUT_TRACKS, JSON.stringify({
   hyaku: hyaku.map((p) => ({ id: p.id, jp: p.jp, en: p.en, m: p.m, lat: p.lat, lon: p.lon, region: p.region, done: done[p.id] || null }))
 }));
 
-console.log(`${files.length} files -> ${built.length} outings; ${summary.hike} hike / ${summary.ski} backcountry ski; ${summary.turned_back} turned back; ${summary.overseas} overseas; hyakumeizan ${summary.hyaku_done}/100`);
+console.log(`${files.length} files -> ${built.length} outings; ${summary.hike} hike / ${summary.ski} backcountry ski / ${summary.run} trail run; ${summary.turned_back} turned back; ${summary.overseas} overseas; hyakumeizan ${summary.hyaku_done}/100`);
 console.log(`tracks.json ${(fs.statSync(OUT_TRACKS).size / 1024).toFixed(0)} KB`);
 if (unnamed.length) console.log(`\nUNNAMED (add a keyword to names.json or an override):\n  ${unnamed.join("\n  ")}`);
 if (guessed.length) console.log(`\nSPORT GUESSED as backcountry ski from the month (confirm or override):\n  ${guessed.join("\n  ")}`);

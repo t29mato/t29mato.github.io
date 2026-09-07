@@ -44,13 +44,13 @@
   }).addTo(map);
   map.fitBounds(JAPAN);
 
-  var state = { view: "tracks", layers: { hike: true, ski: true, hyaku: false }, selected: null };
+  var state = { view: "tracks", layers: { hike: true, ski: true, run: true, hyaku: false }, selected: null };
   var data = null;
   var lines = {}, dots = {}, hyakuDots = [];
 
   function colorFor(o) {
     if (o.status === "turned back") return ink("--danger");
-    return o.sport === "ski" ? ink("--amber") : ink("--accent");
+    return o.sport === "ski" ? ink("--amber") : o.sport === "run" ? ink("--green") : ink("--accent");
   }
 
   function draw() {
@@ -132,7 +132,7 @@
     var srcs = o.sources.map(function (s) { return '<a href="' + o.links[s] + '" rel="noopener">[' + s + ']</a>'; }).join(" ");
     selEl.innerHTML =
       '<p class="hike-sel-head"><span class="hike-date">' + o.date + '</span> <span class="hike-name">' + o.en + '</span> ' +
-      '<span class="hike-sport hike-' + o.sport + '">' + (o.sport === "ski" ? "backcountry ski" : "hike") + '</span> ' +
+      '<span class="hike-sport hike-' + o.sport + '">' + (o.sport === "ski" ? "backcountry ski" : o.sport === "run" ? "trail run" : "hike") + '</span> ' +
       (o.status === "turned back" ? '<span class="hike-fail">turned back</span> ' : "") +
       '<span class="hike-src">' + srcs + '</span></p>' +
       profileSvg(o) +
