@@ -1,4 +1,4 @@
-# /hikes/ handoff (as of 2026-09-07, main at a210cb7)
+# /hikes/ handoff (as of 2026-09-07, main at 76a1fb8)
 
 Repo copy of the session note; the same text lives in the Claude Code project memory on mini-2.
 
@@ -23,8 +23,11 @@ session state that AGENTS.md deliberately does not carry.
 - Production = GitHub Pages main. Vercel was only for previews.
 
 ## Data facts
-- Raw GPX live in `_gpx/{yamap,strava,yamareco}/` (git-ignored) on mini-2
-  (this machine) only. 99 files: YAMAP 55, Yamareco 39, Strava 7.
+- Raw GPX live in `_gpx/{yamap,strava,yamareco}/` and are **committed** as of
+  e7a66be: 101 files, YAMAP 55 / Yamareco 39 / Strava 7, 25 MB. A clone is
+  enough to rebuild, and the Drive ids below are now only provenance. The repo
+  is public, so the full-precision tracks and their per-second timestamps are
+  public too — the page still serves only the thinned geometry.
 - Drive folders (owner's account): "YAMAP GPX" 1_3X_S4nbVKDlAJgSh-fTl3AcPKybs-jr,
   "Strava GPX" 11XTsmaF1jgVN3_2R2K6T93kVDieL0L-v, "Yamareco GPX"
   1u9ewCHIo5sCOiBwU6-V2mAzC5P7HbGbh. Each also holds the Colab notebook that
@@ -35,19 +38,37 @@ session state that AGENTS.md deliberately does not carry.
   once, ~9 files each, decoding via Write + base64 -d) worked; their spill
   files collided, so verify each GPX's first <time> against its file name
   date afterwards (script used: date within ±1 day, md5 uniqueness).
-- Not on the map (Strava-only, GPX too big to pull this way): 2021-11-03
-  Mt. Takao (6204635161), 2023-11-03 Mt. Takao (10151614346), 2026-01-10
-  Lunch Hike (17007993691). Drop them in `_gpx/strava/` with the standard
-  name and rebuild.
+- Not on the map (Strava-only, no GPX on disk) — four, not three; the build
+  lists them: 2021-11-03 Mt. Takao (6204635161), 2023-11-03 Mt. Takao
+  (10151614346), 2026-01-10 Lunch Hike (17007993691), 2026-02-15 BCSki
+  Mt. Teine Neopara (17411124077). Drop them in `_gpx/strava/` with the
+  standard name and rebuild.
 - Summit points in hyakumeizan.json are approximate (mine, ~1 km) except the
   ones corrected from tracks: amagi, asama (Maekake), hiragatake, makihata,
   echigo-koma. The build reports any name-matched peak >800 m from its point.
 
 ## Open items the owner has not answered
-- Which winter Yamareco-only rows the build guessed as backcountry ski are
+- Which of the 26 winter rows the build guessed as backcountry ski are
   actually hikes (`node _scripts/build-hikes.mjs` lists them). Fix via
-  `_data/hikes/overrides.json`.
-- Whether the three missing Strava days matter enough to fetch.
+  `_data/hikes/overrides.json`. The four that look least like ski days:
+  2025-03-30 美ヶ原 (+140 m over 6.9 km), 2025-03-29 木曽駒ヶ岳 (2.6 km from
+  the ropeway), 2023-03-04 谷川岳 天神尾根, 2026-02-16 手稲ネオパラ (a snow
+  cave and beacon drill, not a tour).
+- Whether the four missing Strava days matter enough to fetch.
+
+## Answered since
+- Mt. Fuji, 2022-07-02: not summited. The checklist stays 45/100. Worth
+  knowing that it fails the gate by 5 m — GPS max_ele 3621 against the
+  3776 - 150 threshold — so if that day is ever re-recorded it may flip on
+  its own. Both Fuji days (2022-05-22 too) start at the Subaru Line fifth
+  station and were filed as "Mt. Kyogatake" until 3fda7a1.
+- Name resolution now has three guards (3fda7a1), because six outings were
+  filed under the wrong mountain: a matched keyword inside another matched
+  keyword is dropped, `not` patterns work in names.json as they do in
+  hyakumeizan.json, and a keyword carrying a `hyaku` id is rejected when the
+  track sits more than 30 km from that summit. The last one is what tells
+  Hakkoda's 大岳 from 守門岳's, and it reports UNNAMED rather than guessing.
+  Watch for the same shape: a short peak name is rarely unique in Japan.
 
 ## Working notes
 - The auto-mode classifier intermittently blocks `git commit`/`git push`,
