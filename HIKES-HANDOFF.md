@@ -48,15 +48,18 @@ session state that AGENTS.md deliberately does not carry.
   echigo-koma. The build reports any name-matched peak >800 m from its point.
 
 ## Open items the owner has not answered
-- Which of the 26 winter rows the build guessed as backcountry ski are
-  actually hikes (`node _scripts/build-hikes.mjs` lists them). Fix via
-  `_data/hikes/overrides.json`. The four that look least like ski days:
-  2025-03-30 美ヶ原 (+140 m over 6.9 km), 2025-03-29 木曽駒ヶ岳 (2.6 km from
-  the ropeway), 2023-03-04 谷川岳 天神尾根, 2026-02-16 手稲ネオパラ (a snow
-  cave and beacon drill, not a tour).
 - Whether the four missing Strava days matter enough to fetch.
 
 ## Answered since
+- The 26 rows the build guessed as backcountry ski from the month: all 26 are
+  ski. Nothing to correct — including the four that read least like ski days
+  from the numbers (2025-03-30 美ヶ原, +140 m over 6.9 km; 2025-03-29 木曽駒ヶ岳,
+  2.6 km from the ropeway; 2023-03-04 谷川岳 天神尾根; 2026-02-16 手稲ネオパラ,
+  a snow cave and beacon drill). Every Teine Neopara day is backcountry.
+  They are recorded in overrides.json as bare `{"sport": "ski"}` so the build
+  stops asking, and the build now reports only guesses nothing has confirmed.
+  The seasonal rule is 26 for 26 so far, but it is still a guess: a new winter
+  day is reported, and should be looked at rather than assumed.
 - Mt. Fuji, 2022-07-02: not summited. The checklist stays 45/100. Worth
   knowing that it fails the gate by 5 m — GPS max_ele 3621 against the
   3776 - 150 threshold — so if that day is ever re-recorded it may flip on

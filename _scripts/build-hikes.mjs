@@ -279,7 +279,10 @@ const built = outings.map((o) => {
     const winter = month === 12 || month <= 3;
     sport = snowCountry && high >= 1000 && (winter || (month === 4 && high >= 1800)) ? "ski" : "hike";
     sportSource = "guess";
-    if (sport === "ski") guessed.push(`${id}  ${titles.join(" / ")}`);
+    // Only an unreviewed guess is worth reporting. An override that agrees
+    // with it is a confirmation the owner has already given, and repeating
+    // the question every build is how the same 26 rows get judged twice.
+    if (sport === "ski" && !ov.sport) guessed.push(`${id}  ${titles.join(" / ")}`);
   }
   if (ov.sport) { sport = ov.sport; sportSource = "override"; }
 

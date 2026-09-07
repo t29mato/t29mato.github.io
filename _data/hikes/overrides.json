@@ -1,5 +1,5 @@
 {
-  "_comment": "Per-outing corrections applied last by _scripts/build-hikes.mjs. Key is the outing id (date_source_recordid) or just the date. Fields: sport (hike|ski), en, status (summited|turned back), skip (true drops the outing from the page).",
+  "_comment": "Per-outing corrections applied last by _scripts/build-hikes.mjs. Key is the outing id (date_source_recordid) or just the date. A bare {\"sport\": \"ski\"} is a confirmation, not a correction: the owner reviewed the days the build guessed from the month and every one of them was a ski day. Recording them stops the build reporting the same 26 rows on every run, and stops the sport depending on a heuristic that may be retuned. Fields: sport (hike|ski), en, status (summited|turned back), skip (true drops the outing from the page).",
   "2025-09-24_yamareco_8735406": {
     "en": "Paradise Valley (Agadir, Morocco)"
   },
@@ -9,5 +9,83 @@
   "2025-09-19_strava_15866726858": {
     "skip": true,
     "_why": "A 300 m evening stroll in the Black Forest near Oppenau; a recording, not an outing."
+  },
+  "2022-02-11_yamap_15625676": {
+    "sport": "ski"
+  },
+  "2022-02-12_yamap_15660723": {
+    "sport": "ski"
+  },
+  "2022-02-13_yamap_15693935": {
+    "sport": "ski"
+  },
+  "2023-02-04_yamap_22285037": {
+    "sport": "ski"
+  },
+  "2023-02-05_yamap_22333959": {
+    "sport": "ski"
+  },
+  "2023-02-12_yamap_22463341": {
+    "sport": "ski"
+  },
+  "2023-02-17_yamareco_5226827": {
+    "sport": "ski"
+  },
+  "2023-02-18_yamap_22534348": {
+    "sport": "ski"
+  },
+  "2023-03-04_yamap_22779154": {
+    "sport": "ski"
+  },
+  "2023-03-05_yamap_22830436": {
+    "sport": "ski"
+  },
+  "2024-02-18_yamareco_6481482": {
+    "sport": "ski"
+  },
+  "2024-04-06_yamareco_6625940": {
+    "sport": "ski"
+  },
+  "2024-04-07_yamareco_6631545": {
+    "sport": "ski"
+  },
+  "2025-02-16_yamareco_7813317": {
+    "sport": "ski"
+  },
+  "2025-03-09_yamareco_7887232": {
+    "sport": "ski"
+  },
+  "2025-03-18_yamareco_7909597": {
+    "sport": "ski"
+  },
+  "2025-03-20_yamareco_7915616": {
+    "sport": "ski"
+  },
+  "2025-03-22_yamareco_7924860": {
+    "sport": "ski"
+  },
+  "2025-03-29_yamareco_7951858": {
+    "sport": "ski"
+  },
+  "2025-03-30_yamareco_7962358": {
+    "sport": "ski"
+  },
+  "2025-04-05_yamareco_7976390": {
+    "sport": "ski"
+  },
+  "2025-04-12_yamareco_8000255": {
+    "sport": "ski"
+  },
+  "2025-04-19_yamareco_8034498": {
+    "sport": "ski"
+  },
+  "2025-04-20_yamareco_8038927": {
+    "sport": "ski"
+  },
+  "2025-04-26_yamareco_8068362": {
+    "sport": "ski"
+  },
+  "2026-02-16_yamareco_9297054": {
+    "sport": "ski"
   }
 }
