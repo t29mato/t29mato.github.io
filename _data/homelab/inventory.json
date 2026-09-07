@@ -153,7 +153,7 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "End to end: the camera detects its own event and opens its stream, mini-1 records whatever answers, and the clip is mirrored off-site and pruned locally only once it is confirmed there. The first real event was 66 seconds and 12.1 MB, uploaded in 12. Events are filed by camera and date rather than by recorder — a recorder can be replaced, and the second camera has to land somewhere that does not collide.",
+      "note": "End to end: the camera detects its own event and opens its stream, mini-1 records whatever answers, and the clip is mirrored off-site and pruned locally only once it is confirmed there. The first real event was 66 seconds and 12.1 MB, uploaded in 12. Events are filed by camera and date rather than by recorder — a recorder can be replaced, and the second camera has to land somewhere that does not collide. Getting them off the machine is now measured in seconds rather than minutes: the clip uploads the moment it exists, and a single still goes two seconds into the event, over a second RTSP session the camera was measured to allow. A recording of somebody walking in is worth nothing while it is still on a disk they can carry out.",
       "status": "in use"
     },
     {

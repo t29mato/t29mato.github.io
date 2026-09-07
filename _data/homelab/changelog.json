@@ -1,6 +1,12 @@
 [
   {
     "date": "2026-09-07",
+    "title": "Eleven minutes in the room, down to fourteen seconds",
+    "body": "The recorder mirrored its clips off-site on a ten-minute timer, which is fine as a backup and useless as a defence. Measured on a real event: recorded at 16:39:55, in the archive at 16:50:48 \u2014 ten minutes and fifty-three seconds in which the only copy of who walked in was on a disk in the room they walked into. Two changes. The clip now uploads the moment it exists rather than waiting for the next sweep, and the sweep stays behind it as the thing that guarantees delivery when the immediate attempt loses a link. And one frame goes out while the event is still running, over a second RTSP session \u2014 possible only because of a measurement taken on the fourth for an entirely different reason, that this camera serves two simultaneous clients. First evidence out of the house at about fourteen seconds now, whatever the length of the event. The floor is not bandwidth: nine of those seconds are a single rclone spending them on an OAuth refresh and its first API call, against a still image that is half a megabyte. None of it survives losing the line before the upload, which is exactly what the camera keeping its own copy is for.",
+    "delta": null
+  },
+  {
+    "date": "2026-09-07",
     "title": "The minis are not the same age, and neither line here said so",
     "body": "The host table called all four minis Late 2012 and the blurb above it called all four of them 2011, which is two wrong answers pointing in opposite directions. Prometheus settled it without anyone getting up: node_exporter publishes each thread's maximum frequency, and mini-1 tops out at 2.9 GHz against mini-2's 3.1 GHz. That is an i5-2415M and an i5-3210M \u2014 a Mid 2011 machine and a Late 2012 one, bought as though they were a batch and recorded as though they were identical. Only those two are corrected. mini-3 and mini-4 still have no OS, so nothing has measured them, and their year is still a thing written down rather than a thing checked. The question that surfaced it was whether the minis could take a heavy test suite off the laptop. They cannot, and not by a margin worth arguing: one M1 is roughly eight of these on multi-core, and a test run does not divide across machines the way it divides across cores. The minis are the right shape for what they already do \u2014 always on, cheap to leave on, and watching from outside whatever they are watching. Speed was never the job.",
     "delta": null
