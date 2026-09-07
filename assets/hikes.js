@@ -67,8 +67,13 @@
         layer.bindTooltip(o.en + " · " + o.date, { direction: "top", className: "hike-tip" });
         layer.on("click", function () { select(o.id, false); });
       });
+      // The line is the track; the dot is the high point, drawn in both views
+      // so an outing is findable when the whole country is on screen.
       if (on && state.view === "tracks") line.addTo(map);
-      if (on && (state.view === "peaks" || o.status === "turned back" || sel)) dot.addTo(map);
+      if (on) {
+        if (state.view === "tracks" && !sel && o.status !== "turned back") dot.setRadius(3.5);
+        dot.addTo(map);
+      }
       lines[o.id] = line; dots[o.id] = dot;
     });
 
@@ -140,6 +145,15 @@
     if (history.replaceState) history.replaceState(null, "", "#" + id);
   }
 
+  // "japan" fits the outings inside Japan, not the archipelago: the point is
+  // to see the tracks, and a frame from Okinawa to Etorofu makes them dust.
+  function fit(which) {
+    var pts = [];
+    data.outings.forEach(function (o) { if (o.peak && (which === "world" || o.region !== "overseas")) pts.push(o.peak); });
+    if (pts.length) map.fitBounds(L.latLngBounds(pts), { padding: [24, 24], maxZoom: 9 });
+    else map.fitBounds(JAPAN);
+  }
+
   function wireControls() {
     ctl.hidden = false;
     ctl.addEventListener("click", function (e) {
@@ -155,12 +169,7 @@
         b.setAttribute("aria-pressed", state.layers[k] ? "true" : "false");
         draw();
       } else if (b.hasAttribute("data-fit")) {
-        if (b.getAttribute("data-fit") === "japan") map.fitBounds(JAPAN);
-        else {
-          var all = [];
-          data.outings.forEach(function (o) { if (o.peak) all.push(o.peak); });
-          map.fitBounds(L.latLngBounds(all), { padding: [20, 20] });
-        }
+        fit(b.getAttribute("data-fit"));
       }
     });
     document.querySelectorAll(".hike-list li[data-id]").forEach(function (li) {
@@ -183,6 +192,7 @@
       draw();
       var hash = decodeURIComponent(location.hash.slice(1));
       if (hash) select(hash, true);
+      else fit("japan");
     })
     .catch(function () {
       mapEl.innerHTML = '<p class="lab-pane-fallback">Could not load tracks.json.</p>';
