@@ -280,6 +280,10 @@ belongs in the inventory, the diagram, the changelog or the commit message:
 Fukada's 100 famous mountains. Like `/homelab/`, it is rendered from data
 files and holds no facts of its own.
 
+The current state of the work — decisions taken, where the raw data is,
+what is still open, and the tooling gotchas — is in `HIKES-HANDOFF.md` at
+the repo root (excluded from the build). Read it before continuing.
+
 ### Where the truth lives
 
 | File | What it is |

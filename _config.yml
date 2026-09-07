@@ -121,3 +121,6 @@ exclude:
   # provenance, but it is not a page — without this it would be built and
   # served at /publications-data.html.
   - publications-data.md
+  # Session handoff for the hikes page: state, open items, gotchas. For
+  # whoever continues the work, not for the site.
+  - HIKES-HANDOFF.md
