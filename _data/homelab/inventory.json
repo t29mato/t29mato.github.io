@@ -1,6 +1,6 @@
 {
   "updated_at": "2026-09-07",
-  "blurb": "Four Mac minis from 2011, a switch, and a laptop to drive them. Two hosts are provisioned so far; the rest are hardware waiting for an OS.",
+  "blurb": "Four Mac minis from 2011 and 2012, a switch, and a laptop to drive them. Two hosts are provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
       "id": "air-1",
@@ -28,7 +28,7 @@
     },
     {
       "id": "mini-1",
-      "hardware": "Mac mini (Late 2012)",
+      "hardware": "Mac mini (Mid 2011)",
       "ram": "8 GB",
       "os": "Ubuntu 24.04 LTS (desktop edition, boots to multi-user)",
       "role": "main machine — agent session, camera recorder, Prometheus, Grafana, labstat",
