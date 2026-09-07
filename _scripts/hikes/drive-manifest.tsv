@@ -1,0 +1,138 @@
+# Every GPX exported to Google Drive, one row per file, as listed by the Drive
+# API on 2026-09-07. This is provenance, not site content: _scripts/ is excluded
+# from the Jekyll build. Columns: source, date, name (as exported), activity id,
+# bytes, drive file id.
+#
+# The activity id is the last underscore-separated field of the filename, which
+# is what makes an outbound link buildable without asking any service anything:
+#   yamap     https://yamap.com/activities/{id}
+#   yamareco  https://www.yamareco.com/modules/yamareco/detail-{id}.html
+#   strava    https://www.strava.com/activities/{id}
+source	date	name	activity_id	bytes	drive_id
+yamap	2021-08-07	天城山	20505495	33319	1Z6WKUAaMg1E65H3HBC8FTZWW_Pwxrznw
+yamap	2021-08-21	巻機山	20505397	705448	11nzI_AJ_e0JroUpbWDDEBO3GkU3asB_G
+yamap	2021-08-22	谷川岳	20505452	224968	1t8Fb1NqMQXGXKa_yL5xKf6NuvB_AnvuS
+yamap	2021-08-28	大山	12746831	41713	1rE7auidxmfU9Wflar0coGWNlVmnwXiXK
+yamap	2021-09-04	筑波山(男体山)・筑波山(女体山)	12853532	23459	11d5JXO57bjoqf-EDVPG9gfdzlCMqgAyN
+yamap	2021-09-18	薬師岳・安達太良山	13101450	64293	1CPfFSy6rMLkSphI3EujjAhwrZEL3FAFa
+yamap	2021-09-19	西大巓・西吾妻山	13153013	123293	19agY6VKgOoUTkJJKMhBWNJER7N3qTPHd
+yamap	2021-09-20	赤埴山・磐梯山	13185117	83009	19Ztbqa9Mag47n7CYDJUkoM1lK0wAIn8I
+yamap	2021-09-23	霧藻ヶ峰・前白岩山・白岩山・雲取山・小雲取山・ヨモギノ頭	13257357	130984	1PRQwpKJJUO2h5tcQZUD9CxsIlKqHT-zi
+yamap	2021-10-02	車坂山・槍ヶ鞘・トーミの頭・前掛山・鋸岳・仙人岳・蛇骨岳	13433577	83961	1chH9K8g__esVuxewO9LumJEDV9S8_-d5
+yamap	2021-10-03	茨木山・四阿山・浦倉山	13486564	108041	1trUg-LmFUnlxpkeUeNxBH8BQ5rd7V9xQ
+yamap	2021-10-16	日立アルプストレイル・神峯山	13705462	1549	18jlxZYmgCmE68lEaaGM4bKHcZGWWJP36
+yamap	2021-10-16	羽黒山・神峰山・御岩山・高鈴山・真弓山・風神山	13722451	181754	1V-CBGO0Ljx6etXsAQB4To5-D7QbB1q8V
+yamap	2021-10-24	筑波山(男体山)・筑波山(女体山)	13867740	60495	1ZboJ2zFNHh2fuo_ON5JzCfpr2lDCW10Q
+yamap	2021-11-06	茶臼岳(那須岳)・隠居倉・朝日岳・剣が峰	14147746	81910	1Euy4v9BYXV33EdQAlT-u8twmq673Rx_o
+yamap	2021-11-07	Gozenyama trail run 10k	14192823	146874	1lc7qPlfIE9PpewduIky5bvfiX80HHVLG
+yamap	2021-11-21	多度山	14444012	55537	14PShweJw5dyVwqSbz4onUJXCtsevbyg8
+yamap	2022-01-01	宝篋山	15000902	34855	1K3iLC8H3SFkXgYJI7Yf70cUQbC1tqRNp
+yamap	2022-02-11	羊蹄山（蝦夷富士）真狩ルート	15625676	14605	1OaQdXr1Q58NVhqfVzBEB34xhwU0SKkHO
+yamap	2022-02-12	目国内岳・雷電山	15660723	69698	1qIbDhWeQbfFGvMqj7o1ftTmITwAtSP3d
+yamap	2022-02-13	岩内岳	15693935	69068	1zcOQSB3cBKpL0cWzyCpREanrcRYq-PSs
+yamap	2022-05-02	大台ヶ原山（日出ヶ岳）	16998989	32533	1S1w7r9feg8_m0TEM30RkO-WBSj4WvB_e
+yamap	2022-05-03	弁天ノ森・八経ヶ岳（八剣山・仏経ヶ岳）・弥山	17057123	53813	1YdiBCaxOdb67_wJ1anWbLHohTkyXljNT
+yamap	2022-05-05	伊吹山	17146052	10381	1gAfc8d5tYrme3iy87VP_ZdRB50J9q7xo
+yamap	2022-05-22	経ヶ岳 富士山	17494642	23576	1Qldo0qCucyoUd4ZLuin6pHt2xhyjeOS8
+yamap	2022-06-18	高手山・西峰・剣ヶ峰山・武尊山・中ノ岳・家の串山・剣ヶ峰	18009914	125170	1Y6Ckjmi4DwXsqVkiIWRjFCXl9E1_CXWp
+yamap	2022-06-19	地蔵岳・北山・篭山・駒ヶ岳・黒檜山・足柄山・陣笠山・薬師岳	18044602	88073	18o5FfV2GGJlJSdu-jsIGVUMx97kIlDcW
+yamap	2022-07-02	経ヶ岳	18261692	78251	1WAwJe3LBRReL48Q4BXRgqBaOZ9FSNt3v
+yamap	2022-08-21	十勝岳	19166527	54244	1OKlRN9NGQjj7fMpqO_OoBPhVmdF141x9
+yamap	2022-08-22	旭岳・間宮岳・中岳・北鎮岳・鋸岳・比布岳・安足間岳・当麻岳	19181619	108755	1UXF3PEJthwA76Bxdc6XRpsKamRr8jFsI
+yamap	2022-08-23	斜里岳	19194226	59565	1hLwTo_cbVNKsTObl3uVQidFZ2CasFQDr
+yamap	2022-08-24	羅臼岳	19207245	83020	1shb4LGNVt5AtQrGGC8fq_0wgA5IuX9YK
+yamap	2022-08-25	雌阿寒岳・阿寒富士	19216063	74019	1-4kEqKWAwv15avIH61fnmcQ0Guw7M0qH
+yamap	2022-08-26	トムラウシ山	19228548	144469	13CEHafNQLOHzfGUYqMXqaa1SQhrS3ymm
+yamap	2022-08-27	真狩岳・羊蹄山（後方羊蹄山・マッカリヌプリ）	19247184	58047	1WsbJ7erQvLS60v7fFNUQFnQkRDzeVizv
+yamap	2022-09-10	会津駒ヶ岳・中門岳	19494733	88293	1KNGAcWnLpITTlAEvNOckhBpH_UmLiyin
+yamap	2022-09-11	燧ヶ岳(柴安嵓)・俎嵓	19542643	110808	1NptH4VfBmhfwKxzhkeF75xNZ721fPSXF
+yamap	2022-10-09	至仏山・小至仏山	20139638	69361	1zl8ZXZ5ZWxxVygi9QRSz5DA8aA3_GBuz
+yamap	2022-10-15	地蔵岳（鳳凰山）・赤抜沢ノ頭・観音岳（鳳凰山）	20262975	101782	1kOZQ3DjfS-g_z-7MSaMFKqj6fMDRkGBq
+yamap	2022-10-16	双児山・駒津峰・甲斐駒ヶ岳・小仙丈ヶ岳	20310566	86067	1r4nm5jG1TIWuYJ_QF6zCu04C8Y8gZMl3
+yamap	2022-10-22	下台倉山・台倉山・池ノ岳・平ヶ岳	20419148	125798	1TYkNnm4l1UUlkpDbjcV0WcxUoLnq50l-
+yamap	2022-10-23	道行山・小倉山・越後駒ヶ岳	20449920	91012	1y1xiglOMgjab8jVSDPZNA1bDnv67Z07F
+yamap	2023-02-04	長峰・大岳	22285037	74660	1DTo34p7Z_vBSE011ljWcRCb0vlHXg42Z
+yamap	2023-02-05	カヘヨノボッチ・前岳・浅草岳	22333959	80836	1CrajjVGovSIJBlENwGFvfkrzxnLTh_an
+yamap	2023-02-12	三田原山	22463341	74867	1XIyuE-nP2oEA1RVzJsfoFPV-Yi3RlOWS
+yamap	2023-02-18	平標山	22534348	78644	1NJDboqcyP2UfZXGxrKbdDIMyGq2_O1GR
+yamap	2023-03-04	熊穴沢ノ頭・谷川岳（トマの耳）	22779154	47985	1MSpLaz7wnJsP6CYpMYdwMtKyPXOezk6n
+yamap	2023-03-05	苗場山	22830436	88145	1-yJXvz9tHnwuCjQoOaOINW37X6ejfuYk
+yamap	2023-04-30	剣山	23874772	37412	1lq9J3Ot_vFfiih7jazmi7rpY7q6tjrR4
+yamap	2023-05-02	石鎚山・天狗岳	23943995	59204	1Lau1-bl7t_ANRiHHIfXtBgXW1RyG_a84
+yamap	2023-08-05	男体山	25940075	56486	1UoNcBoGfrpZ_S4_bKtsexZ1nu_ZWE091
+yamap	2023-10-04	アグン山	27188348	77252	1BhANOW6n2ZGpKR1RhEjv8FbZZ2azN_04
+yamap	2023-10-05	バトゥール山	27198532	20371	1jkFGDzycK8nSdaUb5nIY9mmnRWtCXUxt
+yamap	2023-11-11	ヨナ沢の頭・空木岳・東川岳・熊沢岳・大滝山・檜尾岳	28133319	229325	1BxkQIYTkKR5Qpfa9n7DHy0h4JE6wvhnR
+yamap	2023-11-12	諏訪山・西岳	28169173	78845	1hRS27Reb_POsrcZk-eZnWSEXPOVyYlSZ
+strava	2021-08-07	Hike_Mt. Amagi	5767448011	40073	1XTHOmqkAGhPxfwDTJx5KuGofOxB6ZZME
+strava	2021-08-21	Hike_Mt. Makihata	5832049012	489884	122sIc2P0gjZ-bptcrybuajcxFpq2Ck9j
+strava	2021-08-21	Hike_Mt. Makihata 2	5832095661	625486	1IOOWnw4wi80iGZWifV6NtVf9r5S-jznO
+strava	2021-08-22	Hike_Mt. Tanigawa	5832095865	586063	1ZZLQjwkHmx_3T4NuCDvIKfQo2xyHwNfn
+strava	2021-08-28	Hike_Mt. Oyama	5864194928	565813	1gdaZ63c17DEmphgBeZ6_B6QWH5cAC1xy
+strava	2021-09-04	Hike_Mt. Tsukuba	5901754624	441514	1j_ZsI_YowYI3pY3Nzq7JzkIWfd2lkgi6
+strava	2021-09-18	Hike_安達太良山 Mt. Adatara	5977462978	2302214	1K4fBvX_CmOqlvgPu0gGjUbHK1z3BazKC
+strava	2021-09-19	Hike_吾妻山 Mt. Azuma	5984251019	3834963	1lvJIGb8GZQxHAtPPWp6-YPzb0N85Lzqj
+strava	2021-09-20	Hike_磐梯山 Mt. Bandai	5993454128	77873	1HVKqttrktKok-YQqwsYDK_c4WPXwQhid
+strava	2021-09-23	Hike_Mt. Kumotori	6005305019	3279382	1kI0yZio3fZCfMb1IfTStvhaJIr_RR4ln
+strava	2021-10-02	Hike_Mt. Asama	6050648562	2833605	1d-gJ_QDLNqJgudKrQgQN08xKsEB6dhix
+strava	2021-10-02	Hike_Mt. Kusatsu Shirane	6050739500	132241	1eFQvafqyQi6EN_hI23zmy4qJaKSfWYc8
+strava	2021-10-03	Hike_azumaya san	6055601105	2825937	1oTFCmfZyS2w9ogLKOPUZIpOk4JEl5WTG
+strava	2021-10-24	Hike_Mt. Tsukuba	6157619524	1177798	1XotR7IuvxRox2TU9AKkPglyYUPMFgT-h
+strava	2021-11-03	Hike_Mt. Takao	6204635161	1946603	1QGTKelx242bYIJ8qVqOcxZeXE9yyfCxF
+strava	2021-11-06	Hike_Mt. Nasudake	6217993416	2381078	1tm4Fx3YfTNB9WIGC4XRf5aTIHo9aYTpr
+strava	2021-11-21	Hike_Mt. Tado	6286138773	1461626	1hwqBs9ylRUW4wLw6jPqzCzbZTP5poTlF
+strava	2022-01-01	Hike_Hokyo san	6453604434	411170	1k3Vrf97abpdN94Wl_QVsHq2tJ8uQT54a
+strava	2023-09-27	Hike_Padar island	9928040297	560244	1m9eqTq95-9mMETU1Gh7lCh50udikjB5i
+strava	2023-10-05	Hike_Afternoon Hike	9985283585	261574	1pDDzj0pUSd8OB0HCYJ6ImbW2mhKobqQ4
+strava	2023-11-03	Hike_Mt. Takao	10151614346	1740566	1nmurGzs9z54e7XdqzHTKTROdjdpDN6DS
+strava	2024-02-12	BCSki_Forest of Kinsei	10749837955	28524	1O7YacF6XdqJH81CosHlib6EJloHHj1Bg
+strava	2024-02-17	BCSki_Yellow waterfall	10780053665	26711	1aLGZi4Hdf6e51c-C2W9gTr_IIUECi70y
+strava	2025-03-23	BCSki_Morning Run	14236848355	1022535	1iY_5n_JCaX0oP7fQdLJg2K3hKul2Zbsd
+strava	2025-09-19	Hike_Evening Hike	15866726858	34468	1DfIuzKxbfgE2-G8ks2EM7RBpYCtJml2L
+strava	2025-12-07	BCSki_Lunch Backcountry Ski	16671437281	872269	1F0EFHURIt7ZOOhyF7VLFTNGV7rIwMx0r
+strava	2025-12-07	BCSki_Morning Backcountry Ski	16671508650	2668585	1ex8VlsohwyhcS4h_smwB6uS7iqkpLYLt
+strava	2025-12-07	BCSki_Morning Backcountry Ski 2	16675468944	2014880	1UXCh631qMExckBz2I-xNHoEd-4AovDFO
+strava	2026-01-10	Hike_Lunch Hike	17007993691	4015997	11BIb9CGaSaTxbEyhV7DNt_ArVz3uZq-7
+strava	2026-02-01	BCSki_Mt. Mitahara around Mt. Myoko	17245311205	3214845	1aRhpwAxIAgcOeaGAeXAQ3pBCBfP8iBVq
+strava	2026-02-12	BCSki_Teine Neopara	17369768684	4005578	1lMk4hjiFjxPFc5UpSiFOfhsCkGTCBRIH
+strava	2026-02-15	BCSki_Mt. Teine Neopara	17411124077	5258820	1qGJGCVe9GlUnu3roDBOR1kwNQOYQQXp_
+strava	2026-02-22	BCSki_Mt. Tairappyo	17478906783	5544573	13grrXUS6X2YO44dLThkGC5Ddid3oB03S
+yamareco	2023-02-17	苗場山	5226827	74020	1JljCPfbnrP2a5oKi72LUW2Tash8DuXbC
+yamareco	2024-02-12	金精道路出合い	6458955	27325	1FY1lluvdxemMwjihXdQ2tdDyYLf09glv
+yamareco	2024-02-17	Yellow waterfall	6468145	25480	12eekTeI-yHWGDxT-433TrRb0DxlNGhkl
+yamareco	2024-02-18	猫魔八方台	6481482	37714	1cUWFgmpMlvBeq1dBMJPIoDgdn7FnwfrP
+yamareco	2024-04-06	白馬乗鞍岳	6625940	38371	1g9fKEufS4HbguTi8kIWkaTP1MlWb7Tw6
+yamareco	2024-04-07	小蓮華山	6631545	46487	1EsYF8nmqw6RQ1nAV8j8lb8OOeLwrYufY
+yamareco	2024-05-18	箱根山	6816524	40232	1XcAS2FPSs3V6IpFcmlktH8yhfczcVi-d
+yamareco	2024-08-25	筑波山	7176092	36501	1AOe5hQNI3XlZaCf78S3kSL6IN78sQmiS
+yamareco	2024-09-14	飯豊山	7242939	116495	1E1hUPFgkmMteV9S3tjVathtJnbQaVSH4
+yamareco	2024-09-21	妙義山	7263360	37038	1zSDCQQ5Pn1nhxdzw7lPdG5z38KsRzF57
+yamareco	2024-09-28	奥白根山	7290580	60410	1uT0_Y_LG-66KMGWPOOW4UuuVgMLgxpWQ
+yamareco	2024-11-03	仏国寺	7437714	21723	1hL2Si4OfcLiovuqQLXw3VWLCf01R2vlU
+yamareco	2024-11-09	金峰山	7467164	89604	1WyBdJJJRYtzqkz-r00T7OcE65al8BG2v
+yamareco	2025-02-16	日光白根山	7813317	44038	1x4LFnrS1gygZmyWDtieBakn5nI6FyDAe
+yamareco	2025-03-01	中大倉山・スダレ山BC	7856507	38212	1aoe_574kx-GfoT2Og95mkGjWp4heTt8B
+yamareco	2025-03-09	aizu komagatake	7887232	43226	1--5W2G9glGTCGr8PYS9jW0bLZiYpl8x1
+yamareco	2025-03-18	雛岳	7909597	20220	1Akk3xIUzZhflQLOXiZiYkZHGwC_uT3df
+yamareco	2025-03-20	大岳鞍部避難小屋	7915616	35889	1gp927hhvgIIlR4Ucyr77s1klA-HFMdYR
+yamareco	2025-03-22	栗駒山	7924860	27286	1_E0JUkpY0qLKQBpkaIulq3U2UC1CzceW
+yamareco	2025-03-23	不忘山	7930969	20444	1rRYAZwUOFOYSADXptGFPYyb0Ri0XullJ
+yamareco	2025-03-29	木曽駒ヶ岳	7951858	12310	1ooTzaSRzaLfVpA9iYLekOgjg4GyBdO6e
+yamareco	2025-03-30	美ヶ原	7962358	27060	14YoVqptBkSsQWPCPbX4SMVOeP8_fZxBb
+yamareco	2025-04-05	巻機山	7976390	45699	1j2LyvMtc4yaG4wC06IDmzvZDsbM2qP9d
+yamareco	2025-04-12	会津駒ヶ岳	8000255	45382	1Uv8vozqeAWjyIrg1f03cSgz4--bJ_bPv
+yamareco	2025-04-19	小蓮華山	8034498	71686	1W2QJNLBZdL0wFU7vfcJqyzIIgZjW0xsS
+yamareco	2025-04-20	白馬乗鞍岳	8038927	30911	1rurWOh8EcrOkSXdF-lf1E9bf8AN4CWOJ
+yamareco	2025-04-26	白馬岳 小蓮華経由 蓮華温泉宿泊	8068362	104048	1Bwg_x4iRXsugomPnwkshvFqGhNRG95nK
+yamareco	2025-05-04	甲武信ヶ岳	8128527	89201	1zdwvnj1eXnYcyUzg3E5Mts3bd4fIkGFU
+yamareco	2025-05-10	宝篋山	8148397	22823	1X6eLn-Gi9oKAs6H4D4d7lBqLomQkAH6V
+yamareco	2025-09-24	NO NAME	8735406	34731	1s1JY6rM8rLhQlPve-Ihzk_MSWfosLoNY
+yamareco	2025-11-13	NO NAME	8933570	693	1XZiHvm_ekZhF6bCpi5ucCJcb4fGEoFIA
+yamareco	2025-11-13	蓮花峰	8937415	56220	1AzAZu52EkaXSjTm0b8weIx0PihtK9d8Z
+yamareco	2025-11-24	宝篋山	8990608	41720	1LNN8e5VUYTnTiyTshd_5xJbmtQGUt0CO
+yamareco	2025-11-29	小町山	9005779	24939	1myl9lb01LAgCLvWApnbZlITlmRkzZ6QU
+yamareco	2025-12-07	越後駒ヶ岳 撤退	9044624	2014880	1fPRr8NxcZ6ibGiUbPX8VE8-EuT7LO9hX
+yamareco	2026-02-01	三田原山	9245120	3214845	1769f0a04vc4Te33OXzo0KOMrwDU3eWK3
+yamareco	2026-02-12	手稲ネオパラ	9275546	4893146	15JHZQEF4WwhE3vWaqG3Umtdzr2BE6Fld
+yamareco	2026-02-16	手稲ネオパラと雪洞作り訓練とビーコン訓練	9297054	672132	13CTvy3SAxTApb-8bJ0xAM_fW2Z3ldsG-
+yamareco	2026-02-22	平標山	9339439	6766895	1urAJc7hMeQ6g_9KrE4VgHsIKApW9BMbG

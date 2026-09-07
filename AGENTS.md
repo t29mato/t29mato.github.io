@@ -213,6 +213,44 @@ rather than assuming.
 
 On macOS, none of this applies: use the system Chrome.
 
+### Working on this repo from more than one machine
+
+Every mini gets its own clone, and more than one agent session may be awake at
+once. Two rules keep that from hurting, and they follow from one observation:
+**the only files here that cannot be merged are the ones that never needed to
+be.**
+
+**1. Whoever changes the spec regenerates the diagram, in the same commit.**
+Never regenerate from a spec change someone else made and you have not pulled.
+`.gitattributes` marks the rendered pages `-merge`, so git will refuse to
+interleave two renders rather than quietly producing a broken one. When a
+conflict does land on them, do not read it: take the spec you want, run
+`deliver` and `compare` again, and commit the result. Nothing is lost, because
+nothing in those files exists anywhere except in the spec.
+
+**2. Rebase, do not merge.**
+
+```bash
+git config pull.rebase true    # once per clone
+git pull && git push
+```
+
+A merge commit for a one-line change to `inventory.json` buries the history
+this page is partly for.
+
+Prose and data — `AGENTS.md`, `_data/homelab/*.json`, the markdown pages — may
+be edited from any machine. They are small and they merge. That matters more
+than it sounds: agent memory is per-machine and does not travel, so anything a
+session on one mini learns is lost unless it lands in this repo or in an issue.
+A rule that stops other machines writing documentation would quietly throw away
+the reason for having them.
+
+If the generated pages ever become a real nuisance, the structural fix is to
+stop committing them and render them in CI from `homelab/spec/`. That is a
+bigger change than it looks — GitHub Pages would have to build from a workflow
+rather than from the branch — and it is not worth doing before the pain is
+real.
+
 ### What must never go on this page
 
 The page is world-readable, and the lab is a home. None of the following
