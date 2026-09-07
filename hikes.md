@@ -15,7 +15,7 @@ tty_cmd: atlas --tiles opentopomap
 {{ S.outings }} days on trails between {{ S.first | slice: 0, 7 }} and {{ S.last | slice: 0, 7 }} — hikes and treks, backcountry ski, the odd trail run — rebuilt from {{ S.files }} GPX files that YAMAP, Strava and Yamareco recorded, drawn where they happened. <span class="hike-hike">Cyan</span> is a hike or trek, <span class="hike-ski">amber</span> a backcountry ski, <span class="hike-run">green</span> a trail run; a <span class="hike-fail">red</span> ring is a day that turned back short of the summit. Every row links to the record on the app that made it.
 </p>
 
-<p class="tty-dim lab-updated">last updated {{ H.updated_at }} · {{ S.hike }} hikes · {{ S.ski }} backcountry ski · {{ S.run }} trail runs · {{ S.hyaku_done }} of the 100 famous mountains</p>
+<p class="tty-dim lab-updated">last updated {{ H.updated_at }} · {{ S.hike }} hikes · {{ S.ski }} backcountry ski · {{ S.run }} trail run{% if S.run != 1 %}s{% endif %} · {{ S.hyaku_done }} of the 100 famous mountains</p>
 
 <div class="hike-ctl" id="hike-ctl" hidden>
   <span class="hike-ctl-group"><span class="tty-dim">view:</span>
