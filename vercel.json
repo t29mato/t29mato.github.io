@@ -4,5 +4,6 @@
   "installCommand": "bundle install",
   "buildCommand": "bundle exec jekyll build",
   "outputDirectory": "_site",
+  "build": { "env": { "PAGES_REPO_NWO": "t29mato/t29mato.github.io" } },
   "github": { "enabled": false }
 }
