@@ -30,6 +30,7 @@ tty_cmd: atlas --tiles carto
     <button type="button" data-fit="world">world</button></span>
 </div>
 
+<link rel="stylesheet" href="{{ "/assets/vendor/leaflet/leaflet.css" | relative_url }}">
 <figure class="lab-pane hike-pane">
   <figcaption class="lab-pane-bar">
     <span class="lab-pane-file">tracks.json · {{ S.outings }} tracks · {{ S.files }} files</span>
