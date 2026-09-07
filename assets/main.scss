@@ -1100,9 +1100,33 @@ a.post-row:focus-visible .post-row-title { color: var(--accent-hover); }
 /* Unknown gets no colour, by the same rule the statuses follow. */
 .lab-live-empty { color: var(--text-dim); }
 
-/* GAP — still undefined, and only reachable where /api/status answers, so not
-   on the published page: .lab-live-id, .lab-live-detail, .lab-live-by, and
-   whatever .lab-live-fallback / .lab-live-foot carried past font-size.
+/* The row's own columns, on the same grammar: a name that holds its width so
+   the status words line up under each other, prose that takes what is left,
+   and the attribution last and dim, because who saw it is the least of what
+   the row says. The status word sits second here rather than last — that is
+   the band's one departure from `ls services/`, and it is the live one, so
+   the state is next to the name. */
+.lab-live-id {
+  flex: none;
+  min-width: 17ch; /* "mini-1-exporter" is the longest the lab reports */
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.lab-live-detail {
+  flex: 1 1 20rem;
+  min-width: 0;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.lab-live-by {
+  flex: none;
+  color: var(--text-dim);
+}
+
+/* GAP — whatever .lab-live-fallback / .lab-live-foot carried past font-size is
+   still missing; both render, so the band is readable without it.
    (.lab-topology is an iframe id, not a class — it was never styled here and
    .lab-pane-frame covers it.) */
 
