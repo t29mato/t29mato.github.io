@@ -40,7 +40,7 @@
   L.control.zoom({ position: "topleft" }).addTo(map);
   L.tileLayer(TILE, {
     subdomains: "abc", maxZoom: 17,
-    attribution: 'map data &copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors, SRTM · style &copy; <a href="https://opentopomap.org" rel="noopener">OpenTopoMap</a> (CC-BY-SA)'
+    attribution: 'map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, SRTM · style &copy; <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA)'
   }).addTo(map);
   map.fitBounds(JAPAN);
 
@@ -129,7 +129,7 @@
     state.selected = id;
     draw();
     if (fly) map.fitBounds(L.latLngBounds(o.track), { padding: [30, 30], maxZoom: 13 });
-    var srcs = o.sources.map(function (s) { return '<a href="' + o.links[s] + '" rel="noopener">[' + s + ']</a>'; }).join(" ");
+    var srcs = o.sources.map(function (s) { return '<a href="' + o.links[s] + '" target="_blank" rel="noopener">[' + s + ']</a>'; }).join(" ");
     selEl.innerHTML =
       '<p class="hike-sel-head"><span class="hike-date">' + o.date + '</span> <span class="hike-name">' + o.en + '</span> ' +
       '<span class="hike-sport hike-' + o.sport + '">' + (o.sport === "ski" ? "backcountry ski" : o.sport === "run" ? "trail run" : "hike") + '</span> ' +
