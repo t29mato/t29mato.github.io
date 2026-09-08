@@ -111,7 +111,7 @@
     },
     {
       "name": "herdr",
-      "note": "Terminal and session management across the hosts.",
+      "note": "Installed per user — under ~/.local/bin on the minis, by Homebrew on air-1 — on the same standard as node: nothing system-wide, so a host can be re-pinned without touching its packages. What it manages is the terminals on the host it is running on, which is narrower than this line used to claim. Every install here is 0.8.0, each one runs its own server, and a session on mini-2 is not visible from air-1; reaching across the hosts is still the laptop opening one SSH connection per mini, and nothing survives the lid closing. 0.9 adds a machine list that puts a remote host's workspaces beside the local ones over SSH — the shape this lab already has, with the laptop as the client and the always-on machines doing the work — and it is not on the stable channel here yet.",
       "status": "in use"
     },
     {
