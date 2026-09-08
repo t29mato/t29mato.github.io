@@ -95,6 +95,11 @@
       "status": "in use"
     },
     {
+      "name": "mac-autorestart",
+      "note": "A five-line systemd oneshot that clears AFTERG3_EN, bit 0 of the chipset's GEN_PMCON_3 register, so that mains returning is enough to start the machine and nobody has to walk over and press anything. Apple's own setting for this lives in the SMC, which only macOS can write and which both minis lost along with macOS; the chipset register is the same decision one layer down, and Linux can write it with a masked setpci. The bit sits in the RTC well and so survives the outage it is there for, which is also why re-asserting it at boot is insurance rather than the mechanism. Proved rather than argued: mini-2 was set, mini-1 was deliberately left alone, both were unplugged together, and only mini-2 came back. mini-1 has the register write; the unit that re-applies it is not on that host yet.",
+      "status": "in use"
+    },
+    {
       "name": "OpenSSH server",
       "note": "The only way onto a mini. Key auth from air-1.",
       "status": "in use"
@@ -111,7 +116,7 @@
     },
     {
       "name": "herdr",
-      "note": "0.9.0 on all three, and the claim this line used to make is finally true: air-1 saves each mini as an SSH machine, and their workspaces sit in the laptop's sidebar beside the local ones. Client on the laptop, servers on the machines that stay on — the shape the lab already had, except that leaving is no longer the same as stopping, because the remote server holds the panes and a closed lid now costs a connection rather than the work. Installed per user on every host: ~/.local/bin on the minis, and on air-1 too once Homebrew turned out to be two releases behind, so three hosts share one distribution path on the same standard as node. It costs about 24 MB resident on a mini, measured rather than assumed — a twentieth of what ollama holds on mini-1, and the reason the worry about adding it to these machines was misplaced. What it consolidates is the watching and not the work: the agent CLI still runs within one server and cannot see the agents on the other machines, so two sessions sharing a clone can still land on each other. That stayed a repository problem and was solved as one, with a worktree, so that two writers never share a HEAD.",
+      "note": "0.9.0 on all three, and the claim this line used to make is finally true: air-1 saves each mini as an SSH machine, and their workspaces sit in the laptop's sidebar beside the local ones. Client on the laptop, servers on the machines that stay on — the shape the lab already had, except that leaving is no longer the same as stopping, because the remote server holds the panes and a closed lid now costs a connection rather than the work. Installed per user on every host: ~/.local/bin on the minis, and on air-1 too once Homebrew turned out to be two releases behind, so three hosts share one distribution path on the same standard as node. It costs about 24 MB resident on a mini, measured rather than assumed — a twentieth of what ollama used to hold on mini-1 before that was removed, and the reason the worry about adding it to these machines was misplaced. What it consolidates is the watching and not the work: the agent CLI still runs within one server and cannot see the agents on the other machines, so two sessions sharing a clone can still land on each other. That stayed a repository problem and was solved as one, with a worktree, so that two writers never share a HEAD.",
       "status": "in use"
     },
     {
@@ -122,11 +127,6 @@
     {
       "name": "Grafana",
       "note": "Unpacked under ~/monitoring beside Prometheus and run as a user unit, so nothing is installed system-wide and nothing needs root. Its data source and its one dashboard are provisioned from files rather than clicked in, so the install is reproducible — eleven panels chosen for these machines rather than the two-hundred-panel community dashboard, on the grounds that a screen showing every metric shows none of them. It answers on the LAN only, and deliberately is not what reports on the lab from outside: a dashboard served from mini-1 cannot tell anyone that mini-1 is down. Its version and usage reporting are off — the same standard the public site holds itself to about calling third parties.",
-      "status": "in use"
-    },
-    {
-      "name": "ollama",
-      "note": "A local model runtime on mini-1, resident at about half a gigabyte. Written down because it is half a gigabyte: an inventory that lists the services somebody meant to run and omits the ones that are actually holding memory is not an inventory.",
       "status": "in use"
     },
     {
@@ -172,7 +172,7 @@
     "Every mini here has the same 5400rpm spinning disk. It was once written down as a fact about mini-2 alone, which read as though there were a faster one to move work to. There is not.",
     "One agent session per host. It is not a style preference: two sessions and a browser on one mini put the load average at twice the thread count and two gigabytes into swap, on a spinning disk.",
     "These minis were built for open air, so they sit side by side and are never stacked.",
-    "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour.",
+    "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour. They are meant to die in a power cut and come back afterwards, which until this month they did not do without a finger on each power button.",
     "Nothing here accepts a connection from outside the LAN, and no port is forwarded to reach it. Status leaves the other way — pushed out, never pulled in — so the page that reports a failure is not inside the thing that failed.",
     "Addresses live on the router as DHCP reservations and in one mode-600 config on the recorder. Nothing pushed to the public endpoint may carry one: the endpoint publishes a whitelist of fields, so a host that starts sending its address just gets the field dropped."
   ]
