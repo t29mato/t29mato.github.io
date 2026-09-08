@@ -1,0 +1,35 @@
+{%- comment -%}
+  The plate grid on /illustrations/.
+
+  Deliberately not showcase.html, for two reasons that are not style choices:
+  a showcase card is a link to somewhere and this one has no destination —
+  the picture *is* the thing, there is no page behind it — and `.showcase-shot`
+  crops every preview to 16/10, which is exactly wrong for a portrait plate.
+  So the pane chrome is shared by eye, and the image rule is its own.
+
+  Callers pass a list from their own front matter. Each item wants: name, img,
+  w, h, blurb. Optional: tags, note. `w`/`h` are the file's real pixel size —
+  they set the intrinsic ratio so the page does not jump while the plate
+  loads, and the pane's title strip prints them the way `file` would.
+{%- endcomment -%}
+<ul class="art-grid">
+{% for item in include.items %}
+  <li class="art-card">
+    <span class="showcase-file" aria-hidden="true">{{ item.img | split: "/" | last }} — JPEG, {{ item.w }}x{{ item.h }}</span>
+    <img class="art-plate" src="{{ item.img | relative_url }}" alt="{{ item.alt | default: item.name }}"
+         loading="lazy" width="{{ item.w }}" height="{{ item.h }}">
+    <div class="showcase-body">
+      <div class="showcase-head">
+        <span class="showcase-title">{{ item.name }}</span>
+      </div>
+      {% if item.tags %}
+      <div class="showcase-tags">
+        {% for tag in item.tags %}<span class="showcase-tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      <p class="showcase-blurb">{{ item.blurb | markdownify | remove: "<p>" | remove: "</p>" }}</p>
+      {% if item.note %}<p class="showcase-note">{{ item.note | markdownify | remove: "<p>" | remove: "</p>" }}</p>{% endif %}
+    </div>
+  </li>
+{% endfor %}
+</ul>
