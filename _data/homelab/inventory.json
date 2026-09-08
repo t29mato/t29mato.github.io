@@ -111,7 +111,7 @@
     },
     {
       "name": "herdr",
-      "note": "Installed per user — under ~/.local/bin on the minis, by Homebrew on air-1 — on the same standard as node: nothing system-wide, so a host can be re-pinned without touching its packages. What it manages is the terminals on the host it is running on, which is narrower than this line used to claim. Every install here is 0.8.0, each one runs its own server, and a session on mini-2 is not visible from air-1; reaching across the hosts is still the laptop opening one SSH connection per mini, and nothing survives the lid closing. 0.9 adds a machine list that puts a remote host's workspaces beside the local ones over SSH — the shape this lab already has, with the laptop as the client and the always-on machines doing the work — and it is not on the stable channel here yet.",
+      "note": "0.9.0 on all three, and the claim this line used to make is finally true: air-1 saves each mini as an SSH machine, and their workspaces sit in the laptop's sidebar beside the local ones. Client on the laptop, servers on the machines that stay on — the shape the lab already had, except that leaving is no longer the same as stopping, because the remote server holds the panes and a closed lid now costs a connection rather than the work. Installed per user on every host: ~/.local/bin on the minis, and on air-1 too once Homebrew turned out to be two releases behind, so three hosts share one distribution path on the same standard as node. It costs about 24 MB resident on a mini, measured rather than assumed — a twentieth of what ollama holds on mini-1, and the reason the worry about adding it to these machines was misplaced.",
       "status": "in use"
     },
     {
