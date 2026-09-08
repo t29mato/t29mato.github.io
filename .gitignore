@@ -18,3 +18,9 @@ _site
 # env pull` writes real project secrets into the same shape. The CLI added the
 # glob itself — it stays.
 .env*
+
+# Claude Code's per-clone state: settings.local.json, and worktrees/ — which
+# holds whole checkouts of this repo, each with its own .git. Committing that
+# nests a repository inside itself; the worktrees are also disposable and
+# per-machine, and every mini has its own.
+.claude/
