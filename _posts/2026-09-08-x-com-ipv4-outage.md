@@ -70,7 +70,7 @@ x.com and github.com publish no AAAA record. In 2026 that is a completely ordina
 
 ## Finding the break
 
-So where along the IPv4 road was the cut? The Mac itself was healthy — it held a normal private IPv4 address (`192.168.0.82`) and a global IPv6 address (`240b:11:c4a2:f00:...`). The router answered instantly. Everything past the router did not:
+So where along the IPv4 road was the cut? The Mac itself was healthy — it held a normal private IPv4 address (`192.168.0.82`) and a global IPv6 address (`240b:xxxx:...`). The router answered instantly. Everything past the router did not:
 
 ```
 $ ping 192.168.0.1        # the router
@@ -92,12 +92,12 @@ $ traceroute -n 1.1.1.1
 
 ## The router that said Connected
 
-I pulled up the router's status page (a TP-Link) and pasted it into the session:
+I pulled up the router's status page (a consumer router) and pasted it into the session:
 
 ```
 Internet status:        接続しました (Connected)
 Connection type:        v6プラス
-IP address:             106.73.196.162
+IP address:             106.73.x.x  (redacted)
 Subnet mask:            255.255.255.255
 Default gateway:        0.0.0.0
 Primary DNS:            0.0.0.0
