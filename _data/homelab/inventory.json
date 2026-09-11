@@ -86,7 +86,7 @@
   "network": {
     "topology": "gw-1 is the uplink and the only Wi-Fi. sw-1 hangs off it, and the minis and the monitor Pi go to sw-1 over 1000BASE-T; sessions leave air-1 and reach the minis by SSH. The cameras take no switch port — they have no Ethernet, so they join gw-1 over Wi-Fi like air-1 does.",
     "addressing": "gw-1 holds a reservation for every host that has a job, keyed to its MAC, so a reinstall or a power cut brings it back on the address it left on — one source of truth, and nothing to configure on the host. Addresses are grouped by kind: one digit says what a host is, the next says which one it is. The recorder resolves the cameras by name anyway, so the numbers appear in exactly one place.",
-    "disclosure": "Addresses, hostnames and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both."
+    "disclosure": "Addresses and key material are not published. Neither is the router's model: an unmanaged switch has no address and no firmware to attack, but a router has both. Hostnames used to be on that list, and are not any more, because the machines were renamed to the names this page already used — mini-1 is now called mini-1. That looks like giving something up and is close to giving up nothing: a hostname is only worth having once you are on the LAN, and anyone on the LAN can enumerate hosts without it. What it buys is one name instead of four. These machines answered to a hostname, a Prometheus instance label and a name on this page, all different, and the cost was paid in wrong assumptions rather than in anything visible."
   },
   "stack": [
     {
@@ -121,7 +121,7 @@
     },
     {
       "name": "Prometheus + node_exporter",
-      "note": "Running on mini-1, scraping every 15s and keeping 90 days. It is the collector, not the page: it lives inside the LAN, so it cannot be what reports that the LAN is unreachable. Its own first finding was that mini-2 answered ping and SSH but had no exporter on it — a target that had never existed, showing as an outage. It has one now, so both provisioned minis are measured.",
+      "note": "Running on mini-1, scraping every 15s and keeping 90 days. It is the collector, not the page: it lives inside the LAN, so it cannot be what reports that the LAN is unreachable. Its own first finding was that mini-2 answered ping and SSH but had no exporter on it — a target that had never existed, showing as an outage. It has one now, so both provisioned minis are measured. Its targets are addresses with the instance label written beside them, which is why renaming the hosts cost nothing here: the label is in the scrape config, not read off the machine, so ninety days of history stayed one series.",
       "status": "in use"
     },
     {
@@ -174,7 +174,7 @@
     "These minis were built for open air, so they sit side by side and are never stacked.",
     "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour. They are meant to die in a power cut and come back afterwards, which until this month they did not do without a finger on each power button.",
     "Nothing here accepts a connection from outside the LAN, and no port is forwarded to reach it. Status leaves the other way — pushed out, never pulled in — so the page that reports a failure is not inside the thing that failed.",
-    "Addresses live on the router as DHCP reservations and in one mode-600 config on the recorder. Nothing pushed to the public endpoint may carry one: the endpoint publishes a whitelist of fields, so a host that starts sending its address just gets the field dropped.",
+    "Addresses live in three places and no more: DHCP reservations on the router, one mode-600 config per camera on the recorder, and a few static lines in each machine's /etc/hosts. The third was added when naming was looked at properly — the router serves no names at all, and mDNS answered .local with addresses nothing could reach, which is worse than not answering because it looks like the service being down. Nothing pushed to the public endpoint may carry an address: the endpoint publishes a whitelist of fields, so a host that starts sending its own just gets the field dropped.",
     "What this page may not say, it says somewhere else rather than nowhere. An index of where each service answers — and the floor plan with what the cameras cover — lives in a private repository and is served on the LAN only, alongside Grafana. Nothing forwards a port to it. The split is the point: this page carries what each thing is and why, that one carries only where, and it reads these descriptions rather than keeping a second copy of them."
   ]
 }
