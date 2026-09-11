@@ -174,6 +174,7 @@
     "These minis were built for open air, so they sit side by side and are never stacked.",
     "A 288 Wh LiFePO4 station backs gw-1, sw-1 and pi-1, so the network and the monitor outlive a power cut. It does not back the minis: four of them under load would empty it inside an hour. They are meant to die in a power cut and come back afterwards, which until this month they did not do without a finger on each power button.",
     "Nothing here accepts a connection from outside the LAN, and no port is forwarded to reach it. Status leaves the other way — pushed out, never pulled in — so the page that reports a failure is not inside the thing that failed.",
-    "Addresses live on the router as DHCP reservations and in one mode-600 config on the recorder. Nothing pushed to the public endpoint may carry one: the endpoint publishes a whitelist of fields, so a host that starts sending its address just gets the field dropped."
+    "Addresses live on the router as DHCP reservations and in one mode-600 config on the recorder. Nothing pushed to the public endpoint may carry one: the endpoint publishes a whitelist of fields, so a host that starts sending its address just gets the field dropped.",
+    "What this page may not say, it says somewhere else rather than nowhere. An index of where each service answers — and the floor plan with what the cameras cover — lives in a private repository and is served on the LAN only, alongside Grafana. Nothing forwards a port to it. The split is the point: this page carries what each thing is and why, that one carries only where, and it reads these descriptions rather than keeping a second copy of them."
   ]
 }
