@@ -125,7 +125,7 @@
 
   <div class="scroll">
   <svg class="topo" viewBox="0 0 1320 466" role="img"
-       aria-label="Homelab topology. air-1, a MacBook Air, and two Wi-Fi cameras reach gw-1 over the air; only gw-1 has a copper run, 1000BASE-T, into port 1 of sw-1, an 8-port unmanaged switch. Ports 2 to 6 run copper to mini-1, mini-2, mini-3, mini-4 and pi-1; ports 7 and 8 are spare. mini-1 and mini-2 are up; mini-3, mini-4, pi-1 and cam-2 are planned. Every host pushes a heartbeat out through gw-1 to a public endpoint; nothing inbound is accepted and no port is forwarded. gw-1, sw-1 and pi-1 are on a 288 Wh battery station; the minis are not.">
+       aria-label="Homelab topology. air-1, a MacBook Air, and two Wi-Fi cameras reach gw-1 over the air; only gw-1 has a copper run, 1000BASE-T, into port 1 of sw-1, an 8-port unmanaged switch. Ports 2 to 6 run copper to mini-1, mini-2, mini-3, mini-4 and pi-1; ports 7 and 8 are spare. mini-1, mini-2 and both cameras are up; mini-3, mini-4 and pi-1 are planned. Every host pushes a heartbeat out through gw-1 to a public endpoint; nothing inbound is accepted and no port is forwarded. gw-1, sw-1 and pi-1 are on a 288 Wh battery station; the minis are not.">
     <title>homelab topology — signal flow from air-1 to the hosts</title>
     <desc>Copper links are solid lines ending in a square jack. Wi-Fi is a dotted field with radio arcs and no line. Dashed boxes are planned hosts whose switch port is already reserved.</desc>
     <defs>
@@ -176,16 +176,16 @@
     <path class="rf live r3" d="M202.9,254.1 A38,38 0 0 1 202.9,307.9"/>
     <text x="224" y="285">sessions →</text>
 
-    <!-- cam-2 (planned) -->
-    <rect class="node planned" x="24" y="364" width="152" height="72"/>
-    <text class="id planned-text" x="32" y="380">cam-2</text>
-    <text class="st-planned" x="168" y="380" text-anchor="end">planned</text>
-    <text class="planned-text" x="32" y="396">plug-in Wi-Fi camera</text>
+    <!-- cam-2 (up) -->
+    <rect class="node" x="24" y="364" width="152" height="72"/>
+    <text class="id" x="32" y="380">cam-2</text>
+    <text class="st-up" x="168" y="380" text-anchor="end">up</text>
+    <text x="32" y="396">plug-in Wi-Fi camera</text>
     <text class="dim" x="32" y="410">RTSP · no Ethernet</text>
-    <text class="dim" x="32" y="424">recorded on a mini</text>
-    <path class="rf planned r1" d="M185.9,390.1 A14,14 0 0 1 185.9,409.9"/>
-    <path class="rf planned r2" d="M194.4,381.6 A26,26 0 0 1 194.4,418.4"/>
-    <path class="rf planned r3" d="M202.9,372.1 A38,38 0 0 1 202.9,426.9"/>
+    <text class="dim" x="32" y="424">recorded on mini-1</text>
+    <path class="rf live r1" d="M185.9,390.1 A14,14 0 0 1 185.9,409.9"/>
+    <path class="rf live r2" d="M194.4,381.6 A26,26 0 0 1 194.4,418.4"/>
+    <path class="rf live r3" d="M202.9,372.1 A38,38 0 0 1 202.9,426.9"/>
     <text class="dim" x="224" y="404">rtsp →</text>
 
     <!-- gw-1 hears the air on its left edge -->

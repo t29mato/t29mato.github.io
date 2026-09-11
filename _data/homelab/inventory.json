@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-09-08",
-  "blurb": "Four Mac minis from 2011 and 2012, a switch, and a laptop to drive them. Two hosts are provisioned so far; the rest are hardware waiting for an OS.",
+  "updated_at": "2026-09-11",
+  "blurb": "Four Mac minis from 2011 and 2012, a switch, two cameras, and a laptop to drive them. Two hosts are provisioned so far; the rest are hardware waiting for an OS.",
   "hosts": [
     {
       "id": "air-1",
@@ -31,7 +31,7 @@
       "hardware": "Mac mini (Mid 2011)",
       "ram": "8 GB",
       "os": "Ubuntu 24.04 LTS (desktop edition, boots to multi-user)",
-      "role": "main machine — agent session, camera recorder, Prometheus, Grafana, labstat",
+      "role": "main machine — agent session, camera recorder (both cameras), Prometheus, Grafana, labstat",
       "status": "up"
     },
     {
@@ -79,8 +79,8 @@
       "hardware": "Plug-in Wi-Fi camera",
       "ram": "-",
       "os": "-",
-      "role": "RTSP source over Wi-Fi, recorded on a mini",
-      "status": "planned"
+      "role": "RTSP source over Wi-Fi, recorded on mini-1",
+      "status": "up"
     }
   ],
   "network": {
@@ -136,7 +136,7 @@
     },
     {
       "name": "camrec",
-      "note": "Event recording on mini-1. The camera serves RTSP only while it has an event, so the stream's existence is the trigger and there is no detector to tune: ffmpeg opens its input before its output, so the 404 between events writes nothing and the disk stays asleep. Events are filed under the camera, mirrored off-site, and only then deleted locally.",
+      "note": "Event recording on mini-1, one watcher per camera. The cameras serve RTSP only while they have an event, so the stream's existence is the trigger and there is no detector to tune: ffmpeg opens its input before its output, so the 404 between events writes nothing and the disk stays asleep. Events are filed under the camera, mirrored off-site, and only then deleted locally. The watcher is a template unit instanced on the camera id, which is what the second camera turned from a claim into a fact — the archive was already split per camera, and the health file, staging directory and address cache beside it were not, so two watchers would have written the same three paths and each would have described the other's camera.",
       "status": "in use"
     },
     {
@@ -153,17 +153,17 @@
   "services": [
     {
       "name": "Camera recording",
-      "note": "End to end: the camera detects its own event and opens its stream, mini-1 records whatever answers, and the clip is mirrored off-site and pruned locally only once it is confirmed there. The first real event was 66 seconds and 12.1 MB, uploaded in 12. Events are filed by camera and date rather than by recorder — a recorder can be replaced, and the second camera has to land somewhere that does not collide. Getting them off the machine is now measured in seconds rather than minutes: the clip uploads the moment it exists, and a single still goes two seconds into the event, over a second RTSP session the camera was measured to allow. A recording of somebody walking in is worth nothing while it is still on a disk they can carry out.",
+      "note": "End to end: a camera detects its own event and opens its stream, mini-1 records whatever answers, and the clip is mirrored off-site and pruned locally only once it is confirmed there. The first real event was 66 seconds and 12.1 MB, uploaded in 12. Events are filed by camera and date rather than by recorder — a recorder can be replaced, and the second camera had to land somewhere that did not collide. It has: both cameras are recorded now, by two instances of one unit. Getting clips off the machine is measured in seconds rather than minutes: the clip uploads the moment it exists, and a single still goes two seconds into the event, over a second RTSP session the camera was measured to allow. A recording of somebody walking in is worth nothing while it is still on a disk they can carry out.",
       "status": "in use"
     },
     {
       "name": "Live view wall",
-      "note": "Every camera on one screen, deliberately not running unless someone is looking. The camera serves at least two simultaneous RTSP clients — measured, not assumed — so watching and recording do not have to compete.",
+      "note": "Every camera on one screen, deliberately not running unless someone is looking. A camera serves at least two simultaneous RTSP clients — measured, not assumed — so watching and recording do not have to compete. There are two cameras to put on it now.",
       "status": "planned"
     },
     {
       "name": "Lab status",
-      "note": "The one live thing on the public page. mini-1 pushes a heartbeat outward every minute — what Prometheus already knows about each host, plus the state of the services on it — and the page reads that and never the LAN. Absence is the signal, so nothing has to report that a host died: its beat simply stops, and what it was the sole observer of goes unknown rather than down. It is live: both minis push once a minute and the page reads it from anywhere. The camera is on it too, reported by the recorder that watches it rather than by a second prober, and only called missing after several consecutive checks miss it — a plug-in Wi-Fi camera drops off the air when it idles, and a page that cries wolf twice an hour is a page nobody reads. Two reporters may describe the same host, which is wanted rather than tolerated — the endpoint keeps the worse of two live observations, so an exporter that has died on a machine that has not shows as degraded from outside and up from inside, and the page prints the true one.",
+      "note": "The one live thing on the public page. mini-1 pushes a heartbeat outward every minute — what Prometheus already knows about each host, plus the state of the services on it — and the page reads that and never the LAN. Absence is the signal, so nothing has to report that a host died: its beat simply stops, and what it was the sole observer of goes unknown rather than down. It is live: both minis push once a minute and the page reads it from anywhere. Both cameras are on it too, each reported by the watcher that records it rather than by a second prober, and only called missing after several consecutive checks miss it — a plug-in Wi-Fi camera drops off the air when it idles, and a page that cries wolf twice an hour is a page nobody reads. Two reporters may describe the same host, which is wanted rather than tolerated — the endpoint keeps the worse of two live observations, so an exporter that has died on a machine that has not shows as degraded from outside and up from inside, and the page prints the true one.",
       "status": "in use"
     }
   ],
