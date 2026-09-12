@@ -657,50 +657,6 @@ a.tty-prow:focus-visible .tty-purl { color: var(--accent); }
   }
 }
 
-/* ==========================================================================
-   Project list — works
-   --------------------------------------------------------------------------
-   ls output, one entry per row: name, then what it is. No boxes — a listing,
-   like the homepage tree it continues from.
-   ========================================================================== */
-
-.proj-list {
-  list-style: none;
-  margin: 1.75rem 0 2.5rem;
-  padding: 0;
-  max-width: 52rem;
-
-  > li {
-    margin: 0;
-    padding: 0.7rem 0.25rem 0.7rem 2ch;
-    position: relative;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-dim);
-    font-size: 0.92em;
-
-    &:first-child { border-top: 1px solid var(--border); }
-
-    /* The bullet the markdown never wrote: an amber asterisk in the margin.
-       Absolute, because kramdown wraps loose-list items in a <p> and an
-       inline ::before would sit alone on the line above it. */
-    &::before {
-      content: "*" / "";
-      position: absolute;
-      left: 0;
-      color: var(--amber);
-    }
-
-    p { margin: 0; }
-
-    strong a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
-
-      &:hover { color: var(--accent-hover); text-decoration: underline; }
-    }
-  }
-}
 
 /* ==========================================================================
    Panes — games, tools, animations
