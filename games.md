@@ -87,7 +87,7 @@ games:
 
   - name: "GeoMon: India"
     img: /assets/games/geomon-india.jpg
-    url: https://geomon-india.vercel.app
+    url: /games/geomon-india/
     rating: 1
     tags: [RPG, Learning]
     blurb: >-
