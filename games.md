@@ -84,6 +84,16 @@ games:
       Steal a car and tear through the back streets of a procedurally generated
       Tokyo at night.
     note: An early build — the city is there, the missions are not.
+
+  - name: "GeoMon: India"
+    img: /assets/games/geomon-india.jpg
+    url: https://geomon-india.vercel.app
+    rating: 1
+    tags: [RPG, Learning]
+    blurb: >-
+      Walk a tile map of India drawn from real state borders, scout local
+      wildlife with gifts from their home state, and learn a fact in every town.
+    note: A prototype — chapters one and two only. English or Japanese.
 ---
 
 # Games
