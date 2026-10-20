@@ -127,8 +127,8 @@
   // The tune that belongs to where the player is.
   function bgmForScreen() {
     if (S.screen === 'title') return 'title';
-    if (S.screen === 'arena') return 'title';
-    if (S.screen === 'records') return 'title';
+    if (S.screen === 'arena') return 'arena';
+    if (S.screen === 'records') return 'arena';
     if (S.screen === 'finale') return 'title';
     if (S.mode === 'arena') return 'battle';
     if (S.level === LAST && !S.free) return 'boss';
@@ -1503,6 +1503,7 @@
     b.phase = 'count';
     b.i = 0;
     b.penalty = 0; b.misses = 0; b.timeouts = 0; b.keys = 0;
+    b.streak = 0;
     b.qlog = [];
     if (b.kind === 'boss') b.hp = b.maxHp;
     b.log = (MONSTERS[b.monster] || '') + 'が あらわれた！';
@@ -1515,6 +1516,7 @@
       n -= 1;
       if (n > 0) { banner(String(n), 'count'); AU.se('tick'); b.timer = setTimeout(step, reduceMotion ? 250 : 650); return; }
       banner('たたかう！', 'go');
+      AU.se('go');
       b.phase = 'fight';
       b.start = performance.now();
       loadQuestion();
@@ -1557,8 +1559,10 @@
       miss();
     }
     if (b.q.check()) {
-      AU.se('hit');
+      b.streak = (b.streak || 0) + 1;
+      AU.se('hit', b.streak);
       hitFlash();
+      termFlash('hit');
       var spell = spellsFor(b.q) || 'こうげき';
       var used = (performance.now() - b.qStart) / 1000;
       // Faster answers hit harder.
@@ -1566,6 +1570,8 @@
       b.qlog[b.i].s = +used.toFixed(2);
       b.i += 1;
       if (b.i >= b.qs.length) { finishBattle(true); return; }
+      // The beaten foe flies off while the next one walks in.
+      if (b.kind !== 'boss') foeDown();
       loadQuestion();
       render();
       castFx(spell, MONSTERS[b.monster], dmg);
@@ -1575,10 +1581,13 @@
   function miss() {
     var b = S.battle;
     b.misses += 1;
+    b.streak = 0;
     b.penalty += LV.MISS_PENALTY;
     if (b.qlog[b.i]) b.qlog[b.i].m += 1;
     AU.se('miss');
     flash('miss', 'ミス +' + LV.MISS_PENALTY + '秒');
+    termFlash('miss');
+    shake('soft');
     renderHud();
     hurtFx('ゆうしゃは じゅもんを まちがえた！');
   }
@@ -1597,17 +1606,20 @@
   function timeout() {
     var b = S.battle;
     b.timeouts += 1;
+    b.streak = 0;
     if (b.qlog[b.i]) b.qlog[b.i].to = 1;
     if (b.kind === 'boss') {
       b.hp -= 1;
       AU.se('hurt');
       flash('hurt', '魔王の攻撃！');
+      termFlash('miss');
       shake();
       if (b.hp <= 0) { finishBattle(false); return; }
     } else {
       b.penalty += LV.TIMEOUT_PENALTY;
-      AU.se('miss');
+      AU.se('timeout');
       flash('miss', '時間切れ +' + LV.TIMEOUT_PENALTY + '秒');
+      termFlash('miss');
     }
     b.i += 1;
     if (b.i >= b.qs.length) { finishBattle(b.kind === 'boss'); return; }
@@ -1646,7 +1658,9 @@
     b.qs.forEach(function (t) { Q[t].show.forEach(function (a) { pool = pool.concat(LV.tipsFor(a)); }); });
     result.tip = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
     S.result = result;
-    AU.play('victory', 'title');
+    // A best time (past the first run) gets the long fanfare, a new rank the
+    // scale run; the screen's own tune follows either.
+    AU.play(result.record && result.count > 1 ? 'record' : result.rankUp ? 'rankup' : 'victory', 'arena');
     S.mode = 'story';
     S.battle = null;
     showScreen('arena');
@@ -1742,7 +1756,7 @@
     var q = $('#quest');
     if (!b) return;
     q.classList.add('hud');
-    var key = [b.i, b.phase, b.hp, b.misses, b.timeouts].join(':');
+    var key = [b.i, b.phase, b.hp, b.misses, b.timeouts, b.streak].join(':');
     if (q.dataset.hud !== key) {
       var entering = q.dataset.hudI !== String(b.i) && b.phase === 'fight' && b.kind !== 'boss';
       q.dataset.hud = key;
@@ -1770,7 +1784,8 @@
         html += '<div class="hud-time">0.0<small>秒</small></div>';
         html += '<div class="hud-stat">' + (b.penalty ? '<span class="pen">+' + b.penalty + '秒</span>' : '') + '<span>ミス ' + b.misses + '</span></div>';
       }
-      html += '<div class="hud-count">' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</div>';
+      html += '<div class="hud-count">' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length +
+        (b.streak >= 3 ? ' <span class="hud-combo">' + b.streak + ' 連続</span>' : '') + '</div>';
       html += '</div>';
       q.innerHTML = html;
     }
@@ -1817,9 +1832,33 @@
   // A question answered: the hero casts, the foe takes damage.
   function castFx(spell, foe, dmg) {
     heroPose('hero_cast', 500);
+    var boss = S.battle && S.battle.kind === 'boss';
     var d = $('#quest .dmg');
     if (d && !reduceMotion) { d.textContent = String(dmg); d.classList.remove('show'); void d.offsetWidth; d.classList.add('show'); }
-    hudLog('ゆうしゃは ' + spell + 'を となえた！ ' + foe + (S.battle && S.battle.kind === 'boss' ? 'に ' + dmg + ' のダメージ！' : 'を たおした！'));
+    // The boss stays and takes the hit; a course foe already flew off.
+    var f = $('#quest .hud-foe');
+    if (f && boss && !reduceMotion) { f.classList.remove('struck'); void f.offsetWidth; f.classList.add('struck'); }
+    hudLog('ゆうしゃは ' + spell + 'を となえた！ ' + foe + (boss ? 'に ' + dmg + ' のダメージ！' : 'を たおした！'));
+  }
+
+  // The foe on screen, slashed: a copy of its sprite flashes white and is
+  // knocked off to the right while the band is rebuilt for the next one.
+  function foeDown() {
+    if (reduceMotion) return;
+    var foe = $('#quest .hud-foe .foe');
+    var layer = $('#hudfx');
+    if (!foe || !layer) return;
+    var r = foe.getBoundingClientRect();
+    if (!r.width) return;
+    var ghost = document.createElement('div');
+    ghost.className = 'foe-down';
+    ghost.style.left = r.left + 'px';
+    ghost.style.top = r.top + 'px';
+    ghost.style.width = r.width + 'px';
+    ghost.style.height = r.height + 'px';
+    ghost.innerHTML = foe.innerHTML + '<i class="slash"></i>';
+    layer.appendChild(ghost);
+    setTimeout(function () { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 500);
   }
 
   function hurtFx(text) {
@@ -2204,12 +2243,24 @@
     q.classList.add('hit');
   }
 
-  function shake() {
+  // kind: 'soft' for a slip, nothing for a blow from the boss.
+  function shake(kind) {
     if (reduceMotion) return;
     var t = $('.term-wrap');
-    t.classList.remove('shake');
+    t.classList.remove('shake', 'soft');
     void t.offsetWidth;
     t.classList.add('shake');
+    if (kind === 'soft') t.classList.add('soft');
+  }
+
+  // A glow around the terminal: gold for a hit, red for a miss.
+  function termFlash(kind) {
+    if (reduceMotion) return;
+    var t = $('.term-wrap');
+    if (!t) return;
+    t.classList.remove('flash-hit', 'flash-miss');
+    void t.offsetWidth;
+    t.classList.add('flash-' + kind);
   }
 
   function celebrate() {
@@ -2238,6 +2289,9 @@
     // swallow Enter/Space as a click.
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     $$('.screen').forEach(function (el) { el.hidden = el.id !== name + '-screen'; });
+    // A screen keeps its scroll while hidden; a result must start at the top.
+    var shown = $('#' + name + '-screen');
+    if (shown) shown.scrollTop = 0;
     if (name !== 'game') { clearInterval(S.clock); $('#brief').hidden = true; S.briefOpen = false; }
     syncBody();
     render();
@@ -2341,10 +2395,14 @@
     res.hidden = false;
     res.dataset.runId = r.runId || '';
     var course = REC.courseOf(r.course);
+    // A best time past the first run gets a stamp; a climbed rank a tag.
+    var isRec = !!(r.record && r.count > 1);
+    res.classList.toggle('is-rec', isRec);
     res.innerHTML =
+      (isRec ? '<div class="res-stamp" aria-hidden="true">新記録</div>' : '') +
       '<div class="dq-log"><p>' + esc(course.title) + 'を せいはした！</p>' + growthLines(r) + '</div>' +
       '<div class="res-time">' + r.time.toFixed(1) + '<small>秒</small></div>' +
-      '<div class="res-rank">称号 <b>' + esc(r.rank) + '</b></div>' +
+      '<div class="res-rank' + (r.rankUp ? ' up' : '') + '">称号 <b>' + esc(r.rank) + '</b>' + (r.rankUp ? '<span class="res-up">UP</span>' : '') + '</div>' +
       '<dl class="res-facts">' +
       '<dt>1 問あたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd>' +
       '<dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd>' +
@@ -2359,6 +2417,8 @@
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">もう一度</button>' +
       '<button type="button" class="btn" data-records="' + r.course + '">記録を見る</button></div>';
+    // Confetti once per run, for a record or a new rank.
+    if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
 
   // ---- 記録の間 --------------------------------------------------------------
