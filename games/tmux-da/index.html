@@ -33,7 +33,7 @@
       <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">八間屋敷 から</small></button>
       <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small></button>
     </div>
-    <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。通信はしない。記録はこのブラウザの中だけ。</p>
+    <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
   </section>
   <aside class="plan" aria-label="見取り図">
     <div class="plan-label">見取り図 ― 屋敷を選ぶ</div>
@@ -87,6 +87,11 @@
         <button type="button" data-rec-course="normal" aria-pressed="false">八間屋敷<small>おすすめ</small></button>
         <button type="button" data-rec-course="hard" aria-pressed="false">百間屋敷<small>真剣勝負</small></button>
       </div>
+      <div class="seg rec-tab" role="group" aria-label="見るもの">
+        <button type="button" data-rec-tab="growth" aria-pressed="true">上達</button>
+        <button type="button" data-rec-tab="board" aria-pressed="false">番付</button>
+        <button type="button" data-rec-tab="sync" aria-pressed="false">引き継ぎ</button>
+      </div>
       <div id="records-body" class="records-body"></div>
       <div class="cta">
         <button type="button" id="btn-records-back" class="btn">戻る</button>
@@ -101,6 +106,7 @@
 
 <script src="js/levels.js"></script>
 <script src="js/records.js"></script>
+<script src="js/net.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/tmux.js"></script>
 <script src="js/app.js"></script>

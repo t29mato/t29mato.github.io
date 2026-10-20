@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var T = ADV.tmux, LV = ADV.levels, AU = ADV.audio, REC = ADV.records;
+  var T = ADV.tmux, LV = ADV.levels, AU = ADV.audio, REC = ADV.records, NET = ADV.net || null;
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
@@ -1218,6 +1218,29 @@
     return a;
   }
 
+  // The ghost (影) to race: today's fastest player if faster than you, else
+  // your own best. Your own is there at once; today's arrives if it can.
+  function pickGhost(b) {
+    var own = REC.ghostOf(b.course.id);
+    b.ghost = own;
+    if (!NET || !NET.state().key) return;
+    NET.ghost(b.course.id, 'today').then(function (g) {
+      if (!g || S.run !== b || (own && own.time <= g.time) || (g.splits || []).length !== b.qs.length) return;
+      var me = NET.state().name;
+      if (me && g.name === me && own) return;
+      b.ghost = { name: g.name, time: g.time, splits: g.splits, today: true };
+      prepGhost(b);
+      $('#playbar').dataset.key = '';
+      if (S.screen === 'game') renderPlaybar();
+    }).catch(function () { /* offline: your own ghost */ });
+  }
+
+  function prepGhost(b) {
+    if (!b.ghost) return;
+    var t = 0;
+    b.ghost.cum = b.ghost.splits.map(function (s) { t += s; return t; });
+  }
+
   function prepareRun(courseId) {
     var course = REC.courseOf(courseId) || REC.courseOf('normal');
     S.run = {
@@ -1230,8 +1253,11 @@
       penalty: 0, misses: 0, overs: 0, guides: 0, keys: 0,
       start: 0, qStart: 0, end: 0,
       stage: 0,
+      ghostDiff: null,
       seed: course.id + ':' + Math.random()
     };
+    pickGhost(S.run);
+    prepGhost(S.run);
   }
 
   function beginRun() {
@@ -1271,6 +1297,7 @@
     b.pausedAt = performance.now();
     clearInterval(S.clock);
     S.armed = false;
+    AU.stop();
     $('#pause').hidden = false;
     render();
   }
@@ -1285,6 +1312,7 @@
     $('#pause').hidden = true;
     $('#sashizu').dataset.key = '';
     AU.se('go');
+    music();
     startClock();
     render();
     focusSink();
@@ -1331,6 +1359,8 @@
       termFlash('hit');
       var used = (performance.now() - b.qStart) / 1000;
       b.qlog[b.i].s = +used.toFixed(2);
+      // Against the ghost: where you are now versus where it was here.
+      if (b.ghost && b.ghost.cum) b.ghostDiff = (performance.now() - b.start) / 1000 + b.penalty - b.ghost.cum[b.i];
       if (b.streak % 5 === 0) chip('good', '五連の仕掛け ・ 手際よし');
       b.i += 1;
       if (b.i >= b.qs.length) { finishRun(); return; }
@@ -1397,7 +1427,11 @@
     b.qs.forEach(function (t) { Q[t].show.forEach(function (a) { pool = pool.concat(LV.tipsFor(a)); }); });
     result.tip = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
     result.at = new Date();
+    if (b.ghost) {
+      result.ghost = { name: b.ghost.name, time: b.ghost.time, diff: +(time - b.ghost.time).toFixed(2) };
+    }
     S.result = result;
+    shareRun(sum.runId);
     S.run = null;
     showScreen('result');
     // A best time past the first run gets the long fanfare, a new rank the
@@ -1514,17 +1548,28 @@
     renderClock();
   }
 
+  // The ghost in the bar: who it is, and after each question how far ahead
+  // or behind you are. It changes only when a question is solved.
+  function ghostHTML(b) {
+    if (!b.ghost) return '';
+    var who = b.ghost.today ? '今日の一番 ' + b.ghost.name : '自分のベスト';
+    var d = b.ghostDiff;
+    var txt = d == null ? b.ghost.time.toFixed(1) + '秒' : (d <= 0 ? '−' : '+') + Math.abs(d).toFixed(1) + '秒';
+    return '<span class="pb-ghost' + (d == null ? '' : d <= 0 ? ' ahead' : ' behind') + '" title="影: ' + esc(who) + '">影 <small>' + esc(who) + '</small> <b>' + txt + '</b></span>';
+  }
+
   function renderPlaybar() {
     var b = S.run;
     var el = $('#playbar');
     if (!b || !el) return;
-    var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0].join('|');
+    var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0, b.ghost ? b.ghost.name : '', b.ghostDiff].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + ' ・ 仕掛け <b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
       (b.streak >= 3 ? '<span class="pb-streak">' + b.streak + ' 連</span>' : '') +
       '<span class="pb-sp"></span>' +
       (b.misses ? '<span class="pb-pen">仕掛け違い ' + b.misses + '（+' + b.penalty + '秒）</span>' : '') +
+      ghostHTML(b) +
       '<span class="pb-time"><span>0.0</span><small>秒</small></span>';
     renderClock();
   }
@@ -2167,10 +2212,11 @@
       '<div><dt>1 仕掛けあたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd></div>' +
       '<div><dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd></div>' +
       '<div><dt>仕掛け違い</dt><dd>' + r.misses + '（+' + (r.misses * LV.MISS_PENALTY) + '秒）</dd></div>' +
-      '<div><dt>灯り（目安超過）</dt><dd>' + r.overs + ' 仕掛け ・ 指南 ' + r.guides + '</dd></div>' +
+      '<div><dt>灯り（目安超過）</dt><dd>' + r.overs + ' 仕掛け</dd></div>' +
       '<div><dt>自己ベスト</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
       '<div><dt>押したキー</dt><dd>' + r.keys + '</dd></div>' +
       '</dl>' +
+      resultNetHTML(r) +
       spark(r.spark) +
       '<div class="spark-l"><span>' + (slow ? '灯りがいちばん長かった仕掛け: ' + esc(slow.text || '棟を渡る') + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '灯りなし。どの仕掛けも目安のうちに解いた') + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span>■ 自己ベスト ■ 今回</span>' : '') + '</div>' +
@@ -2179,6 +2225,138 @@
       '<button type="button" class="btn" data-records="' + r.course + '">絵巻を開く</button>' +
       '<button type="button" class="btn ghost" data-title="1">見取り図へ</button></div>';
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
+  }
+
+  // ---- 番付 and 合言葉 ---------------------------------------------------------
+  // All optional: with no network the game is exactly as before.
+
+  // After a run: bring the history in line with the other devices, then
+  // enter the run on the boards when the player has a name.
+  function shareRun(runId) {
+    var r = S.result;
+    if (!NET || !r) return;
+    // Nothing leaves the browser until the player gives a name or a 合言葉.
+    if (!NET.state().key) { r.board = { state: 'noname' }; return; }
+    var run = (REC.load().runs || []).filter(function (x) { return x.id === runId; })[0];
+    r.board = { state: NET.state().name ? 'sending' : 'noname' };
+    NET.sync().then(function () {
+      if (!NET.state().name) { r.board = { state: 'noname' }; return null; }
+      return NET.submit(run).then(function (res) {
+        r.board = res ? { state: 'ok', rank: res.rank, total: res.total } : { state: 'off' };
+      });
+    }).catch(function (e) {
+      r.board = { state: e && e.status === 400 && NET.state().name ? 'refused' : 'offline' };
+    }).then(function () { if (S.screen === 'result' && S.result === r) renderResult(); });
+  }
+
+  function resultNetHTML(r) {
+    var html = '';
+    if (r.ghost) {
+      var d = r.ghost.diff;
+      html += '<p class="em-ghost' + (d <= 0 ? ' win' : '') + '">影（' + esc(r.ghost.name === '自分' ? '自分のベスト' : r.ghost.name) + ' ' + r.ghost.time.toFixed(1) + '秒）に ' +
+        (d <= 0 ? '<b>' + Math.abs(d).toFixed(1) + ' 秒差で勝った</b>' : Math.abs(d).toFixed(1) + ' 秒差で負けた') + '</p>';
+    }
+    var b = r.board;
+    if (!b) return html;
+    if (b.state === 'sending') html += '<p class="em-board">今日の番付に載せている……</p>';
+    if (b.state === 'ok') html += '<p class="em-board">今日の番付 <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">番付を見る</a></p>';
+    if (b.state === 'refused') html += '<p class="em-board dim">この記録は番付に載せられなかった（手で解いた記録だけが載る）。</p>';
+    if (b.state === 'noname') {
+      html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日の番付に載る</label>' +
+        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">番付に載せる</button></span>' +
+        '<small class="nf-msg"></small></form>';
+    }
+    return html;
+  }
+
+  // The name form: on the result it also enters the run just made.
+  function submitName(form) {
+    var input = form.querySelector('input'), msg = form.querySelector('.nf-msg');
+    var name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    msg.textContent = '送っている……';
+    NET.setName(name).then(function () { return NET.sync(); }).then(function () {
+      AU.se('hit', 1);
+      if (form.dataset.nameForm === 'result' && S.result) {
+        var r = S.result;
+        var run = (REC.load().runs || []).filter(function (x) { return x.id === r.runId; })[0];
+        r.board = { state: 'sending' };
+        renderResult();
+        return NET.submit(run).then(function (res) {
+          r.board = res ? { state: 'ok', rank: res.rank, total: res.total } : { state: 'off' };
+          renderResult();
+        });
+      }
+      renderRecords();
+    }).catch(function (e) {
+      msg.textContent = e && e.status === 409 ? 'その名前は他の人が使っている。別の名前で。' :
+        e && e.status === 400 ? '使えない名前。12 文字まで。' : 'つながらなかった。あとでもう一度。';
+    });
+  }
+
+  // 番付: each player's best for the course, today / this week / ever.
+  function renderBoard(body, id) {
+    var span = S.boardSpan || 'today';
+    var seg = '<div class="seg rec-span" role="group" aria-label="期間">' +
+      [['today', '今日'], ['week', '今週'], ['all', '全期間']].map(function (x) {
+        return '<button type="button" data-span="' + x[0] + '" aria-pressed="' + (x[0] === span ? 'true' : 'false') + '">' + x[1] + '</button>';
+      }).join('') + '</div>';
+    var me = NET ? NET.state().name : null;
+    var key = id + '|' + span;
+    var cached = S.boardCache && S.boardCache[key];
+    var table = function (rows) {
+      if (!rows.length) return '<p class="rec-empty">' + (span === 'today' ? 'まだ今日の記録はない。一番乗りの好機。' : 'まだ記録がない。') + '</p>';
+      return '<table class="rec-table board"><thead><tr><th>位</th><th>名前</th><th>タイム</th><th class="r-note">日付</th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    };
+    var note = me ? '<p class="rec-empty">「' + esc(me) + '」として載る。名前は「引き継ぎ」で変えられる。</p>'
+      : '<p class="rec-empty">名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。</p>';
+    body.innerHTML = '<div class="rec-panel"><div class="rec-head">番付 ・ ' + esc(REC.courseOf(id).title) + '</div>' + seg +
+      '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">読み込み中……</p>') + '</div>' + note + '</div>';
+    if (cached && Date.now() - cached.at < 15000) return;
+    if (!NET) return;
+    // Looking at the boards is the player's choice; reading sends nothing of theirs.
+    NET.board(id, span).then(function (rows) {
+      S.boardCache = S.boardCache || {};
+      S.boardCache[key] = { rows: rows, at: Date.now() };
+      if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || 'today') === span) renderRecords();
+    }).catch(function () {
+      var bb = $('#records-body .board-body');
+      if (bb && !cached) bb.innerHTML = '<p class="rec-empty">番付につながらなかった。通信できるときにもう一度。</p>';
+    });
+  }
+
+  // 引き継ぎ: the 合言葉 and the name.
+  function renderSync(body) {
+    var st = NET ? NET.state() : {};
+    var keyHTML = st.key
+      ? '<div class="sync-key"><code>' + esc(st.key) + '</code><button type="button" class="btn" data-copy-key>写す</button></div>' +
+        '<p class="rec-empty">別の端末でこの合言葉を入れると、同じ記録が見られる。他の人には教えない。' + (st.syncedAt ? '最後に合わせた: ' + esc(recDate(st.syncedAt)) + ' ' + esc(st.syncedAt.slice(11, 16)) + '（UTC）' : '') + '</p>'
+      : '<p class="rec-empty">まだ合言葉がない。一度遊ぶか、下の「今すぐ合わせる」で作られる。</p>';
+    body.innerHTML =
+      '<div class="rec-panel"><div class="rec-head">この端末の合言葉</div>' + keyHTML +
+      '<div class="cta"><button type="button" class="btn" data-sync-now>今すぐ合わせる</button></div><p class="sync-msg rec-empty" data-sync-msg></p></div>' +
+      '<div class="rec-panel"><div class="rec-head">別の端末の合言葉を入れる</div>' +
+      '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="例: matsu-kaze-tsuru-482"><button type="submit" class="btn">この合言葉にする</button></span>' +
+      '<small class="nf-msg">この端末の記録も、その合言葉の側に合わさる。</small></form></div>' +
+      '<div class="rec-panel"><div class="rec-head">番付の名前</div>' +
+      '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" value="' + esc(st.name || '') + '" placeholder="名前（12 文字まで）"><button type="submit" class="btn">' + (st.name ? '変える' : '付ける') + '</button></span>' +
+      '<small class="nf-msg">' + (st.name ? '遊ぶたびに、その回の記録が番付に載る。' : '名前を付けると、遊ぶたびに番付に載る。') + '</small></form></div>';
+  }
+
+  function syncNow(msgEl) {
+    if (!NET) return;
+    if (msgEl) msgEl.textContent = '合わせている……';
+    NET.sync().then(function (res) {
+      renderRecords();
+      var m = $('[data-sync-msg]');
+      if (m) m.textContent = res.added ? res.added + ' 回分の記録が加わった。' : '合わせた。この端末の記録はそろっている。';
+    }).catch(function () {
+      var m = $('[data-sync-msg]');
+      if (m) m.textContent = 'つながらなかった。通信できるときにもう一度。';
+    });
   }
 
   // ---- 絵巻: the run history ------------------------------------------------
@@ -2220,8 +2398,13 @@
     var id = S.recCourse;
     var c = REC.courseOf(id);
     $$('#records-screen [data-rec-course]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recCourse === id ? 'true' : 'false'); });
-    var st = REC.stats(id);
+    var tab = S.recTab || 'growth';
+    $$('#records-screen [data-rec-tab]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recTab === tab ? 'true' : 'false'); });
+    $('#records-screen .rec-seg').hidden = tab === 'sync';
     var body = $('#records-body');
+    if (tab === 'board') { renderBoard(body, id); return; }
+    if (tab === 'sync') { renderSync(body); return; }
+    var st = REC.stats(id);
     if (!st) {
       body.innerHTML = '<div class="rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の絵巻は、まだ白紙。</p><p>一度屋敷に入ると、ここに上達が描かれていく。</p></div>' +
         '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に入る</button></div>';
@@ -2241,7 +2424,7 @@
       '</div>';
     var chart = '<div class="rec-panel"><div class="rec-head">タイムの移り変わり（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>';
     var rows = st.runs.slice(0, 20).map(function (r) {
-      var note = r.legacy ? '旧記録' : '違い ' + r.misses + (r.overs ? ' ・ 灯り ' + r.overs : '') + (r.guides ? ' ・ 指南 ' + r.guides : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
+      var note = r.legacy ? '旧記録' : '違い ' + r.misses + (r.overs ? ' ・ 灯り ' + r.overs : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
       return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">内訳</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -2285,7 +2468,7 @@
     });
     document.addEventListener('pointerdown', function () { AU.unlock(); }, true);
     $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'normal'); });
-    $('#btn-records').addEventListener('click', function () { openRecords(null, 'title'); });
+    $('#btn-records').addEventListener('click', function () { S.recTab = 'growth'; openRecords(null, 'title'); });
     $('#course-list').addEventListener('click', function (e) {
       var b = e.target.closest('[data-course]');
       if (b) startRun(b.dataset.course);
@@ -2299,7 +2482,9 @@
     });
     $('#result-screen').addEventListener('click', function (e) {
       var r = e.target.closest('[data-records]');
-      if (r) { openRecords(r.dataset.records || null, 'result'); return; }
+      if (r) { S.recTab = 'growth'; openRecords(r.dataset.records || null, 'result'); return; }
+      var bd = e.target.closest('[data-board]');
+      if (bd) { e.preventDefault(); S.recTab = 'board'; S.boardSpan = 'today'; openRecords(bd.dataset.board, 'result'); return; }
       var b = e.target.closest('[data-course]');
       if (b) { startRun(b.dataset.course); return; }
       if (e.target.closest('[data-title]')) showScreen('title');
@@ -2307,16 +2492,47 @@
     $('#records-screen').addEventListener('click', function (e) {
       var t = e.target.closest('[data-rec-course]');
       if (t) { S.recCourse = t.dataset.recCourse; AU.se('cursor'); renderRecords(); return; }
+      var tb = e.target.closest('[data-rec-tab]');
+      if (tb) { S.recTab = tb.dataset.recTab; AU.se('cursor'); renderRecords(); if (S.recTab === 'sync' && NET && NET.state().key) syncNow(); return; }
+      var sp = e.target.closest('[data-span]');
+      if (sp) { S.boardSpan = sp.dataset.span; AU.se('cursor'); renderRecords(); return; }
+      if (e.target.closest('[data-sync-now]')) { syncNow($('[data-sync-msg]')); return; }
+      if (e.target.closest('[data-copy-key]')) {
+        var k = NET && NET.state().key;
+        var done = function () { var m = $('[data-sync-msg]'); if (m) m.textContent = '合言葉を写した。'; };
+        if (k && navigator.clipboard) navigator.clipboard.writeText(k).then(done, function () {});
+        return;
+      }
       var b = e.target.closest('[data-course]');
       if (b) { startRun(b.dataset.course); return; }
       if (e.target.closest('#btn-records-back')) { showScreen(S.recordsFrom === 'result' && S.result ? 'result' : 'title'); return; }
       if (e.target.closest('#btn-records-clear')) {
-        if (!window.confirm('絵巻の記録をすべて消す？')) return;
+        var linked = NET && NET.state().key;
+        if (!window.confirm(linked ? 'この端末の記録をすべて消して、合言葉も外す？（合言葉の側の記録は残る）' : '絵巻の記録をすべて消す？')) return;
         REC.clearArena();
+        if (linked) NET.forget();
         renderRecords();
       }
     });
 
+    // The name and 合言葉 forms on the result and 絵巻 screens.
+    document.addEventListener('submit', function (e) {
+      var f = e.target;
+      if (f.matches('[data-name-form]')) { e.preventDefault(); submitName(f); }
+      if (f.matches('[data-key-form]')) {
+        e.preventDefault();
+        var msg = f.querySelector('.nf-msg');
+        msg.textContent = '合わせている……';
+        NET.useKey(f.querySelector('input').value).then(function (res) {
+          renderRecords();
+          var m = $('[data-sync-msg]');
+          if (m) m.textContent = '合言葉を切り替えた。' + (res.added ? res.added + ' 回分の記録が加わった。' : '');
+        }).catch(function (err) {
+          msg.textContent = err && err.status === 404 ? 'その合言葉は見つからない。綴りを確かめて。' :
+            err && err.message === 'bad key' ? '合言葉の形が違う（例: matsu-kaze-tsuru-482）。' : 'つながらなかった。あとでもう一度。';
+        });
+      }
+    });
     document.addEventListener('keydown', onKeyDown);
     var sink = $('#sink');
     sink.addEventListener('input', onSinkInput);

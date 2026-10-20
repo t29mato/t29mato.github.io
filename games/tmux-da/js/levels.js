@@ -98,8 +98,8 @@
     return prefixLabel(prefix) + ' を押して離してから ' + HINTS[action];
   }
 
-  // `limit` is the 目安 in seconds per question. Past it nothing is skipped:
-  // the keys light up, and at 1.5 times it the step-by-step 指南 appears.
+  // `limit` is the 目安 in seconds per question. Past it nothing is skipped;
+  // the 指南 (the answer, step by step) is on screen from the start anyway.
   // `rankMul` scales the rank thresholds for courses whose questions take
   // several keys. Bump `ver` whenever `qs` or the rules change, so older
   // runs can be told apart in the history (ver 2: no skipping, no +5 秒).

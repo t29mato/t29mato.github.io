@@ -10,13 +10,14 @@
 
   var REC = ADV.records;
   var STORE_KEY = 'tmux-da-net';
-  var DEFAULT_API = 'https://tmux-da-api.t29mato.workers.dev';
+  var DEFAULT_API = 'https://tmux-da-api.starrydata-mcp-cloudflare.workers.dev';
 
-  // ?api=http://localhost:8787 points a test page at a local server.
+  // ?api=http://localhost:8787 points a test page at a local server. Only a
+  // local one: a link must not be able to send the 合言葉 anywhere else.
   var API = (function () {
     try {
       var q = new URLSearchParams(window.location.search).get('api');
-      if (q) return q.replace(/\/$/, '');
+      if (q && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(q)) return q.replace(/\/$/, '');
     } catch (e) { /* old browsers: the default */ }
     return DEFAULT_API;
   })();
