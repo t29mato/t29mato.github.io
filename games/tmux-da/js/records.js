@@ -1,4 +1,4 @@
-// tmux打: arena records. Every run is kept (up to a cap per course), with
+// tmux からくり屋敷: run records. Every run is kept (up to a cap per course), with
 // the seconds each question took, so a player can see how far they have
 // come. No DOM here: app.js draws, and a share card can reuse a run as is.
 (function () {
@@ -6,7 +6,7 @@
 
   var LV = ADV.levels;
   var STORE_KEY = 'tmux-da';
-  var SCHEMA = 2, CAP = 100, HARD_CAP = 200;
+  var SCHEMA = 3, CAP = 100, HARD_CAP = 200;
 
   function recordKey(id) { return 'tmux:' + id; }
   function courseOf(id) { return LV.COURSES.filter(function (c) { return c.id === id; })[0] || null; }
@@ -30,11 +30,15 @@
   }
 
   // Old saves kept only a best time per course. Each becomes one run, marked
-  // legacy, so the history starts from it instead of from nothing.
+  // legacy, so the history starts from it instead of from nothing. Schema 2
+  // runs carry the old game's rank titles; schema 3 renames them.
   function migrate(all) {
     if (all.schema === SCHEMA && Array.isArray(all.runs)) return false;
     all.arena = all.arena || {};
-    all.runs = Array.isArray(all.runs) ? all.runs : [];
+    var hadRuns = Array.isArray(all.runs);
+    all.runs = hadRuns ? all.runs : [];
+    all.runs.forEach(function (r) { if (LV.OLD_RANKS[r.rank]) r.rank = LV.OLD_RANKS[r.rank]; });
+    if (hadRuns) { all.schema = SCHEMA; return true; }
     Object.keys(all.arena).forEach(function (key) {
       var id = key.replace(/^tmux:/, ''), c = courseOf(id), b = all.arena[key];
       if (!c || !b || typeof b.time !== 'number') return;
@@ -119,6 +123,7 @@
     var par = c ? LV.par(c) : null;
     var parBefore = prevRuns.some(function (r) { return par != null && r.time <= par; });
     var spark = prevRuns.slice(0, 9).reverse().concat([run]).map(function (r) { return { time: r.time, rec: !!r.rec }; });
+    var ao5 = function (list) { return list.length >= 5 ? list.slice(0, 5).reduce(function (s, r) { return s + r.time; }, 0) / 5 : null; };
     return {
       runId: run.id,
       count: prevRuns.length + 1,
@@ -133,7 +138,9 @@
       par: par,
       parMet: par != null && run.time <= par,
       parFirst: par != null && run.time <= par && !parBefore,
-      spark: spark
+      spark: spark,
+      ao5: ao5([run].concat(prevRuns)),
+      ao5Prev: ao5(prevRuns)
     };
   }
 
@@ -154,7 +161,9 @@
     };
   }
 
-  // Per question type over the latest n runs that logged questions.
+  // Per question type over the latest n runs that logged questions. `o` marks
+  // a question that ran past its 目安, `g` one where the 指南 came out; `to`
+  // is a timeout from the old rules, counted at the limit.
   function weakness(course, n) {
     var c = courseOf(course);
     var runs = runsOf(course).filter(function (r) { return r.qs && r.qs.length; }).slice(0, n || 10);
@@ -164,15 +173,15 @@
       r.qs.forEach(function (q) {
         var s = q.to ? (c ? c.limit : 10) : q.s;
         if (s == null) return;
-        var e = by[q.t] || (by[q.t] = { type: q.t, sum: 0, n: 0, m: 0, timeouts: 0 });
-        e.sum += s; e.n += 1; e.m += q.m || 0; e.timeouts += q.to ? 1 : 0;
+        var e = by[q.t] || (by[q.t] = { type: q.t, sum: 0, n: 0, m: 0, overs: 0, guides: 0 });
+        e.sum += s; e.n += 1; e.m += q.m || 0; e.overs += (q.o || q.to) ? 1 : 0; e.guides += q.g ? 1 : 0;
         total += s; count += 1;
       });
     });
     var mean = count ? total / count : 0;
     var list = Object.keys(by).map(function (k) {
       var e = by[k];
-      return { type: e.type, avg: e.sum / e.n, missRate: e.m / e.n, timeouts: e.timeouts, n: e.n, ratio: mean ? (e.sum / e.n) / mean : 1 };
+      return { type: e.type, avg: e.sum / e.n, missRate: e.m / e.n, overs: e.overs, guides: e.guides, n: e.n, ratio: mean ? (e.sum / e.n) / mean : 1 };
     }).filter(function (e) { return e.n >= 2; });
     list.sort(function (a, b) { return b.ratio - a.ratio; });
     return { runs: runs.length, mean: mean, weak: list.slice(0, 3), strong: list.length > 3 ? list[list.length - 1] : null };
