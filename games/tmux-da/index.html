@@ -38,7 +38,7 @@
   <aside class="plan" aria-label="見取り図">
     <div class="plan-label">見取り図 ― 屋敷を選ぶ</div>
     <ul id="course-list" class="wings"></ul>
-    <p class="plan-note">仕掛けは毎回ちがう順で出る。違う操作は +2 秒。目安を過ぎても仕掛けは飛ばない。行灯がともって押すキーが光り、それでも進まなければ指南が 1 手ずつ出る。</p>
+    <p class="plan-note">仕掛けは毎回ちがう順で出る。違う操作は +2 秒。指図には答えの手順がいつも出ている。目安を過ぎても仕掛けは飛ばない。タブを離れると時計が止まる。</p>
   </aside>
   <div class="facade" aria-hidden="true"><i></i><i class="warm"></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i></div>
 </main>
@@ -55,6 +55,7 @@
       <div class="term-wrap">
         <div id="term" class="term" aria-live="off"></div>
         <div id="banner" class="banner" aria-live="polite"></div>
+        <div id="pause" class="pause" hidden><b>一時停止</b><span>時計は止まっている。キーを押すか、ここを押すと再開</span></div>
         <span id="probe" class="probe" aria-hidden="true">MMMMMMMMMMMMMMMMMMMM</span>
       </div>
       <div id="status" class="status"></div>

@@ -187,6 +187,45 @@
     return { runs: runs.length, mean: mean, weak: list.slice(0, 3), strong: list.length > 3 ? list[list.length - 1] : null };
   }
 
+  // Runs from another device (through the 合言葉) join the history. The
+  // record marks and bests are worked out again in the order runs were made.
+  // Returns how many runs were new here.
+  function merge(runs) {
+    var all = load();
+    var have = {};
+    all.runs.forEach(function (r) { have[r.id] = 1; });
+    var added = 0;
+    (runs || []).forEach(function (r) {
+      if (!r || typeof r.id !== 'string' || have[r.id] || !courseOf(r.course) || typeof r.time !== 'number') return;
+      have[r.id] = 1;
+      all.runs.push(r);
+      added++;
+    });
+    if (!added) return 0;
+    all.runs.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+    all.arena = {};
+    all.runs.forEach(function (r) {
+      var key = recordKey(r.course), b = all.arena[key];
+      r.rec = !b || r.time < b.time;
+      if (r.rec) all.arena[key] = { time: r.time, misses: r.misses, date: r.at.slice(0, 10), runId: r.id, ver: r.ver };
+    });
+    LV.COURSES.forEach(function (c) { all.runs = prune(all.runs, c.id); });
+    write(all);
+    return added;
+  }
+
+  // The run to race as a ghost: the personal best that logged every question.
+  function ghostOf(course) {
+    var c = courseOf(course);
+    var runs = runsOf(course).filter(function (r) {
+      return c && r.ver === c.ver && r.qs && r.qs.length === c.qs.length && r.qs.every(function (q) { return typeof q.s === 'number'; });
+    });
+    if (!runs.length) return null;
+    runs.sort(function (a, b) { return a.time - b.time; });
+    var r = runs[0];
+    return { name: '自分', time: r.time, at: r.at, splits: r.qs.map(function (q) { return +(q.s + 2 * (q.m || 0)).toFixed(2); }) };
+  }
+
   function clearArena() {
     var all = load();
     all.arena = {};
@@ -198,7 +237,7 @@
   window.ADV.records = {
     SCHEMA: SCHEMA, CAP: CAP, HARD_CAP: HARD_CAP,
     load: load, add: add, runsOf: runsOf, best: best,
-    stats: stats, weakness: weakness, clearArena: clearArena,
+    stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
     recordKey: recordKey, courseOf: courseOf
   };
 })();

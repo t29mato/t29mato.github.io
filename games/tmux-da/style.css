@@ -196,7 +196,7 @@ kbd.pfx { background: var(--ai); color: #fff; border-color: var(--ai-d); }
 .sz-q { font-family: var(--mincho); font-size: 25px; font-weight: 700; line-height: 1.45; margin: 12px 0 14px; min-height: 1.45em; text-wrap: balance; }
 .sz-keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 kbd.done { opacity: 0.4; }
-kbd.next { border-color: var(--andon); background: #fff3d6; box-shadow: 0 0 0 3px var(--andon-glow); transform: scale(1.12); animation: lamp 1.2s ease-in-out infinite; }
+kbd.next { border-color: var(--andon); background: #fff3d6; box-shadow: 0 0 0 3px var(--andon-glow); transform: scale(1.12); }
 kbd.pfx.next { background: var(--ai); }
 @keyframes lamp { 50% { box-shadow: 0 0 0 5px rgba(240, 163, 58, 0.25), 0 0 16px var(--andon-glow); } }
 .sz-hint { font-size: 12px; color: var(--sumi-dim); margin-top: 12px; line-height: 1.6; }
@@ -207,15 +207,19 @@ kbd.pfx.next { background: var(--ai); }
 .andon { margin-top: 14px; border: 1px solid var(--paper-line); border-radius: 3px; padding: 10px 12px; background: var(--washi-3); }
 .andon.lit { border-color: var(--andon); box-shadow: 0 0 0 1px var(--andon), 0 0 22px var(--andon-glow); }
 .andon-l { font-size: 12px; color: var(--sumi-dim); display: flex; justify-content: space-between; align-items: center; }
-.andon-over { font-family: var(--mono); color: var(--shu); font-size: 15px; }
+.andon-over { color: var(--shu); font-size: 13px; }
+.andon.lit .gauge { display: none; }
+.pause { position: absolute; inset: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(27, 24, 20, 0.82); color: var(--washi); cursor: pointer; text-align: center; padding: 16px; }
+.pause[hidden] { display: none; }
+.pause b { font-family: var(--mincho); font-size: 34px; letter-spacing: 0.3em; }
+.pause span { font-size: 13px; color: #d9cfbd; }
 .gauge { height: 10px; background: #e6dcc6; border-radius: 999px; overflow: hidden; margin-top: 6px; border: 1px solid var(--paper-line); position: relative; }
 .gauge i { position: absolute; top: 0; bottom: 0; }
 .gauge .left { left: 0; width: 100%; background: linear-gradient(90deg, var(--moss), #9cc27a); }
 .gauge .over { right: 0; width: 0; background: var(--shu); }
 .andon-note { margin: 8px 0 0; font-size: 12.5px; color: #9a5b12; }
-.shinan { margin-top: 10px; border-top: 1px dashed var(--paper-line); padding-top: 10px; }
+.shinan { margin-top: 12px; border: 1px solid var(--paper-line); border-left: 3px solid var(--andon); border-radius: 3px; padding: 8px 12px; background: var(--washi-3); }
 .shinan-t { font-family: var(--mincho); font-size: 13px; color: var(--shu); letter-spacing: 0.2em; display: flex; align-items: center; gap: 8px; }
-.shinan-t i { width: 12px; height: 16px; background: var(--andon); border-radius: 3px 3px 5px 5px; box-shadow: 0 0 10px rgba(240, 163, 58, 0.8); }
 .shinan ol { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
 .shinan li { display: flex; align-items: baseline; gap: 8px; color: var(--sumi-dim); }
 .shinan li.now { color: var(--sumi); font-weight: 700; }
@@ -249,9 +253,101 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .probe { position: absolute; visibility: hidden; white-space: pre; font-family: var(--mono); font-size: 14px; line-height: 20px; top: 0; left: 0; }
 @media (max-width: 760px) { .probe { font-size: 13px; } }
 
-.pane { position: absolute; overflow: hidden; }
-.pane.active { background: radial-gradient(420px 260px at 50% 60%, #fff3d2, transparent); }
-.pane-title { height: 20px; line-height: 20px; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; padding: 0 0.5ch; color: var(--term-dim); }
+.pane { position: absolute; overflow: hidden; z-index: 1; transition: left 280ms cubic-bezier(.3,.7,.2,1), top 280ms cubic-bezier(.3,.7,.2,1), width 280ms cubic-bezier(.3,.7,.2,1), height 280ms cubic-bezier(.3,.7,.2,1); }
+.pane-title, .pane-body { z-index: 1; }
+.pane-title { position: relative; }
+/* the lantern light: glides to the room you stand in, flares on a hit */
+.glow { position: absolute; z-index: 0; pointer-events: none; background: radial-gradient(closest-side, rgba(255, 233, 180, 0.95), rgba(255, 233, 180, 0.35) 70%, transparent); transition: left 260ms ease-out, top 260ms ease-out, width 260ms ease-out, height 260ms ease-out; }
+.glow.flare { animation: flare 320ms ease-out; }
+@keyframes flare { 30% { filter: brightness(1.12) saturate(1.4); transform: scale(1.03); } }
+/* 襖: a paper door with a wooden frame, a 腰板 and an 引手. One lies over a
+   new room and slides away; one slides shut over a room that is closed. */
+.fusuma {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(138, 106, 58, 0.14) 0 1.5px, transparent 2px) 0 0 / 26px 26px,
+    linear-gradient(180deg, var(--washi-3) 0 82%, var(--wood-l) 82% 83%, var(--wood-d) 83%);
+  box-shadow: inset 0 0 0 4px var(--wood-d), inset 0 0 0 5px var(--wood-l), -6px 0 16px rgba(40, 25, 5, 0.3);
+}
+.fusuma i { position: absolute; left: 12px; top: 50%; width: 10px; height: 26px; margin-top: -13px; border-radius: 5px; background: #2b2622; opacity: 0.75; }
+.fusuma.open-y, .fusuma.shut-y { box-shadow: inset 0 0 0 4px var(--wood-d), inset 0 0 0 5px var(--wood-l), 0 -6px 16px rgba(40, 25, 5, 0.3); }
+.fusuma.open-y i, .fusuma.shut-y i { left: 50%; top: 12px; width: 26px; height: 10px; margin: 0 0 0 -13px; }
+.fusuma.open-x { animation: door-open-x 360ms cubic-bezier(.4,.1,.2,1) forwards; }
+.fusuma.open-y { animation: door-open-y 360ms cubic-bezier(.4,.1,.2,1) forwards; }
+.fusuma.shut-x { animation: door-shut-x 260ms cubic-bezier(.4,0,.6,1) forwards; }
+.fusuma.shut-y { animation: door-shut-y 260ms cubic-bezier(.4,0,.6,1) forwards; }
+@keyframes door-open-x { to { transform: translateX(103%); } }
+@keyframes door-open-y { to { transform: translateY(103%); } }
+@keyframes door-shut-x { from { transform: translateX(-103%); } }
+@keyframes door-shut-y { from { transform: translateY(-103%); } }
+/* a new room: its door slides away (the room itself only brightens) */
+.pane.enter-x, .pane.enter-y { animation: room-open 360ms ease-out; }
+.pane.enter-fade { animation: room-fade 300ms ease-out; }
+@keyframes room-open { from { filter: brightness(1.05); } }
+@keyframes room-fade { from { opacity: 0; } }
+/* a closed room: the door shuts over it, then the wall is gone */
+.pane.leaving { z-index: 2; pointer-events: none; animation: room-gone 360ms ease-in forwards; }
+@keyframes room-gone { 0%, 72% { opacity: 1; } 100% { opacity: 0; } }
+/* 大広間: zooming lifts the other walls away; unzooming drops them back */
+.pane.leaving.lift { animation: wall-lift 320ms ease-in forwards; }
+.pane.enter-drop { animation: wall-drop 320ms cubic-bezier(.3,.7,.2,1); }
+@keyframes wall-lift { to { transform: translateY(-14%); opacity: 0; } }
+@keyframes wall-drop { from { transform: translateY(-14%); opacity: 0; } }
+.border { z-index: 2; transition: left 280ms cubic-bezier(.3,.7,.2,1), top 280ms cubic-bezier(.3,.7,.2,1), width 280ms, height 280ms; }
+.border.settle { animation: settle 420ms ease-out; }
+@keyframes settle { 0%, 55% { opacity: 0; } 100% { opacity: 1; } }
+/* another wing: a big fusuma sweeps off the house while the view slides in */
+.term.slide-next { animation: slide-next 380ms cubic-bezier(.3,.7,.2,1); }
+.term.slide-prev { animation: slide-prev 380ms cubic-bezier(.3,.7,.2,1); }
+@keyframes slide-next { from { transform: translateX(6%); opacity: 0.4; } }
+@keyframes slide-prev { from { transform: translateX(-6%); opacity: 0.4; } }
+.wipe {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(138, 106, 58, 0.14) 0 1.5px, transparent 2px) 0 0 / 26px 26px,
+    linear-gradient(180deg, var(--washi-3) 0 84%, var(--wood-l) 84% 85%, var(--wood-d) 85%);
+  box-shadow: inset 0 0 0 6px var(--wood-d), inset 0 0 0 7px var(--wood-l), 0 0 30px rgba(40, 25, 5, 0.4);
+}
+.wipe i { position: absolute; left: 50%; top: 50%; width: 14px; height: 42px; margin: -21px 0 0 -7px; border-radius: 7px; background: #2b2622; opacity: 0.75; }
+.wipe.next { animation: wipe-next 400ms cubic-bezier(.4,.1,.2,1) forwards; }
+.wipe.prev { animation: wipe-prev 400ms cubic-bezier(.4,.1,.2,1) forwards; }
+@keyframes wipe-next { to { transform: translateX(-104%); } }
+@keyframes wipe-prev { to { transform: translateX(104%); } }
+
+/* furnishing: the 鴨居 under the title row, a 柱 at the left, tatami at the
+   foot, furniture on it, sometimes a lamp overhead or something on the wall */
+.decor { position: absolute; inset: 20px 0 0 0; z-index: 0; pointer-events: none; }
+.kamoi { position: absolute; left: 0; right: 0; top: 0; height: 5px; background: linear-gradient(180deg, #b08a52, #6e4a22 55%, #4a3016); box-shadow: 0 2px 4px rgba(60, 40, 10, 0.16); opacity: 0.8; }
+.hashira { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(90deg, #b08a52, #7a5a32 55%, #5a4322); opacity: 0.7; }
+.tatami {
+  position: absolute; left: 0; right: 0; bottom: 0; height: min(24%, 42px);
+  background:
+    repeating-linear-gradient(0deg, rgba(90, 80, 30, 0.10) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, #cfc58c 0 calc(50% - 4px), #3f4a2c calc(50% - 4px) 50%);
+  background-size: auto, 220px 100%;
+  border-top: 3px solid #8a6a3a; opacity: 0.6;
+}
+.pane.active .tatami { opacity: 0.85; }
+.pane.cramped .tatami { height: 10px; border-top-width: 2px; }
+.decor .furn { position: absolute; right: 5%; bottom: min(7%, 12px); height: min(50%, 150px); width: auto; max-width: 72%; opacity: 0.45; transition: opacity 260ms; }
+.decor .wall { position: absolute; top: 8px; right: 12px; height: min(32%, 90px); width: auto; opacity: 0.45; transition: opacity 260ms; }
+.decor .lamp { position: absolute; top: 4px; right: 30%; height: min(36%, 110px); width: auto; opacity: 0.5; transition: opacity 260ms; }
+.pane.active .decor .furn, .pane.active .decor .wall, .pane.active .decor .lamp { opacity: 0.85; }
+/* only the room you stand in is alive, and only just: the clock ticks, the
+   tea steams, a flame breathes. Nothing else loops. */
+.decor .pendulum { transform-box: fill-box; transform-origin: 50% 0; }
+.pane.active .decor .pendulum { animation: pendulum 1.6s ease-in-out infinite alternate; }
+@keyframes pendulum { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.decor .steam { opacity: 0; }
+.pane.active .decor .steam { animation: steam 4s ease-in-out infinite; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(3px); } 40% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-5px); } }
+.decor .flame { transform-box: fill-box; transform-origin: 50% 100%; }
+.pane.active .decor .flame { animation: flame 2.2s ease-in-out infinite alternate; }
+@keyframes flame { from { transform: scale(0.94, 0.96); opacity: 0.9; } to { transform: scale(1.03, 1.06); opacity: 1; } }
+.pane.scene-akima .tatami { opacity: 0.35; }
+.pane.scene-akima .decor .kamoi, .pane.scene-akima .decor .hashira { opacity: 0.4; }
+/* 欄間: the title row sits in the strip above the 鴨居 */
+.pane-title { height: 20px; line-height: 20px; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; padding: 0 0.5ch; color: var(--term-dim); background: linear-gradient(180deg, rgba(138, 106, 58, 0.12), rgba(138, 106, 58, 0.04)); }
 .pt-idx { font-size: 11px; color: var(--term-dim); }
 .pt-name { font-family: var(--mincho); font-size: 12.5px; background: #fff; border: 1px solid var(--paper-line); padding: 0 7px; line-height: 16px; color: var(--sumi-dim); }
 .pane.active .pt-name { color: #2b1a05; border-color: var(--andon); background: #fff3d2; font-weight: 700; }

@@ -382,7 +382,19 @@
 
   // Panes with nothing to do get a room name, so every pane has a label.
   var ROOM_NAMES = ['茶の間', '座敷', '納戸', '書院', '次の間', '仏間'];
+  // Rooms the player adds with a split take the next free name.
+  var SPARE_NAMES = ['客間', '控えの間', '台所', '縁側'];
   var SCENE_NAMES = { kakejiku: '掛け軸の間', akima: '空き間', makimono: '巻物の間' };
+
+  // A room the player splits off is furnished too: the first name no room
+  // in the session has yet. Names mean nothing to the questions.
+  function nameRoom(pane) {
+    if (!pane || pane.scene) return;
+    var used = {};
+    S.session.windows.forEach(function (w) { T.panesOf(w).forEach(function (p) { if (p.name) used[p.name] = true; }); });
+    var names = ROOM_NAMES.concat(SPARE_NAMES);
+    for (var i = 0; i < names.length; i++) if (!used[names[i]]) { pane.name = names[i]; return; }
+  }
 
   function stagePane(pane, scene, name, opts) {
     opts = opts || {};
@@ -595,8 +607,8 @@
       return true;
     }
 
-    if (key === '%') { T.splitPane(win, pane.id, 'lr', null, false); S.lastAction = 'split_lr'; return true; }
-    if (key === '"') { T.splitPane(win, pane.id, 'tb', null, false); S.lastAction = 'split_tb'; return true; }
+    if (key === '%') { nameRoom(T.splitPane(win, pane.id, 'lr', null, false)); S.lastAction = 'split_lr'; return true; }
+    if (key === '"') { nameRoom(T.splitPane(win, pane.id, 'tb', null, false)); S.lastAction = 'split_tb'; return true; }
     if (key === 'z') { win.zoomed = !win.zoomed; S.lastAction = 'zoom'; return true; }
     if (key === 'x') {
       var idx = T.paneIndex(S.session, win, pane);
@@ -619,7 +631,7 @@
       };
       return true;
     }
-    if (key === 'c') { var w = T.createWindow(S.session, 'zsh'); T.selectWindow(S.session, w.id); S.lastAction = 'new_window'; return true; }
+    if (key === 'c') { var w = T.createWindow(S.session, 'zsh'); T.selectWindow(S.session, w.id); nameRoom(T.activePane(w)); S.lastAction = 'new_window'; return true; }
     if (key === 'n') { T.nextWindow(S.session, 1); S.lastAction = 'select_window'; return true; }
     if (key === 'p') { T.nextWindow(S.session, -1); S.lastAction = 'select_window'; return true; }
     if (/^[0-9]$/.test(key)) {
@@ -700,13 +712,14 @@
     } else if (/^(new-window|neww)$/.test(cmd)) {
       var w = T.createWindow(S.session, flag('-n') || 'zsh');
       T.selectWindow(S.session, w.id);
+      nameRoom(T.activePane(w));
       S.lastAction = 'new_window';
     } else if (/^(rename-window|renamew)$/.test(cmd)) {
       if (argv[1]) win.name = argv.slice(1).join(' ');
       S.lastAction = 'rename';
     } else if (/^(split-window|splitw)$/.test(cmd)) {
       var lr = argv.indexOf('-h') > 0;
-      T.splitPane(win, pane.id, lr ? 'lr' : 'tb', null, false);
+      nameRoom(T.splitPane(win, pane.id, lr ? 'lr' : 'tb', null, false));
       S.lastAction = lr ? 'split_lr' : 'split_tb';
     } else if (/^(kill-pane|killp)$/.test(cmd)) {
       if (!T.killPane(win, pane.id)) message('最後の間は閉じられない');
@@ -894,7 +907,16 @@
     if (S.screen !== 'game') return;
     var t = e.target;
     if (t && t !== document.body && t.id !== 'sink' && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+    if (S.run && S.run.phase === 'pause') {
+      if (!isModifierOnly(e.key)) resumeRun();
+      e.preventDefault();
+      return;
+    }
+    // A soft keyboard's keydown carries no key; its text comes as input.
+    if (e.key === 'Unidentified' || e.key === 'Process' || e.isComposing) return;
     var k = { key: e.key, code: e.code, ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey, meta: e.metaKey };
+    // A key typed into the focused sink is handled here, never again as input.
+    if (t && t.id === 'sink' && !e.metaKey && (e.key.length === 1 || e.key === 'Enter')) e.preventDefault();
     if (handleKey(k)) e.preventDefault();
   }
 
@@ -1240,6 +1262,34 @@
     render();
   }
 
+  // Leaving the tab or the window stops the clock; the question is hidden
+  // until the player is back and presses a key or clicks.
+  function pauseRun() {
+    var b = S.run;
+    if (!b || b.phase !== 'play' || S.screen !== 'game') return;
+    b.phase = 'pause';
+    b.pausedAt = performance.now();
+    clearInterval(S.clock);
+    S.armed = false;
+    $('#pause').hidden = false;
+    render();
+  }
+
+  function resumeRun() {
+    var b = S.run;
+    if (!b || b.phase !== 'pause') return;
+    var d = performance.now() - b.pausedAt;
+    b.start += d;
+    b.qStart += d;
+    b.phase = 'play';
+    $('#pause').hidden = true;
+    $('#sashizu').dataset.key = '';
+    AU.se('go');
+    startClock();
+    render();
+    focusSink();
+  }
+
   function loadQuestion() {
     var b = S.run;
     var type = b.qs[b.i];
@@ -1301,20 +1351,20 @@
     shake();
   }
 
-  // The 行灯: past the 目安 the keys light up; at 1.5 times it, the 指南.
+  // The 行灯: past the 目安 the panel says so, once, and stays still. The
+  // question is never skipped; the 指南 is on screen from the start.
   function startClock() {
     clearInterval(S.clock);
     S.clock = setInterval(function () {
       var b = S.run;
       if (!b || b.phase !== 'play' || S.screen !== 'game') { clearInterval(S.clock); return; }
       var used = (performance.now() - b.qStart) / 1000;
-      var stage = used > b.limit * LV.GUIDE_AT ? 2 : used > b.limit ? 1 : 0;
+      var stage = used > b.limit ? 1 : 0;
       if (stage > b.stage) {
         var log = b.qlog[b.i];
         if (b.stage < 1) { b.overs += 1; log.o = 1; b.streak = 0; }
-        if (stage === 2) { b.guides += 1; log.g = 1; }
         b.stage = stage;
-        AU.se(stage === 2 ? 'shinan' : 'andon');
+        AU.se('andon');
         syncBody();
         renderSashizu();
       }
@@ -1421,22 +1471,22 @@
     $('#title-meta').textContent = '合図 ' + prefixLabel();
   }
 
-  // The order on the left: the question, its keys, the 目安 and the 指南.
-  // Rebuilt only when the question, the stage or the key state changes; the
-  // clock ticks update the gauge in place.
+  // The order on the left: the question, the 指南 (the answer, step by step,
+  // shown from the start) and the 目安. Rebuilt only when the question, the
+  // stage or the key state changes; the clock ticks update the gauge in place.
   function renderSashizu() {
     var el = $('#sashizu');
     var b = S.run;
     if (!el || !b) return;
     var playing = b.phase === 'play' && b.q;
-    var move = playing && b.stage > 0 ? b.q.next() : null;
+    var move = playing ? b.q.next() : null;
     var key = [b.i, b.phase, b.stage, S.armed ? 1 : 0, S.confirm ? 1 : 0, S.prompt ? 1 : 0, move ? move.text : ''].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     var n = b.qs.length;
     var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
-      html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : '') + '</div>';
+      html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : '') + '</div>';
       el.innerHTML = html;
       return;
     }
@@ -1446,24 +1496,19 @@
     var lit = move ? move.keys : [];
     var pfxCls = 'pfx' + (move && move.pfx ? (S.armed ? ' done' : ' next') : '');
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
-    var hints = [];
-    b.q.show.forEach(function (a) { if (LV.HINTS[a]) hints.push(LV.HINTS[a]); });
-    html += '<div class="sz-hint">' + hints.map(esc).join('<br>') + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
-    html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>目安 ' + b.limit + ' 秒</span><b class="andon-over"></b></div>' +
-      '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
-    if (b.stage === 2 && move) {
+    if (move) {
       var steps = [];
       if (move.pfx) steps.push({ text: '合図 ' + prefixLabel() + ' を押して離す', done: S.armed });
       steps.push({ text: move.text, done: false });
       var now = steps.findIndex(function (s) { return !s.done; });
-      html += '<div class="shinan"><div class="shinan-t"><i></i>行灯がともった ― 指南</div><ol>' +
+      html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
         steps.map(function (s, i) {
           return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + (s.done ? ' ✓' : '') + '</li>';
         }).join('') + '</ol></div>';
-    } else if (b.stage === 1) {
-      html += '<p class="andon-note">目安を過ぎた。押すキーが光っている。</p>';
     }
+    html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>目安 ' + b.limit + ' 秒</span><b class="andon-over"></b></div>' +
+      '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
     html += '</div>';
     el.innerHTML = html;
     renderClock();
@@ -1489,14 +1534,16 @@
   function renderClock() {
     var b = S.run;
     if (!b) return;
-    var now = performance.now();
+    var live = b.phase === 'play' || b.phase === 'pause';
+    var now = b.phase === 'pause' ? b.pausedAt : performance.now();
     var t = $('#playbar .pb-time span');
-    if (t) t.textContent = (b.phase === 'play' ? (now - b.start) / 1000 + b.penalty : 0).toFixed(1);
-    var used = b.phase === 'play' ? (now - b.qStart) / 1000 : 0;
+    if (t) t.textContent = (live ? (now - b.start) / 1000 + b.penalty : 0).toFixed(1);
+    var used = live ? (now - b.qStart) / 1000 : 0;
     var left = $('#sashizu .gauge .left'), over = $('#sashizu .gauge .over'), o = $('#sashizu .andon-over');
     if (left) left.style.width = Math.max(0, (b.limit - used) / b.limit * 100) + '%';
     if (over) over.style.width = Math.min(100, Math.max(0, (used - b.limit) / (b.limit * (LV.GUIDE_AT - 1)) * 100)) + '%';
-    if (o) o.textContent = used > b.limit ? '超過 +' + (used - b.limit).toFixed(1) + ' 秒' : '';
+    // Past the 目安 the panel goes still: no counting seconds to distract.
+    if (o) o.textContent = used > b.limit ? '目安を過ぎた' : '';
   }
 
   // Short notes under the order: a streak, a wrong key.
@@ -1522,10 +1569,48 @@
     S.rows = Math.max(8, Math.floor(box.height / S.cellH));
   }
 
+  // The panes are kept as elements between renders, so a split, a close, a
+  // resize or a zoom can move them (this house is livelier than tmux: real
+  // panes jump, these slide like fusuma). A new window slides the whole view.
+  var view = { session: null, win: null, zoomed: false, borders: '' };
+
+  // A fusuma panel laid over a room: it slides away when the room opens and
+  // slides shut when the room is closed. Removed with its animation.
+  function fusuma(el, cls) {
+    var door = document.createElement('div');
+    door.className = 'fusuma ' + cls;
+    door.innerHTML = '<i></i>';
+    el.appendChild(door);
+    door.addEventListener('animationend', function () { door.remove(); });
+  }
+
+  // Switching wings: a big fusuma sweeps off the whole house.
+  function wipe(term, dir) {
+    if (reduceMotion) return;
+    var door = document.createElement('div');
+    door.className = 'wipe ' + dir;
+    door.innerHTML = '<i></i>';
+    term.appendChild(door);
+    door.addEventListener('animationend', function () { door.remove(); });
+  }
+
+  function animateOnce(el, cls) {
+    if (reduceMotion) return;
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    el.addEventListener('animationend', function done(e) {
+      if (e.target !== el) return;
+      el.classList.remove(cls);
+      el.removeEventListener('animationend', done);
+    });
+  }
+
   function renderTerm() {
     var term = $('#term');
     measureCells();
     if (S.detached) {
+      view.session = view.win = null;
       term.innerHTML = '<div class="outer-shell"><div class="pane-body outer-body">' + linesHTML(S.outer.lines) +
         '<div class="sh-line"><span class="sh-prompt">$ </span>' + withCursor(S.outer.input, S.outer.cur, true) + '</div></div></div>';
       var ob = $('.outer-body', term);
@@ -1537,30 +1622,113 @@
     var cw = S.cellW, ch = S.cellH;
     var active = null;
     lay.panes.forEach(function (r) { if (r.pane.id === win.active) active = r; });
-    var html = '';
+    var fresh = view.session !== S.session || view.win !== win;
+    if (fresh) {
+      var moved = view.session === S.session && view.win;
+      var next = moved && (win.index > view.win.index || S.session.windows.indexOf(view.win) < 0);
+      if (moved) animateOnce(term, next ? 'slide-next' : 'slide-prev');
+      term.innerHTML = '<div class="glow"></div>';
+      if (moved) wipe(term, next ? 'next' : 'prev');
+      view.borders = '';
+    }
+    // Zooming lifts the other walls away; unzooming drops them back.
+    var zoomIn = !fresh && win.zoomed && !view.zoomed;
+    var zoomOut = !fresh && !win.zoomed && view.zoomed;
+    view.session = S.session;
+    view.win = win;
+    view.zoomed = win.zoomed;
+    var old = {};
+    $$(':scope > .pane[data-pane-id]', term).forEach(function (el) { old[el.dataset.paneId] = el; });
     lay.panes.forEach(function (r) {
       var p = r.pane;
       var isActive = p.id === win.active;
       var idx = T.paneIndex(S.session, win, p);
-      html += '<div class="pane' + (isActive ? ' active' : '') + (p.scene ? ' scene-' + p.scene : '') + '" data-pane-id="' + p.id + '" data-scene="' + (p.scene || '') + '" style="left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + (r.w * cw) + 'px;height:' + (r.h * ch) + 'px">';
-      html += '<div class="pane-title"><span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">大広間</span>' : '') + '</div>';
-      html += '<div class="pane-body' + (p.mode === 'copy' ? ' copy' : '') + '" data-pane-body="' + p.id + '">';
-      if (p.mode === 'copy') html += '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>';
-      html += sceneHTML(p);
-      html += linesHTML(p.lines, p.mode === 'copy' ? p : null);
-      html += '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
-      html += '</div></div>';
+      var el = old[p.id];
+      var born = !el;
+      delete old[p.id];
+      if (born) {
+        el = document.createElement('div');
+        el.dataset.paneId = p.id;
+        el.innerHTML = '<div class="decor"></div><div class="pane-title"></div><div class="pane-body"></div>';
+        term.appendChild(el);
+      }
+      var wpx = r.w * cw, hpx = r.h * ch;
+      var room = p.scene ? '' : (p.name || '');
+      var size = hpx < 110 || wpx < 150 ? 'cramped' : '';
+      el.className = 'pane' + (isActive ? ' active' : '') + (p.scene ? ' scene-' + p.scene : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
+      el.dataset.scene = p.scene || '';
+      el.style.cssText = 'left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + wpx + 'px;height:' + hpx + 'px';
+      var decorKey = (p.scene || room) + '|' + size;
+      if (el.dataset.decor !== decorKey) {
+        el.dataset.decor = decorKey;
+        el.firstChild.innerHTML = decorHTML(p.scene, room, size);
+      }
+      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">大広間</span>' : '');
+      var body = el.children[2];
+      body.className = 'pane-body' + (p.mode === 'copy' ? ' copy' : '');
+      body.dataset.paneBody = p.id;
+      body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
+        sceneHTML(p) + linesHTML(p.lines, p.mode === 'copy' ? p : null) +
+        '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
+      // A room that appears in a window already on screen slides open from
+      // the side it was split off.
+      if (born && !fresh && !reduceMotion) {
+        var anim = zoomOut ? 'enter-drop' : 'enter-fade';
+        if (!zoomOut) lay.panes.forEach(function (o) {
+          if (o.x === r.x && o.w === r.w && o.y + o.h + 1 === r.y) anim = 'enter-y';
+          else if (o.y === r.y && o.h === r.h && o.x + o.w + 1 === r.x) anim = 'enter-x';
+        });
+        if (anim === 'enter-x' || anim === 'enter-y') fusuma(el, 'open-' + anim.slice(-1));
+        el.dataset.anim = anim;
+        el.classList.add(anim);
+        el.addEventListener('animationend', function done(e) {
+          if (e.target !== el) return;
+          el.classList.remove(el.dataset.anim);
+          delete el.dataset.anim;
+          el.removeEventListener('animationend', done);
+        });
+      }
     });
+    // Rooms that are gone fold away (and stop counting as rooms at once).
+    Object.keys(old).forEach(function (id) {
+      var el = old[id];
+      el.removeAttribute('data-pane-id');
+      el.removeAttribute('data-scene');
+      $$('[data-pane-body],[data-copy-ind]', el).forEach(function (x) { x.removeAttribute('data-pane-body'); x.removeAttribute('data-copy-ind'); });
+      el.className = 'pane leaving' + (zoomIn ? ' lift' : '');
+      if (reduceMotion) { el.remove(); return; }
+      // A closed room gets its fusuma shut; a room zoomed away lifts off.
+      if (!zoomIn) fusuma(el, el.offsetWidth >= el.offsetHeight ? 'shut-x' : 'shut-y');
+      setTimeout(function () { el.remove(); }, 360);
+    });
+    // The lantern light follows the room you stand in.
+    var glow = $(':scope > .glow', term);
+    if (glow && active) glow.style.cssText = 'left:' + (active.x * cw) + 'px;top:' + (active.y * ch) + 'px;width:' + (active.w * cw) + 'px;height:' + (active.h * ch) + 'px';
+    var bhtml = '';
     lay.borders.forEach(function (b) {
       var near = false;
       if (active) {
         if (b.dir === 'v') near = (active.x + active.w === b.x || active.x === b.x + 1) && active.y < b.y + b.len && b.y < active.y + active.h;
         else near = (active.y + active.h === b.y || active.y === b.y + 1) && active.x < b.x + b.len && b.x < active.x + active.w;
       }
-      html += '<div class="border ' + b.dir + (near ? ' near' : '') + '" style="left:' + (b.x * cw) + 'px;top:' + (b.y * ch) + 'px;width:' + ((b.dir === 'v' ? 1 : b.len) * cw) + 'px;height:' + ((b.dir === 'v' ? b.len : 1) * ch) + 'px"></div>';
+      bhtml += '<div class="border ' + b.dir + (near ? ' near' : '') + '" style="left:' + (b.x * cw) + 'px;top:' + (b.y * ch) + 'px;width:' + ((b.dir === 'v' ? 1 : b.len) * cw) + 'px;height:' + ((b.dir === 'v' ? b.len : 1) * ch) + 'px"></div>';
     });
-    if (S.picker) html += pickerHTML();
-    term.innerHTML = html;
+    if (bhtml !== view.borders) {
+      // Borders move with the rooms; a changed set fades in once they land.
+      var shape = function (h) { return h.replace(/ near/g, ''); };
+      var reshaped = shape(bhtml) !== shape(view.borders);
+      $$(':scope > .border', term).forEach(function (x) { x.remove(); });
+      var tmp = document.createElement('div');
+      tmp.innerHTML = bhtml;
+      while (tmp.firstChild) {
+        if (reshaped && !fresh && !reduceMotion) tmp.firstChild.classList.add('settle');
+        term.appendChild(tmp.firstChild);
+      }
+      view.borders = bhtml;
+    }
+    var pk = $(':scope > .picker', term);
+    if (pk) pk.remove();
+    if (S.picker) term.insertAdjacentHTML('beforeend', pickerHTML());
     // Scroll positions, the copy cursor and the indicator need the DOM.
     lay.panes.forEach(function (r) {
       var p = r.pane;
@@ -1610,6 +1778,143 @@
       html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + '">(' + i + ') ' + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '') + '</div>';
     });
     return html + '</div>';
+  }
+
+  // Each room is furnished: tatami underfoot, a 鴨居 and a 柱 for the walls,
+  // furniture on the floor and sometimes something on the wall or hanging
+  // from the ceiling. Drawn faint, behind the shell text. The floor pieces
+  // share one 200x90 viewBox so they sit on the tatami at the same scale.
+  var svg = function (vb, body, cls) { return '<svg class="' + cls + '" viewBox="' + vb + '" aria-hidden="true">' + body + '</svg>'; };
+  var zabuton = function (x, y, c) { return '<path d="M' + x + ' ' + y + 'q25-5 50 0l3 10q-28 5-56 0z" fill="' + c + '"/><circle cx="' + (x + 25) + '" cy="' + (y + 5) + '" r="1.5" fill="#f3eadb" opacity=".8"/>'; };
+  var yunomi = function (x, y) { return '<path d="M' + x + ' ' + y + 'h7l-1 9h-5z" fill="#efe6d2" stroke="#9a8f7c" stroke-width=".8"/><path class="steam" d="M' + (x + 3.5) + ' ' + (y - 1) + 'c-3-4 3-6 0-10" fill="none" stroke="#b9ab8e" stroke-width="1.6" stroke-linecap="round"/>'; };
+  var steam = function (x, y) { return '<path class="steam" d="M' + x + ' ' + y + 'c-3-4 3-6 0-10" fill="none" stroke="#b9ab8e" stroke-width="1.6" stroke-linecap="round"/>'; };
+  var andon = function (x) { return '<rect x="' + x + '" y="30" width="26" height="54" fill="#fbf6ea" stroke="#5a3a1a" stroke-width="1.5"/><path d="M' + x + ' 48h26M' + x + ' 66h26M' + (x + 13) + ' 30v54" stroke="#5a3a1a" stroke-width="1"/><ellipse cx="' + (x + 13) + '" cy="58" rx="8" ry="12" fill="#ffd27a" opacity=".55"/><path class="flame" d="M' + (x + 13) + ' 50c-2.5 3-2.5 6 0 8 2.5-2 2.5-5 0-8z" fill="#f0a33a"/><rect x="' + (x - 4) + '" y="84" width="34" height="2" fill="#5a3a1a"/>'; };
+  var FURNISH = {
+    // A Showa 茶の間: 茶箪笥, ちゃぶ台 with 急須, 湯呑 and みかん, 座布団 on
+    // three sides, a pull-cord lamp overhead and the 柱時計 ticking.
+    '茶の間': {
+      furn: svg('0 0 200 90',
+        '<rect x="156" y="6" width="42" height="78" rx="1.5" fill="#7a5a32"/><rect x="159" y="9" width="36" height="30" fill="#e9e2d0"/>' +
+        '<path d="M177 9v30M159 24h36" stroke="#7a5a32" stroke-width="1.5"/><path d="M163 15h10M181 15h10M163 31h10M181 31h10" stroke="#9a8f7c" stroke-width="1.2" opacity=".6"/>' +
+        '<rect x="159" y="43" width="36" height="12" fill="#6b4a26"/><rect x="159" y="58" width="36" height="12" fill="#6b4a26"/><rect x="159" y="73" width="36" height="8" fill="#6b4a26"/>' +
+        '<circle cx="177" cy="49" r="1.6" fill="#d9b25a"/><circle cx="177" cy="64" r="1.6" fill="#d9b25a"/><rect x="161" y="1" width="10" height="5" rx="1" fill="#4f6440"/>' +
+        '<rect x="66" y="60" width="5" height="24" fill="#5a3a1a"/><rect x="128" y="60" width="5" height="24" fill="#5a3a1a"/>' +
+        '<path d="M52 56h96v5c0 3-22 6-48 6s-48-3-48-6z" fill="#6e4520"/><ellipse cx="100" cy="56" rx="48" ry="9" fill="#9a6532"/>' +
+        '<ellipse cx="100" cy="55" rx="42" ry="6.5" fill="none" stroke="#b07a45" stroke-width=".8"/>' +
+        '<ellipse cx="82" cy="49" rx="9" ry="7" fill="#4f6440"/><path d="M73 47l-7-4" stroke="#4f6440" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M90 45l9-6" stroke="#5a3a1a" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="82" cy="42.5" rx="4" ry="1.6" fill="#3d4f31"/>' +
+        yunomi(102, 43) + yunomi(113, 44) +
+        '<ellipse cx="134" cy="52" rx="10" ry="3" fill="#efe6d2" stroke="#9a8f7c" stroke-width=".6"/><circle cx="130" cy="48" r="4" fill="#e98a2a"/><circle cx="137" cy="48.5" r="3.6" fill="#f09a35"/><path d="M130 44.5l1-2" stroke="#4f6440" stroke-width="1.2"/>' +
+        zabuton(4, 72, '#8a3b3b') + zabuton(92, 76, '#8a3b3b'), 'furn'),
+      lamp: svg('0 0 70 90',
+        '<path d="M35 0v34" stroke="#3a2a14" stroke-width="1.6"/>' +
+        '<path d="M35 34c-12 0-22 10-24 22h48c-2-12-12-22-24-22z" fill="#5f7d57"/><path d="M11 56h48" stroke="#3a2a14" stroke-width="1.2"/>' +
+        '<path d="M14 57q21 5 42 0z" fill="#fff8e8"/><circle cx="35" cy="60" r="5" fill="#ffd27a"/>' +
+        '<ellipse class="lamp-glow" cx="35" cy="68" rx="30" ry="16" fill="#ffd27a" opacity=".22"/>' +
+        '<path d="M42 57v20" stroke="#9a8f7c" stroke-width="1"/><circle cx="42" cy="78" r="1.8" fill="#b9322a"/>', 'lamp'),
+      wall: svg('0 0 40 86',
+        '<rect x="5" y="2" width="30" height="80" rx="3" fill="#6e4520"/><path d="M5 2h30" stroke="#4a3016" stroke-width="3"/><circle cx="20" cy="20" r="11" fill="#f6efdd" stroke="#3a2a14" stroke-width="1.2"/>' +
+        '<path d="M20 11v2M29 20h-2M20 29v-2M11 20h2" stroke="#6f6558" stroke-width="1"/><path d="M20 20V12M20 20l5 3" stroke="#2b2622" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<rect x="10" y="36" width="20" height="40" fill="#3a2a14"/><rect x="12" y="38" width="16" height="36" fill="#f6efdd" opacity=".12"/>' +
+        '<g class="pendulum"><path d="M20 36v28" stroke="#c9a24a" stroke-width="1.2"/><circle cx="20" cy="66" r="4.5" fill="#d9b25a"/></g>', 'wall')
+    },
+    // 座敷: a 床の間 with a scroll and 生け花, cushions laid out for guests.
+    '座敷': {
+      furn: svg('0 0 200 90',
+        '<rect x="116" y="62" width="84" height="22" fill="#5a3a1a"/><rect x="116" y="60" width="84" height="3" fill="#8a5a2b"/>' +
+        '<rect x="160" y="2" width="20" height="52" fill="#fbf6ea" stroke="#cdbf9f" stroke-width=".6"/><rect x="158" y="1" width="24" height="3" fill="#5a3a1a"/><rect x="158" y="52" width="24" height="3" fill="#5a3a1a"/>' +
+        '<path d="M170 12c-2 8 3 14 0 26" fill="none" stroke="#2b2622" stroke-width="2" opacity=".6"/><rect x="172" y="44" width="4" height="4" fill="#b9322a"/>' +
+        '<path d="M130 60c-6-2-7-12-2-16h12c5 4 4 14-2 16z" fill="#3b4a5c"/>' +
+        '<path d="M134 44c-2-10-8-16-16-22M134 44c3-8 10-12 18-14M134 44c0-8 2-16 0-24" fill="none" stroke="#4a3a24" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<circle cx="118" cy="22" r="3.4" fill="#b9322a"/><circle cx="152" cy="30" r="3" fill="#b9322a"/><circle cx="134" cy="20" r="2.6" fill="#c84b3c"/>' +
+        '<path d="M124 27l4-1M142 33l4 1M131 32l3 2" stroke="#5d7a4a" stroke-width="2.4" stroke-linecap="round"/>' +
+        zabuton(6, 72, '#3b4a5c') + zabuton(60, 72, '#3b4a5c'), 'furn')
+    },
+    // 納戸: a 長持, stacked 葛籠, a 行李 with the futon rolled on it, a broom.
+    '納戸': {
+      furn: svg('0 0 200 90',
+        '<rect x="104" y="50" width="88" height="34" rx="2" fill="#3a2a14"/><path d="M104 57h88" stroke="#5a4322" stroke-width="2"/><path d="M148 50v34" stroke="#b9322a" stroke-width="2.5"/><rect x="124" y="61" width="8" height="6" fill="#8a6a3a"/>' +
+        '<rect x="118" y="24" width="56" height="26" rx="2" fill="#a07c48"/><path d="M118 31h56" stroke="#5a4322" stroke-width="1.5"/><path d="M126 31v19M138 31v19M150 31v19M162 31v19" stroke="#6e5530" stroke-width="1"/><path d="M146 24v26" stroke="#b9322a" stroke-width="2"/>' +
+        '<rect x="30" y="58" width="56" height="26" rx="2" fill="#c8a862"/><path d="M30 64h56M58 58v26" stroke="#8a6a3a" stroke-width="1.2"/><path d="M34 70h48M34 76h48" stroke="#8a6a3a" stroke-width=".6" opacity=".6"/>' +
+        '<ellipse cx="58" cy="50" rx="26" ry="8" fill="#8a3b3b"/><ellipse cx="34" cy="50" rx="4" ry="8" fill="#b35050"/>' +
+        '<path d="M16 20l-4 64" stroke="#8a6a3a" stroke-width="2" stroke-linecap="round"/><path d="M12 68l-8 16M12 68l-2 18M12 68l4 17M12 68l8 15" stroke="#c8a862" stroke-width="2" stroke-linecap="round"/>', 'furn')
+    },
+    // 書院: a 文机 with 硯, brush and bound books, an 行灯, the round window.
+    '書院': {
+      furn: svg('0 0 200 90',
+        '<rect x="50" y="52" width="100" height="6" fill="#7a4a22"/><rect x="56" y="58" width="6" height="26" fill="#5a3a1a"/><rect x="138" y="58" width="6" height="26" fill="#5a3a1a"/>' +
+        '<rect x="62" y="44" width="22" height="8" rx="1.5" fill="#2b2622"/><rect x="66" y="40" width="6" height="4" fill="#1a1612"/>' +
+        '<rect x="88" y="47" width="26" height="5" fill="#fbf6ea" stroke="#cdbf9f" stroke-width=".6"/><path d="M90 50l26-8" stroke="#3a2a14" stroke-width="2" stroke-linecap="round"/><path d="M113 43l5-1.5" stroke="#efe6d2" stroke-width="2.4" stroke-linecap="round"/>' +
+        '<rect x="118" y="36" width="28" height="5" fill="#fbf6ea" stroke="#9a8f7c" stroke-width=".6"/><rect x="118" y="41" width="28" height="5" fill="#fbf6ea" stroke="#9a8f7c" stroke-width=".6"/><rect x="118" y="46" width="28" height="6" fill="#fbf6ea" stroke="#9a8f7c" stroke-width=".6"/><path d="M118 36v16" stroke="#2b4a7a" stroke-width="2.5"/>' +
+        andon(166) + zabuton(74, 74, '#3b4a5c'), 'furn'),
+      wall: svg('0 0 70 70',
+        '<circle cx="35" cy="35" r="31" fill="#fbf6ea" stroke="#6e4520" stroke-width="4"/>' +
+        '<path d="M35 4v62M4 35h62M19 6v58M51 6v58M6 19h58M6 51h58" stroke="#8a6a3a" stroke-width="1"/>' +
+        '<path d="M12 50c10-8 20-6 26-16" fill="none" stroke="#5d7a4a" stroke-width="2" opacity="0.5"/>', 'wall')
+    },
+    // 次の間: a gold 屏風 with pines, a 火鉢 warming the floor.
+    '次の間': {
+      furn: svg('0 0 200 90',
+        '<path d="M56 10l36 6v48l-36-6z" fill="#d8b25a"/><path d="M92 16l36-6v48l-36 6z" fill="#e6c46a"/><path d="M128 10l36 6v48l-36-6z" fill="#d8b25a"/><path d="M164 16l36-6v48l-36 6z" fill="#e6c46a"/>' +
+        '<path d="M56 10l36 6 36-6 36 6 36-6M56 58l36 6 36-6 36 6 36-6" fill="none" stroke="#2b2622" stroke-width="1.6"/>' +
+        '<circle cx="178" cy="26" r="6" fill="#b9322a" opacity=".8"/>' +
+        '<path d="M74 46c16-6 28-18 56-16s36 12 58 6" fill="none" stroke="#4a5d3a" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M104 28c5-5 13-5 18 0M140 34c5-5 13-5 18 0M80 36c4-4 10-4 14 0" fill="none" stroke="#3d4f31" stroke-width="4" stroke-linecap="round"/>' +
+        '<path d="M12 62h44l-4 22H16z" fill="#4a4540"/><ellipse cx="34" cy="62" rx="22" ry="5" fill="#6f6558"/><ellipse cx="34" cy="62" rx="15" ry="3" fill="#9a8f7c"/>' +
+        '<path class="flame" d="M34 54c-3 3-3 6 0 8 3-2 3-5 0-8z" fill="#f0a33a"/>' + steam(30, 54) +
+        zabuton(66, 74, '#3b4a5c'), 'furn')
+    },
+    // 仏間: the 仏壇 open, a candle, incense, the 鈴 on its cushion.
+    '仏間': {
+      furn: svg('0 0 200 90',
+        '<rect x="110" y="6" width="8" height="78" fill="#2b2420"/><rect x="196" y="6" width="4" height="78" fill="#2b2420"/>' +
+        '<rect x="118" y="2" width="78" height="82" fill="#1f1a16"/><rect x="124" y="8" width="66" height="54" fill="#5a3a1a"/><rect x="130" y="12" width="54" height="44" fill="#7a5a20"/>' +
+        '<path d="M130 12l27-8 27 8" fill="none" stroke="#d9b25a" stroke-width="1.5"/><rect x="154" y="28" width="6" height="18" fill="#d9b25a"/><circle cx="157" cy="23" r="4" fill="#d9b25a"/>' +
+        '<rect x="122" y="62" width="70" height="4" fill="#d9b25a"/><rect x="122" y="68" width="70" height="14" fill="#2b2420"/><path d="M157 68v14" stroke="#d9b25a" stroke-width=".8"/>' +
+        '<rect x="98" y="52" width="4" height="22" fill="#f6efdd"/><rect x="94" y="74" width="12" height="4" fill="#8a6a3a"/><path class="flame" d="M100 44c-3 3-3 6 0 8 3-2 3-5 0-8z" fill="#f0a33a"/>' +
+        '<path d="M72 68h16l-2 8H74z" fill="#8a6a3a"/><ellipse cx="80" cy="68" rx="8" ry="2" fill="#9a8f7c"/>' + steam(80, 66) +
+        '<path d="M38 76q12-4 24 0l1 6q-13 4-26 0z" fill="#8a3b3b"/><path d="M42 66h16a8 8 0 0 1-16 0z" fill="#c9a24a"/><path d="M60 62l8-6" stroke="#5a3a1a" stroke-width="2" stroke-linecap="round"/>' +
+        zabuton(2, 74, '#4a3f5c'), 'furn')
+    },
+    // The rooms a player opens with a split.
+    '客間': {
+      furn: svg('0 0 200 90',
+        zabuton(10, 72, '#4f6440') + zabuton(146, 72, '#4f6440') +
+        '<rect x="60" y="58" width="6" height="26" fill="#5a3a1a"/><rect x="134" y="58" width="6" height="26" fill="#5a3a1a"/><rect x="54" y="52" width="92" height="7" rx="1" fill="#8a5a2b"/>' +
+        '<rect x="78" y="46" width="44" height="6" rx="1" fill="#3a2a14"/>' + yunomi(84, 37) + yunomi(110, 37) +
+        '<rect x="96" y="40" width="9" height="6" fill="#efe6d2" stroke="#9a8f7c" stroke-width=".6"/><circle cx="100" cy="41" r="2" fill="#b9322a"/>', 'furn')
+    },
+    '控えの間': {
+      furn: svg('0 0 200 90',
+        '<rect x="124" y="20" width="68" height="56" fill="#fbf6ea" stroke="#5a3a1a" stroke-width="2"/><rect x="118" y="76" width="80" height="4" fill="#5a3a1a"/><rect x="120" y="80" width="8" height="4" fill="#5a3a1a"/><rect x="188" y="80" width="8" height="4" fill="#5a3a1a"/>' +
+        '<path d="M136 60c14-10 30-10 44 0" fill="none" stroke="#4a5d3a" stroke-width="2.4"/><circle cx="170" cy="36" r="6" fill="#b9322a" opacity=".7"/>' +
+        andon(40) + zabuton(70, 72, '#3b4a5c'), 'furn')
+    },
+    '台所': {
+      furn: svg('0 0 200 90',
+        '<path d="M92 84V50q0-10 10-10h88q10 0 10 10v34z" fill="#8c7b66"/><path d="M92 84h108" stroke="#5a4a3a" stroke-width="2"/>' +
+        '<path d="M104 84v-12q0-5 5-5h12q5 0 5 5v12z" fill="#2b2622"/><path d="M160 84v-12q0-5 5-5h12q5 0 5 5v12z" fill="#2b2622"/><path class="flame" d="M115 72c-3 3-3 6 0 8 3-2 3-5 0-8z" fill="#f0a33a"/>' +
+        '<ellipse cx="118" cy="40" rx="16" ry="4" fill="#4a4540"/><path d="M104 40q14-14 28 0z" fill="#3a3530"/><rect x="108" y="24" width="20" height="4" rx="2" fill="#8a6a3a"/>' +
+        '<ellipse cx="176" cy="40" rx="14" ry="4" fill="#4a4540"/><path d="M164 40q12-12 24 0z" fill="#3a3530"/><rect x="170" y="26" width="12" height="3" rx="1.5" fill="#8a6a3a"/>' + steam(118, 22) + steam(176, 24) +
+        '<path d="M28 60h30l-3 24H31z" fill="#a07c48"/><path d="M28 64h30" stroke="#5a4322" stroke-width="1.5"/><path d="M34 62l-2-10M52 62l2-10" stroke="#8a6a3a" stroke-width="2"/><path d="M30 52h26" stroke="#8a6a3a" stroke-width="2"/>' +
+        '<path d="M44 44l14-20" stroke="#8a6a3a" stroke-width="2"/><ellipse cx="43" cy="46" rx="5" ry="3" fill="#8a6a3a"/>', 'furn')
+    },
+    '縁側': {
+      furn: svg('0 0 200 90',
+        '<rect x="140" y="64" width="40" height="4" fill="#5a3a1a"/><rect x="144" y="68" width="4" height="16" fill="#5a3a1a"/><rect x="172" y="68" width="4" height="16" fill="#5a3a1a"/><path d="M148 64v-8h24v8z" fill="#3b4a5c"/>' +
+        '<path d="M160 56c-2-10 4-14 0-22M160 44l-8-4M160 50l8-6" fill="none" stroke="#4a3a24" stroke-width="2.4" stroke-linecap="round"/>' +
+        '<circle cx="150" cy="38" r="7" fill="#4a5d3a"/><circle cx="170" cy="42" r="8" fill="#5d7a4a"/><circle cx="160" cy="32" r="7" fill="#4a5d3a"/>' +
+        '<rect x="96" y="76" width="30" height="5" rx="1" fill="#3a2a14"/>' + yunomi(106, 66) +
+        zabuton(20, 72, '#8a3b3b'), 'furn')
+    }
+  };
+
+  function decorHTML(scene, room, size) {
+    if (scene === 'makimono') return '';
+    var html = '<div class="kamoi"></div><div class="hashira"></div><div class="tatami"></div>';
+    var f = FURNISH[room];
+    if (f && !size) html += f.furn + (f.lamp || '') + (f.wall || '');
+    return html;
   }
 
   // What a staged pane shows above its shell: the room's name, large.
@@ -1752,6 +2057,9 @@
     t.classList.remove('flash-hit', 'flash-miss');
     void t.offsetWidth;
     t.classList.add('flash-' + kind);
+    // The lantern flares with a hit.
+    var glow = $('#term > .glow');
+    if (glow && kind === 'hit') animateOnce(glow, 'flare');
   }
 
   function celebrate() {
@@ -1956,12 +2264,12 @@
       (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text || '棟を渡る') + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') + '</div>';
   }
 
+  // The sink keeps the focus during play: on phones it raises the soft
+  // keyboard, and on desktops a focused text field makes key-grabbing
+  // extensions (Vimium and the like) step aside and pass every key through.
   function focusSink() {
-    // Only phones need the sink focused (it raises the soft keyboard).
-    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-      var sink = $('#sink');
-      if (sink && S.screen === 'game') sink.focus();
-    }
+    var sink = $('#sink');
+    if (sink && S.screen === 'game' && document.activeElement !== sink) sink.focus({ preventScroll: true });
   }
 
   // ---- wiring ------------------------------------------------------------
@@ -2013,6 +2321,11 @@
     var sink = $('#sink');
     sink.addEventListener('input', onSinkInput);
     $('#term').addEventListener('pointerdown', function () { focusSink(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) pauseRun(); });
+    window.addEventListener('blur', pauseRun);
+    $('#pause').addEventListener('pointerdown', function (e) { e.preventDefault(); resumeRun(); });
+    // Vimium's Esc, a click on a key button: take the focus straight back.
+    $('#sink').addEventListener('blur', function () { setTimeout(focusSink, 0); });
     $('#keybar').addEventListener('click', function (e) {
       var b = e.target.closest('button');
       if (!b) return;
