@@ -552,6 +552,7 @@
 
     if (S.armed) {
       S.armed = false;
+      S.graceUntil = 0;
       return prefixedKey(k, win, pane);
     }
 
