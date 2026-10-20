@@ -42,6 +42,7 @@
     session: null,
     armed: false,          // prefix pressed, waiting for the key
     repeatUntil: 0,        // tmux repeat-time window for -r bindings
+    graceUntil: 0,         // trailing repeat keys after a solve are ignored
     confirm: null,         // {text, yes}
     prompt: null,          // {label, value, done}
     picker: null,          // {idx}: choose-tree
@@ -554,6 +555,14 @@
       return prefixedKey(k, win, pane);
     }
 
+
+    // Resize keys still coming after the last question was solved belong to
+    // that question: swallow them instead of counting a 仕掛け違い here.
+    if (Date.now() < S.graceUntil && resizeBinding(k)) {
+      S.graceUntil = Date.now() + 500;
+      return true;
+    }
+    S.graceUntil = 0;
 
     if (Date.now() < S.repeatUntil) {
       var r = resizeBinding(k);
@@ -1320,6 +1329,8 @@
 
   function loadQuestion() {
     var b = S.run;
+    if (Date.now() < S.repeatUntil) S.graceUntil = Date.now() + 500;
+    S.repeatUntil = 0;
     var type = b.qs[b.i];
     var q = Q[type];
     newSession();
