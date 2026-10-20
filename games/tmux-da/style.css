@@ -128,8 +128,6 @@ kbd.pfx { background: var(--ai); color: #fff; border-color: var(--ai-d); }
 .hero-title .en { display: block; font-size: 0.43em; letter-spacing: 0.12em; color: var(--hero-accent); font-weight: 500; font-family: var(--mono); }
 .lead { font-size: 16px; line-height: 2; margin: 22px 0 0; max-width: 560px; color: var(--ink); }
 .lead b { color: var(--hero-ink); font-weight: 700; }
-.setting { margin-top: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.setting-label { font-family: var(--mincho); font-size: 14px; color: var(--ink-dim); }
 .hero .cta { margin-top: 28px; }
 .fine { font-size: 12.5px; color: var(--ink-dim); margin-top: 20px; max-width: 560px; }
 

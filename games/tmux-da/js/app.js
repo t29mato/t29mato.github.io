@@ -1397,7 +1397,6 @@
 
   function renderTitle() {
     var all = REC.load();
-    $$('#title-screen [data-prefix]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.prefix === S.prefix ? 'true' : 'false'); });
     var pick = lastCourse(all);
     var html = '';
     LV.COURSES.forEach(function (c) {
@@ -1969,7 +1968,6 @@
 
   function init() {
     var saved = store.load();
-    if (saved.prefix === 'C-a' || saved.prefix === 'C-b') S.prefix = saved.prefix;
     applyTheme(saved.theme === 'dark' || saved.theme === 'light' ? saved.theme : null);
     applySound(saved.sound !== false);
 
@@ -1978,9 +1976,6 @@
       b.addEventListener('click', function () { applySound(!S.sound); store.save({ sound: S.sound }); if (S.sound) music(); });
     });
     document.addEventListener('pointerdown', function () { AU.unlock(); }, true);
-    $$('#title-screen [data-prefix]').forEach(function (b) {
-      b.addEventListener('click', function () { S.prefix = b.dataset.prefix; store.save({ prefix: S.prefix }); AU.se('cursor'); renderTitle(); });
-    });
     $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'normal'); });
     $('#btn-records').addEventListener('click', function () { openRecords(null, 'title'); });
     $('#course-list').addEventListener('click', function (e) {
