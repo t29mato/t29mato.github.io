@@ -45,6 +45,17 @@ games:
       waves, and brace for the Titan at the end.
     note: Twelve sectors, drawn like a field manual.
 
+  - name: "tmux打 (tmux-da)"
+    img: /assets/games/tmux-da.jpg
+    url: /games/tmux-da/
+    source: https://github.com/t29mato/tmux-da
+    rating: 3
+    tags: [Typing, Learning]
+    blurb: >-
+      Learn tmux the way Sushida teaches typing: race the clock through shuffled
+      prompts, splitting, zooming and swapping panes with the real key bindings.
+    note: Japanese, with an 8-bit RPG story mode and a CLI version that runs inside real tmux.
+
   - name: Bomb Rush
     img: /assets/games/bomb-rush.jpg
     url: /experiments/bomb-rush/

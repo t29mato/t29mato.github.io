@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>tmux打</title>
+<meta name="description" content="ブラウザの中の tmux で 24 の試練を解き、闘技場で速さを競う。キー操作を指に入れる。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%231a1730'/%3E%3Cpath fill='%23f0b35a' d='M0 0h8v1H0zM0 7h8v1H0zM0 1h1v6H0zM7 1h1v6H7zM3 1h2v6H3z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-screen="title">
+
+<header class="topbar">
+  <a class="brand to-title" href="#" role="button">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-name">tmux打</span>
+    <span class="brand-sub">タイムアタック</span>
+  </a>
+  <div class="topbar-right">
+    <span id="title-meta" class="meta"></span>
+    <button type="button" class="sound-toggle" aria-pressed="true" aria-label="音を消す">♪</button>
+    <button type="button" class="theme-toggle" aria-label="テーマを切り替える">☾</button>
+  </div>
+</header>
+
+<!-- ===== title ===== -->
+<main id="title-screen" class="screen title">
+  <section class="hero">
+    <p class="eyebrow">寿司打のように、tmux を指で覚える</p>
+    <h1 class="hero-title"><span class="line1">tmux</span><span class="line2">打</span></h1>
+    <p class="hero-sub">出されたお題を tmux のキーでさばいて、タイムを競う。押すキーはいつも画面に出る。<br>1 面ずつ覚える 3 章 24 面の冒険つき。</p>
+
+    <div class="settings">
+      <div class="setting">
+        <div class="setting-label">prefix</div>
+        <div class="seg" role="group" aria-label="prefix キー">
+          <button type="button" data-prefix="C-b" aria-pressed="true">Ctrl+b<small>標準</small></button>
+          <button type="button" data-prefix="C-a" aria-pressed="false">Ctrl+a<small>入れ子向け</small></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <button type="button" id="btn-arena" class="btn primary arena-btn">タイムアタック<span class="sub">闘技場</span></button>
+      <button type="button" id="btn-continue" class="btn" hidden>続きから</button>
+      <button type="button" id="btn-start" class="btn">冒険を始める<span class="sub">1 面ずつ覚える</span></button>
+    </div>
+    <p class="fineprint">通信はしない。記録はこのブラウザの中だけ。迷ったら prefix → i で説明が出る。音は右上の ♪ で切り替え。</p>
+  </section>
+  <section class="map-panel" aria-label="地図">
+    <div class="frame">
+      <div class="frame-title">冒険の地図</div>
+      <div id="map-slot"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ===== game ===== -->
+<main id="game-screen" class="screen game" hidden>
+  <div id="quest" class="quest"></div>
+  <div class="term-wrap">
+    <div id="term" class="term" aria-live="off"></div>
+    <div id="banner" class="banner" aria-live="polite"></div>
+    <span id="probe" class="probe" aria-hidden="true">MMMMMMMMMMMMMMMMMMMM</span>
+  </div>
+  <div id="status" class="status"></div>
+  <div id="keybar" class="keybar" aria-label="画面上のキー"></div>
+  <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" enterkeyhint="go">
+</main>
+
+<!-- ===== finale ===== -->
+<main id="finale-screen" class="screen finale" hidden>
+  <div class="finale-card frame">
+    <div id="trophy" class="trophy"></div>
+    <p class="eyebrow">全 24 面クリア ・ 魔王を倒した</p>
+    <h1 class="finale-title">tmux は、<wbr>もう指に入っている。</h1>
+    <p id="cheat-meta" class="cheat-meta"></p>
+    <table class="cheat">
+      <thead><tr><th>#</th><th>できること</th><th>呪文</th><th>キー（prefix のあと）</th></tr></thead>
+      <tbody id="cheat-body"></tbody>
+    </table>
+    <div class="cta">
+      <button type="button" id="btn-free" class="btn primary">冒険を続ける（自由に遊ぶ）</button>
+      <button type="button" id="btn-finale-arena" class="btn">闘技場へ</button>
+      <button type="button" id="btn-reset" class="btn ghost">記録を消す</button>
+    </div>
+  </div>
+</main>
+
+<!-- ===== arena ===== -->
+<main id="arena-screen" class="screen arena" hidden>
+  <div class="arena-wrap">
+    <header class="arena-head">
+      <p class="eyebrow">タイムアタック</p>
+      <h1 class="arena-title"><span id="arena-hero" class="arena-hero"></span>闘技場</h1>
+      <p class="arena-lead">お題は毎回ちがう順に出る。押すキーはいつも画面に出ている。全部解くまでの時間を競う。違う操作をすると +2 秒、1 問の時間切れは +5 秒。</p>
+      <p id="arena-meta" class="cheat-meta"></p>
+    </header>
+    <section id="arena-result" class="arena-result frame" hidden></section>
+    <ul id="course-list" class="course-list"></ul>
+    <div class="cta"><button type="button" class="btn ghost to-title">タイトルに戻る</button></div>
+  </div>
+</main>
+
+<!-- ===== briefing ===== -->
+<div id="brief" class="overlay" hidden>
+  <div class="brief-card frame" role="dialog" aria-modal="true" aria-label="冒険の書"></div>
+</div>
+<div id="fx" aria-hidden="true"></div>
+
+<script src="js/levels.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/tmux.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
