@@ -125,6 +125,40 @@
     }
   ];
 
+  // 稽古の間: only the question types you are slowest at, three times each.
+  // Its questions are picked per run (records.js weakTypes), so it has no
+  // board and no ghost; its runs still count towards what you have learnt.
+  var KEIKO = {
+    id: 'keiko', title: '稽古の間', mode: '苦手稽古', limit: 14, rankMul: 1.3, ver: 2, practice: true,
+    plan: { cols: 3, rows: 3, cells: 9, lit: 4 },
+    desc: '灯りが多い仕掛けだけを三度ずつ。', qs: []
+  };
+
+  // A question type counts as learnt (覚えた) after this many solves in a
+  // row within the 目安, with no wrong key. Its 指南 then stays folded until
+  // the 目安 passes.
+  var LEARNT_AFTER = 3;
+
+  // 腕前 (skill level), Lv 1 to 30, from seconds per question (after
+  // penalties, divided by the course's rankMul): 6 秒 is Lv 1, 1.2 秒 Lv 30,
+  // evenly on a log scale. The title is the run rank for the same pace.
+  var LV_SLOW = 6, LV_FAST = 1.2, LV_MAX = 30;
+  function levelFor(pace) {
+    var t = (Math.log(LV_SLOW) - Math.log(pace)) / (Math.log(LV_SLOW) - Math.log(LV_FAST));
+    return Math.max(1, Math.min(LV_MAX, 1 + Math.floor(t * (LV_MAX - 1) + 1e-9)));
+  }
+  // The pace that reaches level `lv`.
+  function paceFor(lv) {
+    var t = (lv - 1) / (LV_MAX - 1);
+    return Math.exp(Math.log(LV_SLOW) - t * (Math.log(LV_SLOW) - Math.log(LV_FAST)));
+  }
+
+  // The day in Japan (YYYY-MM-DD): today's 屋敷 asks in the same order for
+  // everyone, so the 番付 compares like with like.
+  function dayKey(d) {
+    return new Date((d || new Date()).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
   // Ranks by average seconds per question, after penalties.
   var RANKS = [
     { max: 1.6, title: '名匠' },
@@ -145,8 +179,9 @@
   }
 
   // 当主の刻, the target time for a course: からくり師 pace on every question.
-  function par(course) {
-    return Math.round(course.qs.length * RANKS[1].max * (course.rankMul || 1));
+  // `n` overrides the number of questions (the 稽古の間 picks its own).
+  function par(course, n) {
+    return Math.round((n || course.qs.length) * RANKS[1].max * (course.rankMul || 1));
   }
 
   window.ADV = window.ADV || {};
@@ -162,6 +197,12 @@
     OLD_RANKS: OLD_RANKS,
     rankFor: rankFor,
     par: par,
+    KEIKO: KEIKO,
+    LEARNT_AFTER: LEARNT_AFTER,
+    LV_MAX: LV_MAX,
+    levelFor: levelFor,
+    paceFor: paceFor,
+    dayKey: dayKey,
     MISS_PENALTY: 2,
     GUIDE_AT: 1.5
   };

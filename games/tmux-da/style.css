@@ -82,11 +82,15 @@ kbd.pfx { background: var(--ai); color: #fff; border-color: var(--ai-d); }
 .brand-name em { font-style: normal; font-family: var(--mono); font-size: 15px; color: var(--hero-accent); margin-right: 6px; letter-spacing: 0.04em; font-weight: 500; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
 .meta { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); }
-.sound-toggle, .theme-toggle {
+.sound-toggle, .theme-toggle, .quiet-toggle {
   width: 34px; height: 34px; border-radius: 3px; cursor: pointer;
   background: transparent; border: 1px solid var(--line); color: var(--ink);
 }
-.sound-toggle:hover, .theme-toggle:hover { border-color: var(--andon); }
+.quiet-toggle { font-family: var(--mincho); font-size: 15px; }
+.sound-toggle:hover, .theme-toggle:hover, .quiet-toggle:hover { border-color: var(--andon); }
+/* 静かな屋敷: nothing loops (pendulum, steam, flame, the lit windows, the cursor) */
+body[data-quiet="1"] .decor *, body[data-quiet="1"] .facade i, body[data-quiet="1"] .st-prefix { animation: none !important; }
+body[data-quiet="1"] .cursor { animation: none; }
 
 .screen { flex: 1 1 auto; min-height: 0; }
 
@@ -187,6 +191,11 @@ kbd.pfx { background: var(--ai); color: #fff; border-color: var(--ai-d); }
 .pb-time small { font-size: 13px; color: var(--ink-dim); margin-left: 4px; }
 
 .play-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 22px; }
+/* the side panel is the detail; the order itself is in the house */
+body:not([data-detail="1"]) .play-body { grid-template-columns: minmax(0, 1fr); }
+body:not([data-detail="1"]) .side { display: none; }
+.game-foot { display: flex; gap: 10px; flex: none; }
+.detail-toggle { font-size: 13px; padding: 6px 14px; }
 .side { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; }
 
 /* 指図: the order */
@@ -232,7 +241,56 @@ kbd.pfx.next { background: var(--ai); }
 .shinan li.done { text-decoration: line-through; text-decoration-color: rgba(0, 0, 0, 0.25); }
 .shinan .no { font-family: var(--mincho); width: 1.2em; flex: none; }
 
-.chips { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.chips { position: absolute; top: 26px; right: 10px; z-index: 8; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none; }
+/* 指図 in the house: the order bar, under the panes, where the eyes are */
+.order { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; background: var(--washi-3); color: var(--sumi); border-left: 4px solid var(--andon); border-radius: 2px; padding: 7px 12px; min-height: 44px; }
+.ob-n { font-family: var(--mincho); font-size: 12px; color: var(--sumi-dim); letter-spacing: 0.1em; }
+.ob-q { font-family: var(--mincho); font-size: 19px; line-height: 1.35; }
+.ob-guide { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-left: auto; }
+.ob-keys { display: inline-flex; align-items: center; gap: 5px; }
+.ob-keys kbd { font-size: 13px; padding: 2px 8px; }
+.ob-keys kbd.next { transform: none; }
+.ob-txt { font-size: 12.5px; color: var(--sumi-dim); }
+.ob-guide.learnt { color: var(--moss); font-weight: 700; font-size: 13px; gap: 8px; }
+.ob-guide.learnt .ob-txt { font-weight: 400; }
+/* 完成図: what to change, marked on the rooms and wings. Still, never moving. */
+.goal { position: absolute; z-index: 5; pointer-events: none; border: 2px dashed var(--andon); border-radius: 2px; }
+.goal-tag { position: absolute; right: 6px; top: 24px; font-family: var(--mincho); font-size: 12.5px; font-weight: 700; line-height: 1.5; background: var(--andon); color: #2b1a05; padding: 0 8px; border-radius: 2px; white-space: nowrap; }
+.goal.close { border-color: var(--shu); background: repeating-linear-gradient(135deg, rgba(185, 50, 42, 0.07) 0 8px, transparent 8px 16px); }
+.goal.close .goal-tag { background: var(--shu); color: #fff; }
+.goal.split-v::after { content: ""; position: absolute; top: 22px; bottom: 6px; left: 50%; border-left: 3px dashed var(--andon); }
+.goal.split-h::after { content: ""; position: absolute; left: 6px; right: 6px; top: calc(50% + 10px); border-top: 3px dashed var(--andon); }
+.goal.zoom { border-width: 3px; }
+.goal.unzoom { border-style: dotted; }
+.goal.resize::after { content: "⇠ ⇢"; position: absolute; top: 50%; right: -2px; transform: translate(50%, -50%); font-size: 20px; color: #9a5b12; background: var(--washi-3); border: 1px solid var(--andon); border-radius: 3px; padding: 0 4px; }
+.goal.to-left::after { content: "⇠"; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 30px; color: #9a5b12; }
+.goal.top::after { content: "⇡"; position: absolute; right: 12px; top: 50px; font-size: 30px; color: #9a5b12; }
+.st-win.goal-tab { position: relative; outline: 2px dashed var(--andon); outline-offset: 1px; }
+.st-win.goal-tab.close { outline-color: #ff8a80; }
+.st-win.goal-tab.new { color: var(--andon-2); }
+.st-win .goal-tag { position: static; margin-left: 6px; font-size: 11px; padding: 0 5px; }
+/* 腕前 */
+.skill { margin-top: 18px; max-width: 460px; }
+.sk-row { display: flex; align-items: baseline; gap: 10px; }
+.sk-lab { font-family: var(--mincho); font-size: 13px; letter-spacing: 0.3em; color: var(--ink-dim); }
+.sk-lv { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--hero-accent); }
+.sk-lv small { font-size: 14px; color: var(--ink-dim); font-weight: 400; }
+.sk-lv.up { color: var(--shu); }
+.sk-title { font-family: var(--mincho); font-size: 18px; }
+.sk-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 6px 0 4px; }
+.sk-bar i { display: block; height: 100%; background: var(--andon); }
+.sk-note, .sk-none { font-size: 12px; color: var(--ink-dim); }
+.em-skill { margin: 14px 0 0; max-width: none; }
+.em-skill .sk-lab, .em-skill .sk-note, .em-skill .sk-none { color: var(--sumi-dim); }
+.em-skill .sk-lv { color: #9a5b12; }
+.em-skill .sk-lv.up { color: var(--shu); }
+.em-skill .sk-bar { background: var(--paper-line); }
+.em-learnt { margin: 8px 0 0; font-size: 13.5px; color: var(--moss); }
+.em-learnt.lost { color: var(--sumi-dim); }
+kbd.hk { display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 10.5px; padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; opacity: 0.6; vertical-align: middle; background: none; box-shadow: none; color: inherit; }
+.btn small + kbd.hk { margin-left: 0; margin-top: 2px; }
+@media (pointer: coarse) { kbd.hk { display: none; } }
+.learnt-note { margin: 12px 0 0; font-size: 13px; color: var(--moss); }
 .chip { font-size: 12.5px; padding: 6px 12px; border-radius: 3px; background: var(--washi); color: var(--sumi); border: 1px solid var(--paper-line); animation: rise 200ms ease-out; }
 .chip.good { border-color: var(--moss); color: var(--moss); font-weight: 600; }
 .chip.miss { border-color: var(--shu); color: var(--shu); font-weight: 600; }
@@ -240,7 +298,7 @@ kbd.pfx.next { background: var(--ai); }
 
 /* 屋敷: the tmux */
 .yashiki {
-  min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 8px;
+  min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 8px;
   background: linear-gradient(180deg, #6b4f2a, #553c1f); border: 8px solid var(--wood-d); border-radius: 4px; padding: 10px;
   box-shadow: var(--shadow);
 }
@@ -542,6 +600,16 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .rec-svg .best { stroke: var(--shu); stroke-width: 1.5; stroke-dasharray: 4 3; }
 .rec-chart .lbl { position: absolute; right: 0; transform: translateY(-110%); font-size: 11px; background: var(--washi); padding: 0 4px; }
 .rec-chart .par-l { color: var(--moss); }
+.rec-svg.daily .line { fill: none; stroke: var(--ai); stroke-width: 2; }
+.daily-chart .dot { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--ai); }
+.daily-chart { height: 140px; }
+.daily-l { display: flex; justify-content: space-between; font-size: 12px; color: var(--sumi-dim); margin-top: 4px; }
+.daily-l b { color: var(--shu); }
+.learnt-list .rec-head { margin-bottom: 8px; }
+.learnt-list ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.learnt-list li { font-size: 12.5px; border: 1px solid var(--paper-line); border-radius: 3px; padding: 2px 8px; color: var(--sumi-dim); }
+.learnt-list li.ok { border-color: var(--moss); color: var(--moss); font-weight: 700; }
+.learnt-list li small { margin-left: 6px; font-weight: 400; font-size: 11px; }
 .rec-chart .best-l { color: var(--shu); left: 0; right: auto; }
 .weak-list { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; }
 .weak-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; }
@@ -594,8 +662,12 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .title { grid-template-columns: minmax(0, 1fr); gap: 36px; padding: 28px 16px 40px; }
   .facade { display: none; }
   .play-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
+  body:not([data-detail="1"]) .play-body { grid-template-rows: minmax(0, 1fr); }
   .side { overflow: visible; }
-  .chips { position: absolute; right: 16px; z-index: 30; pointer-events: none; }
+  .order { padding: 6px 8px; min-height: 0; gap: 2px 8px; }
+  .ob-q { font-size: 16px; }
+  .ob-guide { margin-left: 0; }
+  .ob-txt { display: none; }
 }
 @media (max-width: 760px), (pointer: coarse) {
   .keybar { display: flex; }
@@ -622,7 +694,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .term { font-size: 13px; }
   .room-name { font-size: 18px; }
   .kakejiku-art { display: none; }
-  .quit { display: none; }
+  .game-foot { display: none; }
   .result, .records { padding: 24px 8px 40px; }
   .emaki { grid-template-columns: 12px minmax(0, 1fr) 12px; }
   .emaki-body { padding: 20px 16px 18px; }

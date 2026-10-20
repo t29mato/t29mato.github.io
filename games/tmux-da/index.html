@@ -18,6 +18,7 @@
   </a>
   <div class="topbar-right">
     <span id="title-meta" class="meta"></span>
+    <button type="button" class="quiet-toggle" aria-pressed="true" aria-label="飾りを動かす">静</button>
     <button type="button" class="sound-toggle" aria-pressed="true" aria-label="音を消す">♪</button>
     <button type="button" class="theme-toggle" aria-label="テーマを切り替える">☾</button>
   </div>
@@ -29,9 +30,11 @@
     <p class="eyebrow">屋敷を出ても、仕掛けはそのまま。</p>
     <h1 class="hero-title"><span class="en">tmux</span>からくり屋敷</h1>
     <p class="lead">襖が立ち、部屋が回り、壁が外れて大広間になる。<br>指図どおりに<b>襖を立て</b>、<b>間を渡り</b>、<b>棟を建て</b>、<b>巻物を読む</b>。<br>奥の間に辿り着くまでの速さを競う。押すキーはいつも指図に書いてある。</p>
+    <div id="skill" class="skill"></div>
     <div class="cta">
-      <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">八間屋敷 から</small></button>
-      <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small></button>
+      <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">八間屋敷 から</small><kbd class="hk">Enter</kbd></button>
+      <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small><kbd class="hk">R</kbd></button>
+      <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden>稽古の間<small id="keiko-sub">苦手だけ</small><kbd class="hk">K</kbd></button>
     </div>
     <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
   </section>
@@ -48,21 +51,25 @@
   <div id="playbar" class="playbar"></div>
   <div class="play-body">
     <div class="side">
-      <section id="sashizu" class="sashizu" aria-live="polite"></section>
-      <div id="chips" class="chips" aria-live="polite"></div>
+      <section id="sashizu" class="sashizu"></section>
     </div>
     <section class="yashiki">
       <div class="term-wrap">
         <div id="term" class="term" aria-live="off"></div>
         <div id="banner" class="banner" aria-live="polite"></div>
+        <div id="chips" class="chips" aria-live="polite"></div>
         <div id="pause" class="pause" hidden><b>一時停止</b><span>時計は止まっている。キーを押すか、ここを押すと再開</span></div>
         <span id="probe" class="probe" aria-hidden="true">MMMMMMMMMMMMMMMMMMMM</span>
       </div>
+      <div id="order" class="order" aria-live="polite"></div>
       <div id="status" class="status"></div>
     </section>
   </div>
   <div id="keybar" class="keybar" aria-label="画面上のキー"></div>
-  <button type="button" class="btn ghost quit to-title">屋敷を出る</button>
+  <div class="game-foot">
+    <button type="button" class="btn ghost quit to-title">屋敷を出る</button>
+    <button type="button" class="btn ghost detail-toggle" aria-pressed="false">指図の詳細を出す</button>
+  </div>
   <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" enterkeyhint="go">
 </main>
 

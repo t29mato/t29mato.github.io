@@ -9,7 +9,10 @@
   var SCHEMA = 3, CAP = 100, HARD_CAP = 200;
 
   function recordKey(id) { return 'tmux:' + id; }
-  function courseOf(id) { return LV.COURSES.filter(function (c) { return c.id === id; })[0] || null; }
+  function courseOf(id) {
+    if (id === LV.KEIKO.id) return LV.KEIKO;
+    return LV.COURSES.filter(function (c) { return c.id === id; })[0] || null;
+  }
 
   function read() {
     try {
@@ -96,6 +99,7 @@
     var c = courseOf(run.course);
     var prevRuns = runsOf(run.course, all);
     var prevBest = best(run.course, all);
+    var skillFrom = skill(all), learntFrom = learnt();
     run.id = run.id || newId();
     run.ver = c ? c.ver : 1;
     run.at = run.at || new Date().toISOString();
@@ -107,7 +111,14 @@
     }
     all.runs = prune(all.runs, run.course);
     write(all);
-    return summarize(run, prevRuns, prevBest);
+    var sum = summarize(run, prevRuns, prevBest);
+    // What this run changed in the long run: the 腕前 and what is learnt.
+    var learntNow = learnt();
+    sum.skillFrom = skillFrom;
+    sum.skill = skill();
+    sum.learntNew = Object.keys(learntNow).filter(function (t) { return learntNow[t].learnt && !(learntFrom[t] && learntFrom[t].learnt); });
+    sum.learntLost = Object.keys(learntFrom).filter(function (t) { return learntFrom[t].learnt && !(learntNow[t] && learntNow[t].learnt); });
+    return sum;
   }
 
   function rankIndex(title) {
@@ -120,7 +131,7 @@
     var prev = prevRuns[0] || null;
     var bestRank = null;
     prevRuns.forEach(function (r) { if (bestRank == null || rankIndex(r.rank) < rankIndex(bestRank)) bestRank = r.rank; });
-    var par = c ? LV.par(c) : null;
+    var par = c ? LV.par(c, run.n) : null;
     var parBefore = prevRuns.some(function (r) { return par != null && r.time <= par; });
     var spark = prevRuns.slice(0, 9).reverse().concat([run]).map(function (r) { return { time: r.time, rec: !!r.rec }; });
     var ao5 = function (list) { return list.length >= 5 ? list.slice(0, 5).reduce(function (s, r) { return s + r.time; }, 0) / 5 : null; };
@@ -187,6 +198,71 @@
     return { runs: runs.length, mean: mean, weak: list.slice(0, 3), strong: list.length > 3 ? list[list.length - 1] : null };
   }
 
+  // ---- learning, across every course -----------------------------------------
+
+  // Every logged question, oldest first, with the 目安 of its course.
+  function allQuestions() {
+    var out = [];
+    (load().runs || []).forEach(function (r) {
+      var c = courseOf(r.course);
+      if (!c || !r.qs) return;
+      r.qs.forEach(function (q) { if (q && q.t && typeof q.s === 'number') out.push({ t: q.t, s: q.s, m: q.m || 0, o: !!(q.o || q.to), limit: c.limit }); });
+    });
+    return out;
+  }
+
+  // Per question type: how many clean solves in a row (within the 目安, no
+  // wrong key) up to now, and whether that makes it learnt.
+  function learnt() {
+    var by = {};
+    allQuestions().forEach(function (q) {
+      var e = by[q.t] || (by[q.t] = { streak: 0, seen: 0 });
+      e.seen += 1;
+      e.streak = !q.o && !q.m && q.s <= q.limit ? e.streak + 1 : 0;
+    });
+    Object.keys(by).forEach(function (k) { by[k].learnt = by[k].streak >= LV.LEARNT_AFTER; });
+    return by;
+  }
+
+  // The question types to practise: slowest relative to the others over the
+  // latest 60 logged questions, then most 灯り. At most `n`.
+  function weakTypes(n) {
+    var qs = allQuestions().slice(-60);
+    if (qs.length < 5) return [];
+    var by = {}, total = 0;
+    qs.forEach(function (q) {
+      var rel = q.s / q.limit;
+      var e = by[q.t] || (by[q.t] = { type: q.t, sum: 0, n: 0, overs: 0 });
+      e.sum += rel; e.n += 1; e.overs += q.o ? 1 : 0; total += rel;
+    });
+    var mean = total / qs.length;
+    var list = Object.keys(by).map(function (k) { var e = by[k]; return { type: e.type, score: e.sum / e.n / mean + e.overs / e.n, n: e.n }; });
+    list.sort(function (a, b) { return b.score - a.score; });
+    return list.slice(0, n || 3).map(function (e) { return e.type; });
+  }
+
+  // 腕前: the pace of the latest five runs on the three houses (seconds per
+  // question, after penalties, over rankMul), its level and the next one.
+  function skill(all) {
+    all = all || load();
+    var runs = (all.runs || []).filter(function (r) { var c = courseOf(r.course); return c && !c.practice && !r.legacy && r.n; }).slice(-5);
+    if (!runs.length) return null;
+    var pace = runs.reduce(function (s, r) { return s + r.time / r.n / (courseOf(r.course).rankMul || 1); }, 0) / runs.length;
+    var lv = LV.levelFor(pace);
+    var next = lv < LV.LV_MAX ? LV.paceFor(lv + 1) : null;
+    return { pace: pace, lv: lv, title: LV.rankFor(pace), runs: runs.length, next: next, toNext: next != null ? pace - next : null };
+  }
+
+  // The best time of each day for a course, oldest first.
+  function dailyBest(course) {
+    var by = {};
+    runsOf(course).forEach(function (r) {
+      var d = LV.dayKey(new Date(r.at));
+      if (!by[d] || r.time < by[d]) by[d] = r.time;
+    });
+    return Object.keys(by).sort().map(function (d) { return { day: d, time: by[d] }; });
+  }
+
   // Runs from another device (through the 合言葉) join the history. The
   // record marks and bests are worked out again in the order runs were made.
   // Returns how many runs were new here.
@@ -238,6 +314,7 @@
     SCHEMA: SCHEMA, CAP: CAP, HARD_CAP: HARD_CAP,
     load: load, add: add, runsOf: runsOf, best: best,
     stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
+    learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest,
     recordKey: recordKey, courseOf: courseOf
   };
 })();

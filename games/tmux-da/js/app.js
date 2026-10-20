@@ -71,6 +71,12 @@
     b.dataset.armed = S.armed ? '1' : (Date.now() < S.repeatUntil ? 'repeat' : '0');
     b.dataset.detached = S.detached ? '1' : '0';
     b.dataset.stage = S.run && S.run.phase === 'play' ? String(S.run.stage) : '0';
+    b.dataset.detail = S.detail ? '1' : '0';
+    b.dataset.quiet = S.quiet ? '1' : '0';
+    var dt = $('.detail-toggle');
+    if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指図の詳細をしまう' : '指図の詳細を出す'; }
+    var qt = $('.quiet-toggle');
+    if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静かな屋敷（飾りは止まっている）' : '動く屋敷（振り子や湯気が動く）'; }
   }
 
   // ---- theme and sound ------------------------------------------------------
@@ -914,7 +920,7 @@
   // Real keyboard events become the normalised key object.
   function onKeyDown(e) {
     AU.unlock();
-    if (S.screen !== 'game') return;
+    if (S.screen !== 'game') { navKey(e); return; }
     var t = e.target;
     if (t && t !== document.body && t.id !== 'sink' && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
     if (S.run && S.run.phase === 'pause') {
@@ -928,6 +934,35 @@
     // A key typed into the focused sink is handled here, never again as input.
     if (t && t.id === 'sink' && !e.metaKey && (e.key.length === 1 || e.key === 'Enter')) e.preventDefault();
     if (handleKey(k)) e.preventDefault();
+  }
+
+  // Outside the house the keyboard moves between screens, so a player can
+  // go round and round without the mouse:
+  //   見取り図  Enter 入る, 1〜3 屋敷を選んで入る, K 稽古, R 絵巻
+  //   絵巻      Enter / Space もう一度, K 稽古, R 絵巻, Esc 見取り図
+  //   記録      Esc 戻る
+  function navKey(e) {
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    // Keys still held from the last question must not start the next run.
+    if (performance.now() < (S.navAfter || 0)) return;
+    var go = function (fn) { e.preventDefault(); AU.se('cursor'); fn(); };
+    if (S.screen === 'title') {
+      if (k === 'Enter') return go(function () { startRun($('#btn-enter').dataset.course || 'normal'); });
+      var i = '123'.indexOf(k);
+      if (i >= 0 && LV.COURSES[i]) return go(function () { startRun(LV.COURSES[i].id); });
+      if ((k === 'k' || k === 'K') && !$('#btn-keiko').hidden) return go(function () { startRun('keiko'); });
+      if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(null, 'title'); });
+    } else if (S.screen === 'result' && S.result) {
+      if (k === 'Enter' || k === ' ') return go(function () { startRun(S.result.course); });
+      if ((k === 'k' || k === 'K') && REC.weakTypes(3).length) return go(function () { startRun('keiko'); });
+      if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(REC.courseOf(S.result.course).practice ? 'normal' : S.result.course, 'result'); });
+      if (k === 'Escape') return go(function () { showScreen('title'); });
+    } else if (S.screen === 'records') {
+      if (k === 'Escape') return go(function () { showScreen(S.recordsFrom === 'result' && S.result ? 'result' : 'title'); });
+    }
   }
 
   // Soft keyboards may not produce usable keydown events; take the text.
@@ -1029,23 +1064,28 @@
   }
 
   // Every question: text, the tmux command it teaches, the actions it may
-  // use (others are misses), the key actions to show, setup(r), check() and
-  // next(): the move the guide shows from the current state.
+  // use (others are misses), the key actions to show, setup(r), check(),
+  // next(): the move the guide shows from the current state, and goal():
+  // what to change, marked in the house itself (完成図) — {pane, mark, tag}
+  // on a room or {tab, tag} on a wing in the status bar ('+' for a new one).
   var Q = {
     split_lr: {
       text: '襖を立てて、左右に仕切れ', cmd: 'split-window -h', allow: ['split_lr'], show: ['split_lr'],
+      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'split-v', tag: 'ここに襖を縦に' }]; },
       setup: function (r) { var x = room(WINGS[0], r() < 0.5 ? [null] : [null, null], 'tb', 0); S.q0 = splitCount(x.win, 'lr'); },
       check: function () { return splitCount(T.activeWindow(S.session), 'lr') > S.q0; },
       next: function () { return mv(['%'], '% を押す（Shift+5）。襖が縦に立つ'); }
     },
     split_tb: {
       text: '襖を立てて、上下に仕切れ', cmd: 'split-window -v', allow: ['split_tb'], show: ['split_tb'],
+      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'split-h', tag: 'ここに襖を横に' }]; },
       setup: function (r) { var x = room(WINGS[0], r() < 0.5 ? [null] : [null, null], 'lr', 0); S.q0 = splitCount(x.win, 'tb'); },
       check: function () { return splitCount(T.activeWindow(S.session), 'tb') > S.q0; },
       next: function () { return mv(['"'], '" を押す（ダブルクォート）。襖が横に立つ'); }
     },
     focus: {
       text: '掛け軸の間へ渡れ', cmd: 'select-pane -L/-R/-U/-D', allow: [], show: ['focus'],
+      goal: function () { return [{ pane: S.target, mark: 'go', tag: 'ここへ' }]; },
       setup: function (r) {
         var n = 3 + pickInt(r, 2), t = 1 + pickInt(r, n - 1);
         var sc = []; for (var i = 0; i < n; i++) sc.push(i === t ? 'kakejiku' : null);
@@ -1056,18 +1096,21 @@
     },
     zoom: {
       text: '襖を外して、この間を大広間にせよ', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
+      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'zoom', tag: 'この間を大広間に' }]; },
       setup: function (r) { room(WINGS[0], r() < 0.5 ? [null, null] : [null, null, null], 'tiled', 0); },
       check: function () { return T.activeWindow(S.session).zoomed; },
       next: function () { return mv(['z'], 'z を押す。いまの間が画面いっぱいになる'); }
     },
     unzoom: {
       text: '襖を戻して、大広間を元の間に', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
+      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'unzoom', tag: '元の間に戻す' }]; },
       setup: function () { var x = room(WINGS[0], [null, null, null], 'tiled', 0); x.win.zoomed = true; },
       check: function () { return !T.activeWindow(S.session).zoomed; },
       next: function () { return mv(['z'], 'もう一度 z を押す。大広間が元に戻る'); }
     },
     close: {
       text: '空き間を閉じよ', cmd: 'kill-pane', allow: ['close'], show: ['focus', 'close'],
+      goal: function () { return [{ pane: S.target, mark: 'close', tag: '閉じる' }]; },
       setup: function (r) {
         var n = 2 + pickInt(r, 2), t = pickInt(r, n);
         var sc = []; for (var i = 0; i < n; i++) sc.push(i === t ? 'akima' : null);
@@ -1078,6 +1121,7 @@
     },
     new_window: {
       text: '離れを建てよ（新しい棟）', cmd: 'new-window', allow: ['new_window'], show: ['new_window'],
+      goal: function () { return [{ tab: '+', tag: '新しい棟' }]; },
       setup: function () { room(WINGS[0], [null], 'single'); },
       ready: function () { S.q0 = S.session.windows.length; },
       check: function () { return S.session.windows.length > S.q0; },
@@ -1085,6 +1129,7 @@
     },
     select_window: {
       text: null, cmd: 'select-window -t 番号', allow: ['select_window'], show: ['select_window'],
+      goal: function () { return [{ tab: S.q0, tag: 'ここへ' }]; },
       setup: function (r) {
         WINGS.forEach(function (n) { room(n, [null], 'single'); });
         var from = pickInt(r, 3), to = (from + 1 + pickInt(r, 2)) % 3;
@@ -1097,6 +1142,7 @@
     },
     resize: {
       text: '襖をずらして、この間を広げるか狭めよ', cmd: 'resize-pane -L/-R', allow: ['resize'], show: ['resize'],
+      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'resize', tag: '襖を 5 マス以上ずらす' }]; },
       setup: function (r) {
         var x = room(WINGS[0], [null, null], 'lr', pickInt(r, 2));
         var rr = T.rectOf(x.win, x.win.active, S.cols, S.rows);
@@ -1111,6 +1157,7 @@
     },
     swap: {
       text: '掛け軸の間を左端へ回せ', cmd: 'swap-pane -U', allow: ['swap'], show: ['swap'],
+      goal: function () { return [{ pane: S.target, mark: 'to-left', tag: '左端へ回す' }]; },
       setup: function (r) {
         var n = 2 + pickInt(r, 2);
         var sc = []; for (var i = 0; i < n; i++) sc.push(i === n - 1 ? 'kakejiku' : null);
@@ -1121,6 +1168,7 @@
     },
     rename: {
       text: 'この棟に camp と名札を掛けよ', cmd: 'rename-window', allow: ['rename'], show: ['rename'],
+      goal: function () { return [{ tab: T.activeWindow(S.session).name, tag: 'camp と名札を' }]; },
       setup: function () { room('zsh', [null], 'single'); },
       check: function () { return T.activeWindow(S.session).name === 'camp'; },
       next: function () {
@@ -1130,6 +1178,7 @@
     },
     kill_window: {
       text: '棟「蔵」を丸ごと閉めよ', cmd: 'kill-window', allow: ['kill_window', 'select_window'], show: ['select_window', 'kill_window'],
+      goal: function () { return [{ tab: WINGS[2], mark: 'close', tag: '棟ごと閉める' }]; },
       setup: function (r) {
         room(WINGS[0], [null], 'single');
         room(WINGS[2], ['akima', 'akima'], 'lr', 0);
@@ -1144,6 +1193,7 @@
     },
     copy_top: {
       text: '巻物を頭まで巻き戻せ', cmd: 'copy-mode → history-top', allow: ['copy'], show: ['copy'],
+      goal: function () { return [{ pane: S.target, mark: 'top', tag: '頭まで巻き戻す' }]; },
       setup: function () { var x = room(WINGS[0], ['makimono'], 'single'); S.target = x.panes[0].id; },
       check: function () {
         var h = T.findPane(S.session, S.target);
@@ -1159,6 +1209,7 @@
     },
     find_zoom: {
       text: '掛け軸の間を大広間にせよ', cmd: 'select-pane → resize-pane -Z', allow: ['zoom'], show: ['focus', 'zoom'],
+      goal: function () { return [{ pane: S.target, mark: 'zoom', tag: 'ここを大広間に' }]; },
       setup: function (r) {
         var t = 1 + pickInt(r, 3);
         var sc = [null, null, null, null]; sc[t] = 'kakejiku';
@@ -1169,6 +1220,12 @@
     },
     trident: {
       text: '左に一間、右に上下二間を仕切れ', cmd: 'split-window -h → -v', allow: ['split_lr', 'split_tb'], show: ['split_lr', 'split_tb'],
+      goal: function () {
+        var win = T.activeWindow(S.session);
+        if (T.panesOf(win).length === 1) return [{ pane: win.active, mark: 'split-v', tag: 'まず左右に' }];
+        if (win.root.dir === 'lr' && win.root.b.type === 'pane') return [{ pane: win.root.b.pane.id, mark: 'split-h', tag: '右を上下に' }];
+        return [];
+      },
       setup: function () { room(WINGS[0], [null], 'single'); },
       check: function () { return isTrident(T.activeWindow(S.session)); },
       next: function () {
@@ -1183,6 +1240,7 @@
     },
     two_akima: {
       text: '空き間を二つとも閉じよ', cmd: 'kill-pane ×2', allow: ['close'], show: ['focus', 'close'],
+      goal: function () { return S.q0.filter(paneExists).map(function (id) { return { pane: id, mark: 'close', tag: '閉じる' }; }); },
       setup: function (r) {
         var a = 1 + pickInt(r, 3), b = 1 + (a + pickInt(r, 2)) % 3;
         if (b === a) b = a === 3 ? 1 : a + 1;
@@ -1197,6 +1255,7 @@
     },
     new_and_home: {
       text: '離れを建てて、母屋へ戻れ', cmd: 'new-window → select-window', allow: ['new_window', 'select_window'], show: ['new_window', 'select_window'],
+      goal: function () { return S.q1 ? [{ tab: WINGS[0], tag: 'ここへ戻る' }] : [{ tab: '+', tag: '新しい棟' }]; },
       setup: function () { room(WINGS[0], [null], 'single'); S.q1 = false; },
       ready: function () { S.q0 = S.session.windows.length; },
       check: function () {
@@ -1207,6 +1266,7 @@
     },
     swap_zoom: {
       text: '掛け軸の間を左端へ回し、大広間にせよ', cmd: 'swap-pane → resize-pane -Z', allow: ['swap', 'zoom'], show: ['swap', 'zoom'],
+      goal: function () { return atLeft(S.target) ? [{ pane: S.target, mark: 'zoom', tag: 'ここを大広間に' }] : [{ pane: S.target, mark: 'to-left', tag: '左端へ回す' }]; },
       setup: function () { var x = room(WINGS[0], [null, null, 'kakejiku'], 'evenh', 2); S.target = x.panes[2].id; },
       check: function () {
         var h = T.findPane(S.session, S.target);
@@ -1216,11 +1276,22 @@
     }
   };
 
+  // Short names of the question types, for lists.
+  var TYPE_NAMES = {
+    split_lr: '襖を縦に', split_tb: '襖を横に', focus: '間を渡る', zoom: '大広間', unzoom: '大広間を戻す',
+    close: '間を閉じる', new_window: '棟を建てる', select_window: '棟を渡る', resize: '襖をずらす', swap: '間を回す',
+    rename: '名札', kill_window: '棟を閉める', copy_top: '巻物', find_zoom: '探して大広間', trident: '三つ間',
+    two_akima: '二つ閉じる', new_and_home: '建てて戻る', swap_zoom: '回して大広間'
+  };
+  function typeName(t) { return TYPE_NAMES[t] || t; }
+
   // A new order, avoiding the same question twice in a row where it can.
-  function shuffle(a) {
+  // `rand` makes it repeatable (today's order); Math.random otherwise.
+  function shuffle(a, rand) {
+    rand = rand || Math.random;
     for (var tries = 0; tries < 50; tries++) {
       for (var i = a.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
+        var j = Math.floor(rand() * (i + 1));
         var t = a[i]; a[i] = a[j]; a[j] = t;
       }
       if (a.every(function (x, n) { return n === 0 || a[n - 1] !== x; })) break;
@@ -1231,6 +1302,7 @@
   // The ghost (影) to race: today's fastest player if faster than you, else
   // your own best. Your own is there at once; today's arrives if it can.
   function pickGhost(b) {
+    if (b.course.practice) { b.ghost = null; return; }
     var own = REC.ghostOf(b.course.id);
     b.ghost = own;
     if (!NET || !NET.state().key) return;
@@ -1251,12 +1323,28 @@
     b.ghost.cum = b.ghost.splits.map(function (s) { t += s; return t; });
   }
 
+  // The questions of a run. A house asks the same questions every time, in
+  // today's order: the same for everyone on the same day (Japan time), so
+  // the 番付 compares like with like. The 稽古の間 asks your weakest types.
+  function questionsFor(course, day) {
+    if (course.practice) {
+      var weak = REC.weakTypes(3);
+      var list = [];
+      weak.forEach(function (t) { list.push(t, t, t); });
+      return shuffle(list);
+    }
+    return shuffle(course.qs.slice(), rng(day + ':' + course.id));
+  }
+
   function prepareRun(courseId) {
     var course = REC.courseOf(courseId) || REC.courseOf('normal');
+    var day = LV.dayKey();
     S.run = {
       course: course,
-      // The same questions every time, in a new order each run.
-      qs: shuffle(course.qs.slice()),
+      day: day,
+      qs: questionsFor(course, day),
+      // Question types learnt before this run: their 指南 stays folded.
+      learnt: REC.learnt(),
       limit: course.limit,
       i: 0,
       phase: 'ready',
@@ -1264,7 +1352,8 @@
       start: 0, qStart: 0, end: 0,
       stage: 0,
       ghostDiff: null,
-      seed: course.id + ':' + Math.random()
+      // Today's rooms are the same for everyone too.
+      seed: course.practice ? course.id + ':' + Math.random() : day + ':' + course.id
     };
     pickGhost(S.run);
     prepGhost(S.run);
@@ -1332,6 +1421,9 @@
     var b = S.run;
     if (Date.now() < S.repeatUntil) S.graceUntil = Date.now() + 500;
     S.repeatUntil = 0;
+    // A message from the last question would hide this one's wings.
+    S.message = null;
+    clearTimeout(S.messageTimer);
     var type = b.qs[b.i];
     var q = Q[type];
     newSession();
@@ -1443,6 +1535,7 @@
       result.ghost = { name: b.ghost.name, time: b.ghost.time, diff: +(time - b.ghost.time).toFixed(2) };
     }
     S.result = result;
+    S.navAfter = performance.now() + 700;
     shareRun(sum.runId);
     S.run = null;
     showScreen('result');
@@ -1487,12 +1580,38 @@
   }
 
   function lastCourse(all) {
-    var last = (all.runs || []).slice(-1)[0];
-    return last && REC.courseOf(last.course) ? last.course : 'normal';
+    var runs = (all.runs || []).filter(function (r) { var c = REC.courseOf(r.course); return c && !c.practice; });
+    var last = runs.slice(-1)[0];
+    return last ? last.course : 'normal';
+  }
+
+  // 腕前: the level from the latest five runs, its title, and how much
+  // faster per question the next level is. A still bar, no motion.
+  function skillHTML(sk, from) {
+    if (!sk) return '<div class="sk-none">腕前 ―　一度屋敷に入ると、ここに Lv が出る</div>';
+    var cur = LV.paceFor(sk.lv), nxt = sk.next;
+    var frac = nxt != null ? Math.max(0, Math.min(1, (cur - sk.pace) / (cur - nxt))) : 1;
+    var up = from && from.lv < sk.lv;
+    return '<div class="sk-row"><span class="sk-lab">腕前</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
+      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span><b class="sk-title">' + esc(sk.title) + '</b></div>' +
+      '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
+      '<div class="sk-note">' + (nxt != null ? '次の Lv.' + (sk.lv + 1) + ' まで、1 仕掛けあたり ' + sk.toNext.toFixed(2) + ' 秒速く' : '最高の Lv。') +
+      '（直近 ' + sk.runs + ' 回の平均 ' + sk.pace.toFixed(2) + ' 秒／仕掛け）</div>';
+  }
+
+  // The top bar: the 腕前, always in view.
+  function renderMeta(all) {
+    var sk = REC.skill(all);
+    $('#title-meta').textContent = sk ? '腕前 Lv.' + sk.lv + ' ' + sk.title : '合図 ' + prefixLabel();
   }
 
   function renderTitle() {
     var all = REC.load();
+    $('#skill').innerHTML = skillHTML(REC.skill(all));
+    var weak = REC.weakTypes(3);
+    var kb = $('#btn-keiko');
+    kb.hidden = !weak.length;
+    if (weak.length) $('#keiko-sub').textContent = '苦手: ' + weak.map(function (t) { return typeName(t); }).join('・');
     var pick = lastCourse(all);
     var html = '';
     LV.COURSES.forEach(function (c) {
@@ -1514,22 +1633,34 @@
     $('#btn-enter').dataset.course = pick;
     var n = (all.runs || []).length;
     $('#records-sub').textContent = n ? '通算 ' + n + ' 回' : '記録を見る';
-    $('#title-meta').textContent = '合図 ' + prefixLabel();
+    renderMeta(all);
   }
 
-  // The order on the left: the question, the 指南 (the answer, step by step,
-  // shown from the start) and the 目安. Rebuilt only when the question, the
-  // stage or the key state changes; the clock ticks update the gauge in place.
+  // Whether this question's 指南 is folded: its type is learnt (覚えた) and
+  // the 目安 has not passed yet.
+  function folded(b) {
+    var e = b.learnt && b.learnt[b.qs[b.i]];
+    return !!(e && e.learnt) && b.stage === 0;
+  }
+
+  // The 指図, twice: in the house (the order bar under the panes, where the
+  // eyes are) and in the side panel (the detail, hidden unless asked for).
+  // Each holds the question and the 指南, the answer step by step, shown
+  // from the start unless the question type is learnt. Rebuilt only when
+  // the question, the stage or the key state changes; the clock ticks update
+  // the gauge in place.
   function renderSashizu() {
     var el = $('#sashizu');
     var b = S.run;
     if (!el || !b) return;
     var playing = b.phase === 'play' && b.q;
-    var move = playing ? b.q.next() : null;
-    var key = [b.i, b.phase, b.stage, S.armed ? 1 : 0, S.confirm ? 1 : 0, S.prompt ? 1 : 0, move ? move.text : ''].join('|');
+    var fold = playing && folded(b);
+    var move = playing && !fold ? b.q.next() : null;
+    var key = [b.i, b.phase, b.stage, fold ? 1 : 0, S.armed ? 1 : 0, S.confirm ? 1 : 0, S.prompt ? 1 : 0, move ? move.text : ''].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     var n = b.qs.length;
+    renderOrder(b, playing, move, fold);
     var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
       html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : '') + '</div>';
@@ -1544,20 +1675,53 @@
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
     if (move) {
-      var steps = [];
-      if (move.pfx) steps.push({ text: '合図 ' + prefixLabel() + ' を押して離す', done: S.armed });
-      steps.push({ text: move.text, done: false });
-      var now = steps.findIndex(function (s) { return !s.done; });
       html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
-        steps.map(function (s, i) {
+        steps(move).map(function (s, i, all) {
+          var now = all.findIndex(function (x) { return !x.done; });
           return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + (s.done ? ' ✓' : '') + '</li>';
         }).join('') + '</ol></div>';
+    } else if (fold) {
+      html += '<p class="learnt-note">覚えた仕掛け。指南は目安を過ぎたら出る。</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>目安 ' + b.limit + ' 秒</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
     html += '</div>';
     el.innerHTML = html;
     renderClock();
+  }
+
+  function steps(move) {
+    var list = [];
+    if (move.pfx) list.push({ text: '合図 ' + prefixLabel() + ' を押して離す', key: prefixLabel(), done: S.armed });
+    list.push({ text: move.text, keys: move.keys, done: false });
+    return list;
+  }
+
+  // The order bar, in the house under the panes: the question in one line,
+  // then the keys of the next step and what they do. Nothing moves in it.
+  function renderOrder(b, playing, move, fold) {
+    var el = $('#order');
+    if (!el) return;
+    var n = b.qs.length;
+    var head = '<span class="ob-n">' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span>';
+    if (!playing) {
+      el.innerHTML = head + '<b class="ob-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : '') + '</b>';
+      return;
+    }
+    var html = head + '<b class="ob-q">' + esc(qText(b)) + '</b>';
+    if (move) {
+      var st = steps(move);
+      var keys = '';
+      st.forEach(function (s, i) {
+        if (i) keys += '<span class="arr">→</span>';
+        if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + (s.done ? ' ✓' : '') + '</kbd>';
+        else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
+      });
+      html += '<span class="ob-guide"><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></span>';
+    } else if (fold) {
+      html += '<span class="ob-guide learnt">覚えた ✓<span class="ob-txt">指南は目安を過ぎたら出る</span></span>';
+    }
+    el.innerHTML = html;
   }
 
   // The ghost in the bar: who it is, and after each question how far ahead
@@ -1783,6 +1947,21 @@
       }
       view.borders = bhtml;
     }
+    // 完成図: what this question wants changed, marked on the rooms.
+    $$(':scope > .goal', term).forEach(function (x) { x.remove(); });
+    goalMarks().forEach(function (g) {
+      if (!g.pane) return;
+      var r = null;
+      lay.panes.forEach(function (x) { if (x.pane.id === g.pane) r = x; });
+      if (!r) return;
+      var full = g.mark === 'unzoom';
+      var box = full ? { x: 0, y: 0, w: S.cols, h: S.rows } : r;
+      var d = document.createElement('div');
+      d.className = 'goal ' + (g.mark || 'go');
+      d.style.cssText = 'left:' + (box.x * cw) + 'px;top:' + (box.y * ch) + 'px;width:' + (box.w * cw) + 'px;height:' + (box.h * ch) + 'px';
+      d.innerHTML = '<span class="goal-tag">' + esc(g.tag) + '</span>';
+      term.appendChild(d);
+    });
     var pk = $(':scope > .picker', term);
     if (pk) pk.remove();
     if (S.picker) term.insertAdjacentHTML('beforeend', pickerHTML());
@@ -1820,6 +1999,18 @@
         el.scrollTop = el.scrollHeight;
       }
     });
+  }
+
+  function tabGoal(name) {
+    var found = null;
+    goalMarks().forEach(function (g) { if (g.tab === name) found = g; });
+    return found;
+  }
+
+  function goalMarks() {
+    var b = S.run;
+    if (!b || b.phase !== 'play' || !b.q || !b.q.goal || S.detached) return [];
+    try { return b.q.goal() || []; } catch (e) { return []; }
   }
 
   function markCursor(el, p) {
@@ -2024,8 +2215,11 @@
     S.session.windows.forEach(function (w) {
       var flag = w.id === S.session.active ? '*' : (w.id === S.session.last ? '-' : '');
       if (w.id === S.session.active && w.zoomed) flag += 'Z';
-      html += '<span class="st-win' + (w.id === S.session.active ? ' cur' : '') + '">' + w.index + ':' + esc(w.name) + flag + '</span>';
+      var g = tabGoal(w.name);
+      html += '<span class="st-win' + (w.id === S.session.active ? ' cur' : '') + (g ? ' goal-tab' + (g.mark === 'close' ? ' close' : '') : '') + '">' + w.index + ':' + esc(w.name) + flag + (g ? '<span class="goal-tag">' + esc(g.tag) + '</span>' : '') + '</span>';
     });
+    var gn = tabGoal('+');
+    if (gn) html += '<span class="st-win goal-tab new">' + S.session.windows.length + ':＋<span class="goal-tag">' + esc(gn.tag) + '</span></span>';
     html += '</span><span class="st-right">';
     if (S.armed) html += '<span class="st-prefix">PREFIX</span>';
     else if (Date.now() < S.repeatUntil) html += '<span class="st-prefix repeat">REPEAT</span>';
@@ -2215,11 +2409,13 @@
     el.classList.toggle('is-rec', isRec);
     el.innerHTML =
       '<div class="em-hd">絵 巻 ・ ' + kanji(Math.min(r.count, 99)) + ' 回 目</div>' +
-      '<h2 class="em-title">奥の間に辿り着いた。</h2>' +
+      '<h2 class="em-title">' + (c.practice ? '稽古を終えた。' : '奥の間に辿り着いた。') + '</h2>' +
       '<div class="em-sub">' + esc(c.title) + ' ・ 仕掛け ' + r.n + ' ・ ' + wareki(r.at) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>秒</small></div>' +
       '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2') + '</span><span>' + rankLine + '</span></div>' +
+      '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
+      learntHTML(r) +
       '<dl class="em-facts">' +
       '<div><dt>1 仕掛けあたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd></div>' +
       '<div><dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd></div>' +
@@ -2233,9 +2429,11 @@
       '<div class="spark-l"><span>' + (slow ? '灯りがいちばん長かった仕掛け: ' + esc(slow.text || '棟を渡る') + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '灯りなし。どの仕掛けも目安のうちに解いた') + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span>■ 自己ベスト ■ 今回</span>' : '') + '</div>' +
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
-      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">もう一度 屋敷へ</button>' +
-      '<button type="button" class="btn" data-records="' + r.course + '">絵巻を開く</button>' +
-      '<button type="button" class="btn ghost" data-title="1">見取り図へ</button></div>';
+      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度 屋敷へ') + '<kbd class="hk">Enter</kbd></button>' +
+      (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">苦手を稽古<kbd class="hk">K</kbd></button>' : '') +
+      '<button type="button" class="btn" data-records="' + (c.practice ? 'normal' : r.course) + '">絵巻を開く<kbd class="hk">R</kbd></button>' +
+      '<button type="button" class="btn ghost" data-title="1">見取り図へ<kbd class="hk">Esc</kbd></button></div>';
+    renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
 
@@ -2248,7 +2446,9 @@
     var r = S.result;
     if (!NET || !r) return;
     // Nothing leaves the browser until the player gives a name or a 合言葉.
-    if (!NET.state().key) { r.board = { state: 'noname' }; return; }
+    if (!NET.state().key) { r.board = REC.courseOf(r.course).practice ? null : { state: 'noname' }; return; }
+    // 稽古 is kept in step between devices but never goes on the boards.
+    if (REC.courseOf(r.course).practice) { NET.sync().catch(function () {}); return; }
     var run = (REC.load().runs || []).filter(function (x) { return x.id === runId; })[0];
     r.board = { state: NET.state().name ? 'sending' : 'noname' };
     NET.sync().then(function () {
@@ -2259,6 +2459,15 @@
     }).catch(function (e) {
       r.board = { state: e && e.status === 400 && NET.state().name ? 'refused' : 'offline' };
     }).then(function () { if (S.screen === 'result' && S.result === r) renderResult(); });
+  }
+
+  // What this run taught: types newly learnt (their 指南 folds from now on)
+  // and types that slipped (their 指南 is back).
+  function learntHTML(r) {
+    var html = '';
+    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">覚えた: <b>' + r.learntNew.map(typeName).map(esc).join('・') + '</b>（次から指南を畳む）</p>';
+    if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">もう一度: ' + r.learntLost.map(typeName).map(esc).join('・') + '（指南を出す）</p>';
+    return html;
   }
 
   function resultNetHTML(r) {
@@ -2406,6 +2615,31 @@
     return '<div id="rec-chart" class="rec-chart" role="img" aria-label="タイムの移り変わり">' + svg + lbl + '</div>';
   }
 
+  // Every day's best since the first run: the long view of getting faster.
+  // A line on a fixed grid; the first and the latest day are labelled.
+  function dailyChart(days, c) {
+    if (days.length < 2) return '';
+    var W = 300, H = 100, par = LV.par(c);
+    var max = Math.max(par, Math.max.apply(null, days.map(function (d) { return d.time; }))) * 1.1;
+    var min = Math.min(par, Math.min.apply(null, days.map(function (d) { return d.time; }))) * 0.85;
+    var x = function (i) { return +(days.length === 1 ? W / 2 : i / (days.length - 1) * W).toFixed(2); };
+    var y = function (t) { return +(H - (t - min) / (max - min) * H).toFixed(2); };
+    var pts = days.map(function (d, i) { return x(i) + ',' + y(d.time); }).join(' ');
+    var first = days[0], last = days[days.length - 1];
+    var gain = first.time - last.time;
+    var svg = '<svg class="rec-svg daily" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<line class="par" x1="0" x2="' + W + '" y1="' + y(par) + '" y2="' + y(par) + '" vector-effect="non-scaling-stroke"/>' +
+      '<polyline class="line" points="' + pts + '" vector-effect="non-scaling-stroke"/>' +
+      '</svg>' +
+      // Dots as HTML so the stretched SVG does not squash them.
+      days.map(function (d, i) { return '<i class="dot" style="left:' + (x(i) / W * 100) + '%;top:' + y(d.time) + '%" title="' + esc(d.day + ' ' + d.time.toFixed(1) + '秒') + '"></i>'; }).join('');
+    return '<div class="rec-panel"><div class="rec-head">日ごとのベスト（全期間 ' + days.length + ' 日）</div>' +
+      '<div class="rec-chart daily-chart">' + svg + '<span class="lbl par-l" style="top:' + y(par) + '%">当主の刻 ' + par + '秒</span></div>' +
+      '<div class="daily-l"><span>' + esc(first.day.slice(5).replace('-', '/')) + ' ' + first.time.toFixed(1) + '秒</span>' +
+      '<span>' + (gain > 0 ? '<b>−' + gain.toFixed(1) + ' 秒</b>' : '') + '</span>' +
+      '<span>' + esc(last.day.slice(5).replace('-', '/')) + ' ' + last.time.toFixed(1) + '秒</span></div></div>';
+  }
+
   function renderRecords() {
     var id = S.recCourse;
     var c = REC.courseOf(id);
@@ -2434,13 +2668,14 @@
       '<div class="rec-tile"><small>挑戦回数</small><b>' + st.count + ' 回</b></div>' +
       '<div class="rec-tile"><small>五回平均</small><b>' + fmt(a5) + '</b></div>' +
       '</div>';
-    var chart = '<div class="rec-panel"><div class="rec-head">タイムの移り変わり（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>';
+    var chart = '<div class="rec-panel"><div class="rec-head">タイムの移り変わり（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>' +
+      dailyChart(REC.dailyBest(id), c);
     var rows = st.runs.slice(0, 20).map(function (r) {
       var note = r.legacy ? '旧記録' : '違い ' + r.misses + (r.overs ? ' ・ 灯り ' + r.overs : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
       return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">内訳</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + chart + weakPanel(id) + table;
+    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + chart + weakPanel(id) + learntPanel() + table;
   }
 
   function weakPanel(id) {
@@ -2456,7 +2691,22 @@
     };
     return '<div class="rec-panel rec-weak"><div class="rec-head">灯りが多い仕掛け（直近 ' + w.runs + ' 回）</div><ol class="weak-list">' +
       w.weak.map(row).join('') + '</ol>' +
-      (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text || '棟を渡る') + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') + '</div>';
+      (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text || '棟を渡る') + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') +
+      (REC.weakTypes(3).length ? '<div class="cta"><button type="button" class="btn" data-course="keiko">苦手だけ稽古する（' + REC.weakTypes(3).map(typeName).join('・') + '）</button></div>' : '') +
+      '</div>';
+  }
+
+  // Which question types are learnt (指南 folded) and how close the rest are.
+  function learntPanel() {
+    var l = REC.learnt();
+    var types = Object.keys(TYPE_NAMES).filter(function (t) { return l[t]; });
+    if (!types.length) return '';
+    var done = types.filter(function (t) { return l[t].learnt; });
+    return '<div class="rec-panel learnt-list"><div class="rec-head">覚えた仕掛け ' + done.length + ' ／ ' + types.length + '</div><ul>' +
+      types.map(function (t) {
+        var e = l[t];
+        return '<li class="' + (e.learnt ? 'ok' : '') + '">' + esc(typeName(t)) + '<small>' + (e.learnt ? '覚えた' : 'あと ' + (LV.LEARNT_AFTER - e.streak)) + '</small></li>';
+      }).join('') + '</ul></div>';
   }
 
   // The sink keeps the focus during play: on phones it raises the soft
@@ -2473,6 +2723,12 @@
     var saved = store.load();
     applyTheme(saved.theme === 'dark' || saved.theme === 'light' ? saved.theme : null);
     applySound(saved.sound !== false);
+    // The side panel is the detail; the order is in the house. Quiet (no
+    // looping decoration) unless the player asks for motion.
+    S.detail = saved.detail === true;
+    S.quiet = saved.quiet !== false;
+    $('.detail-toggle').addEventListener('click', function () { S.detail = !S.detail; store.save({ detail: S.detail }); syncBody(); if (S.screen === 'game') render(); focusSink(); });
+    $('.quiet-toggle').addEventListener('click', function () { S.quiet = !S.quiet; store.save({ quiet: S.quiet }); syncBody(); });
 
     $$('.theme-toggle').forEach(function (b) { b.addEventListener('click', toggleTheme); });
     $$('.sound-toggle').forEach(function (b) {
@@ -2481,6 +2737,7 @@
     document.addEventListener('pointerdown', function () { AU.unlock(); }, true);
     $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'normal'); });
     $('#btn-records').addEventListener('click', function () { S.recTab = 'growth'; openRecords(null, 'title'); });
+    $('#btn-keiko').addEventListener('click', function () { startRun('keiko'); });
     $('#course-list').addEventListener('click', function (e) {
       var b = e.target.closest('[data-course]');
       if (b) startRun(b.dataset.course);
@@ -2594,11 +2851,15 @@
             course: b.course.id, phase: b.phase, i: b.i, n: b.qs.length, type: b.type, misses: b.misses,
             stage: b.stage, overs: b.overs, guides: b.guides,
             order: b.q ? qText(b) : null,
+            qs: b.qs.slice(), day: b.day,
+            folded: b.q && b.phase === 'play' ? folded(b) : false,
+            goals: b.q && b.phase === 'play' ? goalMarks().length : 0,
             goal: b.type === 'select_window' ? S.q0 : null,
             next: b.q && b.phase === 'play' ? b.q.next() : null
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
+          quiet: S.quiet, detail: S.detail,
           cols: S.cols, rows: S.rows
         };
       }
