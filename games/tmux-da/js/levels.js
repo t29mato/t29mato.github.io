@@ -363,19 +363,22 @@
   // A course is a fixed list of questions, the same every time, so a record
   // can be compared with the last one. Question types live in app.js.
   // `limit` is seconds per question; running out counts as a miss.
+  // `mode` is the Sushida-style name; `rankMul` scales the rank thresholds
+  // for courses whose questions take several keys. Bump `ver` whenever `qs`
+  // or `limit` change, so older runs can be told apart in the history.
   var COURSES = [
     {
-      id: 'easy', title: '草原コース', sub: '初級', monster: 'slime', limit: 12,
+      id: 'easy', title: '草原コース', mode: '手ならし', sub: '初級', monster: 'slime', limit: 12, rankMul: 1, ver: 1,
       desc: '分割・移動・全画面・閉じる・部屋の移動。第 1 章の呪文だけ。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
-      id: 'normal', title: '塔コース', sub: '中級', monster: 'bat', limit: 14,
+      id: 'normal', title: '塔コース', mode: 'おすすめ', sub: '中級', monster: 'bat', limit: 14, rankMul: 1.3, ver: 1, recommended: true,
       desc: '大きさ・名前・入れ替え・部屋を閉じる・コピーモードも混ざる。',
       qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'focus', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
     },
     {
-      id: 'hard', title: '城コース', sub: '上級', monster: 'knight', limit: 18,
+      id: 'hard', title: '城コース', mode: '真剣勝負', sub: '上級', monster: 'knight', limit: 18, rankMul: 2, ver: 1,
       desc: '1 問で 2〜3 手の連続技。迷わず手が動くか。',
       qs: ['find_zoom', 'trident', 'two_monsters', 'new_and_home', 'swap_zoom', 'split_lr', 'find_zoom', 'copy_top', 'two_monsters', 'trident', 'kill_window', 'swap_zoom', 'new_and_home', 'focus', 'resize', 'find_zoom']
     }
@@ -396,9 +399,16 @@
     { max: Infinity, title: '村人' }
   ];
 
-  function rankFor(avg) {
-    for (var i = 0; i < RANKS.length; i++) if (avg <= RANKS[i].max) return RANKS[i].title;
+  // `mul` is the course's rankMul: a hard question may take twice as long.
+  function rankFor(avg, mul) {
+    var a = avg / (mul || 1);
+    for (var i = 0; i < RANKS.length; i++) if (a <= RANKS[i].max) return RANKS[i].title;
     return RANKS[RANKS.length - 1].title;
+  }
+
+  // The target time for a course: '勇者' pace on every question.
+  function par(course) {
+    return Math.round(course.qs.length * RANKS[1].max * (course.rankMul || 1));
   }
 
   window.ADV = window.ADV || {};
@@ -417,7 +427,9 @@
     tipsFor: tipsFor,
     COURSES: COURSES,
     BOSS: BOSS,
+    RANKS: RANKS,
     rankFor: rankFor,
+    par: par,
     MISS_PENALTY: 2,
     TIMEOUT_PENALTY: 5
   };

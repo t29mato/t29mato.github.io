@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var T = ADV.tmux, LV = ADV.levels, ART = ADV.art, AU = ADV.audio;
+  var T = ADV.tmux, LV = ADV.levels, ART = ADV.art, AU = ADV.audio, REC = ADV.records;
   var LAST = LV.LAST_LEVEL;
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
@@ -37,7 +37,7 @@
         // Arena records survive "記録を消す", which is about the story.
         var keep = store.load();
         window.localStorage.removeItem(STORE_KEY);
-        if (keep.arena) window.localStorage.setItem(STORE_KEY, JSON.stringify({ arena: keep.arena }));
+        if (keep.arena || keep.runs) window.localStorage.setItem(STORE_KEY, JSON.stringify({ schema: keep.schema, arena: keep.arena || {}, runs: keep.runs || [] }));
       } catch (e) { /* ignore */ }
     }
   };
@@ -128,6 +128,7 @@
   function bgmForScreen() {
     if (S.screen === 'title') return 'title';
     if (S.screen === 'arena') return 'title';
+    if (S.screen === 'records') return 'title';
     if (S.screen === 'finale') return 'title';
     if (S.mode === 'arena') return 'battle';
     if (S.level === LAST && !S.free) return 'boss';
@@ -1464,10 +1465,6 @@
     slime: 'プルプル', bat: 'ヤミコウモリ', knight: 'カゲナイト', boss: '魔王ターミナス'
   };
 
-  // Arena records are keyed 'tmux:<course>', as they were when the game had
-  // a second keymap, so earlier records still count.
-  function recordKey(id) { return 'tmux:' + id; }
-
   // A new order, avoiding the same question twice in a row where it can.
   function shuffle(a) {
     for (var tries = 0; tries < 50; tries++) {
@@ -1506,6 +1503,7 @@
     b.phase = 'count';
     b.i = 0;
     b.penalty = 0; b.misses = 0; b.timeouts = 0; b.keys = 0;
+    b.qlog = [];
     if (b.kind === 'boss') b.hp = b.maxHp;
     b.log = (MONSTERS[b.monster] || '') + 'が あらわれた！';
     $('#quest').dataset.hud = '';
@@ -1546,6 +1544,7 @@
     b.q = q;
     b.type = type;
     b.qStart = performance.now();
+    b.qlog[b.i] = { t: type, s: null, m: 0 };
     S.clipboard = '';
   }
 
@@ -1564,6 +1563,7 @@
       var used = (performance.now() - b.qStart) / 1000;
       // Faster answers hit harder.
       var dmg = Math.max(3, Math.round(40 - used * 6));
+      b.qlog[b.i].s = +used.toFixed(2);
       b.i += 1;
       if (b.i >= b.qs.length) { finishBattle(true); return; }
       loadQuestion();
@@ -1576,6 +1576,7 @@
     var b = S.battle;
     b.misses += 1;
     b.penalty += LV.MISS_PENALTY;
+    if (b.qlog[b.i]) b.qlog[b.i].m += 1;
     AU.se('miss');
     flash('miss', 'ミス +' + LV.MISS_PENALTY + '秒');
     renderHud();
@@ -1596,6 +1597,7 @@
   function timeout() {
     var b = S.battle;
     b.timeouts += 1;
+    if (b.qlog[b.i]) b.qlog[b.i].to = 1;
     if (b.kind === 'boss') {
       b.hp -= 1;
       AU.se('hurt');
@@ -1634,15 +1636,12 @@
       course: b.course.id, time: time, raw: (b.end - b.start) / 1000, misses: b.misses, timeouts: b.timeouts,
       keys: b.keys, n: b.qs.length, avg: time / b.qs.length
     };
-    var saved = store.load().arena || {};
-    var key = recordKey(b.course.id);
-    var best = saved[key];
-    result.best = best ? best.time : null;
-    result.record = !best || time < best.time;
-    if (result.record) {
-      saved[key] = { time: time, misses: b.misses, date: new Date().toISOString().slice(0, 10) };
-      store.save({ arena: saved });
-    }
+    var sum = REC.add({
+      course: b.course.id, prefix: S.prefix,
+      time: +time.toFixed(2), raw: +result.raw.toFixed(2), misses: b.misses, timeouts: b.timeouts,
+      keys: b.keys, n: b.qs.length, qs: b.qlog
+    });
+    for (var k in sum) result[k] = sum[k];
     var pool = [];
     b.qs.forEach(function (t) { Q[t].show.forEach(function (a) { pool = pool.concat(LV.tipsFor(a)); }); });
     result.tip = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
@@ -1661,6 +1660,7 @@
     if (S.screen === 'game') { renderQuest(); renderTerm(); renderStatus(); renderKeybar(); }
     if (S.screen === 'finale') renderFinale();
     if (S.screen === 'arena') renderArena();
+    if (S.screen === 'records') renderRecords();
   }
 
   function keycaps(list) {
@@ -1682,6 +1682,13 @@
     } else cont.hidden = true;
     $('#btn-start').innerHTML = saved > 1 ? '最初から<span class="sub">記録を消す</span>' : '冒険を始める<span class="sub">1 面ずつ覚える</span>';
     $('#title-meta').textContent = 'prefix ' + prefixLabel();
+    var all = REC.load(), runs = all.runs || [];
+    var rb = $('#btn-records');
+    rb.hidden = !runs.length;
+    if (runs.length) {
+      var last = runs[runs.length - 1], b = REC.best(last.course, all), c = REC.courseOf(last.course);
+      rb.innerHTML = '記録の間<span class="sub">通算 ' + runs.length + ' 戦' + (b && c ? ' ・ ' + esc(c.title) + ' 最高 ' + b.time.toFixed(1) + '秒' : '') + '</span>';
+    }
   }
 
   function gauge(left, max, cls) {
@@ -2282,17 +2289,47 @@
 
   function fmt(t) { return t == null ? '—' : t.toFixed(1) + '秒'; }
 
+  function sec(t) { return t.toFixed(1) + ' 秒'; }
+
+  // The last few runs as bars, oldest first; the shape matters, not the numbers.
+  function spark(list) {
+    if (!list || list.length < 2) return '';
+    var max = Math.max.apply(null, list.map(function (r) { return r.time; }));
+    var bars = list.map(function (r, i) {
+      var h = Math.max(2, Math.round(r.time / max * 8)) * 3;
+      return '<i class="' + (r.rec ? 'rec' : '') + (i === list.length - 1 ? ' now' : '') + '" style="height:' + h + 'px"></i>';
+    }).join('');
+    return '<div class="spark" aria-label="直近 ' + list.length + ' 回のタイム"><span class="spark-label">直近 ' + list.length + ' 回</span><span class="spark-bars">' + bars + '</span></div>';
+  }
+
+  // What the result log says about this run against the earlier ones.
+  function growthLines(r) {
+    var out = [];
+    if (r.count === 1) out.push('<p>はじめての挑戦。これが きみの出発点だ。</p>');
+    else if (r.record) out.push('<p class="rec">★ 新記録！ これまでの最高より <b>' + Math.abs(r.bestDelta).toFixed(1) + ' 秒</b> はやい</p>');
+    else if (r.delta < 0) out.push('<p>前回より <b>' + Math.abs(r.delta).toFixed(1) + ' 秒</b> はやくなった</p>');
+    else out.push('<p>前回より ' + r.delta.toFixed(1) + ' 秒 おそい。自己ベストまで あと ' + r.bestDelta.toFixed(1) + ' 秒</p>');
+    if (r.rankUp) out.push('<p class="rec">称号が <b>' + esc(r.rankFrom) + '</b> から <b>' + esc(r.rank) + '</b> に あがった！</p>');
+    else if (r.parFirst) out.push('<p class="rec">目標タイム ' + r.par + ' 秒を 切った！</p>');
+    return out.slice(0, 2).join('');
+  }
+
   function renderArena() {
-    var saved = store.load().arena || {};
+    var all = REC.load();
+    var saved = all.arena || {};
     var html = '';
     LV.COURSES.forEach(function (c) {
-      var best = saved[recordKey(c.id)];
+      var best = saved[REC.recordKey(c.id)];
+      var count = REC.runsOf(c.id, all).length;
       var n = c.qs.length;
       html += '<li><button type="button" class="course" data-course="' + c.id + '">' +
         '<span class="course-spr">' + ART.sprite(c.monster) + '</span>' +
-        '<span class="course-main"><span class="course-title">' + esc(c.title) + '<small>' + esc(c.sub) + ' ・ ' + n + ' 問</small></span>' +
+        '<span class="course-main"><span class="course-title">' + esc(c.title) +
+        '<span class="course-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + (c.recommended ? ' ★' : '') + '</span>' +
+        '<small>' + esc(c.sub) + ' ・ ' + n + ' 問</small></span>' +
         '<span class="course-desc">' + esc(c.desc) + '</span></span>' +
-        '<span class="course-best"><small>最高記録</small>' + (best ? fmt(best.time) : '—') + '</span>' +
+        '<span class="course-best"><small>最高記録</small>' + (best ? fmt(best.time) : '—') +
+        '<small class="course-par">目標 ' + LV.par(c) + '秒' + (count ? ' ・ ' + count + ' 戦' : '') + '</small></span>' +
         '</button></li>';
     });
     $('#course-list').innerHTML = html;
@@ -2302,12 +2339,12 @@
     var res = $('#arena-result');
     if (!r) { res.hidden = true; return; }
     res.hidden = false;
-    var course = LV.COURSES.filter(function (c) { return c.id === r.course; })[0];
+    res.dataset.runId = r.runId || '';
+    var course = REC.courseOf(r.course);
     res.innerHTML =
-      '<div class="dq-log"><p>' + esc(course.title) + 'を せいはした！</p>' +
-      (r.record ? '<p class="rec">★ 新記録！</p>' : '') + '</div>' +
+      '<div class="dq-log"><p>' + esc(course.title) + 'を せいはした！</p>' + growthLines(r) + '</div>' +
       '<div class="res-time">' + r.time.toFixed(1) + '<small>秒</small></div>' +
-      '<div class="res-rank">称号 <b>' + esc(LV.rankFor(r.avg)) + '</b></div>' +
+      '<div class="res-rank">称号 <b>' + esc(r.rank) + '</b></div>' +
       '<dl class="res-facts">' +
       '<dt>1 問あたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd>' +
       '<dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd>' +
@@ -2315,9 +2352,101 @@
       '<dt>時間切れ</dt><dd>' + r.timeouts + '（+' + (r.timeouts * LV.TIMEOUT_PENALTY) + '秒）</dd>' +
       '<dt>押したキー</dt><dd>' + r.keys + '</dd>' +
       '<dt>これまでの最高</dt><dd>' + fmt(r.best) + '</dd>' +
+      '<dt>目標タイム</dt><dd>' + r.par + '秒' + (r.parMet ? ' ✓' : '') + '</dd>' +
+      '<dt>通算</dt><dd>' + r.count + ' 戦目</dd>' +
       '</dl>' +
+      spark(r.spark) +
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
-      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">もう一度</button></div>';
+      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">もう一度</button>' +
+      '<button type="button" class="btn" data-records="' + r.course + '">記録を見る</button></div>';
+  }
+
+  // ---- 記録の間 --------------------------------------------------------------
+
+  function openRecords(course, from) {
+    S.recordsFrom = from || S.screen;
+    if (course) S.recCourse = course;
+    if (!S.recCourse) {
+      var all = REC.load();
+      var last = (all.runs || []).slice(-1)[0];
+      S.recCourse = last ? last.course : 'normal';
+    }
+    showScreen('records');
+  }
+
+  function recDate(at) {
+    var d = new Date(at);
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  // Up to 20 latest runs as pixel bars: gold for a record, a dotted line at
+  // the best and a faint one at the target time. The SVG stretches to the
+  // box; the labels are HTML on top so their text keeps its size.
+  function recChart(runs, c, best) {
+    var list = runs.slice(0, 20).reverse();
+    var W = 200, H = 100;
+    var par = LV.par(c);
+    var max = Math.max(par, Math.max.apply(null, list.map(function (r) { return r.time; }))) * 1.12;
+    var y = function (t) { return +(H - t / max * H).toFixed(2); };
+    var svg = '<svg class="rec-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">';
+    list.forEach(function (r, i) {
+      svg += '<rect class="bar' + (r.rec ? ' rec' : '') + (i === list.length - 1 ? ' now' : '') + '" x="' + (i * 10 + 1.5) + '" y="' + y(r.time) + '" width="7" height="' + (H - y(r.time)) + '"><title>' +
+        esc(recDate(r.at) + ' ' + r.time.toFixed(1) + '秒 ミス ' + r.misses) + '</title></rect>';
+    });
+    svg += '<line class="par" x1="0" x2="' + W + '" y1="' + y(par) + '" y2="' + y(par) + '" vector-effect="non-scaling-stroke"/>';
+    if (best != null) svg += '<line class="best" x1="0" x2="' + W + '" y1="' + y(best) + '" y2="' + y(best) + '" vector-effect="non-scaling-stroke"/>';
+    svg += '</svg>';
+    var lbl = '<span class="lbl par-l" style="top:' + y(par) + '%">目標 ' + par + '秒</span>';
+    if (best != null) lbl += '<span class="lbl best-l" style="top:' + y(best) + '%">最高 ' + best.toFixed(1) + '秒</span>';
+    return '<div id="rec-chart" class="rec-chart" role="img" aria-label="タイム推移">' + svg + lbl + '</div>';
+  }
+
+  function renderRecords() {
+    var id = S.recCourse;
+    var c = REC.courseOf(id);
+    $$('#records-screen [data-rec-course]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recCourse === id ? 'true' : 'false'); });
+    $('#records-hero').innerHTML = ART.sprite(c.monster, 'arena-hero-spr');
+    var st = REC.stats(id);
+    var body = $('#records-body');
+    if (!st) {
+      body.innerHTML = '<div class="dq-log rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の記録は まだない。</p><p>一度走ると、ここに きみの成長が 刻まれる。</p></div>' +
+        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に挑む</button></div>';
+      return;
+    }
+    var gain = st.first.time - st.best;
+    var head = st.count === 1
+      ? '<p>挑戦 1 回。もう一度走ると、ここに成長が出る。</p>'
+      : '<p>はじめて ' + sec(st.first.time) + ' → 自己ベスト ' + sec(st.best) + (gain > 0 ? '（<b>−' + gain.toFixed(1) + ' 秒</b>）。ゆうしゃは つよくなった。' : '。') + '</p>';
+    var tiles =
+      '<div class="rec-tiles">' +
+      '<div class="rec-tile"><small>自己ベスト</small><b>' + fmt(st.best) + '</b></div>' +
+      '<div class="rec-tile"><small>称号</small><b>' + esc(st.bestRank || '—') + '</b></div>' +
+      '<div class="rec-tile"><small>挑戦回数</small><b>' + st.count + ' 戦</b></div>' +
+      '<div class="rec-tile"><small>直近 5 回の平均</small><b>' + fmt(st.recentAvg) + '</b></div>' +
+      '</div>';
+    var chart = '<div class="rec-panel"><div class="rec-head">タイム推移（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>';
+    var rows = st.runs.slice(0, 20).map(function (r) {
+      var note = r.legacy ? '旧記録' : 'ミス ' + r.misses + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
+      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
+    }).join('');
+    var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="cheat rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">ミス</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    body.innerHTML = '<div class="dq-log rec-log">' + head + '</div>' + tiles + chart + weakPanel(id) + table;
+  }
+
+  function weakPanel(id) {
+    var w = REC.weakness(id, 10);
+    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">にがてな じゅもん</div><p class="rec-empty">2 回走ると、苦手が見えてくる。</p></div>';
+    var row = function (e) {
+      var q = Q[e.type];
+      var keys = [];
+      q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
+      return '<li><span class="w-spell">' + esc(spellsFor(q) || 'こうげき') + '</span><span class="w-text">' + esc(q.text) + '</span>' +
+        '<span class="w-num">平均 ' + e.avg.toFixed(1) + '秒 ・ ミス ' + Math.round(e.missRate * 100) + '%</span>' +
+        '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arrow">→</span>' + keycaps(keys) + '</span></li>';
+    };
+    return '<div class="rec-panel rec-weak"><div class="rec-head">にがてな じゅもん（直近 ' + w.runs + ' 戦）</div><ol class="weak-list">' +
+      w.weak.map(row).join('') + '</ol>' +
+      (w.strong ? '<p class="w-strong">とくい: <b>' + esc(spellsFor(Q[w.strong.type]) || '') + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') + '</div>';
   }
 
   function startArena(courseId) {
@@ -2399,8 +2528,24 @@
       resetAll();
     });
     $('#arena-screen').addEventListener('click', function (e) {
+      var r = e.target.closest('[data-records]');
+      if (r) { openRecords(r.dataset.records || null, 'arena'); return; }
       var b = e.target.closest('[data-course]');
       if (b) startArena(b.dataset.course);
+    });
+    $('#btn-records').addEventListener('click', function () { store.save({ prefix: S.prefix }); openRecords(null, 'title'); });
+    $('#records-screen').addEventListener('click', function (e) {
+      var t = e.target.closest('[data-rec-course]');
+      if (t) { S.recCourse = t.dataset.recCourse; AU.se('cursor'); renderRecords(); return; }
+      var b = e.target.closest('[data-course]');
+      if (b) { startArena(b.dataset.course); return; }
+      if (e.target.closest('#btn-records-back')) { S.result = null; showScreen(S.recordsFrom === 'title' ? 'title' : 'arena'); return; }
+      if (e.target.closest('#btn-records-arena')) { S.result = null; showScreen('arena'); return; }
+      if (e.target.closest('#btn-records-clear')) {
+        if (!window.confirm('闘技場の記録をすべて消す？')) return;
+        REC.clearArena();
+        renderRecords();
+      }
     });
     $('#brief').addEventListener('click', function () {
       if (!S.briefOpen) return;
@@ -2433,6 +2578,7 @@
 
     // A read-only view for the tests. Playing still goes through the keyboard.
     window.tmuxDa = {
+      records: function () { return JSON.parse(JSON.stringify(REC.load())); },
       state: function () {
         var win = S.session ? T.activeWindow(S.session) : null;
         var ap = win ? T.activePane(win) : null;
@@ -2454,6 +2600,7 @@
           mp: S.mp ? S.mp.left : null,
           battle: S.battle ? { kind: S.battle.kind, phase: S.battle.phase, i: S.battle.i, n: S.battle.qs.length, type: S.battle.type, misses: S.battle.misses, hp: S.battle.hp, order: S.battle.q ? qText(S.battle) : null } : null,
           result: S.result,
+          recCourse: S.screen === 'records' ? S.recCourse : null,
           cols: S.cols, rows: S.rows
         };
       }
