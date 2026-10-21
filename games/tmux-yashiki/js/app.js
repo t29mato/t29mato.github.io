@@ -714,7 +714,12 @@
     if (key === ' ') { T.nextLayout(win); S.lastAction = 'layout'; return true; }
     if (key === ']') { paste(pane); return true; }
     if (key === ':') { S.lastAction = 'cmd'; S.prompt = { label: ':', value: '', done: runTmuxCommand }; return true; }
-    if (key === 'l') { if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last); S.lastAction = 'select_window'; return true; }
+    if (key === 'l') {
+      if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last);
+      else message('no last window ― l は直前の棟へ戻るキー。隣の間へは矢印か o');
+      S.lastAction = 'select_window';
+      return true;
+    }
     if (key === ';') { if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last); S.lastAction = 'focus'; return true; }
     if (key === 'o') {
       var ps = T.panesOf(win);
