@@ -1,5 +1,5 @@
-// Courses and key data for tmux からくり屋敷 (the browser game).
-// A course is a fixed set of questions (仕掛け), asked in a new order each
+// Courses and key data for tmux 道場 (the browser game).
+// A course is a fixed set of questions (問題), asked in a new order each
 // run, on one house that carries on from question to question. Question
 // types live in app.js. Everything the player reads is Japanese; code
 // identifiers stay English.
@@ -100,43 +100,43 @@
   }
 
   // `limit` is the 目安 in seconds per question. Past it nothing is skipped;
-  // the 指南 (the answer, step by step) is on screen from the start anyway.
+  // the 手順 (the answer, step by step) is on screen from the start anyway.
   // `rankMul` scales the rank thresholds for courses whose questions take
   // several keys. Bump `ver` whenever `qs` or the rules change, so older
   // runs can be told apart in the history (ver 2: no skipping, no +5 秒).
   // The ids stay easy / normal / hard so older records carry over.
   var COURSES = [
     {
-      id: 'easy', title: '三間屋敷', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
+      id: 'easy', title: '入門', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
-      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 仕掛け 1 キー。',
+      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1 キー。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
-      id: 'normal', title: '八間屋敷', mode: '腕試し', limit: 14, rankMul: 1.3, ver: 2,
+      id: 'normal', title: '中級', mode: '腕試し', limit: 14, rankMul: 1.3, ver: 2,
       plan: { cols: 4, rows: 2, cells: 8, lit: 1 },
       desc: '大きさ・名前・入れ替え・ウィンドウを閉じる・スクロールも混ざる。',
       qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'focus', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
     },
     {
-      id: 'hard', title: '百間屋敷', mode: '真剣勝負', limit: 18, rankMul: 2, ver: 2,
+      id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 2, ver: 2,
       plan: { cols: 5, rows: 4, cells: 20, lit: 6 },
-      desc: '1 仕掛けで 2〜3 手。考える前に手が動くか。',
+      desc: '1 問で 2〜3 手。考える前に手が動くか。',
       qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'find_zoom', 'copy_top', 'two_akima', 'trident', 'kill_window', 'swap_zoom', 'new_and_home', 'focus', 'resize', 'find_zoom']
     }
   ];
 
-  // 稽古の間: only the question types you are slowest at, three times each.
+  // 苦手の稽古: only the question types you are slowest at, three times each.
   // Its questions are picked per run (records.js weakTypes), so it has no
   // board and no ghost; its runs still count towards what you have learnt.
   var KEIKO = {
-    id: 'keiko', title: '稽古の間', mode: '苦手稽古', limit: 14, rankMul: 1.3, ver: 2, practice: true,
+    id: 'keiko', title: '苦手の稽古', mode: '苦手稽古', limit: 14, rankMul: 1.3, ver: 2, practice: true,
     plan: { cols: 3, rows: 3, cells: 9, lit: 4 },
-    desc: '灯りが多い仕掛けだけを三度ずつ。', qs: []
+    desc: '目安を超えがちな問題だけを三度ずつ。', qs: []
   };
 
   // A question type counts as learnt (覚えた) after this many solves in a
-  // row within the 目安, with no wrong key. Its 指南 then stays folded until
+  // row within the 目安, with no wrong key. Its 手順 then stays folded until
   // the 目安 passes.
   var LEARNT_AFTER = 3;
 
@@ -154,23 +154,26 @@
     return Math.exp(Math.log(LV_SLOW) - t * (Math.log(LV_SLOW) - Math.log(LV_FAST)));
   }
 
-  // The day in Japan (YYYY-MM-DD): today's 屋敷 asks in the same order for
-  // everyone, so the 番付 compares like with like.
+  // The day in Japan (YYYY-MM-DD): today's course asks in the same order for
+  // everyone, so the ランキング compares like with like.
   function dayKey(d) {
     return new Date((d || new Date()).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   }
 
   // Ranks by average seconds per question, after penalties.
   var RANKS = [
-    { max: 1.6, title: '名匠' },
-    { max: 2.4, title: 'からくり師' },
-    { max: 3.4, title: '屋敷守' },
-    { max: 5, title: '仕掛け番' },
+    { max: 1.6, title: '師範' },
+    { max: 2.4, title: '師範代' },
+    { max: 3.4, title: '三段' },
+    { max: 5, title: '初段' },
     { max: Infinity, title: '見習い' }
   ];
 
-  // Saves from the old game used these titles.
-  var OLD_RANKS = { '伝説の勇者': '名匠', '勇者': 'からくり師', '戦士': '屋敷守', '見習い剣士': '仕掛け番', '村人': '見習い' };
+  // Saves from older versions used these titles (the RPG, then the house).
+  var OLD_RANKS = {
+    '伝説の勇者': '師範', '勇者': '師範代', '戦士': '三段', '見習い剣士': '初段', '村人': '見習い',
+    '名匠': '師範', 'からくり師': '師範代', '屋敷守': '三段', '仕掛け番': '初段'
+  };
 
   // `mul` is the course's rankMul: a hard question may take twice as long.
   function rankFor(avg, mul) {
@@ -179,8 +182,8 @@
     return RANKS[RANKS.length - 1].title;
   }
 
-  // 当主の刻, the target time for a course: からくり師 pace on every question.
-  // `n` overrides the number of questions (the 稽古の間 picks its own).
+  // お手本, the target time for a course: 師範代 pace on every question.
+  // `n` overrides the number of questions (the 苦手の稽古 picks its own).
   function par(course, n) {
     return Math.round((n || course.qs.length) * RANKS[1].max * (course.rankMul || 1));
   }

@@ -1,4 +1,4 @@
-// tmux からくり屋敷: the shared records. Everything here is optional: with no
+// tmux 道場: the shared records. Everything here is optional: with no
 // network (file://, offline, server down) the game keeps its records in the
 // browser as before and nothing on screen breaks.
 //

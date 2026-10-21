@@ -1,4 +1,4 @@
-// tmux からくり屋敷, browser edition: screens, input, the fake shells and
+// tmux 道場, browser edition: screens, input, the fake shells and
 // the run loop. The tmux model is in tmux.js, the courses and keys in
 // levels.js, the records in records.js, the sound in audio.js.
 (function () {
@@ -81,11 +81,11 @@
     b.dataset.detail = S.detail ? '1' : '0';
     b.dataset.quiet = S.quiet ? '1' : '0';
     var dt = $('.detail-toggle');
-    if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指図の詳細をしまう' : '指図の詳細を出す'; }
+    if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指示の詳細をしまう' : '手順の詳細を出す'; }
     var cs = $('#conf-state');
     if (cs) cs.textContent = S.conf ? '自分の設定（合図 ' + prefixLabel() + '）' : '既定';
     var qt = $('.quiet-toggle');
-    if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静かな屋敷（飾りは止まっている）' : '動く屋敷（振り子や湯気が動く）'; }
+    if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静か（飾りは止まっている）' : '動く（飾りが動く）'; }
   }
 
   // ---- theme and sound ------------------------------------------------------
@@ -95,7 +95,7 @@
     else document.documentElement.removeAttribute('data-theme');
     var dark = t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     $$('.theme-toggle').forEach(function (b) {
-      b.setAttribute('aria-label', dark ? '昼の屋敷にする' : '夜の屋敷にする');
+      b.setAttribute('aria-label', dark ? '明るい画面にする' : '暗い画面にする');
       b.textContent = dark ? '☀' : '☾';
     });
   }
@@ -139,7 +139,7 @@
     switch (cmd) {
       case 'help':
         pane.lines.push('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help');
-        pane.lines.push('tmux の操作は ' + prefixLabel() + ' を押して離してからキーを押す。押すキーは画面の上の指図に出ている');
+        pane.lines.push('tmux の操作は ' + prefixLabel() + ' を押して離してからキーを押す。押すキーは画面の上の指示に出ている');
         break;
       case 'ls':
         pane.lines.push('kakejiku.txt  makimono.txt  tokonoma/');
@@ -152,7 +152,7 @@
         break;
       case 'cat':
         if (argv[1] === 'makimono.txt') printScroll(pane);
-        else if (argv[1] === 'kakejiku.txt') pane.lines.push('「屋敷を出ても、仕掛けはそのまま。」');
+        else if (argv[1] === 'kakejiku.txt') pane.lines.push('「デタッチしても、セッションはそのまま。」');
         else pane.lines.push('cat: ' + (argv[1] || '') + ': そんなファイルはない');
         break;
       case 'clear':
@@ -196,7 +196,7 @@
       if (/^(a|attach|attach-session)$/.test(sub)) { attach(); return; }
       if (sub === 'ls' || sub === 'list-sessions') { sessionLines().forEach(function (l) { o.lines.push(l); }); return; }
       if (sub === '' || sub === 'new' || sub === 'new-session') {
-        o.lines.push({ html: '<span class="sh-dim">それは新しいセッションを作るコマンド。屋敷は裏でそのまま残っている —— tmux attach で戻ろう。</span>' });
+        o.lines.push({ html: '<span class="sh-dim">それは新しいセッションを作るコマンド。セッションは裏でそのまま残っている —— tmux attach で戻ろう。</span>' });
         return;
       }
       o.lines.push('usage: tmux [attach|ls]');
@@ -333,7 +333,7 @@
     clearTimeout(S.hintTimer);
     S.hintTimer = setTimeout(function () {
       if (!S.detached) return;
-      S.outer.lines.push({ html: '<span class="sh-dim">ヒント: 屋敷は裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。</span>' });
+      S.outer.lines.push({ html: '<span class="sh-dim">ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。</span>' });
       render();
     }, 12000);
     $('#term').classList.add('powering-down');
@@ -410,8 +410,8 @@
   // would. Long enough that its top is well off the screen.
   function printScroll(pane) {
     var total = 160;
-    pane.lines.push({ html: '<span class="sh-head">==== 巻物 書き出し ====</span>', text: '==== 巻物 書き出し ====' });
-    pane.lines.push({ html: '<span class="sh-gold">「屋敷を出ても、仕掛けはそのまま。」</span>', text: '「屋敷を出ても、仕掛けはそのまま。」' });
+    pane.lines.push({ html: '<span class="sh-head">==== log 先頭 ====</span>', text: '==== log 先頭 ====' });
+    pane.lines.push({ html: '<span class="sh-gold">「デタッチしても、セッションはそのまま。」</span>', text: '「デタッチしても、セッションはそのまま。」' });
     for (var i = 3; i <= total; i++) {
       // Short enough for a half-width pane on a phone (about 22 cells).
       var txt = i % 50 === 0 ? '—— 第' + (i / 50 + 1) + '巻 ——' : i % 17 === 0 ? '……墨がかすれる……' : '……長い文が続く……';
@@ -584,7 +584,7 @@
       if (isPrefix(k)) {
         if (!S.hinted) {
           S.hinted = true;
-          S.outer.lines.push({ html: '<span class="sh-dim">（ここは屋敷の外。合図は効かない。tmux attach で戻ろう）</span>' });
+          S.outer.lines.push({ html: '<span class="sh-dim">（ここは tmux の外。prefix は効かない。tmux attach で戻ろう）</span>' });
         }
         return true;
       }
@@ -647,7 +647,7 @@
     }
 
     // Resize keys still coming after the last question was solved belong to
-    // that question: swallow them instead of counting a 仕掛け違い here.
+    // that question: swallow them instead of counting a 操作ミス here.
     if (Date.now() < S.graceUntil && repeatBinding(k)) {
       S.graceUntil = Date.now() + 500;
       return true;
@@ -783,7 +783,7 @@
     if (key === 'd') { detach(); S.lastAction = 'detach'; return true; }
     if (key === 'i' || key === '?') {
       S.lastAction = 'brief';
-      message('押すキーは画面の上の指図に出ている');
+      message('押すキーは画面の上の指示に出ている');
       return true;
     }
     if (key === '$') {
@@ -1067,8 +1067,8 @@
 
   // Outside the house the keyboard moves between screens, so a player can
   // go round and round without the mouse:
-  //   見取り図  Enter 入る, 1〜3 屋敷を選んで入る, K 稽古, R 絵巻
-  //   絵巻      Enter / Space もう一度, K 稽古, R 絵巻, Esc 見取り図
+  //   コース選択  Enter 入る, 1〜3 コースを選んではじめる, K 稽古, R 記録
+  //   記録      Enter / Space もう一度, K 稽古, R 記録, Esc コース選択
   //   記録      Esc 戻る
   function navKey(e) {
     var t = e.target;
@@ -1108,11 +1108,11 @@
   }
 
   // ---- the run --------------------------------------------------------------
-  // A run is a fixed list of questions (仕掛け) asked on one live house: each
+  // A run is a fixed list of questions (問題) asked on one live house: each
   // is asked about the panes and windows as the player left them, asks for
   // one result, and checks the state after every key. A question is never
   // skipped: past its 目安 the keys light up (行灯); the step-by-step guide
-  // (指南) is on screen from the start unless the type is learnt.
+  // (手順) is on screen from the start unless the type is learnt.
 
   function rng(seed) {
     var h = 1779033703 ^ seed.length;
@@ -1152,7 +1152,7 @@
     var goal = T.rectOf(win, id, S.cols, S.rows);
     var best = null;
     ['L', 'R', 'U', 'D'].forEach(function (d) {
-      // The 指南 points the plain way, never round the edge.
+      // The 手順 points the plain way, never round the edge.
       var nb = T.neighbour(win, S.cols, S.rows, d, true);
       if (!nb || !goal) return;
       var r = T.rectOf(win, nb.id, S.cols, S.rows);
@@ -1169,7 +1169,7 @@
   }
 
   // Other ways to the pane in one step: o (the next pane in order) and ;
-  // (the pane you were in last). Shown beside the 指南, never required.
+  // (the pane you were in last). Shown beside the 手順, never required.
   function altMoves(win, id) {
     var out = [];
     if (win.last === id && T.findPane(S.session, id)) {
@@ -1182,9 +1182,9 @@
     return out;
   }
 
-  // ---- the 指南 in the player's own keys ----------------------------------
+  // ---- the 手順 in the player's own keys ----------------------------------
 
-  // The default key labels of the 指南, as what they do.
+  // The default key labels of the 手順, as what they do.
   var LABEL_SIG = {
     '%': 'k:%', '"': 'k:"', '←': 'k:ArrowLeft', '→': 'k:ArrowRight', '↑': 'k:ArrowUp', '↓': 'k:ArrowDown',
     z: 'k:z', x: 'k:x', c: 'k:c', ',': 'k:,', n: 'k:n', p: 'k:p', l: 'k:l', '[': 'k:[', ']': 'k:]',
@@ -1234,7 +1234,7 @@
     return { pfx: o.pfx, keys: [o.label], text: text };
   }
 
-  // The move the 指南 shows now, in the player's keys.
+  // The move the 手順 shows now, in the player's keys.
   function guideMove(b) {
     var m = b.q.next();
     if (!m || !S.conf) return m;
@@ -1260,7 +1260,7 @@
 
   // The resize key that can move something: sideways if the pane has a
   // left-right split above it, else up or down.
-  // Tried on a copy of the window first, so the 指南 never points a way
+  // Tried on a copy of the window first, so the 手順 never points a way
   // that is already as far as it goes (a narrow pane in a crowded window).
   function resizeMove() {
     var win = T.activeWindow(S.session);
@@ -1605,7 +1605,7 @@
 
   // The questions of a run. A house asks the same questions every time, in
   // today's order: the same for everyone on the same day (Japan time), so
-  // the 番付 compares like with like. The 稽古の間 asks your weakest types.
+  // the ランキング compares like with like. The 苦手の稽古 asks your weakest types.
   function questionsFor(course, day) {
     if (course.practice) {
       var weak = REC.weakTypes(3);
@@ -1639,7 +1639,7 @@
       course: course,
       day: day,
       qs: questionsFor(course, day),
-      // Question types learnt before this run: their 指南 stays folded.
+      // Question types learnt before this run: their 手順 stays folded.
       learnt: REC.learnt(),
       limit: course.limit,
       i: 0,
@@ -1760,7 +1760,7 @@
       b.qlog[b.i].s = +used.toFixed(2);
       // Against the ghost: where you are now versus where it was here.
       if (b.ghost && b.ghost.cum) b.ghostDiff = (performance.now() - b.start) / 1000 + b.penalty - b.ghost.cum[b.i];
-      if (b.streak % 5 === 0) chip('good', '五連の仕掛け ・ 手際よし');
+      if (b.streak % 5 === 0) chip('good', '5 問連続 ・ ミスなし');
       // Hold the solved rooms on screen while they finish moving, under a
       // 成 seal. The clock stops for it; any key goes on at once.
       b.phase = 'clear';
@@ -1803,13 +1803,13 @@
     b.penalty += LV.MISS_PENALTY;
     if (b.qlog[b.i]) b.qlog[b.i].m += 1;
     AU.se('miss');
-    chip('miss', '仕掛け違い +' + LV.MISS_PENALTY + ' 秒');
+    chip('miss', '操作ミス +' + LV.MISS_PENALTY + ' 秒');
     termFlash('miss');
     shake();
   }
 
   // The 行灯: past the 目安 the panel says so, once, and stays still. The
-  // question is never skipped; the 指南 is on screen from the start.
+  // question is never skipped; the 手順 is on screen from the start.
   function startClock() {
     clearInterval(S.clock);
     S.clock = setInterval(function () {
@@ -1824,7 +1824,7 @@
         AU.se('andon');
         syncBody();
         renderSashizu();
-        // A folded 指南 opens in the order at the top of the room.
+        // A folded 手順 opens in the order at the top of the room.
         renderTerm();
         renderTabArrow();
       }
@@ -1914,15 +1914,15 @@
   // 腕前: the level from the latest five runs, its title, and how much
   // faster per question the next level is. A still bar, no motion.
   function skillHTML(sk, from) {
-    if (!sk) return '<div class="sk-none">腕前 ―　一度屋敷に入ると、ここに Lv が出る</div>';
+    if (!sk) return '<div class="sk-none">腕前 ―　一度はじめると、ここに Lv が出る</div>';
     var cur = LV.paceFor(sk.lv), nxt = sk.next;
     var frac = nxt != null ? Math.max(0, Math.min(1, (cur - sk.pace) / (cur - nxt))) : 1;
     var up = from && from.lv < sk.lv;
     return '<div class="sk-row"><span class="sk-lab">腕前</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
       (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span><b class="sk-title">' + esc(sk.title) + '</b></div>' +
       '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
-      '<div class="sk-note">' + (nxt != null ? '次の Lv.' + (sk.lv + 1) + ' まで、1 仕掛けあたり ' + sk.toNext.toFixed(2) + ' 秒速く' : '最高の Lv。') +
-      '（直近 ' + sk.runs + ' 回の平均 ' + sk.pace.toFixed(2) + ' 秒／仕掛け）</div>';
+      '<div class="sk-note">' + (nxt != null ? '次の Lv.' + (sk.lv + 1) + ' まで、1 問あたり ' + sk.toNext.toFixed(2) + ' 秒速く' : '最高の Lv。') +
+      '（直近 ' + sk.runs + ' 回の平均 ' + sk.pace.toFixed(2) + ' 秒／問）</div>';
   }
 
   // The top bar: the 腕前, always in view.
@@ -1947,31 +1947,31 @@
       html += '<li><button type="button" class="wing' + (c.id === pick ? ' hot' : '') + '" data-course="' + c.id + '">' +
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
-        '<span class="wing-n">' + c.qs.length + ' 仕掛け</span>' +
+        '<span class="wing-n">' + c.qs.length + ' 問題</span>' +
         '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span></span>' +
-        '<span class="wing-desc">目安 ' + c.limit + ' 秒／仕掛け。' + esc(c.desc) + '</span></span>' +
+        '<span class="wing-desc">目安 ' + c.limit + ' 秒／問。' + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>自己ベスト</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
-        '<small>' + (runs.length ? (a5 != null ? '五回平均 ' + a5.toFixed(1) + ' ・ ' : '') + runs.length + ' 回' : '当主の刻 ' + LV.par(c) + ' 秒') + '</small></span>' +
+        '<small>' + (runs.length ? (a5 != null ? '五回平均 ' + a5.toFixed(1) + ' ・ ' : '') + runs.length + ' 回' : 'お手本 ' + LV.par(c) + ' 秒') + '</small></span>' +
         '</button></li>';
     });
     $('#course-list').innerHTML = html;
     $('#enter-sub').textContent = REC.courseOf(pick).title + ' から';
     $('#btn-enter').dataset.course = pick;
     var n = (all.runs || []).length;
-    $('#records-sub').textContent = n ? '通算 ' + n + ' 回' : '記録を見る';
+    $('#records-sub').textContent = n ? '通算 ' + n + ' 回' : '上達を見る';
     renderMeta(all);
   }
 
-  // Whether this question's 指南 is folded: its type is learnt (覚えた) and
+  // Whether this question's 手順 is folded: its type is learnt (覚えた) and
   // the 目安 has not passed yet.
   function folded(b) {
     var e = b.learnt && b.learnt[b.qs[b.i]];
     return !!(e && e.learnt) && b.stage === 0;
   }
 
-  // The 指図, twice: in the house (the order bar under the panes, where the
+  // The 指示, twice: in the house (the order bar under the panes, where the
   // eyes are) and in the side panel (the detail, hidden unless asked for).
-  // Each holds the question and the 指南, the answer step by step, shown
+  // Each holds the question and the 手順, the answer step by step, shown
   // from the start unless the question type is learnt. Rebuilt only when
   // the question, the stage or the key state changes; the clock ticks update
   // the gauge in place.
@@ -1988,7 +1988,7 @@
     var n = b.qs.length;
     var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
-      html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
+      html += '<div class="sz-q">' + (b.phase === 'count' ? 'はじめる……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
       el.innerHTML = html;
       return;
     }
@@ -2009,14 +2009,14 @@
     if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">prefix なし</span>' + keycaps(rootKeys, lit) + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
     if (move) {
-      html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
+      html += '<div class="shinan"><div class="shinan-t">手順</div><ol>' +
         steps(move).map(function (s, i, all) {
           var now = all.findIndex(function (x) { return !x.done; });
           return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + tick(s.done) + '</li>';
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">別解: ' + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join('、') + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">覚えた仕掛け。指南は目安を過ぎたら出る。</p>';
+      html += '<p class="learnt-note">覚えた問題。手順は目安を過ぎたら出る。</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>目安 ' + b.limit + ' 秒</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
@@ -2083,10 +2083,10 @@
     var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0, b.ghost ? b.ghost.name : '', b.ghostDiff].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
-    el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + ' ・ 仕掛け <b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
+    el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + ' ・ 問題 <b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
       (b.streak >= 3 ? '<span class="pb-streak">' + b.streak + ' 連</span>' : '') +
       '<span class="pb-sp"></span>' +
-      (b.misses ? '<span class="pb-pen">仕掛け違い ' + b.misses + '（+' + b.penalty + '秒）</span>' : '') +
+      (b.misses ? '<span class="pb-pen">操作ミス ' + b.misses + '（+' + b.penalty + '秒）</span>' : '') +
       ghostHTML(b) +
       '<span class="pb-time"><span>0.0</span><small>秒</small></span>';
     renderClock();
@@ -2814,7 +2814,7 @@
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
   }
 
-  // The result as a hand scroll (絵巻): the time, against 当主の刻, the rank
+  // The result as a hand scroll (記録): the time, against お手本, the rank
   // as a seal, the details and the last ten runs.
   function renderResult() {
     var r = S.result;
@@ -2823,8 +2823,8 @@
     var c = REC.courseOf(r.course);
     var diff = r.time - r.par;
     var verdict = diff <= 0
-      ? '当主の刻 ' + r.par + ' 秒を <b>' + Math.abs(diff).toFixed(1) + ' 秒</b> 上回った'
-      : '当主の刻 ' + r.par + ' 秒まで あと <b>' + diff.toFixed(1) + ' 秒</b>';
+      ? 'お手本 ' + r.par + ' 秒を <b>' + Math.abs(diff).toFixed(1) + ' 秒</b> 上回った'
+      : 'お手本 ' + r.par + ' 秒まで あと <b>' + diff.toFixed(1) + ' 秒</b>';
     var sub = '';
     if (r.count === 1) sub = 'はじめての挑戦。これが出発点。';
     else if (r.record) sub = '★ 自己ベスト更新（' + r.best.toFixed(1) + ' → ' + r.time.toFixed(1) + '）';
@@ -2842,34 +2842,34 @@
     el.innerHTML =
       '<div class="em-hd">絵 巻 ・ ' + kanji(Math.min(r.count, 99)) + ' 回 目</div>' +
       '<h2 class="em-title">' + (c.practice ? '稽古を終えた。' : '奥の間に辿り着いた。') + '</h2>' +
-      '<div class="em-sub">' + esc(c.title) + ' ・ 仕掛け ' + r.n + ' ・ ' + wareki(r.at) + '</div>' +
+      '<div class="em-sub">' + esc(c.title) + ' ・ 問題 ' + r.n + ' ・ ' + wareki(r.at) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>秒</small></div>' +
       '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2') + '</span><span>' + rankLine + '</span></div>' +
       '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
       learntHTML(r) +
       '<dl class="em-facts">' +
-      '<div><dt>1 仕掛けあたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd></div>' +
+      '<div><dt>1 問あたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd></div>' +
       '<div><dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd></div>' +
-      '<div><dt>仕掛け違い</dt><dd>' + r.misses + '（+' + (r.misses * LV.MISS_PENALTY) + '秒）</dd></div>' +
-      '<div><dt>灯り（目安超過）</dt><dd>' + r.overs + ' 仕掛け</dd></div>' +
+      '<div><dt>操作ミス</dt><dd>' + r.misses + '（+' + (r.misses * LV.MISS_PENALTY) + '秒）</dd></div>' +
+      '<div><dt>目安超え</dt><dd>' + r.overs + ' 問題</dd></div>' +
       '<div><dt>自己ベスト</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
       '<div><dt>押したキー</dt><dd>' + r.keys + '</dd></div>' +
       '</dl>' +
       resultNetHTML(r) +
       spark(r.spark) +
-      '<div class="spark-l"><span>' + (slow ? '灯りがいちばん長かった仕掛け: ' + esc(slow.text) + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '灯りなし。どの仕掛けも目安のうちに解いた') + '</span>' +
+      '<div class="spark-l"><span>' + (slow ? 'いちばん時間がかかった問題: ' + esc(slow.text) + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '目安超えなし。どの問題も目安のうちに解いた') + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span>■ 自己ベスト ■ 今回</span>' : '') + '</div>' +
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
-      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度 屋敷へ') + '<kbd class="hk">Enter</kbd></button>' +
+      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度') + '<kbd class="hk">Enter</kbd></button>' +
       (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">苦手を稽古<kbd class="hk">K</kbd></button>' : '') +
-      '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">絵巻を開く<kbd class="hk">R</kbd></button>' +
-      '<button type="button" class="btn ghost" data-title="1">見取り図へ<kbd class="hk">Esc</kbd></button></div>';
+      '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">記録を見る<kbd class="hk">R</kbd></button>' +
+      '<button type="button" class="btn ghost" data-title="1">コース選択へ<kbd class="hk">Esc</kbd></button></div>';
     renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
 
-  // ---- 番付 and 合言葉 ---------------------------------------------------------
+  // ---- ランキング and 合言葉 ---------------------------------------------------------
   // All optional: with no network the game is exactly as before.
 
   // After a run: bring the history in line with the other devices, then
@@ -2893,12 +2893,12 @@
     }).then(function () { if (S.screen === 'result' && S.result === r) renderResult(); });
   }
 
-  // What this run taught: types newly learnt (their 指南 folds from now on)
-  // and types that slipped (their 指南 is back).
+  // What this run taught: types newly learnt (their 手順 folds from now on)
+  // and types that slipped (their 手順 is back).
   function learntHTML(r) {
     var html = '';
-    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">覚えた: <b>' + r.learntNew.map(typeName).map(esc).join('・') + '</b>（次から指南を畳む）</p>';
-    if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">もう一度: ' + r.learntLost.map(typeName).map(esc).join('・') + '（指南を出す）</p>';
+    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">覚えた: <b>' + r.learntNew.map(typeName).map(esc).join('・') + '</b>（次から手順を畳む）</p>';
+    if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">もう一度: ' + r.learntLost.map(typeName).map(esc).join('・') + '（手順を出す）</p>';
     return html;
   }
 
@@ -2911,12 +2911,12 @@
     }
     var b = r.board;
     if (!b) return html;
-    if (b.state === 'sending') html += '<p class="em-board">今日の番付に載せている……</p>';
-    if (b.state === 'ok') html += '<p class="em-board">今日の番付 <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">番付を見る</a></p>';
-    if (b.state === 'refused') html += '<p class="em-board dim">この記録は番付に載せられなかった（手で解いた記録だけが載る）。</p>';
+    if (b.state === 'sending') html += '<p class="em-board">今日のランキングに載せている……</p>';
+    if (b.state === 'ok') html += '<p class="em-board">今日のランキング <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">ランキングを見る</a></p>';
+    if (b.state === 'refused') html += '<p class="em-board dim">この記録はランキングに載せられなかった（手で解いた記録だけが載る）。</p>';
     if (b.state === 'noname') {
-      html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日の番付に載る</label>' +
-        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">番付に載せる</button></span>' +
+      html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日のランキングに載る</label>' +
+        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">ランキングに載せる</button></span>' +
         '<small class="nf-msg"></small></form>';
     }
     return html;
@@ -2947,7 +2947,7 @@
     });
   }
 
-  // 番付: each player's best for the course, today / this week / ever.
+  // ランキング: each player's best for the course, today / this week / ever.
   function renderBoard(body, id) {
     var span = S.boardSpan || 'today';
     var seg = '<div class="seg rec-span" role="group" aria-label="期間">' +
@@ -2966,7 +2966,7 @@
     };
     var note = me ? '<p class="rec-empty">「' + esc(me) + '」として載る。名前は「引き継ぎ」で変えられる。</p>'
       : '<p class="rec-empty">名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。</p>';
-    body.innerHTML = '<div class="rec-panel"><div class="rec-head">番付 ・ ' + esc(REC.courseOf(id).title) + '</div>' + seg +
+    body.innerHTML = '<div class="rec-panel"><div class="rec-head">ランキング ・ ' + esc(REC.courseOf(id).title) + '</div>' + seg +
       '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">読み込み中……</p>') + '</div>' + note + '</div>';
     if (cached && Date.now() - cached.at < 15000) return;
     if (!NET) return;
@@ -2977,7 +2977,7 @@
       if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || 'today') === span) renderRecords();
     }).catch(function () {
       var bb = $('#records-body .board-body');
-      if (bb && !cached) bb.innerHTML = '<p class="rec-empty">番付につながらなかった。通信できるときにもう一度。</p>';
+      if (bb && !cached) bb.innerHTML = '<p class="rec-empty">ランキングにつながらなかった。通信できるときにもう一度。</p>';
     });
   }
 
@@ -2994,9 +2994,9 @@
       '<div class="rec-panel"><div class="rec-head">別の端末の合言葉を入れる</div>' +
       '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="例: matsu-kaze-tsuru-482"><button type="submit" class="btn">この合言葉にする</button></span>' +
       '<small class="nf-msg">この端末の記録も、その合言葉の側に合わさる。</small></form></div>' +
-      '<div class="rec-panel"><div class="rec-head">番付の名前</div>' +
+      '<div class="rec-panel"><div class="rec-head">ランキングの名前</div>' +
       '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" value="' + esc(st.name || '') + '" placeholder="名前（12 文字まで）"><button type="submit" class="btn">' + (st.name ? '変える' : '付ける') + '</button></span>' +
-      '<small class="nf-msg">' + (st.name ? '遊ぶたびに、その回の記録が番付に載る。' : '名前を付けると、遊ぶたびに番付に載る。') + '</small></form></div>';
+      '<small class="nf-msg">' + (st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
   }
 
   function syncNow(msgEl) {
@@ -3012,7 +3012,7 @@
     });
   }
 
-  // ---- 絵巻: the run history ------------------------------------------------
+  // ---- 記録: the run history ------------------------------------------------
 
   function openRecords(course, from) {
     S.recordsFrom = from || S.screen;
@@ -3026,7 +3026,7 @@
   }
 
   // Up to 20 latest runs as bars: vermilion for a record, a dotted line at
-  // the best and a faint one at 当主の刻. The SVG stretches to the box; the
+  // the best and a faint one at お手本. The SVG stretches to the box; the
   // labels are HTML on top so their text keeps its size.
   function recChart(runs, c, best) {
     var list = runs.slice(0, 20).reverse();
@@ -3037,12 +3037,12 @@
     var svg = '<svg class="rec-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">';
     list.forEach(function (r, i) {
       svg += '<rect class="bar' + (r.rec ? ' rec' : '') + (i === list.length - 1 ? ' now' : '') + '" x="' + (i * 10 + 1.5) + '" y="' + y(r.time) + '" width="7" height="' + (H - y(r.time)) + '"><title>' +
-        esc(recDate(r.at) + ' ' + r.time.toFixed(1) + '秒 仕掛け違い ' + r.misses) + '</title></rect>';
+        esc(recDate(r.at) + ' ' + r.time.toFixed(1) + '秒 操作ミス ' + r.misses) + '</title></rect>';
     });
     svg += '<line class="par" x1="0" x2="' + W + '" y1="' + y(par) + '" y2="' + y(par) + '" vector-effect="non-scaling-stroke"/>';
     if (best != null) svg += '<line class="best" x1="0" x2="' + W + '" y1="' + y(best) + '" y2="' + y(best) + '" vector-effect="non-scaling-stroke"/>';
     svg += '</svg>';
-    var lbl = '<span class="lbl par-l" style="top:' + y(par) + '%">当主の刻 ' + par + '秒</span>';
+    var lbl = '<span class="lbl par-l" style="top:' + y(par) + '%">お手本 ' + par + '秒</span>';
     if (best != null) lbl += '<span class="lbl best-l" style="top:' + y(best) + '%">自己ベスト ' + best.toFixed(1) + '秒</span>';
     return '<div id="rec-chart" class="rec-chart" role="img" aria-label="タイムの移り変わり">' + svg + lbl + '</div>';
   }
@@ -3066,7 +3066,7 @@
       // Dots as HTML so the stretched SVG does not squash them.
       days.map(function (d, i) { return '<i class="dot" style="left:' + (x(i) / W * 100) + '%;top:' + y(d.time) + '%" title="' + esc(d.day + ' ' + d.time.toFixed(1) + '秒') + '"></i>'; }).join('');
     return '<div class="rec-panel"><div class="rec-head">日ごとのベスト（全期間 ' + days.length + ' 日）</div>' +
-      '<div class="rec-chart daily-chart">' + svg + '<span class="lbl par-l" style="top:' + y(par) + '%">当主の刻 ' + par + '秒</span></div>' +
+      '<div class="rec-chart daily-chart">' + svg + '<span class="lbl par-l" style="top:' + y(par) + '%">お手本 ' + par + '秒</span></div>' +
       '<div class="daily-l"><span>' + esc(first.day.slice(5).replace('-', '/')) + ' ' + first.time.toFixed(1) + '秒</span>' +
       '<span>' + (gain > 0 ? '<b>−' + gain.toFixed(1) + ' 秒</b>' : '') + '</span>' +
       '<span>' + esc(last.day.slice(5).replace('-', '/')) + ' ' + last.time.toFixed(1) + '秒</span></div></div>';
@@ -3084,7 +3084,7 @@
     if (tab === 'sync') { renderSync(body); return; }
     var st = REC.stats(id);
     if (!st) {
-      body.innerHTML = '<div class="rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の絵巻は、まだ白紙。</p><p>一度屋敷に入ると、ここに上達が描かれていく。</p></div>' +
+      body.innerHTML = '<div class="rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の記録は、まだ白紙。</p><p>一度はじめると、ここに上達が描かれていく。</p></div>' +
         '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に入る</button></div>';
       return;
     }
@@ -3103,7 +3103,7 @@
     var chart = '<div class="rec-panel"><div class="rec-head">タイムの移り変わり（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>' +
       dailyChart(REC.dailyBest(id), c);
     var rows = st.runs.slice(0, 20).map(function (r) {
-      var note = r.legacy ? '旧記録' : '違い ' + r.misses + (r.overs ? ' ・ 灯り ' + r.overs : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
+      var note = r.legacy ? '旧記録' : 'ミス ' + r.misses + (r.overs ? ' ・ 目安超え ' + r.overs : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
       return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">内訳</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -3112,29 +3112,29 @@
 
   function weakPanel(id) {
     var w = REC.weakness(id, 10);
-    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">灯りが多い仕掛け</div><p class="rec-empty">2 回入ると、苦手な仕掛けが見えてくる。</p></div>';
+    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">目安を超えがちな問題</div><p class="rec-empty">2 回入ると、苦手な問題が見えてくる。</p></div>';
     var row = function (e) {
       var q = Q[e.type];
       var keys = [];
       q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
       return '<li><span class="w-text">' + esc(q.text) + '</span>' +
-        '<span class="w-num">平均 ' + e.avg.toFixed(1) + '秒 ・ 違い ' + Math.round(e.missRate * 100) + '%' + (e.overs ? ' ・ 灯り ' + e.overs : '') + '</span>' +
+        '<span class="w-num">平均 ' + e.avg.toFixed(1) + '秒 ・ 違い ' + Math.round(e.missRate * 100) + '%' + (e.overs ? ' ・ 目安超え ' + e.overs : '') + '</span>' +
         '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span></li>';
     };
-    return '<div class="rec-panel rec-weak"><div class="rec-head">灯りが多い仕掛け（直近 ' + w.runs + ' 回）</div><ol class="weak-list">' +
+    return '<div class="rec-panel rec-weak"><div class="rec-head">目安を超えがちな問題（直近 ' + w.runs + ' 回）</div><ol class="weak-list">' +
       w.weak.map(row).join('') + '</ol>' +
       (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text) + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') +
       (REC.weakTypes(3).length ? '<div class="cta"><button type="button" class="btn" data-course="keiko">苦手だけ稽古する（' + REC.weakTypes(3).map(typeName).join('・') + '）</button></div>' : '') +
       '</div>';
   }
 
-  // Which question types are learnt (指南 folded) and how close the rest are.
+  // Which question types are learnt (手順 folded) and how close the rest are.
   function learntPanel() {
     var l = REC.learnt();
     var types = Object.keys(TYPE_NAMES).filter(function (t) { return l[t]; });
     if (!types.length) return '';
     var done = types.filter(function (t) { return l[t].learnt; });
-    return '<div class="rec-panel learnt-list"><div class="rec-head">覚えた仕掛け ' + done.length + ' ／ ' + types.length + '</div><ul>' +
+    return '<div class="rec-panel learnt-list"><div class="rec-head">覚えた問題 ' + done.length + ' ／ ' + types.length + '</div><ul>' +
       types.map(function (t) {
         var e = l[t];
         return '<li class="' + (e.learnt ? 'ok' : '') + '">' + esc(typeName(t)) + '<small>' + (e.learnt ? '覚えた' : 'あと ' + (LV.LEARNT_AFTER - e.streak)) + '</small></li>';
@@ -3247,14 +3247,14 @@
       if (e.target.closest('#btn-records-back')) { showScreen(S.recordsFrom === 'result' && S.result ? 'result' : 'title'); return; }
       if (e.target.closest('#btn-records-clear')) {
         var linked = NET && NET.state().key;
-        if (!window.confirm(linked ? 'この端末の記録をすべて消して、合言葉も外す？（合言葉の側の記録は残る）' : '絵巻の記録をすべて消す？')) return;
+        if (!window.confirm(linked ? 'この端末の記録をすべて消して、合言葉も外す？（合言葉の側の記録は残る）' : '記録の記録をすべて消す？')) return;
         REC.clearArena();
         if (linked) NET.forget();
         renderRecords();
       }
     });
 
-    // The name and 合言葉 forms on the result and 絵巻 screens.
+    // The name and 合言葉 forms on the result and 記録 screens.
     document.addEventListener('submit', function (e) {
       var f = e.target;
       if (f.matches('[data-name-form]')) { e.preventDefault(); submitName(f); }

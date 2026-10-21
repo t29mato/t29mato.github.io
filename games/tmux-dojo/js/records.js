@@ -1,4 +1,4 @@
-// tmux からくり屋敷: run records. Every run is kept (up to a cap per course), with
+// tmux 道場: run records. Every run is kept (up to a cap per course), with
 // the seconds each question took, so a player can see how far they have
 // come. No DOM here: app.js draws, and a share card can reuse a run as is.
 (function () {
@@ -6,7 +6,7 @@
 
   var LV = ADV.levels;
   var STORE_KEY = 'tmux-da';
-  var SCHEMA = 3, CAP = 100, HARD_CAP = 200;
+  var SCHEMA = 4, CAP = 100, HARD_CAP = 200;
 
   function recordKey(id) { return 'tmux:' + id; }
   function courseOf(id) {
@@ -34,7 +34,7 @@
 
   // Old saves kept only a best time per course. Each becomes one run, marked
   // legacy, so the history starts from it instead of from nothing. Schema 2
-  // runs carry the old game's rank titles; schema 3 renames them.
+  // runs carry the old game's rank titles; schema 3 and 4 rename them.
   function migrate(all) {
     if (all.schema === SCHEMA && Array.isArray(all.runs)) return false;
     all.arena = all.arena || {};
@@ -173,7 +173,7 @@
   }
 
   // Per question type over the latest n runs that logged questions. `o` marks
-  // a question that ran past its 目安, `g` one where the 指南 came out; `to`
+  // a question that ran past its 目安, `g` one where the 手順 came out; `to`
   // is a timeout from the old rules, counted at the limit.
   function weakness(course, n) {
     var c = courseOf(course);
@@ -274,6 +274,7 @@
     (runs || []).forEach(function (r) {
       if (!r || typeof r.id !== 'string' || have[r.id] || !courseOf(r.course) || typeof r.time !== 'number') return;
       have[r.id] = 1;
+      if (LV.OLD_RANKS[r.rank]) r.rank = LV.OLD_RANKS[r.rank];
       all.runs.push(r);
       added++;
     });

@@ -45,10 +45,10 @@ games:
       waves, and brace for the Titan at the end.
     note: Twelve sectors, drawn like a field manual.
 
-  - name: "tmux Karakuri Yashiki"
-    img: /assets/games/tmux-yashiki.jpg
-    url: /games/tmux-yashiki/
-    source: https://github.com/t29mato/tmux-yashiki
+  - name: "tmux Dojo"
+    img: /assets/games/tmux-dojo.jpg
+    url: /games/tmux-dojo/
+    source: https://github.com/t29mato/tmux-dojo
     rating: 3
     tags: [Typing, Learning]
     blurb: >-

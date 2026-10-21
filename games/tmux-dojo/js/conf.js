@@ -1,4 +1,4 @@
-// tmux からくり屋敷: reads a pasted .tmux.conf. Only what the game can do is
+// tmux 道場: reads a pasted .tmux.conf. Only what the game can do is
 // taken: the prefix, bind / unbind of the commands the game has, and the
 // vim-tmux-navigator plugin (as it binds its keys by default). Every other
 // line is listed back with the reason it was passed over, never dropped
@@ -6,7 +6,7 @@
 //
 // A binding's action is written as the default prefix key that does the
 // same thing in the game ({key: '%'} for split-window -h), so app.js runs it
-// through its own default table and the 指南 can swap one key for another.
+// through its own default table and the 手順 can swap one key for another.
 (function () {
   'use strict';
 
