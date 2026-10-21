@@ -192,7 +192,7 @@
       return { why: 'その swap-pane はゲームにない' };
     }
     if (/^(next-layout|nextl)$/.test(cmd)) return { key: ' ', say: '並べ方を変える' };
-    if (/^(detach-client|detach)$/.test(cmd)) return { key: 'd', say: '屋敷を離れる（デタッチ）' };
+    if (/^(detach-client|detach)$/.test(cmd)) return { key: 'd', say: 'デタッチする' };
     if (/^(choose-tree|choose-session|choose-window)$/.test(cmd)) return { key: 's', say: 'セッションを選ぶ' };
     if (cmd === 'send-prefix') return { run: 'send-prefix', say: '合図をシェルに送る' };
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };

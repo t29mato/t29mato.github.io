@@ -352,7 +352,7 @@
 
   function makeSession(name) {
     var s = T.createSession({ name: name, baseIndex: 0, paneBaseIndex: 0 });
-    var w = T.createWindow(s, name === 'yashiki' ? '母屋' : 'zsh');
+    var w = T.createWindow(s, name === 'yashiki' ? 'main' : 'zsh');
     s.active = w.id;
     S.sessions.push(s);
     return s;
@@ -390,21 +390,13 @@
 
   // ---- the house: the rooms and wings of one run ----------------------------
 
-  // Every pane gets a room name, so the order can name it. A pane the player
-  // splits off takes the first name no pane in the session has yet. Names
-  // are labels only; the questions mark their targets on the rooms.
-  var ROOM_NAMES = ['茶の間', '座敷', '納戸', '書院', '次の間', '仏間', '客間', '控えの間', '台所', '縁側', '土間', '囲炉裏', '納屋', '渡り廊下'];
-  var WINGS = ['母屋', '離れ', '蔵', '物置', '茶室', '書庫'];
+  var WINGS = ['main', 'logs', 'build', 'test', 'docs', 'db'];
 
-  function nameRoom(pane) {
-    if (!pane) return;
-    var used = {};
-    S.session.windows.forEach(function (w) { T.panesOf(w).forEach(function (p) { if (p.name) used[p.name] = true; }); });
-    for (var i = 0; i < ROOM_NAMES.length; i++) if (!used[ROOM_NAMES[i]]) { pane.name = ROOM_NAMES[i]; return; }
-    pane.name = '';
-  }
+  // Panes have no names: they are their numbers, as tmux shows them
+  // (prefix q). A pane named with select-pane -T keeps its name.
+  function nameRoom(pane) { if (pane) pane.name = ''; }
 
-  // How the order names a pane: its room, or its number.
+  // How the order names a pane: its number (or its -T name).
   function paneLabel(pane) {
     if (pane.name) return pane.name;
     var h = T.findPane(S.session, pane.id);
@@ -430,10 +422,10 @@
     pane.lines.push('一番上の行には何と書いてあった？ コピーモードでスクロールして確かめよう。');
   }
 
-  // The house at the start of a run, the same for everyone: 母屋 with one
+  // The house at the start of a run, the same for everyone: window main with one
   // pane on the left and two on the right (the classic editor-and-shells
-  // layout), 離れ and 蔵 with two panes each. The focus starts on the big
-  // pane of 母屋 and from then on goes only where the player takes it.
+  // layout), logs and build with two panes each. The focus starts on the big
+  // pane of main and from then on goes only where the player takes it.
   function buildHouse() {
     newSession();
     var home = S.session.windows[0];
@@ -1141,7 +1133,7 @@
     return c;
   }
 
-  var WINGS = ['母屋', '離れ', '蔵'];
+  // (window names: WINGS, above)
 
   // A move the guide can show: the prefix first or not, the key labels to
   // light (as in LV.KEYS), and what to do in words.
@@ -1170,7 +1162,7 @@
     win.zoomed = z;
     if (!best) return null;
     var p = T.findPane(S.session, id);
-    var where = DIR_WORDS[best.d] + (best.dist < 0 && p ? 'の『' + paneLabel(p.pane) + '』へ' : 'へ');
+    var where = DIR_WORDS[best.d] + (best.dist < 0 && p ? 'の' + paneLabel(p.pane) + ' へ' : 'へ');
     var m = mv([ARROWS[best.d]], ARROWS[best.d] + ' を押す（' + where + '）');
     m.alt = altMoves(win, id);
     return m;
@@ -1311,7 +1303,7 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = '『' + paneLabel(p) + '』へ移動する';
+        S.qText = function () { return paneLabel(p) + ' へ移動する'; };
       },
       check: function () { return activeId() === S.target; },
       next: function () { return moveTo(S.target); }
@@ -1337,7 +1329,7 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = '『' + paneLabel(p) + '』を閉じる';
+        S.qText = function () { return paneLabel(p) + ' を閉じる'; };
       },
       check: function () { return !paneExists(S.target); },
       next: function () { return closeMove(S.target); }
@@ -1386,7 +1378,7 @@
         // The pane you are in, unless it is at the top left already.
         var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
         S.target = p.id;
-        S.qText = '『' + paneLabel(p) + '』を左上まで動かす（swap）';
+        S.qText = function () { return paneLabel(p) + ' を左上まで動かす（swap）'; };
       },
       check: function () { return isFirst(S.target); },
       next: swapMove
@@ -1453,7 +1445,7 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = '『' + paneLabel(p) + '』へ移動して全画面にする';
+        S.qText = function () { return paneLabel(p) + ' へ移動して全画面にする'; };
       },
       check: function () { var w = T.activeWindow(S.session); return w.active === S.target && w.zoomed; },
       next: function () { return moveTo(S.target) || mv(['z'], 'z を押す（全画面に）'); }
@@ -1488,7 +1480,7 @@
         var a = pick(r, otherPanes());
         var b = pick(r, otherPanes().filter(function (p) { return p !== a; }));
         S.q0 = [a.id, b.id];
-        S.qText = '『' + paneLabel(a) + '』と『' + paneLabel(b) + '』を閉じる';
+        S.qText = function () { return paneLabel(a) + ' と ' + paneLabel(b) + ' を閉じる'; };
       },
       check: function () { return !paneExists(S.q0[0]) && !paneExists(S.q0[1]); },
       next: function () {
@@ -1519,7 +1511,7 @@
         needUnzoom(); needPanes(2);
         var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
         S.target = p.id;
-        S.qText = '『' + paneLabel(p) + '』を左上まで動かして全画面にする';
+        S.qText = function () { return paneLabel(p) + ' を左上まで動かして全画面にする'; };
       },
       check: function () {
         var h = T.findPane(S.session, S.target);
@@ -1728,7 +1720,7 @@
     S.clipboard = '';
   }
 
-  function qText(b) { return S.qText || b.q.text; }
+  function qText(b) { var t = S.qText; return typeof t === 'function' ? t() : t || b.q.text; }
 
   // After every key: a miss, or the question solved.
   function runTick() {
@@ -2031,9 +2023,13 @@
   // message a server prints when you log in: the question, then the keys of
   // the next step and what they do. It moves with you; nothing in it moves.
   function motdHTML(b, move, fold) {
+    // Printed as shell comments just above the prompt, where the eyes are:
+    //   # 3/15  ペイン 2 を閉じる   tmux: kill-pane
+    //   # ▶ Ctrl+b → →   → を押す（右へ）
     var n = b.qs.length;
-    var html = '<div class="motd-h"><span class="ob-n">仕掛け ' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span><b class="ob-q">' + esc(qText(b)) + '</b></div>';
-    if (S.qNote.length) html += '<div class="ob-note">' + esc(S.qNote.join('。')) + '</div>';
+    var c = '<span class="ob-c">#</span> ';
+    var html = '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> <b class="ob-q">' + esc(qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(b.q.cmd) + '</span></div>';
+    if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join('。')) + '</div>';
     if (move) {
       var keys = '';
       steps(move).forEach(function (s, i) {
@@ -2041,10 +2037,10 @@
         if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + tick(s.done) + '</kbd>';
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
-      html += '<div class="ob-guide"><span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
-      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
+      html += '<div class="ob-guide">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
+      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + '  別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
-      html += '<div class="ob-guide learnt">覚えた ✓<span class="ob-txt">手順は目安を過ぎたら出る</span></div>';
+      html += '<div class="ob-guide learnt">' + c + '覚えた ✓<span class="ob-txt">手順は目安を過ぎたら出る</span></div>';
     }
     return html;
   }
@@ -2214,26 +2210,26 @@
       var decorKey = room + '|' + size;
       if (el.dataset.decor !== decorKey) {
         el.dataset.decor = decorKey;
-        el.firstChild.innerHTML = decorHTML(room, size);
+        el.firstChild.innerHTML = '';
       }
-      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (isActive && lay.panes.length > 1 ? '<span class="pt-here">いまここ</span>' : '') + (win.zoomed ? '<span class="zoom-flag">全画面</span>' : '');
+      // The pane's number, always on and dim, as prefix q shows it.
+      el.children[1].innerHTML = '<span class="pnum">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">Z</span>' : '');
       var body = el.children[2];
       body.className = 'pane-body' + (p.mode === 'copy' ? ' copy' : '');
       body.dataset.paneBody = p.id;
+      // The order is printed just above the prompt of the pane you stand in.
+      // In copy mode the text scrolls, so it is pinned to the pane's foot.
+      var order = isActive && playing ? '<div class="motd">' + motdHTML(run, move, fold) + '</div>' : '';
       body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
         linesHTML(p.lines, p.mode === 'copy' ? p : null) +
+        (p.mode === 'copy' ? '' : order) +
         '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
-      // The order sits on top of the room you stand in; the shell starts below it.
-      var motd = $(':scope > .motd', el);
-      if (isActive && playing) {
-        if (!motd) { motd = document.createElement('div'); motd.className = 'motd'; el.appendChild(motd); }
-        motd.innerHTML = motdHTML(run, move, fold);
-        motdH = motd.offsetHeight;
-        body.style.top = (20 + motdH) + 'px';
-      } else {
-        if (motd) motd.remove();
-        body.style.top = '';
-      }
+      var pin = $(':scope > .motd', el);
+      if (order && p.mode === 'copy') {
+        if (!pin) { pin = document.createElement('div'); el.appendChild(pin); }
+        pin.className = 'motd pinned';
+        pin.innerHTML = motdHTML(run, move, fold);
+      } else if (pin) pin.remove();
       // A room that appears in a window already on screen slides open from
       // the side it was split off.
       if (born && !fresh && !reduceMotion) {

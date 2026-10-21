@@ -749,3 +749,71 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* ==== plain tmux: the play screen looks like tmux itself ===================
+   No rooms, no furniture, no fusuma. A dark terminal, tmux's green status
+   bar, the pane numbers prefix q shows (always on, dim), the active pane's
+   border green. The order is printed as shell comments above the prompt. */
+.yashiki {
+  --term-bg: #0d1117; --term-fg: #c9d1d9; --term-dim: #6e7681;
+  --t-line: #30363d; --t-green: #3fb950; --t-red: #f85149; --t-yellow: #e3b341; --t-blue: #58a6ff;
+  --status-bg: #2d9a4a; --status-fg: #04210d;
+  background: #161b22; border: 0; border-radius: 6px; padding: 8px; box-shadow: var(--shadow);
+}
+.yashiki .term { background: var(--term-bg); background-image: none; color: var(--term-fg); border: 1px solid var(--t-line); }
+.yashiki .decor, .yashiki .glow, .yashiki .fusuma, .yashiki .wipe { display: none !important; }
+body[data-armed="1"] .yashiki .term { box-shadow: none; }
+/* panes: numbers instead of titles */
+.yashiki .pane-title { position: absolute; top: 2px; right: 8px; left: auto; height: auto; line-height: 1; background: none; padding: 0; z-index: 3; pointer-events: none; display: flex; gap: 6px; align-items: center; }
+.yashiki .pnum { font-family: var(--mono); font-size: 28px; font-weight: 700; color: #30363d; }
+.yashiki .pane.active .pnum { color: var(--t-green); }
+.yashiki .pane.wanted .pnum { color: var(--t-red); }
+.yashiki .pane.cramped .pnum { font-size: 18px; }
+.yashiki .zoom-flag { font-family: var(--mono); font-size: 12px; font-weight: 700; color: #04210d; background: var(--t-green); padding: 0 5px; border-radius: 2px; }
+.yashiki .pt-name { font-family: var(--mono); font-size: 12px; background: none; border: 0; color: var(--term-dim); }
+.yashiki .pane-body { top: 0; padding: 4px 1ch 0; }
+.yashiki .pane.active::after { box-shadow: inset 0 0 0 2px var(--t-green); }
+.yashiki .pane:not(.active):not(.wanted) > .pane-body { opacity: 0.6; }
+.yashiki .border.v, .yashiki .border.h { background: none; }
+.yashiki .border.v::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid var(--t-line); }
+.yashiki .border.h::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--t-line); }
+.yashiki .border.v.near::before { border-left-color: var(--t-green); }
+.yashiki .border.h.near::before { border-top-color: var(--t-green); }
+.yashiki .sh-prompt { color: var(--t-blue); }
+.yashiki .sh-dim { color: var(--term-dim); }
+.yashiki .sh-head { color: var(--t-blue); }
+.yashiki .sh-gold { color: var(--t-yellow); }
+.yashiki .cursor { background: var(--term-fg); }
+.yashiki .cursor.on-char { color: var(--term-bg); }
+/* the order: comment lines above the prompt */
+.yashiki .motd { position: static; background: none; border: 0; box-shadow: none; padding: 4px 0 2px; color: #8b949e; font-family: var(--mono); font-size: 13px; line-height: 1.55; white-space: normal; }
+.yashiki .motd.pinned { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 4px 1ch; background: rgba(13, 17, 23, 0.94); border-top: 1px solid var(--t-line); }
+.yashiki .motd > div { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin: 0; }
+.yashiki .ob-c { color: #6e7681; }
+.yashiki .ob-n { font-family: var(--mono); font-size: 12px; color: #8b949e; letter-spacing: 0; }
+.yashiki .ob-q { font-family: var(--sans); font-size: 15px; font-weight: 700; color: #f0f6fc; line-height: 1.4; }
+.yashiki .ob-cmd { font-size: 12px; color: var(--t-blue); }
+.yashiki .ob-txt { color: #c9d1d9; font-family: var(--sans); font-size: 13px; }
+.yashiki .motd-go { color: var(--t-yellow); font-size: 11px; }
+.yashiki .ob-alt, .yashiki .ob-note { color: #8b949e; font-size: 12px; }
+.yashiki .ob-guide.learnt { color: var(--t-green); }
+.yashiki .motd kbd { background: #21262d; color: #e6edf3; border: 1px solid #444c56; box-shadow: 0 1px 0 #444c56; }
+.yashiki .motd kbd.next, .yashiki .motd kbd.pfx.next { background: var(--t-yellow); color: #111; border-color: #b08800; box-shadow: 0 1px 0 #b08800; }
+.yashiki .motd kbd.done { background: #1f3b2a; color: #8dd3a0; border-color: #2f5a3e; }
+/* the target: a dashed outline and a stamp in its middle */
+.yashiki .goal { border: 2px dashed var(--t-yellow); background: rgba(227, 179, 65, 0.06); }
+.yashiki .goal.close { border-color: var(--t-red); background: rgba(248, 81, 73, 0.08); }
+.yashiki .goal-tag { left: 50%; right: auto; top: 50% !important; transform: translate(-50%, -50%); font-family: var(--sans); font-size: 15px; padding: 2px 12px; background: var(--t-yellow); color: #111; border-radius: 3px; }
+.yashiki .goal.close .goal-tag { background: var(--t-red); color: #fff; }
+.yashiki .goal.split-v::after, .yashiki .goal.split-h::after { border-color: var(--t-yellow); }
+.yashiki .goal-arrow line { stroke: var(--t-yellow); }
+.yashiki .goal-arrow path { fill: var(--t-yellow); }
+.yashiki .goal-key { background: #161b22; color: #f0f6fc; border-color: var(--t-yellow); }
+/* tmux's own status bar */
+.yashiki .status { background: var(--status-bg); color: var(--status-fg); border-radius: 0; }
+.yashiki .st-session { color: var(--status-fg); }
+.yashiki .st-win.cur { background: none; color: var(--status-fg); font-weight: 700; }
+.yashiki .st-host { color: var(--status-fg); }
+.yashiki .st-win.goal-tab { outline-color: #111; }
+.yashiki .st-win .goal-tag { background: #111; color: var(--t-yellow); }
+.yashiki .seal { border-color: var(--t-green); color: var(--t-green); background: rgba(13, 17, 23, 0.85); }
