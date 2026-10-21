@@ -52,9 +52,9 @@ games:
     rating: 3
     tags: [Typing, Learning]
     blurb: >-
-      Learn tmux inside a house of sliding doors: split rooms, cross to the
-      scroll room, zoom into a great hall, all with the real key bindings, against the clock.
-    note: Japanese. A question never skips; the keys light up and a step-by-step guide appears until you solve it.
+      Learn tmux on a screen that looks like tmux: split, move, zoom, close
+      panes and windows with the real key bindings, against the clock.
+    note: Japanese. Paste your own .tmux.conf to play with your keys; the next keys always sit on the arrow to where you go.
 
   - name: Bomb Rush
     img: /assets/games/bomb-rush.jpg
