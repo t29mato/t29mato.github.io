@@ -57,7 +57,9 @@ Plug 'christoomey/vim-tmux-navigator'</code></pre>
 bind -n C-j select-pane -D
 bind -n C-k select-pane -U
 bind -n C-l select-pane -R
-bind -n 'C-\' select-pane -l</code></pre>
+bind -n 'C-\' select-pane -l
+bind C-l send-keys 'C-l'</code></pre>
+      <p>Ctrl+l は本来シェルの画面消去なので、プラグインは 合図 → Ctrl+l を画面消去に回す（このゲームも同じ）。合図 → l は既定のまま、直前の棟へ戻る。</p>
     </details>
     <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
   </section>

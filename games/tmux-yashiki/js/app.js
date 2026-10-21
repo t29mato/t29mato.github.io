@@ -573,7 +573,10 @@
     if (nv) {
       S.graceUntil = 0;
       S.repeatUntil = 0;
-      if (nv === 'last') { if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last); }
+      if (nv === 'last') {
+        if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last);
+        else message('no last pane');
+      }
       else {
         var nb2 = T.neighbour(win, S.cols, S.rows, nv);
         if (nb2) T.selectPane(win, nb2.id);
@@ -637,6 +640,13 @@
     if (k.alt && !k.ctrl && /^Digit[1-5]$/.test(k.code || '')) {
       T.applyLayout(win, T.LAYOUTS[Number(k.code.slice(5)) - 1]);
       S.lastAction = 'layout';
+      return true;
+    }
+    // vim-tmux-navigator gives Ctrl+l to moving, so it binds 合図 → Ctrl+l
+    // to the shell's clear screen instead.
+    if (S.nav === 'vim' && k.ctrl && !k.alt && !k.meta && String(key).toLowerCase() === 'l') {
+      if (pane.mode !== 'copy') pane.lines.push({ clear: true });
+      S.lastAction = 'brief';
       return true;
     }
     if (k.ctrl || k.alt) { message('そのキーには割り当てがない'); S.lastAction = 'unbound'; return true; }
@@ -720,7 +730,12 @@
       S.lastAction = 'select_window';
       return true;
     }
-    if (key === ';') { if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last); S.lastAction = 'focus'; return true; }
+    if (key === ';') {
+      if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last);
+      else message('no last pane');
+      S.lastAction = 'focus';
+      return true;
+    }
     if (key === 'o') {
       var ps = T.panesOf(win);
       var at2 = ps.findIndex(function (p) { return p.id === pane.id; });
