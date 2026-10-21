@@ -1,122 +1,13 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
-<title>tmux からくり屋敷</title>
-<meta name="description" content="tmux のキーで屋敷の仕掛けを解くタイムアタック。襖を立て、間を渡り、棟を建て、巻物を読む。押すキーはいつも画面に出ている。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%235a4322'/%3E%3Crect x='2' y='2' width='5' height='12' fill='%23ffd27a'/%3E%3Crect x='9' y='2' width='5' height='5' fill='%23ece2cc'/%3E%3Crect x='9' y='9' width='5' height='5' fill='%23ece2cc'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tmux Karakuri Yashiki has moved</title>
+<link rel="canonical" href="/games/tmux-yashiki/">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=/games/tmux-yashiki/">
+<script>location.replace('/games/tmux-yashiki/' + location.search + location.hash);</script>
 </head>
-<body data-screen="title">
-
-<header class="topbar">
-  <a class="brand to-title" href="#" role="button">
-    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span class="brand-name"><em>tmux</em>からくり屋敷</span>
-  </a>
-  <div class="topbar-right">
-    <span id="title-meta" class="meta"></span>
-    <button type="button" class="quiet-toggle" aria-pressed="true" aria-label="飾りを動かす">静</button>
-    <button type="button" class="sound-toggle" aria-pressed="true" aria-label="音を消す">♪</button>
-    <button type="button" class="theme-toggle" aria-label="テーマを切り替える">☾</button>
-  </div>
-</header>
-
-<!-- ===== title ===== -->
-<main id="title-screen" class="screen title">
-  <section class="hero">
-    <p class="eyebrow">屋敷を出ても、仕掛けはそのまま。</p>
-    <h1 class="hero-title"><span class="en">tmux</span>からくり屋敷</h1>
-    <p class="lead">襖が立ち、部屋が回り、壁が外れて大広間になる。<br>指図どおりに<b>襖を立て</b>、<b>間を渡り</b>、<b>棟を建て</b>、<b>巻物を読む</b>。<br>奥の間に辿り着くまでの速さを競う。押すキーはいつも指図に書いてある。</p>
-    <div id="skill" class="skill"></div>
-    <div class="cta">
-      <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">八間屋敷 から</small><kbd class="hk">Enter</kbd></button>
-      <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small><kbd class="hk">R</kbd></button>
-      <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden>稽古の間<small id="keiko-sub">苦手だけ</small><kbd class="hk">K</kbd></button>
-    </div>
-    <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
-  </section>
-  <aside class="plan" aria-label="見取り図">
-    <div class="plan-label">見取り図 ― 屋敷を選ぶ</div>
-    <ul id="course-list" class="wings"></ul>
-    <p class="plan-note">仕掛けは毎回ちがう順で出る。違う操作は +2 秒。指図には答えの手順がいつも出ている。目安を過ぎても仕掛けは飛ばない。タブを離れると時計が止まる。</p>
-  </aside>
-  <div class="facade" aria-hidden="true"><i></i><i class="warm"></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i></div>
-</main>
-
-<!-- ===== game ===== -->
-<main id="game-screen" class="screen game" hidden>
-  <div id="playbar" class="playbar"></div>
-  <div class="play-body">
-    <div class="side">
-      <section id="sashizu" class="sashizu"></section>
-    </div>
-    <section class="yashiki">
-      <div class="term-wrap">
-        <div id="term" class="term" aria-live="off"></div>
-        <div id="banner" class="banner" aria-live="polite"></div>
-        <div id="chips" class="chips" aria-live="polite"></div>
-        <div id="seal" class="seal" aria-hidden="true">成</div>
-        <div id="pause" class="pause" hidden><b>一時停止</b><span>時計は止まっている。キーを押すか、ここを押すと再開</span></div>
-        <span id="probe" class="probe" aria-hidden="true">MMMMMMMMMMMMMMMMMMMM</span>
-      </div>
-      <div id="order" class="order" aria-live="polite"></div>
-      <div id="status" class="status"></div>
-    </section>
-  </div>
-  <div id="keybar" class="keybar" aria-label="画面上のキー"></div>
-  <div class="game-foot">
-    <button type="button" class="btn ghost quit to-title">屋敷を出る</button>
-    <button type="button" class="btn ghost detail-toggle" aria-pressed="false">指図の詳細を出す</button>
-  </div>
-  <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" enterkeyhint="go">
-</main>
-
-<!-- ===== result ===== -->
-<main id="result-screen" class="screen result" hidden>
-  <div class="emaki">
-    <div class="rod" aria-hidden="true"></div>
-    <section id="result-body" class="emaki-body"></section>
-    <div class="rod" aria-hidden="true"></div>
-  </div>
-</main>
-
-<!-- ===== records ===== -->
-<main id="records-screen" class="screen records" hidden>
-  <div class="emaki wide">
-    <div class="rod" aria-hidden="true"></div>
-    <section class="emaki-body">
-      <div class="em-hd">絵 巻 ・ 記 録</div>
-      <h2 class="em-title">上達の絵巻</h2>
-      <div class="seg rec-seg" role="group" aria-label="屋敷">
-        <button type="button" data-rec-course="easy" aria-pressed="false">三間屋敷<small>手ならし</small></button>
-        <button type="button" data-rec-course="normal" aria-pressed="false">八間屋敷<small>腕試し</small></button>
-        <button type="button" data-rec-course="hard" aria-pressed="false">百間屋敷<small>真剣勝負</small></button>
-      </div>
-      <div class="seg rec-tab" role="group" aria-label="見るもの">
-        <button type="button" data-rec-tab="growth" aria-pressed="true">上達</button>
-        <button type="button" data-rec-tab="board" aria-pressed="false">番付</button>
-        <button type="button" data-rec-tab="sync" aria-pressed="false">引き継ぎ</button>
-      </div>
-      <div id="records-body" class="records-body"></div>
-      <div class="cta">
-        <button type="button" id="btn-records-back" class="btn">戻る</button>
-        <button type="button" id="btn-records-clear" class="btn ghost">記録を消す</button>
-      </div>
-    </section>
-    <div class="rod" aria-hidden="true"></div>
-  </div>
-</main>
-
-<div id="fx" aria-hidden="true"></div>
-
-<script src="js/levels.js"></script>
-<script src="js/records.js"></script>
-<script src="js/net.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/tmux.js"></script>
-<script src="js/app.js"></script>
-</body>
+<body><p>This game has moved to <a href="/games/tmux-yashiki/">/games/tmux-yashiki/</a>.</p></body>
 </html>
