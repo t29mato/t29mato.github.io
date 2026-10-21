@@ -32,10 +32,33 @@
     <p class="lead">襖が立ち、部屋が回り、壁が外れて大広間になる。<br>指図どおりに<b>襖を立て</b>、<b>間を渡り</b>、<b>棟を建て</b>、<b>巻物を読む</b>。<br>奥の間に辿り着くまでの速さを競う。押すキーはいつも指図に書いてある。</p>
     <div id="skill" class="skill"></div>
     <div class="cta">
-      <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">八間屋敷 から</small><kbd class="hk">Enter</kbd></button>
+      <button type="button" id="btn-enter" class="btn primary">屋敷に入る<small id="enter-sub">三間屋敷 から</small><kbd class="hk">Enter</kbd></button>
       <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small><kbd class="hk">R</kbd></button>
       <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden>稽古の間<small id="keiko-sub">苦手だけ</small><kbd class="hk">K</kbd></button>
     </div>
+    <div class="navset">
+      <span class="navset-l">隣の間へ</span>
+      <div class="seg" role="group" aria-label="隣の間への移り方">
+        <button type="button" data-nav="default" aria-pressed="true">既定<small>合図 → 矢印</small></button>
+        <button type="button" data-nav="vim" aria-pressed="false">vim-tmux-navigator<small>Ctrl+h j k l</small></button>
+      </div>
+    </div>
+    <details id="nav-conf" class="navconf" hidden>
+      <summary>本物の tmux で同じにするには</summary>
+      <p>プラグイン（<a href="https://github.com/christoomey/vim-tmux-navigator" target="_blank" rel="noopener">vim-tmux-navigator</a>）を TPM で入れる。vim の中でも同じキーで窓を渡れる。</p>
+      <pre><code># ~/.tmux.conf
+set -g @plugin 'christoomey/vim-tmux-navigator'
+run '~/.tmux/plugins/tpm/tpm'
+
+" ~/.vimrc（vim-plug）
+Plug 'christoomey/vim-tmux-navigator'</code></pre>
+      <p>プラグインなしで tmux だけなら:</p>
+      <pre><code>bind -n C-h select-pane -L
+bind -n C-j select-pane -D
+bind -n C-k select-pane -U
+bind -n C-l select-pane -R
+bind -n 'C-\' select-pane -l</code></pre>
+    </details>
     <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
   </section>
   <aside class="plan" aria-label="見取り図">

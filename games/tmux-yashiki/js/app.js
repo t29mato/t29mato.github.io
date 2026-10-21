@@ -57,7 +57,8 @@
     messageTimer: 0,
     cols: 80, rows: 24, cellW: 8, cellH: 18,
     hinted: false,
-    sound: true
+    sound: true,
+    nav: 'default'         // 'vim': vim-tmux-navigator, Ctrl+h/j/k/l with no prefix
   };
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,6 +76,9 @@
     b.dataset.quiet = S.quiet ? '1' : '0';
     var dt = $('.detail-toggle');
     if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指図の詳細をしまう' : '指図の詳細を出す'; }
+    $$('[data-nav]').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.nav === S.nav ? 'true' : 'false'); });
+    var nc = $('#nav-conf');
+    if (nc) nc.hidden = S.nav !== 'vim';
     var qt = $('.quiet-toggle');
     if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静かな屋敷（飾りは止まっている）' : '動く屋敷（振り子や湯気が動く）'; }
   }
@@ -563,6 +567,21 @@
       return prefixedKey(k, win, pane);
     }
 
+    // vim-tmux-navigator: Ctrl+h/j/k/l to the next room, Ctrl+\ back to
+    // the last one, with no prefix.
+    var nv = paneNavKey(k);
+    if (nv) {
+      S.graceUntil = 0;
+      S.repeatUntil = 0;
+      if (nv === 'last') { if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last); }
+      else {
+        var nb2 = T.neighbour(win, S.cols, S.rows, nv);
+        if (nb2) T.selectPane(win, nb2.id);
+      }
+      S.lastAction = 'focus';
+      return true;
+    }
+
 
     // Resize keys still coming after the last question was solved belong to
     // that question: swallow them instead of counting a 仕掛け違い here.
@@ -582,6 +601,13 @@
 
     if (k.key === 'Escape') return true;
     return editLine(pane, k, function (line) { runPaneCommand(pane, line); });
+  }
+
+  var NAV_KEYS = { h: 'L', j: 'D', k: 'U', l: 'R', '\\': 'last' };
+  var NAV_LABELS = { L: 'Ctrl+h', D: 'Ctrl+j', U: 'Ctrl+k', R: 'Ctrl+l', last: 'Ctrl+\\' };
+  function paneNavKey(k) {
+    if (S.nav !== 'vim' || !k.ctrl || k.alt || k.meta) return null;
+    return NAV_KEYS[String(k.key).toLowerCase()] || null;
   }
 
   // tmux's resize bindings (repeatable).
@@ -1033,7 +1059,25 @@
     if (!best) return null;
     var p = T.findPane(S.session, id);
     var name = p && p.pane.name ? p.pane.name : 'その間';
-    return mv([ARROWS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + ARROWS[best.d] + ' を押して渡る');
+    var m = S.nav === 'vim'
+      ? mv([NAV_LABELS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + NAV_LABELS[best.d] + ' で渡る（合図なし）', true)
+      : mv([ARROWS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + ARROWS[best.d] + ' を押して渡る');
+    m.alt = altMoves(win, id);
+    return m;
+  }
+
+  // Other ways to the room in one step: o (the next room in order) and ;
+  // (the room you were in last). Shown beside the 指南, never required.
+  function altMoves(win, id) {
+    var out = [];
+    if (win.last === id && T.findPane(S.session, id)) {
+      out.push(S.nav === 'vim' ? mv([NAV_LABELS.last], 'さっきいた間へ戻る', true) : mv([';'], 'さっきいた間へ戻る'));
+    }
+    var ps = T.panesOf(win);
+    var at = ps.findIndex(function (q) { return q.id === win.active; });
+    if (ps.length > 2 && ps[(at + 1) % ps.length].id === id) out.push(mv(['o'], '次の間へ順に移る'));
+    else if (ps.length === 2) out.push(mv(['o'], 'もう一つの間へ移る'));
+    return out;
   }
 
   function closeMove(id) {
@@ -1548,7 +1592,7 @@
       keys: b.keys, n: b.qs.length, avg: time / b.qs.length
     };
     var sum = REC.add({
-      course: b.course.id, prefix: S.prefix,
+      course: b.course.id, prefix: S.prefix, nav: S.nav === 'vim' ? 'vim' : undefined,
       time: +time.toFixed(2), raw: +raw.toFixed(2), misses: b.misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: b.qs.length, qs: b.qlog
     });
@@ -1703,6 +1747,7 @@
     var lit = move ? move.keys : [];
     var pfxCls = 'pfx' + (move && move.pfx ? (S.armed ? ' done' : ' next') : '');
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
+    if (S.nav === 'vim' && keys.indexOf('←') >= 0) html += '<div class="sz-keys"><span class="arr">合図なし</span>' + keycaps(['Ctrl+h', 'Ctrl+j', 'Ctrl+k', 'Ctrl+l', 'Ctrl+\\'], lit) + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
     if (move) {
       html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
@@ -1710,6 +1755,7 @@
           var now = all.findIndex(function (x) { return !x.done; });
           return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + (s.done ? ' ✓' : '') + '</li>';
         }).join('') + '</ol></div>';
+      if (move.alt && move.alt.length) html += '<span class="sz-alt">別解: ' + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join('、') + '</span>';
     } else if (fold) {
       html += '<p class="learnt-note">覚えた仕掛け。指南は目安を過ぎたら出る。</p>';
     }
@@ -1725,6 +1771,10 @@
     if (move.pfx) list.push({ text: '合図 ' + prefixLabel() + ' を押して離す', key: prefixLabel(), done: S.armed });
     list.push({ text: move.text, keys: move.keys, done: false });
     return list;
+  }
+
+  function altHTML(a) {
+    return (a.pfx ? '<kbd>' + esc(prefixLabel()) + '</kbd>→' : '') + a.keys.map(function (k) { return '<kbd>' + esc(k) + '</kbd>'; }).join('');
   }
 
   // The order bar, in the house under the panes: the question in one line,
@@ -1748,6 +1798,7 @@
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
       html += '<span class="ob-guide"><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></span>';
+      if (move.alt && move.alt.length && !S.armed) html += '<span class="ob-alt">別解 ' + move.alt.map(altHTML).join(' ／ ') + '</span>';
     } else if (fold) {
       html += '<span class="ob-guide learnt">覚えた ✓<span class="ob-txt">指南は目安を過ぎたら出る</span></span>';
     }
@@ -2758,6 +2809,8 @@
     // looping decoration) unless the player asks for motion.
     S.detail = saved.detail === true;
     S.quiet = saved.quiet !== false;
+    S.nav = saved.nav === 'vim' ? 'vim' : 'default';
+    $$('[data-nav]').forEach(function (x) { x.addEventListener('click', function () { S.nav = x.dataset.nav; store.save({ nav: S.nav }); syncBody(); }); });
     $('.detail-toggle').addEventListener('click', function () { S.detail = !S.detail; store.save({ detail: S.detail }); syncBody(); if (S.screen === 'game') render(); focusSink(); });
     $('.quiet-toggle').addEventListener('click', function () { S.quiet = !S.quiet; store.save({ quiet: S.quiet }); syncBody(); });
 
@@ -2890,7 +2943,7 @@
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
-          quiet: S.quiet, detail: S.detail,
+          quiet: S.quiet, detail: S.detail, nav: S.nav,
           cols: S.cols, rows: S.rows
         };
       }

@@ -13,7 +13,7 @@
   var KEYS = {
     split_lr: ['%'],
     split_tb: ['"'],
-    focus: ['←', '→', '↑', '↓'],
+    focus: ['←', '→', '↑', '↓', 'o', ';'],
     zoom: ['z'],
     close: ['x', 'y'],
     resize: MAC ? ['Option+←', 'Option+→', 'Option+↑', 'Option+↓'] : ['Ctrl+←', 'Ctrl+→', 'Ctrl+↑', 'Ctrl+↓'],
@@ -38,7 +38,7 @@
   var HINTS = {
     split_lr: '%（Shift+5）',
     split_tb: '"（ダブルクォート）',
-    focus: '矢印キー',
+    focus: '矢印キー（o で次の間へ順に、; で直前の間へ）',
     zoom: 'z（もう一度押すと元に戻る）',
     close: 'x → 確認に y',
     resize: MAC ? 'Option+矢印キー（prefix のあと Option を押したまま連打できる。Mac では Ctrl+矢印は macOS に取られる）' : 'Ctrl+矢印キー（prefix のあと Ctrl を押したまま連打できる。Option/Alt+矢印でも 5 マスずつ動く）',

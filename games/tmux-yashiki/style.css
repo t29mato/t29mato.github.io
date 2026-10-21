@@ -133,6 +133,15 @@ body[data-quiet="1"] .cursor { animation: none; }
 .lead { font-size: 16px; line-height: 2; margin: 22px 0 0; max-width: 560px; color: var(--ink); }
 .lead b { color: var(--hero-ink); font-weight: 700; }
 .hero .cta { margin-top: 28px; }
+.navset { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.navset-l { font-size: 13px; color: var(--ink-dim); }
+.navconf { margin-top: 10px; max-width: 560px; font-size: 12.5px; color: var(--ink-dim); }
+.navconf summary { cursor: pointer; }
+.navconf a { color: inherit; }
+.navconf pre { margin: 6px 0 10px; padding: 8px 10px; background: rgba(0, 0, 0, 0.25); border-radius: 3px; overflow-x: auto; font-family: var(--mono); font-size: 12px; color: var(--ink); }
+.ob-alt, .sz-alt { font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
+.ob-alt kbd, .sz-alt kbd { opacity: 0.85; }
+.sz-alt { display: block; margin-top: 6px; white-space: normal; }
 .fine { font-size: 12.5px; color: var(--ink-dim); margin-top: 20px; max-width: 560px; }
 
 /* 見取り図: the courses */
