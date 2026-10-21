@@ -106,13 +106,13 @@
   // The ids stay easy / normal / hard so older records carry over.
   var COURSES = [
     {
-      id: 'easy', title: '三間屋敷', mode: '手ならし', limit: 12, rankMul: 1, ver: 2,
+      id: 'easy', title: '三間屋敷', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
       desc: '襖を立てる・間を渡る・大広間・間を閉じる・棟を渡る。1 仕掛け 1 キー。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
-      id: 'normal', title: '八間屋敷', mode: 'おすすめ', limit: 14, rankMul: 1.3, ver: 2, recommended: true,
+      id: 'normal', title: '八間屋敷', mode: '腕試し', limit: 14, rankMul: 1.3, ver: 2,
       plan: { cols: 4, rows: 2, cells: 8, lit: 1 },
       desc: '襖をずらす・名札を掛ける・部屋が回る・棟を閉める・巻物も混ざる。',
       qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'focus', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']

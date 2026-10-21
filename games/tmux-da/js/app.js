@@ -950,7 +950,7 @@
     if (performance.now() < (S.navAfter || 0)) return;
     var go = function (fn) { e.preventDefault(); AU.se('cursor'); fn(); };
     if (S.screen === 'title') {
-      if (k === 'Enter') return go(function () { startRun($('#btn-enter').dataset.course || 'normal'); });
+      if (k === 'Enter') return go(function () { startRun($('#btn-enter').dataset.course || 'easy'); });
       var i = '123'.indexOf(k);
       if (i >= 0 && LV.COURSES[i]) return go(function () { startRun(LV.COURSES[i].id); });
       if ((k === 'k' || k === 'K') && !$('#btn-keiko').hidden) return go(function () { startRun('keiko'); });
@@ -958,7 +958,7 @@
     } else if (S.screen === 'result' && S.result) {
       if (k === 'Enter' || k === ' ') return go(function () { startRun(S.result.course); });
       if ((k === 'k' || k === 'K') && REC.weakTypes(3).length) return go(function () { startRun('keiko'); });
-      if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(REC.courseOf(S.result.course).practice ? 'normal' : S.result.course, 'result'); });
+      if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(REC.courseOf(S.result.course).practice ? lastCourse(REC.load()) : S.result.course, 'result'); });
       if (k === 'Escape') return go(function () { showScreen('title'); });
     } else if (S.screen === 'records') {
       if (k === 'Escape') return go(function () { showScreen(S.recordsFrom === 'result' && S.result ? 'result' : 'title'); });
@@ -1337,7 +1337,7 @@
   }
 
   function prepareRun(courseId) {
-    var course = REC.courseOf(courseId) || REC.courseOf('normal');
+    var course = REC.courseOf(courseId) || REC.courseOf('easy');
     var day = LV.dayKey();
     S.run = {
       course: course,
@@ -1582,7 +1582,7 @@
   function lastCourse(all) {
     var runs = (all.runs || []).filter(function (r) { var c = REC.courseOf(r.course); return c && !c.practice; });
     var last = runs.slice(-1)[0];
-    return last ? last.course : 'normal';
+    return last ? last.course : 'easy';
   }
 
   // 腕前: the level from the latest five runs, its title, and how much
@@ -2431,7 +2431,7 @@
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度 屋敷へ') + '<kbd class="hk">Enter</kbd></button>' +
       (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">苦手を稽古<kbd class="hk">K</kbd></button>' : '') +
-      '<button type="button" class="btn" data-records="' + (c.practice ? 'normal' : r.course) + '">絵巻を開く<kbd class="hk">R</kbd></button>' +
+      '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">絵巻を開く<kbd class="hk">R</kbd></button>' +
       '<button type="button" class="btn ghost" data-title="1">見取り図へ<kbd class="hk">Esc</kbd></button></div>';
     renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
@@ -2735,7 +2735,7 @@
       b.addEventListener('click', function () { applySound(!S.sound); store.save({ sound: S.sound }); if (S.sound) music(); });
     });
     document.addEventListener('pointerdown', function () { AU.unlock(); }, true);
-    $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'normal'); });
+    $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'easy'); });
     $('#btn-records').addEventListener('click', function () { S.recTab = 'growth'; openRecords(null, 'title'); });
     $('#btn-keiko').addEventListener('click', function () { startRun('keiko'); });
     $('#course-list').addEventListener('click', function (e) {
