@@ -387,6 +387,7 @@
     panesOf: panesOf,
     paneIndex: paneIndex,
     findPane: findPane,
+    parentOf: parentOf,
     layout: layout,
     rectOf: rectOf,
     splitPane: splitPane,

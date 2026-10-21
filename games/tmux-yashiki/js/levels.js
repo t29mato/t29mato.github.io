@@ -1,7 +1,8 @@
 // Courses and key data for tmux からくり屋敷 (the browser game).
 // A course is a fixed set of questions (仕掛け), asked in a new order each
-// run. Question types live in app.js. Everything the player reads is
-// Japanese; code identifiers stay English.
+// run, on one house that carries on from question to question. Question
+// types live in app.js. Everything the player reads is Japanese; code
+// identifiers stay English.
 (function () {
   'use strict';
 
@@ -38,7 +39,7 @@
   var HINTS = {
     split_lr: '%（Shift+5）',
     split_tb: '"（ダブルクォート）',
-    focus: '矢印キー（o で次の間へ順に、; で直前の間へ）',
+    focus: '矢印キー（o で次のペインへ順に、; で直前のペインへ）',
     zoom: 'z（もう一度押すと元に戻る）',
     close: 'x → 確認に y',
     resize: MAC ? 'Option+矢印キー（prefix のあと Option を押したまま連打できる。Mac では Ctrl+矢印は macOS に取られる）' : 'Ctrl+矢印キー（prefix のあと Ctrl を押したまま連打できる。Option/Alt+矢印でも 5 マスずつ動く）',
@@ -108,13 +109,13 @@
     {
       id: 'easy', title: '三間屋敷', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
-      desc: '襖を立てる・間を渡る・大広間・間を閉じる・棟を渡る。1 仕掛け 1 キー。',
+      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 仕掛け 1 キー。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
       id: 'normal', title: '八間屋敷', mode: '腕試し', limit: 14, rankMul: 1.3, ver: 2,
       plan: { cols: 4, rows: 2, cells: 8, lit: 1 },
-      desc: '襖をずらす・名札を掛ける・部屋が回る・棟を閉める・巻物も混ざる。',
+      desc: '大きさ・名前・入れ替え・ウィンドウを閉じる・スクロールも混ざる。',
       qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'focus', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
     },
     {

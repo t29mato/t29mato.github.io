@@ -225,6 +225,12 @@ body:not([data-detail="1"]) .side { display: none; }
 .sz-q { font-family: var(--mincho); font-size: 25px; font-weight: 700; line-height: 1.45; margin: 12px 0 14px; min-height: 1.45em; text-wrap: balance; }
 .sz-keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 kbd.done { opacity: 0.4; }
+/* The tick of a done step keeps its width whether shown or not: nothing in
+   the order moves when a step is ticked off. */
+.tick { display: inline-block; width: 1.1em; margin-left: 0.2em; text-align: center; font-style: normal; visibility: hidden; }
+.tick.on { visibility: visible; }
+.ob-note, .sz-note { font-size: 12px; color: var(--sumi-dim); margin-top: 3px; }
+.sz-note { margin: -6px 0 10px; }
 kbd.next { border-color: var(--andon); background: #fff3d6; box-shadow: 0 0 0 3px var(--andon-glow); transform: scale(1.12); }
 kbd.pfx.next { background: var(--ai); }
 @keyframes lamp { 50% { box-shadow: 0 0 0 5px rgba(240, 163, 58, 0.25), 0 0 16px var(--andon-glow); } }
@@ -272,7 +278,7 @@ kbd.pfx.next { background: var(--ai); }
 .motd-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
 .motd-go { color: #c47a12; font-size: 12px; }
 .motd .ob-alt { margin-top: 3px; white-space: normal; }
-.pane.cramped .motd .ob-txt, .pane.cramped .motd .ob-alt { display: none; }
+.pane.cramped .motd .ob-txt, .pane.cramped .motd .ob-alt, .pane.cramped .motd .ob-note { display: none; }
 /* the room you stand in: a lit frame and a いまここ tag; the others recede */
 .pane.active::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 3px var(--andon); }
 .pane:not(.active):not(.wanted) > .pane-body, .pane:not(.active):not(.wanted) > .decor { opacity: 0.5; }
@@ -446,8 +452,6 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .decor .flame { transform-box: fill-box; transform-origin: 50% 100%; }
 .pane.active .decor .flame { animation: flame 2.2s ease-in-out infinite alternate; }
 @keyframes flame { from { transform: scale(0.94, 0.96); opacity: 0.9; } to { transform: scale(1.03, 1.06); opacity: 1; } }
-.pane.scene-akima .tatami { opacity: 0.35; }
-.pane.scene-akima .decor .kamoi, .pane.scene-akima .decor .hashira { opacity: 0.4; }
 /* 欄間: the title row sits in the strip above the 鴨居 */
 .pane-title { height: 20px; line-height: 20px; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; padding: 0 0.5ch; color: var(--term-dim); background: linear-gradient(180deg, rgba(138, 106, 58, 0.12), rgba(138, 106, 58, 0.04)); }
 .pt-idx { font-size: 11px; color: var(--term-dim); }
@@ -478,16 +482,6 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .pane-body.copy .sh-line.cl { background: color-mix(in srgb, var(--ai) 20%, transparent); box-shadow: inset 3px 0 0 var(--ai); }
 .pane-body.copy .sh-line.sel { background: color-mix(in srgb, var(--ai) 60%, transparent); color: #fff; }
 
-/* the rooms that matter: big names in mincho */
-.scene { padding: 8px 0 4px; text-align: center; white-space: normal; }
-.room-name { font-family: var(--mincho); font-size: 26px; font-weight: 700; line-height: 1.3; color: var(--sumi); }
-.scene-cap { font-family: var(--sans); font-size: 12px; color: var(--sumi-dim); }
-.scene.dim .room-name { color: #9a8f7c; }
-.kakejiku-art { width: 26px; height: 54px; margin: 6px auto; background: linear-gradient(180deg, var(--wood-d) 0 4px, #fbf6ea 4px calc(100% - 6px), var(--wood-d) calc(100% - 6px)); border: 1px solid var(--paper-line); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); position: relative; }
-.kakejiku-art::after { content: ""; position: absolute; left: 50%; top: 14px; width: 2px; height: 22px; background: var(--sumi); transform: translateX(-50%); opacity: 0.6; }
-.pane.active[data-scene="kakejiku"] .room-name { color: #9a5b12; }
-.makimono-head { padding: 4px 0 2px; }
-.makimono-roll { width: 120px; height: 12px; margin: 0 auto; background: linear-gradient(90deg, var(--wood) 0 8px, #fff 8px calc(100% - 8px), var(--wood) calc(100% - 8px)); border-radius: 6px; }
 
 /* outside tmux */
 .outer-shell { position: absolute; inset: 0; background: var(--outer-bg); color: var(--outer-fg); z-index: 6; }
@@ -740,8 +734,6 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .andon { margin-top: 8px; padding: 6px 8px; }
   .yashiki { border-width: 4px; padding: 5px; gap: 5px; }
   .term { font-size: 13px; }
-  .room-name { font-size: 18px; }
-  .kakejiku-art { display: none; }
   .game-foot { display: none; }
   .result, .records { padding: 24px 8px 40px; }
   .emaki { grid-template-columns: 12px minmax(0, 1fr) 12px; }

@@ -50,6 +50,9 @@
     detached: false,
     outer: null,           // the shell outside tmux
     target: null,          // pane id the question is about
+    qText: null,           // the order as asked, with the names it targets
+    qGoal: null,           // what it targets, for the tests
+    qNote: [],             // what the house had to add for it, if anything
     lastAction: null,      // what the last key did, for the miss check
     run: null,             // the course being played
     result: null,          // the last finished run, for the result screen
@@ -120,12 +123,6 @@
 
   // ---- the fake shells ---------------------------------------------------
 
-  var SCENE_LS = {
-    kakejiku: 'kakejiku.txt  tokonoma/',
-    akima: '',
-    makimono: 'makimono.txt'
-  };
-
   function lineText(l) {
     if (typeof l === 'string') return l;
     if (!l || l.clear) return '';
@@ -142,10 +139,10 @@
     switch (cmd) {
       case 'help':
         pane.lines.push('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help');
-        pane.lines.push('tmux の操作は ' + prefixLabel() + ' を押して離してからキーを押す。押すキーは左の指図に出ている');
+        pane.lines.push('tmux の操作は ' + prefixLabel() + ' を押して離してからキーを押す。押すキーは画面の上の指図に出ている');
         break;
       case 'ls':
-        if (SCENE_LS[pane.scene] !== '') pane.lines.push(SCENE_LS[pane.scene] || 'shoji.txt  andon');
+        pane.lines.push('kakejiku.txt  makimono.txt  tokonoma/');
         break;
       case 'pwd':
         pane.lines.push('/home/yashiki/' + (pane.name || 'ma'));
@@ -154,7 +151,7 @@
         pane.lines.push(argv.slice(1).join(' '));
         break;
       case 'cat':
-        if (argv[1] === 'makimono.txt') pane.lines.push('長すぎて画面に収まらない。コピーモード（' + prefixLabel() + ' → [）で読もう。');
+        if (argv[1] === 'makimono.txt') printScroll(pane);
         else if (argv[1] === 'kakejiku.txt') pane.lines.push('「屋敷を出ても、仕掛けはそのまま。」');
         else pane.lines.push('cat: ' + (argv[1] || '') + ': そんなファイルはない');
         break;
@@ -163,7 +160,7 @@
         break;
       case 'exit':
         if (!T.killPane(win, pane.id)) {
-          if (!T.killWindow(S.session, win.id)) pane.lines.push('最後の間は閉じられない。');
+          if (!T.killWindow(S.session, win.id)) pane.lines.push('最後のペインは閉じられない。');
         }
         S.lastAction = 'close';
         break;
@@ -391,69 +388,137 @@
     S.picker = null;
   }
 
-  // ---- staging: the rooms of the house -------------------------------------
+  // ---- the house: the rooms and wings of one run ----------------------------
 
-  // Panes with nothing to do get a room name, so every pane has a label.
-  var ROOM_NAMES = ['茶の間', '座敷', '納戸', '書院', '次の間', '仏間'];
-  // Rooms the player adds with a split take the next free name.
-  var SPARE_NAMES = ['客間', '控えの間', '台所', '縁側'];
-  var SCENE_NAMES = { kakejiku: '掛け軸の間', akima: '空き間', makimono: '巻物の間' };
+  // Every pane gets a room name, so the order can name it. A pane the player
+  // splits off takes the first name no pane in the session has yet. Names
+  // are labels only; the questions mark their targets on the rooms.
+  var ROOM_NAMES = ['茶の間', '座敷', '納戸', '書院', '次の間', '仏間', '客間', '控えの間', '台所', '縁側', '土間', '囲炉裏', '納屋', '渡り廊下'];
+  var WINGS = ['母屋', '離れ', '蔵', '物置', '茶室', '書庫'];
 
-  // A room the player splits off is furnished too: the first name no room
-  // in the session has yet. Names mean nothing to the questions.
   function nameRoom(pane) {
-    if (!pane || pane.scene) return;
+    if (!pane) return;
     var used = {};
     S.session.windows.forEach(function (w) { T.panesOf(w).forEach(function (p) { if (p.name) used[p.name] = true; }); });
-    var names = ROOM_NAMES.concat(SPARE_NAMES);
-    for (var i = 0; i < names.length; i++) if (!used[names[i]]) { pane.name = names[i]; return; }
+    for (var i = 0; i < ROOM_NAMES.length; i++) if (!used[ROOM_NAMES[i]]) { pane.name = ROOM_NAMES[i]; return; }
+    pane.name = '';
   }
 
-  function stagePane(pane, scene, name, opts) {
-    opts = opts || {};
-    pane.scene = scene;
-    pane.name = name;
-    pane.lines = [];
-    pane.mode = null;
-    if (scene === 'makimono') {
-      var total = opts.length || 160;
-      pane.lines.push({ html: '<span class="sh-head">==== 巻物 書き出し ====</span>', text: '==== 巻物 書き出し ====' });
-      pane.lines.push({ html: '<span class="sh-gold">「屋敷を出ても、仕掛けはそのまま。」</span>', text: '「屋敷を出ても、仕掛けはそのまま。」' });
-      for (var i = 3; i <= total; i++) {
-        // Short enough for a half-width pane on a phone (about 22 cells).
-        var txt = i % 50 === 0 ? '—— 第' + (i / 50 + 1) + '巻 ——' : i % 17 === 0 ? '……墨がかすれる……' : '……長い文が続く……';
-        var n = (i < 100 ? ' ' : '') + (i < 10 ? ' ' : '') + i;
-        pane.lines.push({ html: '<span class="sh-dim">' + n + '</span>  ' + esc(txt), text: n + '  ' + txt });
-      }
-      pane.lines.push('');
-      pane.lines.push('書き出しには何とあった？ コピーモードで頭まで巻き戻そう。');
+  // How the order names a pane: its room, or its number.
+  function paneLabel(pane) {
+    if (pane.name) return pane.name;
+    var h = T.findPane(S.session, pane.id);
+    return 'ペイン ' + (h ? T.paneIndex(S.session, h.win, pane) : '?');
+  }
+
+  // How the order names a window: as the status bar shows it, "1:蔵".
+  function winLabel(w) { return w.index + ':' + w.name; }
+
+  // The scroll: a long file printed into a pane, as `cat makimono.txt`
+  // would. Long enough that its top is well off the screen.
+  function printScroll(pane) {
+    var total = 160;
+    pane.lines.push({ html: '<span class="sh-head">==== 巻物 書き出し ====</span>', text: '==== 巻物 書き出し ====' });
+    pane.lines.push({ html: '<span class="sh-gold">「屋敷を出ても、仕掛けはそのまま。」</span>', text: '「屋敷を出ても、仕掛けはそのまま。」' });
+    for (var i = 3; i <= total; i++) {
+      // Short enough for a half-width pane on a phone (about 22 cells).
+      var txt = i % 50 === 0 ? '—— 第' + (i / 50 + 1) + '巻 ——' : i % 17 === 0 ? '……墨がかすれる……' : '……長い文が続く……';
+      var n = (i < 100 ? ' ' : '') + (i < 10 ? ' ' : '') + i;
+      pane.lines.push({ html: '<span class="sh-dim">' + n + '</span>  ' + esc(txt), text: n + '  ' + txt });
     }
+    pane.lines.push('');
+    pane.lines.push('一番上の行には何と書いてあった？ コピーモードでスクロールして確かめよう。');
   }
 
-  // A new window in the current session, built from a list of scenes.
-  // shape: 'single' | 'lr' | 'tb' | 'tiled' | 'evenh'. Returns {win, panes}.
-  function room(name, scenes, shape, activeAt) {
-    var win = T.createWindow(S.session, name);
-    T.selectWindow(S.session, win.id);
-    var panes = [T.activePane(win)];
-    for (var i = 1; i < scenes.length; i++) panes.push(T.splitPane(win, panes[panes.length - 1].id, shape === 'tb' ? 'tb' : 'lr', null, true));
-    var layout = { tiled: 'tiled', evenh: 'even-horizontal', lr: 'even-horizontal', tb: 'even-vertical' }[shape];
-    if (layout && panes.length > 1) T.applyLayout(win, layout);
-    var free = ROOM_NAMES.slice();
-    scenes.forEach(function (sc, j) {
-      if (sc) stagePane(panes[j], sc, SCENE_NAMES[sc] || '');
-      else panes[j].name = free.shift();
-    });
-    win.active = panes[activeAt || 0].id;
-    win.last = null;
-    return { win: win, panes: panes };
+  // The house at the start of a run, the same for everyone: 母屋 with one
+  // pane on the left and two on the right (the classic editor-and-shells
+  // layout), 離れ and 蔵 with two panes each. The focus starts on the big
+  // pane of 母屋 and from then on goes only where the player takes it.
+  function buildHouse() {
+    newSession();
+    var home = S.session.windows[0];
+    var p0 = T.activePane(home);
+    var p1 = T.splitPane(home, p0.id, 'lr', null, true);
+    T.splitPane(home, p1.id, 'tb', null, true);
+    var w1 = T.createWindow(S.session, WINGS[1]);
+    T.splitPane(w1, T.activePane(w1).id, 'tb', null, true);
+    var w2 = T.createWindow(S.session, WINGS[2]);
+    T.splitPane(w2, T.activePane(w2).id, 'lr', null, true);
+    S.session.windows.forEach(function (w) { T.panesOf(w).forEach(nameRoom); });
   }
 
-  function windowByName(name, session) {
-    var found = null;
-    (session || S.session).windows.forEach(function (w) { if (!found && w.name === name) found = w; });
-    return found;
+  // ---- what a question needs of the live house ------------------------------
+  // The house carries on from question to question: the panes, the windows,
+  // the zoom and the focus stay as the player left them, and the next
+  // question is asked about what is on screen. A question that needs
+  // something the house lacks (a second pane, a second window, the walls
+  // back from a zoom) gets it here with the smallest change, never a change
+  // of focus, and says so in a note under the order.
+
+  function note(text) { S.qNote.push(text); }
+
+  function needUnzoom() {
+    var win = T.activeWindow(S.session);
+    if (!win.zoomed) return;
+    win.zoomed = false;
+    note('全画面を解除した');
   }
+
+  // At least `n` panes in the active window: the biggest pane is split, the
+  // long way, until there are enough. The focus stays where it is.
+  function needPanes(n) {
+    var win = T.activeWindow(S.session);
+    var added = 0;
+    while (T.panesOf(win).length < n) {
+      if (win.zoomed) needUnzoom();
+      var lay = T.layout(win, S.cols, S.rows);
+      var big = lay.panes[0];
+      lay.panes.forEach(function (r) { if (r.w * r.h > big.w * big.h) big = r; });
+      // A cell is about twice as tall as it is wide.
+      nameRoom(T.splitPane(win, big.pane.id, big.w >= big.h * 2.2 ? 'lr' : 'tb', null, true));
+      added++;
+    }
+    if (added) note('ペインを ' + added + ' つ足した');
+  }
+
+  function needZoom() {
+    needPanes(2);
+    var win = T.activeWindow(S.session);
+    if (win.zoomed) return;
+    win.zoomed = true;
+    note('このペインを全画面にした');
+  }
+
+  // At least `n` windows in the session, the new ones behind the active one.
+  function needWindows(n) {
+    var added = [];
+    while (S.session.windows.length < n) {
+      var w = T.createWindow(S.session, freeWing());
+      nameRoom(T.activePane(w));
+      added.push(winLabel(w));
+    }
+    if (added.length) note('ウィンドウ ' + added.join('、') + ' を足した');
+  }
+
+  function freeWing() {
+    var used = {};
+    S.session.windows.forEach(function (w) { used[w.name] = true; });
+    for (var i = 0; i < WINGS.length; i++) if (!used[WINGS[i]]) return WINGS[i];
+    return 'zsh';
+  }
+
+  // The panes of the active window other than the one the player is in,
+  // and the windows other than the active one: what a question may target.
+  function otherPanes() {
+    var win = T.activeWindow(S.session);
+    return T.panesOf(win).filter(function (p) { return p.id !== win.active; });
+  }
+
+  function otherWindows() {
+    return S.session.windows.filter(function (w) { return w.id !== S.session.active; });
+  }
+
+  function pick(r, list) { return list[pickInt(r, list.length)]; }
 
   // The rectangle a pane would have with the window unzoomed.
   function rectUnzoomed(win, id) {
@@ -466,10 +531,21 @@
 
   function paneExists(id) { return !!T.findPane(S.session, id); }
 
-  function isTrident(win) {
-    var root = win.root;
-    return root.type === 'split' && root.dir === 'lr' && root.a.type === 'pane' &&
-      root.b.type === 'split' && root.b.dir === 'tb' && root.b.a.type === 'pane' && root.b.b.type === 'pane';
+  // Whether a pane has an ancestor split along `axis`: whether a resize on
+  // that axis can move anything.
+  function hasAxis(win, id, axis) {
+    var found = false;
+    (function walk(node, on) {
+      if (node.type === 'pane') { if (node.pane.id === id) found = on; return; }
+      walk(node.a, on || node.dir === axis); walk(node.b, on || node.dir === axis);
+    })(win.root, false);
+    return found;
+  }
+
+  // The first pane in layout order is the top-left one.
+  function isFirst(id) {
+    var h = T.findPane(S.session, id);
+    return !!h && T.panesOf(h.win)[0].id === id;
   }
 
   function scrollInfo(pane) {
@@ -640,7 +716,7 @@
     if (!T.resizePane(win, pane.id, axis, n, S.cols, S.rows)) {
       var other = axis === 'lr' ? '↑ / ↓' : '← / →';
       message(win.zoomed ? '全画面中は大きさを変えられない（z で戻す）'
-        : T.panesOf(win).length < 2 ? '間が 1 つだけなので動かせない。先に襖を立てよう'
+        : T.panesOf(win).length < 2 ? 'ペインが 1 つだけなので動かせない。先に分割しよう'
         : 'この向きにはもう動かせない。反対向きか、' + other + ' を試そう');
     }
   }
@@ -660,10 +736,14 @@
 
     var moves = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' };
     if (moves[key]) {
+      // As select-pane does: the neighbour is found on the unzoomed layout,
+      // and moving there unzooms.
+      var z = win.zoomed;
+      win.zoomed = false;
       var nb = T.neighbour(win, S.cols, S.rows, moves[key]);
+      win.zoomed = z;
       if (nb) T.selectPane(win, nb.id);
-      else if (win.zoomed) { win.zoomed = false; message('全画面を解除した'); }
-      else message('ほかに間がない（' + prefixLabel() + ' → % か " で襖を立てる）');
+      else message('そちらにペインはない（' + prefixLabel() + ' → % か " で分割）');
       S.lastAction = 'focus';
       return true;
     }
@@ -678,7 +758,7 @@
         text: 'kill-pane ' + idx + '? (y/n)',
         yes: function () {
           if (!T.killPane(win, pane.id)) {
-            if (!T.killWindow(S.session, win.id)) message('最後の間は閉じられない');
+            if (!T.killWindow(S.session, win.id)) message('最後のペインは閉じられない');
           }
         }
       };
@@ -688,7 +768,7 @@
       S.lastAction = 'kill_window';
       S.confirm = {
         text: 'kill-window ' + win.name + '? (y/n)',
-        yes: function () { if (!T.killWindow(S.session, win.id)) message('最後の棟は閉じられない'); }
+        yes: function () { if (!T.killWindow(S.session, win.id)) message('最後のウィンドウは閉じられない'); }
       };
       return true;
     }
@@ -711,7 +791,7 @@
     if (key === 'd') { detach(); S.lastAction = 'detach'; return true; }
     if (key === 'i' || key === '?') {
       S.lastAction = 'brief';
-      message('押すキーは左の指図に書いてある');
+      message('押すキーは画面の上の指図に出ている');
       return true;
     }
     if (key === '$') {
@@ -734,7 +814,7 @@
     if (key === ':') { S.lastAction = 'cmd'; S.prompt = { label: ':', value: '', done: runTmuxCommand }; return true; }
     if (key === 'l') {
       if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last);
-      else message('no last window ― l は直前の棟へ戻るキー。隣の間へは矢印か o');
+      else message('no last window ― l は直前のウィンドウへ戻るキー。隣のペインへは矢印か o');
       S.lastAction = 'select_window';
       return true;
     }
@@ -793,10 +873,10 @@
       nameRoom(T.splitPane(win, pane.id, lr ? 'lr' : 'tb', null, false));
       S.lastAction = lr ? 'split_lr' : 'split_tb';
     } else if (/^(kill-pane|killp)$/.test(cmd)) {
-      if (!T.killPane(win, pane.id)) message('最後の間は閉じられない');
+      if (!T.killPane(win, pane.id)) message('最後のペインは閉じられない');
       S.lastAction = 'close';
     } else if (/^(kill-window|killw)$/.test(cmd)) {
-      if (!T.killWindow(S.session, win.id)) message('最後の棟は閉じられない');
+      if (!T.killWindow(S.session, win.id)) message('最後のウィンドウは閉じられない');
       S.lastAction = 'kill_window';
     } else if (/^(select-layout|selectl)$/.test(cmd)) {
       var lay = argv[1] || '';
@@ -1036,10 +1116,11 @@
   }
 
   // ---- the run --------------------------------------------------------------
-  // A run is a fixed list of questions (仕掛け). Each builds a fresh session,
-  // asks for one result, and checks the state after every key. A question
-  // is never skipped: past its 目安 the keys light up (行灯), and at 1.5
-  // times it a step-by-step guide (指南) appears.
+  // A run is a fixed list of questions (仕掛け) asked on one live house: each
+  // is asked about the panes and windows as the player left them, asks for
+  // one result, and checks the state after every key. A question is never
+  // skipped: past its 目安 the keys light up (行灯); the step-by-step guide
+  // (指南) is on screen from the start unless the type is learnt.
 
   function rng(seed) {
     var h = 1779033703 ^ seed.length;
@@ -1089,23 +1170,23 @@
     win.zoomed = z;
     if (!best) return null;
     var p = T.findPane(S.session, id);
-    var name = p && p.pane.name ? p.pane.name : 'その間';
-    var m = mv([ARROWS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + ARROWS[best.d] + ' を押して渡る');
+    var where = DIR_WORDS[best.d] + (best.dist < 0 && p ? 'の『' + paneLabel(p.pane) + '』へ' : 'へ');
+    var m = mv([ARROWS[best.d]], ARROWS[best.d] + ' を押す（' + where + '）');
     m.alt = altMoves(win, id);
     return m;
   }
 
-  // Other ways to the room in one step: o (the next room in order) and ;
-  // (the room you were in last). Shown beside the 指南, never required.
+  // Other ways to the pane in one step: o (the next pane in order) and ;
+  // (the pane you were in last). Shown beside the 指南, never required.
   function altMoves(win, id) {
     var out = [];
     if (win.last === id && T.findPane(S.session, id)) {
-      out.push(mv([';'], 'さっきいた間へ戻る'));
+      out.push(mv([';'], '直前のペインへ戻る'));
     }
     var ps = T.panesOf(win);
     var at = ps.findIndex(function (q) { return q.id === win.active; });
-    if (ps.length > 2 && ps[(at + 1) % ps.length].id === id) out.push(mv(['o'], '次の間へ順に移る'));
-    else if (ps.length === 2) out.push(mv(['o'], 'もう一つの間へ移る'));
+    if (ps.length > 2 && ps[(at + 1) % ps.length].id === id) out.push(mv(['o'], '次のペインへ'));
+    else if (ps.length === 2) out.push(mv(['o'], 'もう一つのペインへ'));
     return out;
   }
 
@@ -1157,7 +1238,7 @@
     }
     var text = m.text.replace(m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）/g, '');
     if (o.n) text = text.replace(/（1 回[^）]*）/, '（1 回 ' + o.n + ' マス' + (o.n < 5 ? '。続けて押す' : '') + '）');
-    if (o.root) text += '（合図なし）';
+    if (o.root) text += '（prefix なし）';
     return { pfx: o.pfx, keys: [o.label], text: text };
   }
 
@@ -1174,165 +1255,185 @@
   }
 
   function closeMove(id) {
-    if (S.confirm) return mv(['y'], '確かめられたら y を押す', true);
-    return moveTo(id) || mv(['x'], 'x を押して間を閉じる');
+    if (S.confirm) return mv(['y'], 'y を押す（閉じる）', true);
+    return moveTo(id) || mv(['x'], 'x を押す（確認が出る）');
   }
 
-  function windowMove(name, verb) {
-    var w = windowByName(name);
+  // To window `id`: by its number, as the status bar shows it.
+  function windowMove(id, verb) {
+    var w = T.windowById(S.session, id);
     if (!w) return null;
-    return mv(['0-9'], name + 'は ' + w.index + ' 番。' + w.index + ' を押して' + (verb || '渡る'));
+    return mv(['0-9'], w.index + ' を押す（' + winLabel(w) + (verb || ' へ') + '）');
   }
 
+  // The resize key that can move something: sideways if the pane has a
+  // left-right split above it, else up or down.
   function resizeMove() {
     var win = T.activeWindow(S.session);
     var r = T.rectOf(win, win.active, S.cols, S.rows);
-    var label = LV.KEYS.resize[r && r.x === 0 ? 1 : 0];
+    var i = hasAxis(win, win.active, 'lr') ? (r && r.x === 0 ? 1 : 0) : (r && r.y === 0 ? 3 : 2);
+    var label = LV.KEYS.resize[i];
     return mv([label], label + ' を押す' + (/^Option/.test(label) ? '（1 回で 5 マス）' : '（1 回 1 マス。続けて 5 回）'));
   }
 
   function swapMove() {
-    return moveTo(S.target) || mv(['{'], '{ を押す（掛け軸の間が左へ回る）');
+    return moveTo(S.target) || mv(['{'], '{ を押す（前のペインと入れ替わる。左上に着くまで）');
   }
 
-  function atLeft(id) {
-    var h = T.findPane(S.session, id);
-    var rr = h && rectUnzoomed(h.win, id);
-    return !!rr && rr.x === 0;
-  }
+  // Every question: text (the generic order, for lists; setup may write a
+  // specific one into S.qText), the tmux command it teaches, the actions it
+  // may use (others are misses), the key actions to show, setup(r): what it
+  // needs of the live house and what it targets, check(), next(): the move
+  // the guide shows from the current state, and goal(): what to change,
+  // marked in the house itself (完成図) — {pane, mark, tag} on a room or
+  // {tab, tag} on a window in the status bar ('+' for a new one).
+  function activeId() { return T.activeWindow(S.session).active; }
 
-  // Every question: text, the tmux command it teaches, the actions it may
-  // use (others are misses), the key actions to show, setup(r), check(),
-  // next(): the move the guide shows from the current state, and goal():
-  // what to change, marked in the house itself (完成図) — {pane, mark, tag}
-  // on a room or {tab, tag} on a wing in the status bar ('+' for a new one).
   var Q = {
     split_lr: {
-      text: '襖を立てて、左右に仕切れ', cmd: 'split-window -h', allow: ['split_lr'], show: ['split_lr'],
-      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'split-v', tag: 'ここに襖を縦に' }]; },
-      setup: function (r) { var x = room(WINGS[0], r() < 0.5 ? [null] : [null, null], 'tb', 0); S.q0 = splitCount(x.win, 'lr'); },
+      text: '左右に分割する（split）', cmd: 'split-window -h', allow: ['split_lr'], show: ['split_lr'],
+      goal: function () { return [{ pane: activeId(), mark: 'split-v', tag: 'ここを左右に' }]; },
+      setup: function () { S.q0 = splitCount(T.activeWindow(S.session), 'lr'); },
       check: function () { return splitCount(T.activeWindow(S.session), 'lr') > S.q0; },
-      next: function () { return mv(['%'], '% を押す（Shift+5）。襖が縦に立つ'); }
+      next: function () { return mv(['%'], '% を押す（Shift+5）。右に新しいペインが開く'); }
     },
     split_tb: {
-      text: '襖を立てて、上下に仕切れ', cmd: 'split-window -v', allow: ['split_tb'], show: ['split_tb'],
-      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'split-h', tag: 'ここに襖を横に' }]; },
-      setup: function (r) { var x = room(WINGS[0], r() < 0.5 ? [null] : [null, null], 'lr', 0); S.q0 = splitCount(x.win, 'tb'); },
+      text: '上下に分割する（split）', cmd: 'split-window -v', allow: ['split_tb'], show: ['split_tb'],
+      goal: function () { return [{ pane: activeId(), mark: 'split-h', tag: 'ここを上下に' }]; },
+      setup: function () { S.q0 = splitCount(T.activeWindow(S.session), 'tb'); },
       check: function () { return splitCount(T.activeWindow(S.session), 'tb') > S.q0; },
-      next: function () { return mv(['"'], '" を押す（ダブルクォート）。襖が横に立つ'); }
+      next: function () { return mv(['"'], '" を押す（ダブルクォート）。下に新しいペインが開く'); }
     },
     focus: {
-      text: '掛け軸の間へ渡れ', cmd: 'select-pane -L/-R/-U/-D', allow: [], show: ['focus'],
+      text: '隣のペインへ移動する', cmd: 'select-pane -L/-R/-U/-D', allow: [], show: ['focus'],
       goal: function () { return [{ pane: S.target, mark: 'go', tag: 'ここへ' }]; },
       setup: function (r) {
-        var n = 3 + pickInt(r, 2), t = 1 + pickInt(r, n - 1);
-        var sc = []; for (var i = 0; i < n; i++) sc.push(i === t ? 'kakejiku' : null);
-        var x = room(WINGS[0], sc, 'tiled', 0); S.target = x.panes[t].id;
+        needUnzoom(); needPanes(2);
+        var p = pick(r, otherPanes());
+        S.target = p.id;
+        S.qText = '『' + paneLabel(p) + '』へ移動する';
       },
-      check: function () { return T.activeWindow(S.session).active === S.target; },
+      check: function () { return activeId() === S.target; },
       next: function () { return moveTo(S.target); }
     },
     zoom: {
-      text: '襖を外して、この間を大広間にせよ', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
-      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'zoom', tag: 'この間を大広間に' }]; },
-      setup: function (r) { room(WINGS[0], r() < 0.5 ? [null, null] : [null, null, null], 'tiled', 0); },
+      text: 'このペインを全画面にする（zoom）', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
+      goal: function () { return [{ pane: activeId(), mark: 'zoom', tag: 'ここを全画面に' }]; },
+      setup: function () { needUnzoom(); needPanes(2); },
       check: function () { return T.activeWindow(S.session).zoomed; },
-      next: function () { return mv(['z'], 'z を押す。いまの間が画面いっぱいになる'); }
+      next: function () { return mv(['z'], 'z を押す。このペインだけが画面いっぱいになる'); }
     },
     unzoom: {
-      text: '襖を戻して、大広間を元の間に', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
-      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'unzoom', tag: '元の間に戻す' }]; },
-      setup: function () { var x = room(WINGS[0], [null, null, null], 'tiled', 0); x.win.zoomed = true; },
+      text: '全画面をやめて元の分割に戻す', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
+      goal: function () { return [{ pane: activeId(), mark: 'unzoom', tag: '元の分割に戻す' }]; },
+      setup: function () { needZoom(); },
       check: function () { return !T.activeWindow(S.session).zoomed; },
-      next: function () { return mv(['z'], 'もう一度 z を押す。大広間が元に戻る'); }
+      next: function () { return mv(['z'], 'もう一度 z を押す。元の分割に戻る'); }
     },
     close: {
-      text: '空き間を閉じよ', cmd: 'kill-pane', allow: ['close'], show: ['focus', 'close'],
+      text: 'ペインを閉じる（kill-pane）', cmd: 'kill-pane', allow: ['close'], show: ['focus', 'close'],
       goal: function () { return [{ pane: S.target, mark: 'close', tag: '閉じる' }]; },
       setup: function (r) {
-        var n = 2 + pickInt(r, 2), t = pickInt(r, n);
-        var sc = []; for (var i = 0; i < n; i++) sc.push(i === t ? 'akima' : null);
-        var x = room(WINGS[0], sc, 'tiled', t === 0 ? 1 : 0); S.target = x.panes[t].id;
+        needUnzoom(); needPanes(2);
+        var p = pick(r, otherPanes());
+        S.target = p.id;
+        S.qText = '『' + paneLabel(p) + '』を閉じる';
       },
       check: function () { return !paneExists(S.target); },
       next: function () { return closeMove(S.target); }
     },
     new_window: {
-      text: '離れを建てよ（新しい棟）', cmd: 'new-window', allow: ['new_window'], show: ['new_window'],
-      goal: function () { return [{ tab: '+', tag: '新しい棟' }]; },
-      setup: function () { room(WINGS[0], [null], 'single'); },
-      ready: function () { S.q0 = S.session.windows.length; },
+      text: '新しいウィンドウを作る', cmd: 'new-window', allow: ['new_window'], show: ['new_window'],
+      goal: function () { return [{ tab: '+', tag: '新しいウィンドウ' }]; },
+      setup: function () { S.q0 = S.session.windows.length; },
       check: function () { return S.session.windows.length > S.q0; },
-      next: function () { return mv(['c'], 'c を押す（create）。新しい棟が建つ'); }
+      next: function () { return mv(['c'], 'c を押す（create）。新しいウィンドウが開く'); }
     },
     select_window: {
-      text: null, cmd: 'select-window -t 番号', allow: ['select_window'], show: ['select_window'],
+      text: 'ほかのウィンドウへ移動する', cmd: 'select-window -t 番号', allow: ['select_window'], show: ['select_window'],
       goal: function () { return [{ tab: S.q0, tag: 'ここへ' }]; },
       setup: function (r) {
-        WINGS.forEach(function (n) { room(n, [null], 'single'); });
-        var from = pickInt(r, 3), to = (from + 1 + pickInt(r, 2)) % 3;
-        T.selectWindow(S.session, windowByName(WINGS[from]).id);
-        S.qText = WINGS[to] + 'へ渡り廊下を渡れ';
-        S.q0 = WINGS[to];
+        needWindows(2);
+        var w = pick(r, otherWindows());
+        S.q0 = w.id;
+        S.qGoal = { index: w.index, name: w.name };
+        S.qText = 'ウィンドウ ' + winLabel(w) + ' へ移動する';
       },
-      check: function () { return T.activeWindow(S.session).name === S.q0; },
+      check: function () { return S.session.active === S.q0; },
       next: function () { return windowMove(S.q0); }
     },
     resize: {
-      text: '襖をずらして、この間を広げるか狭めよ', cmd: 'resize-pane -L/-R', allow: ['resize'], show: ['resize'],
-      goal: function () { return [{ pane: T.activeWindow(S.session).active, mark: 'resize', tag: '襖を 5 マス以上ずらす' }]; },
-      setup: function (r) {
-        var x = room(WINGS[0], [null, null], 'lr', pickInt(r, 2));
-        var rr = T.rectOf(x.win, x.win.active, S.cols, S.rows);
-        S.q0 = rr ? rr.w : 0;
+      text: 'このペインの大きさを変える（resize）', cmd: 'resize-pane -L/-R/-U/-D', allow: ['resize'], show: ['resize'],
+      goal: function () { return [{ pane: activeId(), mark: 'resize', tag: '5 マス以上動かす' }]; },
+      setup: function () {
+        needUnzoom(); needPanes(2);
+        var win = T.activeWindow(S.session);
+        var rr = T.rectOf(win, win.active, S.cols, S.rows);
+        S.q0 = { w: rr ? rr.w : 0, h: rr ? rr.h : 0 };
       },
       check: function () {
         var w = T.activeWindow(S.session);
         var rr = T.rectOf(w, w.active, S.cols, S.rows);
-        return !!rr && !w.zoomed && Math.abs(rr.w - S.q0) >= 5;
+        return !!rr && !w.zoomed && (Math.abs(rr.w - S.q0.w) >= 5 || Math.abs(rr.h - S.q0.h) >= 3);
       },
       next: resizeMove
     },
     swap: {
-      text: '掛け軸の間を左端へ回せ', cmd: 'swap-pane -U', allow: ['swap'], show: ['swap'],
-      goal: function () { return [{ pane: S.target, mark: 'to-left', tag: '左端へ回す' }]; },
+      text: 'ペインを左上まで入れ替えて動かす（swap）', cmd: 'swap-pane -U', allow: ['swap'], show: ['swap'],
+      goal: function () { return [{ pane: S.target, mark: 'to-left', tag: '左上へ' }]; },
       setup: function (r) {
-        var n = 2 + pickInt(r, 2);
-        var sc = []; for (var i = 0; i < n; i++) sc.push(i === n - 1 ? 'kakejiku' : null);
-        var x = room(WINGS[0], sc, 'evenh', n - 1); S.target = x.panes[n - 1].id;
+        needUnzoom(); needPanes(2);
+        // The pane you are in, unless it is at the top left already.
+        var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
+        S.target = p.id;
+        S.qText = '『' + paneLabel(p) + '』を左上まで動かす（swap）';
       },
-      check: function () { return atLeft(S.target); },
+      check: function () { return isFirst(S.target); },
       next: swapMove
     },
     rename: {
-      text: 'この棟に camp と名札を掛けよ', cmd: 'rename-window', allow: ['rename'], show: ['rename'],
-      goal: function () { return [{ tab: T.activeWindow(S.session).name, tag: 'camp と名札を' }]; },
-      setup: function () { room('zsh', [null], 'single'); },
-      check: function () { return T.activeWindow(S.session).name === 'camp'; },
+      text: 'ウィンドウの名前を変える（rename）', cmd: 'rename-window', allow: ['rename'], show: ['rename'],
+      goal: function () { return [{ tab: S.q0.win, tag: S.q0.name + ' に' }]; },
+      setup: function (r) {
+        var win = T.activeWindow(S.session);
+        var name = pick(r, ['dev', 'log', 'ssh', 'edit', 'build'].filter(function (n) { return n !== win.name; }));
+        S.q0 = { win: win.id, name: name };
+        S.qGoal = name;
+        S.qText = 'ウィンドウの名前を「' + name + '」にする（rename）';
+      },
+      check: function () { var w = T.windowById(S.session, S.q0.win); return !!w && w.name === S.q0.name; },
       next: function () {
-        if (S.prompt) return mv([], 'Ctrl+u で今の名前を消し、camp と打って Enter', true);
-        return mv([','], ', を押す（カンマ）。名札を書く欄が出る');
+        if (S.prompt) return mv([], 'Ctrl+u で今の名前を消し、' + S.q0.name + ' と打って Enter', true);
+        return mv([','], ', を押す（カンマ）。名前の入力欄が出る');
       }
     },
     kill_window: {
-      text: '棟「蔵」を丸ごと閉めよ', cmd: 'kill-window', allow: ['kill_window', 'select_window'], show: ['select_window', 'kill_window'],
-      goal: function () { return [{ tab: WINGS[2], mark: 'close', tag: '棟ごと閉める' }]; },
+      text: 'ウィンドウを閉じる（kill-window）', cmd: 'kill-window', allow: ['kill_window', 'select_window'], show: ['select_window', 'kill_window'],
+      goal: function () { return [{ tab: S.q0, mark: 'close', tag: '閉じる' }]; },
       setup: function (r) {
-        room(WINGS[0], [null], 'single');
-        room(WINGS[2], ['akima', 'akima'], 'lr', 0);
-        if (r() < 0.4) T.selectWindow(S.session, windowByName(WINGS[0]).id);
+        needWindows(2);
+        var w = pick(r, otherWindows());
+        S.q0 = w.id;
+        S.qGoal = { index: w.index, name: w.name };
+        S.qText = 'ウィンドウ ' + winLabel(w) + ' を閉じる';
       },
-      check: function () { return !windowByName(WINGS[2]); },
+      check: function () { return !T.windowById(S.session, S.q0); },
       next: function () {
-        if (S.confirm) return mv(['y'], '確かめられたら y を押す', true);
-        if (T.activeWindow(S.session).name !== WINGS[2]) return windowMove(WINGS[2]);
-        return mv(['&'], '& を押す（アンパサンド）。棟ごと閉める');
+        if (S.confirm) return mv(['y'], 'y を押す（閉じる）', true);
+        if (S.session.active !== S.q0) return windowMove(S.q0);
+        return mv(['&'], '& を押す（確認が出る）');
       }
     },
     copy_top: {
-      text: '巻物を頭まで巻き戻せ', cmd: 'copy-mode → history-top', allow: ['copy'], show: ['copy'],
-      goal: function () { return [{ pane: S.target, mark: 'top', tag: '頭まで巻き戻す' }]; },
-      setup: function () { var x = room(WINGS[0], ['makimono'], 'single'); S.target = x.panes[0].id; },
+      text: 'スクロールして一番上まで戻る（copy mode）', cmd: 'copy-mode → history-top', allow: ['copy'], show: ['copy'],
+      goal: function () { return [{ pane: S.target, mark: 'top', tag: '一番上まで' }]; },
+      setup: function () {
+        var pane = T.activePane(T.activeWindow(S.session));
+        pane.mode = null;
+        pane.lines.push({ html: '<span class="sh-prompt">' + esc(promptText(pane)) + '</span>cat makimono.txt' });
+        printScroll(pane);
+        S.target = pane.id;
+      },
       check: function () {
         var h = T.findPane(S.session, S.target);
         if (!h || h.pane.mode !== 'copy') return false;
@@ -1341,49 +1442,53 @@
       },
       next: function () {
         var p = T.activePane(T.activeWindow(S.session));
-        if (p.mode === 'copy') return mv(['g'], 'g を押す。巻物の頭まで一気に戻る', true);
-        return mv(['['], '[ を押す。巻物を読むコピーモードに入る');
+        if (p.mode === 'copy') return mv(['g'], 'g を押す（一番上へ）', true);
+        return mv(['['], '[ を押す（コピーモードに入る）');
       }
     },
     find_zoom: {
-      text: '掛け軸の間を大広間にせよ', cmd: 'select-pane → resize-pane -Z', allow: ['zoom'], show: ['focus', 'zoom'],
-      goal: function () { return [{ pane: S.target, mark: 'zoom', tag: 'ここを大広間に' }]; },
+      text: 'ペインへ移動して全画面にする', cmd: 'select-pane → resize-pane -Z', allow: ['zoom'], show: ['focus', 'zoom'],
+      goal: function () { return [{ pane: S.target, mark: 'zoom', tag: 'ここを全画面に' }]; },
       setup: function (r) {
-        var t = 1 + pickInt(r, 3);
-        var sc = [null, null, null, null]; sc[t] = 'kakejiku';
-        var x = room(WINGS[0], sc, 'tiled', 0); S.target = x.panes[t].id;
+        needUnzoom(); needPanes(2);
+        var p = pick(r, otherPanes());
+        S.target = p.id;
+        S.qText = '『' + paneLabel(p) + '』へ移動して全画面にする';
       },
       check: function () { var w = T.activeWindow(S.session); return w.active === S.target && w.zoomed; },
-      next: function () { return moveTo(S.target) || mv(['z'], 'z を押して大広間に'); }
+      next: function () { return moveTo(S.target) || mv(['z'], 'z を押す（全画面に）'); }
     },
     trident: {
-      text: '左に一間、右に上下二間を仕切れ', cmd: 'split-window -h → -v', allow: ['split_lr', 'split_tb'], show: ['split_lr', 'split_tb'],
+      text: '左右に分割し、右側をさらに上下に分割する', cmd: 'split-window -h → -v', allow: ['split_lr', 'split_tb'], show: ['split_lr', 'split_tb'],
+      // The shape is read around the pane the question started in: a new
+      // left-right split with it on the left and a top-bottom pair on the right.
       goal: function () {
-        var win = T.activeWindow(S.session);
-        if (T.panesOf(win).length === 1) return [{ pane: win.active, mark: 'split-v', tag: 'まず左右に' }];
-        if (win.root.dir === 'lr' && win.root.b.type === 'pane') return [{ pane: win.root.b.pane.id, mark: 'split-h', tag: '右を上下に' }];
+        var s = tridentState();
+        if (s === 'start') return [{ pane: S.q0.pane, mark: 'split-v', tag: 'まず左右に' }];
+        if (s === 'right') return [{ pane: S.q0.right, mark: 'split-h', tag: '右側を上下に' }];
         return [];
       },
-      setup: function () { room(WINGS[0], [null], 'single'); },
-      check: function () { return isTrident(T.activeWindow(S.session)); },
-      next: function () {
+      setup: function () {
         var win = T.activeWindow(S.session);
-        var n = T.panesOf(win).length;
-        if (n === 1) return mv(['%'], '% を押して、まず左右に仕切る');
-        if (n === 2 && win.root.dir === 'lr') {
-          return moveTo(win.root.b.pane.id) || mv(['"'], '右の間で " を押して、上下に仕切る');
-        }
-        return mv(['x'], '形が違う。x → y で間を閉じて、% → " の順にやり直す');
+        S.q0 = { pane: win.active, parent: T.parentOf(win.root, win.active).parent };
+      },
+      check: function () { return tridentState() === 'done'; },
+      next: function () {
+        var s = tridentState();
+        if (s === 'start') return mv(['%'], '% を押す（まず左右に）');
+        if (s === 'right') return moveTo(S.q0.right) || mv(['"'], '" を押す（右側を上下に）');
+        return mv(['x'], '形が違う。x → y でペインを閉じて、% → " の順にやり直す');
       }
     },
     two_akima: {
-      text: '空き間を二つとも閉じよ', cmd: 'kill-pane ×2', allow: ['close'], show: ['focus', 'close'],
+      text: 'ペインを二つ閉じる', cmd: 'kill-pane ×2', allow: ['close'], show: ['focus', 'close'],
       goal: function () { return S.q0.filter(paneExists).map(function (id) { return { pane: id, mark: 'close', tag: '閉じる' }; }); },
       setup: function (r) {
-        var a = 1 + pickInt(r, 3), b = 1 + (a + pickInt(r, 2)) % 3;
-        if (b === a) b = a === 3 ? 1 : a + 1;
-        var sc = [null, null, null, null]; sc[a] = 'akima'; sc[b] = 'akima';
-        var x = room(WINGS[0], sc, 'tiled', 0); S.q0 = [x.panes[a].id, x.panes[b].id];
+        needUnzoom(); needPanes(3);
+        var a = pick(r, otherPanes());
+        var b = pick(r, otherPanes().filter(function (p) { return p !== a; }));
+        S.q0 = [a.id, b.id];
+        S.qText = '『' + paneLabel(a) + '』と『' + paneLabel(b) + '』を閉じる';
       },
       check: function () { return !paneExists(S.q0[0]) && !paneExists(S.q0[1]); },
       next: function () {
@@ -1392,34 +1497,58 @@
       }
     },
     new_and_home: {
-      text: '離れを建てて、母屋へ戻れ', cmd: 'new-window → select-window', allow: ['new_window', 'select_window'], show: ['new_window', 'select_window'],
-      goal: function () { return S.q1 ? [{ tab: WINGS[0], tag: 'ここへ戻る' }] : [{ tab: '+', tag: '新しい棟' }]; },
-      setup: function () { room(WINGS[0], [null], 'single'); S.q1 = false; },
-      ready: function () { S.q0 = S.session.windows.length; },
-      check: function () {
-        if (S.session.windows.length > S.q0) S.q1 = true;
-        return S.q1 && T.activeWindow(S.session).name === WINGS[0];
+      text: '新しいウィンドウを作って、元のウィンドウに戻る', cmd: 'new-window → select-window', allow: ['new_window', 'select_window'], show: ['new_window', 'select_window'],
+      goal: function () { return S.q1 ? [{ tab: S.q0.home, tag: 'ここへ戻る' }] : [{ tab: '+', tag: '新しいウィンドウ' }]; },
+      setup: function () {
+        var win = T.activeWindow(S.session);
+        S.q0 = { n: S.session.windows.length, home: win.id };
+        S.q1 = false;
+        S.qGoal = { index: win.index, name: win.name };
+        S.qText = '新しいウィンドウを作って、' + winLabel(win) + ' に戻る';
       },
-      next: function () { return S.q1 ? windowMove(WINGS[0], '戻る') : mv(['c'], 'c を押して離れを建てる'); }
+      check: function () {
+        if (S.session.windows.length > S.q0.n) S.q1 = true;
+        return S.q1 && S.session.active === S.q0.home;
+      },
+      next: function () { return S.q1 ? windowMove(S.q0.home, ' に戻る') : mv(['c'], 'c を押す（新しいウィンドウ）'); }
     },
     swap_zoom: {
-      text: '掛け軸の間を左端へ回し、大広間にせよ', cmd: 'swap-pane → resize-pane -Z', allow: ['swap', 'zoom'], show: ['swap', 'zoom'],
-      goal: function () { return atLeft(S.target) ? [{ pane: S.target, mark: 'zoom', tag: 'ここを大広間に' }] : [{ pane: S.target, mark: 'to-left', tag: '左端へ回す' }]; },
-      setup: function () { var x = room(WINGS[0], [null, null, 'kakejiku'], 'evenh', 2); S.target = x.panes[2].id; },
+      text: 'ペインを左上まで動かして全画面にする', cmd: 'swap-pane → resize-pane -Z', allow: ['swap', 'zoom'], show: ['swap', 'zoom'],
+      goal: function () { return isFirst(S.target) ? [{ pane: S.target, mark: 'zoom', tag: 'ここを全画面に' }] : [{ pane: S.target, mark: 'to-left', tag: '左上へ' }]; },
+      setup: function (r) {
+        needUnzoom(); needPanes(2);
+        var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
+        S.target = p.id;
+        S.qText = '『' + paneLabel(p) + '』を左上まで動かして全画面にする';
+      },
       check: function () {
         var h = T.findPane(S.session, S.target);
-        return !!h && h.win.zoomed && h.win.active === S.target && atLeft(S.target);
+        return !!h && h.win.zoomed && h.win.active === S.target && isFirst(S.target);
       },
-      next: function () { return atLeft(S.target) ? (moveTo(S.target) || mv(['z'], 'z を押して大広間に')) : swapMove(); }
+      next: function () { return isFirst(S.target) ? (moveTo(S.target) || mv(['z'], 'z を押す（全画面に）')) : swapMove(); }
     }
   };
 
+  // Where the trident question stands: 'start' (nothing new around the
+  // pane), 'right' (split left-right, the right pane still whole; S.q0.right
+  // names it), 'done', or 'other' (some other shape).
+  function tridentState() {
+    var win = T.activeWindow(S.session);
+    var hit = T.parentOf(win.root, S.q0.pane);
+    if (!hit) return 'other';
+    var p = hit.parent;
+    if (p === S.q0.parent) return 'start';
+    if (!p || p.dir !== 'lr' || p.a !== hit.node) return 'other';
+    if (p.b.type === 'pane') { S.q0.right = p.b.pane.id; return 'right'; }
+    return p.b.dir === 'tb' && p.b.a.type === 'pane' && p.b.b.type === 'pane' ? 'done' : 'other';
+  }
+
   // Short names of the question types, for lists.
   var TYPE_NAMES = {
-    split_lr: '襖を縦に', split_tb: '襖を横に', focus: '間を渡る', zoom: '大広間', unzoom: '大広間を戻す',
-    close: '間を閉じる', new_window: '棟を建てる', select_window: '棟を渡る', resize: '襖をずらす', swap: '間を回す',
-    rename: '名札', kill_window: '棟を閉める', copy_top: '巻物', find_zoom: '探して大広間', trident: '三つ間',
-    two_akima: '二つ閉じる', new_and_home: '建てて戻る', swap_zoom: '回して大広間'
+    split_lr: '左右に分割', split_tb: '上下に分割', focus: 'ペイン移動', zoom: '全画面', unzoom: '全画面を戻す',
+    close: 'ペインを閉じる', new_window: 'ウィンドウ作成', select_window: 'ウィンドウ移動', resize: '大きさ変更', swap: '入れ替え',
+    rename: '名前を変える', kill_window: 'ウィンドウを閉じる', copy_top: 'スクロール', find_zoom: '移動して全画面', trident: '三分割',
+    two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面'
   };
   function typeName(t) { return TYPE_NAMES[t] || t; }
 
@@ -1469,9 +1598,25 @@
       var weak = REC.weakTypes(3);
       var list = [];
       weak.forEach(function (t) { list.push(t, t, t); });
-      return shuffle(list);
+      return pairZoom(shuffle(list));
     }
-    return shuffle(course.qs.slice(), rng(day + ':' + course.id));
+    return pairZoom(shuffle(course.qs.slice(), rng(day + ':' + course.id)));
+  }
+
+  // 'unzoom' goes right after a 'zoom' wherever it can, so z is pressed
+  // twice in a row on the live house: in, then out. An unzoom with no zoom
+  // left to follow stays where the shuffle put it (the house zooms for it).
+  function pairZoom(list) {
+    var outs = list.filter(function (t) { return t === 'unzoom'; }).length;
+    if (!outs) return list;
+    var zooms = list.filter(function (t) { return t === 'zoom'; }).length;
+    var spare = Math.max(0, outs - zooms), out = [];
+    list.forEach(function (t) {
+      if (t === 'unzoom') { if (spare) { spare--; out.push(t); } return; }
+      out.push(t);
+      if (t === 'zoom' && outs > spare) { outs--; out.push('unzoom'); }
+    });
+    return out;
   }
 
   function prepareRun(courseId) {
@@ -1565,18 +1710,16 @@
     clearTimeout(S.messageTimer);
     var type = b.qs[b.i];
     var q = Q[type];
-    newSession();
-    // Each question builds its own windows; the default one goes away after.
-    var base = S.session.windows[0];
-    base.name = '';
+    // The house stays as it is; only a half-typed prompt or confirm is dropped.
+    S.armed = false;
+    S.confirm = null;
+    S.prompt = null;
+    S.picker = null;
     S.qText = null;
+    S.qGoal = null;
+    S.qNote = [];
     S.target = null;
     q.setup(rng(b.seed + ':' + b.i));
-    if (S.session.windows.length > 1) T.killWindow(S.session, base.id);
-    S.session.windows.forEach(function (w, i) { w.index = S.session.baseIndex + i; });
-    S.session.last = null;
-    // Counts taken after the default window is gone.
-    if (q.ready) q.ready();
     b.q = q;
     b.type = type;
     b.stage = 0;
@@ -1848,14 +1991,15 @@
     });
     var lit = move ? move.keys : [];
     var pfxCls = 'pfx' + (move && move.pfx ? (S.armed ? ' done' : ' next') : '');
+    if (S.qNote.length) html += '<div class="sz-note">' + esc(S.qNote.join('。')) + '</div>';
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
-    if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">合図なし</span>' + keycaps(rootKeys, lit) + '</div>';
+    if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">prefix なし</span>' + keycaps(rootKeys, lit) + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
     if (move) {
       html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
         steps(move).map(function (s, i, all) {
           var now = all.findIndex(function (x) { return !x.done; });
-          return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + (s.done ? ' ✓' : '') + '</li>';
+          return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + tick(s.done) + '</li>';
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">別解: ' + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join('、') + '</span>';
     } else if (fold) {
@@ -1870,10 +2014,14 @@
 
   function steps(move) {
     var list = [];
-    if (move.pfx) list.push({ text: '合図 ' + prefixLabel() + ' を押して離す', key: prefixLabel(), done: S.armed });
+    if (move.pfx) list.push({ text: prefixLabel() + ' を押して離す（prefix）', key: prefixLabel(), done: S.armed });
     list.push({ text: move.text, keys: move.keys, done: false });
     return list;
   }
+
+  // The tick of a done step. It takes its space whether shown or not, so
+  // nothing in the order shifts when a step is ticked off.
+  function tick(done) { return '<i class="tick' + (done ? ' on' : '') + '" aria-hidden="true">✓</i>'; }
 
   function altHTML(a) {
     return (a.pfx ? '<kbd>' + esc(prefixLabel()) + '</kbd>→' : '') + a.keys.map(function (k) { return '<kbd>' + esc(k) + '</kbd>'; }).join('');
@@ -1885,11 +2033,12 @@
   function motdHTML(b, move, fold) {
     var n = b.qs.length;
     var html = '<div class="motd-h"><span class="ob-n">仕掛け ' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span><b class="ob-q">' + esc(qText(b)) + '</b></div>';
+    if (S.qNote.length) html += '<div class="ob-note">' + esc(S.qNote.join('。')) + '</div>';
     if (move) {
       var keys = '';
       steps(move).forEach(function (s, i) {
         if (i) keys += '<span class="arr">→</span>';
-        if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + (s.done ? ' ✓' : '') + '</kbd>';
+        if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + tick(s.done) + '</kbd>';
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
       html += '<div class="ob-guide"><span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
@@ -2058,22 +2207,21 @@
         term.appendChild(el);
       }
       var wpx = r.w * cw, hpx = r.h * ch;
-      var room = p.scene ? '' : (p.name || '');
+      var room = p.name || '';
       var size = hpx < 110 || wpx < 150 ? 'cramped' : '';
-      el.className = 'pane' + (isActive ? ' active' : '') + (wanted[p.id] ? ' wanted' : '') + (p.scene ? ' scene-' + p.scene : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
-      el.dataset.scene = p.scene || '';
+      el.className = 'pane' + (isActive ? ' active' : '') + (wanted[p.id] ? ' wanted' : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
       el.style.cssText = 'left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + wpx + 'px;height:' + hpx + 'px';
-      var decorKey = (p.scene || room) + '|' + size;
+      var decorKey = room + '|' + size;
       if (el.dataset.decor !== decorKey) {
         el.dataset.decor = decorKey;
-        el.firstChild.innerHTML = decorHTML(p.scene, room, size);
+        el.firstChild.innerHTML = decorHTML(room, size);
       }
-      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (isActive && lay.panes.length > 1 ? '<span class="pt-here">いまここ</span>' : '') + (win.zoomed ? '<span class="zoom-flag">大広間</span>' : '');
+      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (isActive && lay.panes.length > 1 ? '<span class="pt-here">いまここ</span>' : '') + (win.zoomed ? '<span class="zoom-flag">全画面</span>' : '');
       var body = el.children[2];
       body.className = 'pane-body' + (p.mode === 'copy' ? ' copy' : '');
       body.dataset.paneBody = p.id;
       body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
-        sceneHTML(p) + linesHTML(p.lines, p.mode === 'copy' ? p : null) +
+        linesHTML(p.lines, p.mode === 'copy' ? p : null) +
         '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
       // The order sits on top of the room you stand in; the shell starts below it.
       var motd = $(':scope > .motd', el);
@@ -2109,7 +2257,6 @@
     Object.keys(old).forEach(function (id) {
       var el = old[id];
       el.removeAttribute('data-pane-id');
-      el.removeAttribute('data-scene');
       $$('[data-pane-body],[data-copy-ind]', el).forEach(function (x) { x.removeAttribute('data-pane-body'); x.removeAttribute('data-copy-ind'); });
       el.className = 'pane leaving' + (zoomIn ? ' lift' : '');
       if (reduceMotion) { el.remove(); return; }
@@ -2403,26 +2550,11 @@
     }
   };
 
-  function decorHTML(scene, room, size) {
-    if (scene === 'makimono') return '';
+  function decorHTML(room, size) {
     var html = '<div class="kamoi"></div><div class="hashira"></div><div class="tatami"></div>';
     var f = FURNISH[room];
     if (f && !size) html += f.furn + (f.lamp || '') + (f.wall || '');
     return html;
-  }
-
-  // What a staged pane shows above its shell: the room's name, large.
-  function sceneHTML(p) {
-    if (p.scene === 'kakejiku') {
-      return '<div class="scene"><div class="room-name">掛け軸の間</div><div class="kakejiku-art"></div><div class="scene-cap">ここへ渡る</div></div>';
-    }
-    if (p.scene === 'akima') {
-      return '<div class="scene dim"><div class="room-name">空き間</div><div class="scene-cap">閉じる間</div></div>';
-    }
-    if (p.scene === 'makimono') {
-      return '<div class="scene makimono-head"><div class="makimono-roll"></div></div>';
-    }
-    return '';
   }
 
   function linesHTML(lines, copyPane) {
@@ -2461,7 +2593,7 @@
     S.session.windows.forEach(function (w) {
       var flag = w.id === S.session.active ? '*' : (w.id === S.session.last ? '-' : '');
       if (w.id === S.session.active && w.zoomed) flag += 'Z';
-      var g = tabGoal(w.name);
+      var g = tabGoal(w.id);
       html += '<span class="st-win' + (w.id === S.session.active ? ' cur' : '') + (g ? ' goal-tab' + (g.mark === 'close' ? ' close' : '') : '') + '">' + w.index + ':' + esc(w.name) + flag + (g ? '<span class="goal-tag">' + esc(g.tag) + '</span>' : '') + '</span>';
     });
     var gn = tabGoal('+');
@@ -2604,7 +2736,7 @@
   function startRun(courseId) {
     store.save({ prefix: S.prefix });
     S.result = null;
-    newSession();
+    buildHouse();
     prepareRun(courseId);
     $('#chips').innerHTML = '';
     $('#playbar').dataset.key = '';
@@ -2679,7 +2811,7 @@
       '</dl>' +
       resultNetHTML(r) +
       spark(r.spark) +
-      '<div class="spark-l"><span>' + (slow ? '灯りがいちばん長かった仕掛け: ' + esc(slow.text || '棟を渡る') + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '灯りなし。どの仕掛けも目安のうちに解いた') + '</span>' +
+      '<div class="spark-l"><span>' + (slow ? '灯りがいちばん長かった仕掛け: ' + esc(slow.text) + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '灯りなし。どの仕掛けも目安のうちに解いた') + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span>■ 自己ベスト ■ 今回</span>' : '') + '</div>' +
       (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度 屋敷へ') + '<kbd class="hk">Enter</kbd></button>' +
@@ -2945,13 +3077,13 @@
       var q = Q[e.type];
       var keys = [];
       q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
-      return '<li><span class="w-text">' + esc(q.text || '母屋・離れ・蔵を渡る') + '</span>' +
+      return '<li><span class="w-text">' + esc(q.text) + '</span>' +
         '<span class="w-num">平均 ' + e.avg.toFixed(1) + '秒 ・ 違い ' + Math.round(e.missRate * 100) + '%' + (e.overs ? ' ・ 灯り ' + e.overs : '') + '</span>' +
         '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span></li>';
     };
     return '<div class="rec-panel rec-weak"><div class="rec-head">灯りが多い仕掛け（直近 ' + w.runs + ' 回）</div><ol class="weak-list">' +
       w.weak.map(row).join('') + '</ol>' +
-      (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text || '棟を渡る') + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') +
+      (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text) + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') +
       (REC.weakTypes(3).length ? '<div class="cta"><button type="button" class="btn" data-course="keiko">苦手だけ稽古する（' + REC.weakTypes(3).map(typeName).join('・') + '）</button></div>' : '') +
       '</div>';
   }
@@ -3137,9 +3269,12 @@
           screen: S.screen, prefix: S.prefix,
           armed: S.armed, detached: S.detached,
           session: S.session ? S.session.name : null,
+          house: S.session ? S.session.createdAt.getTime() : null,
           windows: S.session ? S.session.windows.map(function (w) { return { index: w.index, name: w.name, active: w.id === S.session.active, panes: T.panesOf(w).length, zoomed: w.zoomed }; }) : [],
           activeWindow: win ? win.name : null,
-          activeScene: ap ? (ap.scene || null) : null,
+          activeIndex: win ? win.index : null,
+          activePane: ap ? ap.id : null,
+          panes: win ? T.panesOf(win).map(function (p) { return p.id; }) : [],
           copyMode: ap ? ap.mode === 'copy' : false,
           input: ap ? ap.input : null,
           cursor: ap ? (ap.cur == null ? ap.input.length : ap.cur) : null,
@@ -3152,7 +3287,8 @@
             qs: b.qs.slice(), day: b.day,
             folded: b.q && b.phase === 'play' ? folded(b) : false,
             goals: b.q && b.phase === 'play' ? goalMarks().length : 0,
-            goal: b.type === 'select_window' ? S.q0 : null,
+            goal: S.qGoal,
+            note: (S.qNote || []).slice(),
             next: b.q && b.phase === 'play' ? guideMove(b) : null
           } : null,
           result: S.result,
