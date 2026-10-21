@@ -205,20 +205,29 @@
 
   // tmux select-pane -L/-R/-U/-D: the adjacent pane in that direction that
   // overlaps the active one; ties go to the first in layout order.
-  function neighbour(win, cols, rows, dir) {
+  // The room next to the active one in a direction. As tmux's
+  // window_pane_find_left/right/up/down, it wraps round at the window edge
+  // (the far side's rooms), unless noWrap.
+  function neighbour(win, cols, rows, dir, noWrap) {
     var l = layout(win, cols, rows);
     var me = null;
     for (var i = 0; i < l.panes.length; i++) if (l.panes[i].pane.id === win.active) me = l.panes[i];
     if (!me) return null;
+    var edge;
+    if (dir === 'L') edge = me.x === 0 ? (noWrap ? null : cols + 1) : me.x;
+    if (dir === 'R') edge = me.x + me.w >= cols ? (noWrap ? null : -1) : me.x + me.w;
+    if (dir === 'U') edge = me.y === 0 ? (noWrap ? null : rows + 1) : me.y;
+    if (dir === 'D') edge = me.y + me.h >= rows ? (noWrap ? null : -1) : me.y + me.h;
+    if (edge == null) return null;
     var best = null;
     for (var j = 0; j < l.panes.length; j++) {
       var r = l.panes[j];
       if (r === me) continue;
       var ok = false;
-      if (dir === 'L') ok = r.x + r.w + 1 === me.x && overlap(r.y, r.h, me.y, me.h);
-      if (dir === 'R') ok = me.x + me.w + 1 === r.x && overlap(r.y, r.h, me.y, me.h);
-      if (dir === 'U') ok = r.y + r.h + 1 === me.y && overlap(r.x, r.w, me.x, me.w);
-      if (dir === 'D') ok = me.y + me.h + 1 === r.y && overlap(r.x, r.w, me.x, me.w);
+      if (dir === 'L') ok = r.x + r.w + 1 === edge && overlap(r.y, r.h, me.y, me.h);
+      if (dir === 'R') ok = edge + 1 === r.x && overlap(r.y, r.h, me.y, me.h);
+      if (dir === 'U') ok = r.y + r.h + 1 === edge && overlap(r.x, r.w, me.x, me.w);
+      if (dir === 'D') ok = edge + 1 === r.y && overlap(r.x, r.w, me.x, me.w);
       if (ok && !best) best = r;
     }
     return best ? best.pane : null;

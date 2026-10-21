@@ -261,12 +261,30 @@ kbd.pfx.next { background: var(--ai); }
 .shinan li.done { text-decoration: line-through; text-decoration-color: rgba(0, 0, 0, 0.25); }
 .shinan .no { font-family: var(--mincho); width: 1.2em; flex: none; }
 
-.chips { position: absolute; top: 26px; right: 10px; z-index: 8; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none; }
-/* 指図 in the house: the order bar, under the panes, where the eyes are */
-.order { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; background: var(--washi-3); color: var(--sumi); border-left: 4px solid var(--andon); border-radius: 2px; padding: 7px 12px; min-height: 44px; }
+.chips { position: absolute; bottom: 14px; right: 10px; z-index: 8; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none; }
+/* 指図 in the house: at the top of the room you stand in, like a login message */
+.motd {
+  position: absolute; left: 0; right: 0; top: 20px; z-index: 3;
+  padding: 6px 1ch 7px; background: var(--washi-3); color: var(--sumi);
+  border-bottom: 2px solid var(--andon); box-shadow: 0 2px 6px rgba(43, 26, 5, 0.12);
+  font-family: var(--sans); font-size: 13px; line-height: 1.4; white-space: normal; word-break: normal;
+}
+.motd-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.motd-go { color: #c47a12; font-size: 12px; }
+.motd .ob-alt { margin-top: 3px; white-space: normal; }
+.pane.cramped .motd .ob-txt, .pane.cramped .motd .ob-alt { display: none; }
+/* the room you stand in: a lit frame and a いまここ tag; the others recede */
+.pane.active::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 3px var(--andon); }
+.pane:not(.active):not(.wanted) > .pane-body, .pane:not(.active):not(.wanted) > .decor { opacity: 0.5; }
+.pt-here { font-size: 11px; font-weight: 700; color: #2b1a05; background: var(--andon); padding: 0 6px; line-height: 16px; border-radius: 2px; }
+/* the way to the room the question wants */
+.goal-arrow { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; overflow: visible; }
+.goal-arrow line { stroke: #c47a12; stroke-width: 4; stroke-linecap: round; }
+.goal-arrow path { fill: #c47a12; }
+.goal-key { position: absolute; z-index: 7; transform: translate(-50%, -50%); pointer-events: none; font-family: var(--mono); font-size: 12px; font-weight: 700; white-space: nowrap; background: #fff3d2; color: #2b1a05; border: 2px solid #c47a12; border-radius: 3px; padding: 1px 7px; }
 .ob-n { font-family: var(--mincho); font-size: 12px; color: var(--sumi-dim); letter-spacing: 0.1em; }
-.ob-q { font-family: var(--mincho); font-size: 19px; line-height: 1.35; }
-.ob-guide { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-left: auto; }
+.ob-q { font-family: var(--mincho); font-size: 17px; line-height: 1.35; }
+.ob-guide { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 5px; }
 .ob-keys { display: inline-flex; align-items: center; gap: 5px; }
 .ob-keys kbd { font-size: 13px; padding: 2px 8px; }
 .ob-keys kbd.next { transform: none; }
@@ -694,7 +712,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .play-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
   body:not([data-detail="1"]) .play-body { grid-template-rows: minmax(0, 1fr); }
   .side { overflow: visible; }
-  .order { padding: 6px 8px; min-height: 0; gap: 2px 8px; }
+  .motd .ob-q { font-size: 15px; }
   .ob-q { font-size: 16px; }
   .ob-guide { margin-left: 0; }
   .ob-txt { display: none; }

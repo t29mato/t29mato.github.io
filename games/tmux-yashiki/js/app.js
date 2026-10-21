@@ -663,6 +663,7 @@
       var nb = T.neighbour(win, S.cols, S.rows, moves[key]);
       if (nb) T.selectPane(win, nb.id);
       else if (win.zoomed) { win.zoomed = false; message('全画面を解除した'); }
+      else message('ほかに間がない（' + prefixLabel() + ' → % か " で襖を立てる）');
       S.lastAction = 'focus';
       return true;
     }
@@ -977,10 +978,12 @@
     if (S.screen !== 'game') { navKey(e); return; }
     var t = e.target;
     if (t && t !== document.body && t.id !== 'sink' && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+    // Paused: any key resumes. Space, Enter and Esc only resume; any other
+    // key also does its work, so the first Ctrl+l after coming back moves.
     if (S.run && S.run.phase === 'pause') {
-      if (!isModifierOnly(e.key)) resumeRun();
-      e.preventDefault();
-      return;
+      if (isModifierOnly(e.key)) return;
+      resumeRun();
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); return; }
     }
     // A soft keyboard's keydown carries no key; its text comes as input.
     if (e.key === 'Unidentified' || e.key === 'Process' || e.isComposing) return;
@@ -1076,7 +1079,8 @@
     var goal = T.rectOf(win, id, S.cols, S.rows);
     var best = null;
     ['L', 'R', 'U', 'D'].forEach(function (d) {
-      var nb = T.neighbour(win, S.cols, S.rows, d);
+      // The 指南 points the plain way, never round the edge.
+      var nb = T.neighbour(win, S.cols, S.rows, d, true);
       if (!nb || !goal) return;
       var r = T.rectOf(win, nb.id, S.cols, S.rows);
       var dist = nb.id === id ? -1 : Math.abs((r.x + r.w / 2) - (goal.x + goal.w / 2)) + Math.abs((r.y + r.h / 2) - (goal.y + goal.h / 2));
@@ -1664,6 +1668,9 @@
         AU.se('andon');
         syncBody();
         renderSashizu();
+        // A folded 指南 opens in the order at the top of the room.
+        renderTerm();
+        renderTabArrow();
       }
       renderClock();
     }, 100);
@@ -1712,7 +1719,7 @@
   function render() {
     syncBody();
     if (S.screen === 'title') renderTitle();
-    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderTerm(); renderStatus(); renderKeybar(); }
+    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderTerm(); renderStatus(); renderTabArrow(); renderKeybar(); }
     if (S.screen === 'result') renderResult();
     if (S.screen === 'records') renderRecords();
   }
@@ -1823,7 +1830,6 @@
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     var n = b.qs.length;
-    renderOrder(b, playing, move, fold);
     var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
       html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
@@ -1873,32 +1879,25 @@
     return (a.pfx ? '<kbd>' + esc(prefixLabel()) + '</kbd>→' : '') + a.keys.map(function (k) { return '<kbd>' + esc(k) + '</kbd>'; }).join('');
   }
 
-  // The order bar, in the house under the panes: the question in one line,
-  // then the keys of the next step and what they do. Nothing moves in it.
-  function renderOrder(b, playing, move, fold) {
-    var el = $('#order');
-    if (!el) return;
+  // The order, written at the top of the room you stand in, like the
+  // message a server prints when you log in: the question, then the keys of
+  // the next step and what they do. It moves with you; nothing in it moves.
+  function motdHTML(b, move, fold) {
     var n = b.qs.length;
-    var head = '<span class="ob-n">' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span>';
-    if (!playing) {
-      el.innerHTML = head + '<b class="ob-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</b>';
-      return;
-    }
-    var html = head + '<b class="ob-q">' + esc(qText(b)) + '</b>';
+    var html = '<div class="motd-h"><span class="ob-n">仕掛け ' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span><b class="ob-q">' + esc(qText(b)) + '</b></div>';
     if (move) {
-      var st = steps(move);
       var keys = '';
-      st.forEach(function (s, i) {
+      steps(move).forEach(function (s, i) {
         if (i) keys += '<span class="arr">→</span>';
         if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + (s.done ? ' ✓' : '') + '</kbd>';
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
-      html += '<span class="ob-guide"><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></span>';
-      if (move.alt && move.alt.length && !S.armed) html += '<span class="ob-alt">別解 ' + move.alt.map(altHTML).join(' ／ ') + '</span>';
+      html += '<div class="ob-guide"><span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
+      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
-      html += '<span class="ob-guide learnt">覚えた ✓<span class="ob-txt">指南は目安を過ぎたら出る</span></span>';
+      html += '<div class="ob-guide learnt">覚えた ✓<span class="ob-txt">手順は目安を過ぎたら出る</span></div>';
     }
-    el.innerHTML = html;
+    return html;
   }
 
   // The ghost in the bar: who it is, and after each question how far ahead
@@ -2018,6 +2017,14 @@
     var win = T.activeWindow(S.session);
     var lay = T.layout(win, S.cols, S.rows);
     var cw = S.cellW, ch = S.cellH;
+    var run = S.run;
+    var playing = !!(run && run.phase === 'play' && run.q);
+    var fold = playing && folded(run);
+    var move = playing && !fold ? guideMove(run) : null;
+    var motdH = 0;
+    var marks = goalMarks();
+    var wanted = {};
+    marks.forEach(function (g) { if (g.pane) wanted[g.pane] = true; });
     var active = null;
     lay.panes.forEach(function (r) { if (r.pane.id === win.active) active = r; });
     var fresh = view.session !== S.session || view.win !== win;
@@ -2053,7 +2060,7 @@
       var wpx = r.w * cw, hpx = r.h * ch;
       var room = p.scene ? '' : (p.name || '');
       var size = hpx < 110 || wpx < 150 ? 'cramped' : '';
-      el.className = 'pane' + (isActive ? ' active' : '') + (p.scene ? ' scene-' + p.scene : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
+      el.className = 'pane' + (isActive ? ' active' : '') + (wanted[p.id] ? ' wanted' : '') + (p.scene ? ' scene-' + p.scene : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
       el.dataset.scene = p.scene || '';
       el.style.cssText = 'left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + wpx + 'px;height:' + hpx + 'px';
       var decorKey = (p.scene || room) + '|' + size;
@@ -2061,13 +2068,24 @@
         el.dataset.decor = decorKey;
         el.firstChild.innerHTML = decorHTML(p.scene, room, size);
       }
-      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">大広間</span>' : '');
+      el.children[1].innerHTML = '<span class="pt-idx">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (isActive && lay.panes.length > 1 ? '<span class="pt-here">いまここ</span>' : '') + (win.zoomed ? '<span class="zoom-flag">大広間</span>' : '');
       var body = el.children[2];
       body.className = 'pane-body' + (p.mode === 'copy' ? ' copy' : '');
       body.dataset.paneBody = p.id;
       body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
         sceneHTML(p) + linesHTML(p.lines, p.mode === 'copy' ? p : null) +
         '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
+      // The order sits on top of the room you stand in; the shell starts below it.
+      var motd = $(':scope > .motd', el);
+      if (isActive && playing) {
+        if (!motd) { motd = document.createElement('div'); motd.className = 'motd'; el.appendChild(motd); }
+        motd.innerHTML = motdHTML(run, move, fold);
+        motdH = motd.offsetHeight;
+        body.style.top = (20 + motdH) + 'px';
+      } else {
+        if (motd) motd.remove();
+        body.style.top = '';
+      }
       // A room that appears in a window already on screen slides open from
       // the side it was split off.
       if (born && !fresh && !reduceMotion) {
@@ -2125,8 +2143,9 @@
       view.borders = bhtml;
     }
     // 完成図: what this question wants changed, marked on the rooms.
-    $$(':scope > .goal', term).forEach(function (x) { x.remove(); });
-    goalMarks().forEach(function (g) {
+    $$(':scope > .goal, :scope > .goal-arrow, :scope > .goal-key', term).forEach(function (x) { x.remove(); });
+    var labelled = false;
+    marks.forEach(function (g) {
       if (!g.pane) return;
       var r = null;
       lay.panes.forEach(function (x) { if (x.pane.id === g.pane) r = x; });
@@ -2136,8 +2155,12 @@
       var d = document.createElement('div');
       d.className = 'goal ' + (g.mark || 'go');
       d.style.cssText = 'left:' + (box.x * cw) + 'px;top:' + (box.y * ch) + 'px;width:' + (box.w * cw) + 'px;height:' + (box.h * ch) + 'px';
-      d.innerHTML = '<span class="goal-tag">' + esc(g.tag) + '</span>';
+      // On the room you stand in, the tag goes under the order.
+      d.innerHTML = '<span class="goal-tag"' + (r === active && !full && motdH ? ' style="top:' + (24 + motdH) + 'px"' : '') + '>' + esc(g.tag) + '</span>';
       term.appendChild(d);
+      // Another room: an arrow from where you stand to it, with the keys.
+      // Only the first gets the keys: the move goes there first.
+      if (active && r !== active && !win.zoomed) { term.insertAdjacentHTML('beforeend', arrowHTML(active, r, cw, ch, motdH, fold || labelled ? '' : moveLabel(move))); labelled = true; }
     });
     var pk = $(':scope > .picker', term);
     if (pk) pk.remove();
@@ -2176,6 +2199,52 @@
         el.scrollTop = el.scrollHeight;
       }
     });
+  }
+
+  // The keys of a move, short: "Ctrl+b → →".
+  function moveLabel(m) {
+    if (!m || !m.keys.length) return '';
+    return (m.pfx ? prefixLabel() + ' → ' : '') + m.keys.join(' ');
+  }
+
+  // Where an arrow starts: the middle of the room you stand in, below the order.
+  function arrowFrom(a, cw, ch, motdH) {
+    var top = a.y * ch + 20 + motdH, bottom = (a.y + a.h) * ch;
+    return { x: (a.x + a.w / 2) * cw, y: Math.min(bottom - 10, (top + bottom) / 2) };
+  }
+
+  function arrowHTML(a, t, cw, ch, motdH, label) {
+    var f = arrowFrom(a, cw, ch, motdH);
+    return arrowSVG(f.x, f.y, (t.x + t.w / 2) * cw, (t.y + t.h / 2) * ch, 34, label, '');
+  }
+
+  function arrowSVG(x1, y1, x2, y2, stop, label, cls) {
+    var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy) || 1;
+    var s0 = Math.min(16, len * 0.1), s1 = Math.min(stop, len * 0.2);
+    var ax = x1 + dx / len * s0, ay = y1 + dy / len * s0, bx = x2 - dx / len * s1, by = y2 - dy / len * s1;
+    var W = S.cols * S.cellW, H = S.rows * S.cellH;
+    return '<svg class="goal-arrow' + (cls ? ' ' + cls : '') + '" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
+      '<defs><marker id="ga-head' + cls + '" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>' +
+      '<line x1="' + ax.toFixed(1) + '" y1="' + ay.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) + '" marker-end="url(#ga-head' + cls + ')"/></svg>' +
+      (label ? '<span class="goal-key' + (cls ? ' ' + cls : '') + '" style="left:' + ((ax + bx) / 2).toFixed(0) + 'px;top:' + ((ay + by) / 2).toFixed(0) + 'px">' + esc(label) + '</span>' : '');
+  }
+
+  // A wing (window) the question wants: an arrow from the room you stand in
+  // down to its tab in the status bar.
+  function renderTabArrow() {
+    var term = $('#term');
+    if (!term) return;
+    $$(':scope > .goal-arrow.tab, :scope > .goal-key.tab', term).forEach(function (x) { x.remove(); });
+    var tab = $('#status .goal-tab');
+    var act = $(':scope > .pane.active', term);
+    if (!tab || !act || S.detached) return;
+    var b = S.run, fold = !!(b && folded(b));
+    var tr = term.getBoundingClientRect(), r = tab.getBoundingClientRect(), ar = act.getBoundingClientRect();
+    var motd = $(':scope > .motd', act);
+    var top = ar.top - tr.top + 20 + (motd ? motd.offsetHeight : 0), bottom = ar.bottom - tr.top;
+    var x1 = ar.left - tr.left + ar.width / 2, y1 = Math.min(bottom - 10, (top + bottom) / 2);
+    var x2 = Math.max(12, Math.min(tr.width - 12, r.left - tr.left + Math.min(r.width / 2, 40))), y2 = tr.height - 4;
+    term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, fold ? '' : moveLabel(b && b.phase === 'play' && b.q ? guideMove(b) : null), 'tab'));
   }
 
   function tabGoal(name) {
