@@ -36,30 +36,16 @@
       <button type="button" id="btn-records" class="btn ghost">絵巻<small id="records-sub">記録を見る</small><kbd class="hk">R</kbd></button>
       <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden>稽古の間<small id="keiko-sub">苦手だけ</small><kbd class="hk">K</kbd></button>
     </div>
-    <div class="navset">
-      <span class="navset-l">隣の間へ</span>
-      <div class="seg" role="group" aria-label="隣の間への移り方">
-        <button type="button" data-nav="default" aria-pressed="true">既定<small>合図 → 矢印</small></button>
-        <button type="button" data-nav="vim" aria-pressed="false">vim-tmux-navigator<small>Ctrl+h j k l</small></button>
+    <details id="conf-box" class="confbox">
+      <summary>キー設定 <b id="conf-state">既定</b></summary>
+      <p>自分の <code>.tmux.conf</code> を貼ると、その割り当てで遊べる。指南もそのキーで出る。読めない行（見た目の設定など）は読み飛ばして、下に理由を出す。自分の設定で遊んだ記録は番付には載らない（絵巻には残る）。</p>
+      <textarea id="conf-text" rows="8" spellcheck="false" autocomplete="off" aria-label=".tmux.conf" placeholder="set -g prefix C-a&#10;bind | split-window -h&#10;bind - split-window -v&#10;bind h select-pane -L"></textarea>
+      <div class="conf-btns">
+        <button type="button" id="conf-apply" class="btn">この設定で遊ぶ</button>
+        <button type="button" id="conf-sample" class="btn ghost">vim-tmux-navigator を足す</button>
+        <button type="button" id="conf-reset" class="btn ghost">既定に戻す</button>
       </div>
-    </div>
-    <details id="nav-conf" class="navconf" hidden>
-      <summary>本物の tmux で同じにするには</summary>
-      <p>プラグイン（<a href="https://github.com/christoomey/vim-tmux-navigator" target="_blank" rel="noopener">vim-tmux-navigator</a>）を TPM で入れる。vim の中でも同じキーで窓を渡れる。</p>
-      <pre><code># ~/.tmux.conf
-set -g @plugin 'christoomey/vim-tmux-navigator'
-run '~/.tmux/plugins/tpm/tpm'
-
-" ~/.vimrc（vim-plug）
-Plug 'christoomey/vim-tmux-navigator'</code></pre>
-      <p>プラグインなしで tmux だけなら:</p>
-      <pre><code>bind -n C-h select-pane -L
-bind -n C-j select-pane -D
-bind -n C-k select-pane -U
-bind -n C-l select-pane -R
-bind -n 'C-\' select-pane -l
-bind C-l send-keys 'C-l'</code></pre>
-      <p>Ctrl+l は本来シェルの画面消去なので、プラグインは 合図 → Ctrl+l を画面消去に回す（このゲームも同じ）。合図 → l は既定のまま、直前の棟へ戻る。</p>
+      <div id="conf-report" class="conf-report"></div>
     </details>
     <p class="fine">はじめての人は三間屋敷へ。1 仕掛け 1 キーで、指図を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、番付と端末の引き継ぎのために送る。</p>
   </section>
@@ -138,6 +124,7 @@ bind C-l send-keys 'C-l'</code></pre>
 <div id="fx" aria-hidden="true"></div>
 
 <script src="js/levels.js"></script>
+<script src="js/conf.js"></script>
 <script src="js/records.js"></script>
 <script src="js/net.js"></script>
 <script src="js/audio.js"></script>

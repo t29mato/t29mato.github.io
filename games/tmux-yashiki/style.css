@@ -125,7 +125,8 @@ body[data-quiet="1"] .cursor { animation: none; }
 .title {
   position: relative; overflow: auto;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 540px); gap: 48px; align-items: start;
-  padding: 40px 48px 150px; max-width: 1280px; width: 100%; margin: 0 auto;
+  grid-template-rows: 1fr auto;
+  padding: 40px 48px 0; max-width: 1280px; width: 100%; margin: 0 auto;
 }
 .hero .eyebrow { font-family: var(--mincho); font-size: 16px; letter-spacing: 0.25em; color: var(--hero-accent); margin: 0; }
 .hero-title { margin: 14px 0 0; font-family: var(--mincho); font-size: clamp(44px, 7vw, 84px); line-height: 1.05; font-weight: 700; letter-spacing: 0.04em; color: var(--hero-ink); }
@@ -133,12 +134,22 @@ body[data-quiet="1"] .cursor { animation: none; }
 .lead { font-size: 16px; line-height: 2; margin: 22px 0 0; max-width: 560px; color: var(--ink); }
 .lead b { color: var(--hero-ink); font-weight: 700; }
 .hero .cta { margin-top: 28px; }
-.navset { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
-.navset-l { font-size: 13px; color: var(--ink-dim); }
-.navconf { margin-top: 10px; max-width: 560px; font-size: 12.5px; color: var(--ink-dim); }
-.navconf summary { cursor: pointer; }
-.navconf a { color: inherit; }
-.navconf pre { margin: 6px 0 10px; padding: 8px 10px; background: rgba(0, 0, 0, 0.25); border-radius: 3px; overflow-x: auto; font-family: var(--mono); font-size: 12px; color: var(--ink); }
+.confbox { margin-top: 18px; max-width: 600px; font-size: 13px; color: var(--ink-dim); }
+.confbox summary { cursor: pointer; font-size: 14px; color: var(--ink); }
+.confbox summary b { font-weight: 600; color: var(--andon); margin-left: 6px; }
+.confbox p { margin: 8px 0; }
+.confbox code { font-family: var(--mono); }
+.confbox textarea { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; padding: 8px 10px; background: var(--bg-2); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; resize: vertical; }
+.conf-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.conf-btns .btn { padding: 6px 14px; font-size: 13px; }
+.conf-report { margin-top: 10px; }
+.conf-report h4 { margin: 10px 0 4px; font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.conf-report ul { margin: 0; padding: 0; list-style: none; }
+.conf-report li { display: block; padding: 3px 0; font-size: 12px; }
+.conf-report li code { display: block; font-family: var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.conf-report li .no { display: inline-block; min-width: 3ch; margin-right: 6px; font-style: normal; color: var(--ink-dim); text-align: right; }
+.conf-report li span { display: block; padding-left: calc(3ch + 6px); }
+.conf-report .err { color: var(--shu); }
 .ob-alt, .sz-alt { font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
 .ob-alt kbd, .sz-alt kbd { opacity: 0.85; }
 .sz-alt { display: block; margin-top: 6px; white-space: normal; }
@@ -172,7 +183,7 @@ body[data-quiet="1"] .cursor { animation: none; }
 
 /* the house front at the bottom: lit shoji */
 .facade {
-  position: absolute; left: 48px; bottom: 0; width: min(600px, 55%); height: 110px;
+  position: relative; grid-column: 1; align-self: end; margin-top: 40px; width: min(600px, 100%); height: 110px; box-sizing: border-box;
   display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; padding: 6px;
   background: var(--wood-d); border: 8px solid var(--wood-d); border-bottom: 0; border-radius: 4px 4px 0 0;
   box-shadow: 0 -10px 40px rgba(240, 163, 58, 0.15);

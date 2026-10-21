@@ -58,13 +58,16 @@
     cols: 80, rows: 24, cellW: 8, cellH: 18,
     hinted: false,
     sound: true,
-    nav: 'default'         // 'vim': vim-tmux-navigator, Ctrl+h/j/k/l with no prefix
+    confText: '',          // the pasted .tmux.conf
+    conf: null             // what of it the game uses (conf.js); null: the defaults
   };
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function prefixKey() { return S.prefix === 'C-a' ? 'a' : 'b'; }
-  function prefixLabel() { return LV.prefixLabel(S.prefix); }
+  var CF = ADV.conf;
+  function prefixSpec() { return S.conf ? S.conf.prefix : CF.parseKey('C-b'); }
+  function prefixEvent() { var p = prefixSpec(); return { key: p.key, ctrl: p.ctrl, alt: p.alt, shift: p.shift }; }
+  function prefixLabel() { return prefixSpec().label; }
 
   function syncBody() {
     var b = document.body;
@@ -76,9 +79,8 @@
     b.dataset.quiet = S.quiet ? '1' : '0';
     var dt = $('.detail-toggle');
     if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指図の詳細をしまう' : '指図の詳細を出す'; }
-    $$('[data-nav]').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.nav === S.nav ? 'true' : 'false'); });
-    var nc = $('#nav-conf');
-    if (nc) nc.hidden = S.nav !== 'vim';
+    var cs = $('#conf-state');
+    if (cs) cs.textContent = S.conf ? '自分の設定（合図 ' + prefixLabel() + '）' : '既定';
     var qt = $('.quiet-toggle');
     if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静かな屋敷（飾りは止まっている）' : '動く屋敷（振り子や湯気が動く）'; }
   }
@@ -507,9 +509,7 @@
     return key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta' || key === 'CapsLock' || key === 'Dead' || key === 'Unidentified' || key === 'Process';
   }
 
-  function isPrefix(k) {
-    return k.ctrl && !k.alt && !k.meta && !k.shift && k.key.toLowerCase() === prefixKey();
-  }
+  function isPrefix(k) { return CF.isPrefix(S.conf, k); }
 
   function handleGameKey(k) {
     if (S.detached) {
@@ -553,7 +553,7 @@
         // Prefix twice: send-prefix. The shell gets the key itself, so C-b
         // (or C-a) still moves the cursor, as in a real tmux.
         S.armed = false;
-        if (pane.mode !== 'copy') lineEdit(pane, 'input', { key: prefixKey(), ctrl: true });
+        if (pane.mode !== 'copy') lineEdit(pane, 'input', prefixEvent());
         return true;
       }
       AU.se('prefix');
@@ -564,39 +564,32 @@
     if (S.armed) {
       S.armed = false;
       S.graceUntil = 0;
+      var pb = CF.lookup(S.conf, 'prefix', k);
+      if (pb) return runBinding(pb, win, pane);
+      if (CF.overridden(S.conf, k)) { message('そのキーには割り当てがない'); S.lastAction = 'unbound'; return true; }
       return prefixedKey(k, win, pane);
     }
 
-    // vim-tmux-navigator: Ctrl+h/j/k/l to the next room, Ctrl+\ back to
-    // the last one, with no prefix.
-    var nv = paneNavKey(k);
-    if (nv) {
+    // The player's own keys with no prefix (bind -n, vim-tmux-navigator).
+    var rb = CF.lookup(S.conf, 'root', k);
+    if (rb) {
       S.graceUntil = 0;
       S.repeatUntil = 0;
-      if (nv === 'last') {
-        if (win.last && T.findPane(S.session, win.last)) T.selectPane(win, win.last);
-        else message('no last pane');
-      }
-      else {
-        var nb2 = T.neighbour(win, S.cols, S.rows, nv);
-        if (nb2) T.selectPane(win, nb2.id);
-      }
-      S.lastAction = 'focus';
-      return true;
+      return runBinding(rb, win, pane);
     }
-
 
     // Resize keys still coming after the last question was solved belong to
     // that question: swallow them instead of counting a 仕掛け違い here.
-    if (Date.now() < S.graceUntil && resizeBinding(k)) {
+    if (Date.now() < S.graceUntil && repeatBinding(k)) {
       S.graceUntil = Date.now() + 500;
       return true;
     }
     S.graceUntil = 0;
 
     if (Date.now() < S.repeatUntil) {
-      var r = resizeBinding(k);
-      if (r) { resize(win, pane, r); armRepeat(); S.lastAction = 'resize'; return true; }
+      var rp = repeatBinding(k);
+      if (rp && rp.bind) return runBinding(rp.bind, win, pane);
+      if (rp) { resize(win, pane, rp); armRepeat(); S.lastAction = 'resize'; return true; }
       S.repeatUntil = 0;
     }
 
@@ -606,11 +599,32 @@
     return editLine(pane, k, function (line) { runPaneCommand(pane, line); });
   }
 
-  var NAV_KEYS = { h: 'L', j: 'D', k: 'U', l: 'R', '\\': 'last' };
-  var NAV_LABELS = { L: 'Ctrl+h', D: 'Ctrl+j', U: 'Ctrl+k', R: 'Ctrl+l', last: 'Ctrl+\\' };
-  function paneNavKey(k) {
-    if (S.nav !== 'vim' || !k.ctrl || k.alt || k.meta) return null;
-    return NAV_KEYS[String(k.key).toLowerCase()] || null;
+  // A key that repeats without the prefix inside the repeat window: one of
+  // the player's -r bindings ({bind}), or the default resize keys.
+  function repeatBinding(k) {
+    var b = CF.lookup(S.conf, 'prefix', k);
+    if (b) return b.repeat ? { bind: b } : null;
+    if (CF.overridden(S.conf, k)) return null;
+    return resizeBinding(k);
+  }
+
+  // Runs one of the player's bindings. Its action is the default key that
+  // does the same in the game, so it goes through the default table.
+  function runBinding(b, win, pane) {
+    var a = b.act;
+    if (a.run === 'send-prefix') { if (pane.mode !== 'copy') lineEdit(pane, 'input', prefixEvent()); S.lastAction = 'brief'; return true; }
+    if (a.run === 'clear') { if (pane.mode !== 'copy') pane.lines.push({ clear: true }); S.lastAction = 'brief'; return true; }
+    if (a.run === 'noop') { message('source-file: ゲームでは何も起きない'); S.lastAction = 'brief'; return true; }
+    if (a.resize) {
+      resize(win, pane, { dir: a.resize, n: a.n });
+      S.lastAction = 'resize';
+    } else {
+      prefixedKey({ key: a.key, code: /^[0-9]$/.test(a.key) ? 'Digit' + a.key : undefined, ctrl: false, alt: false, shift: false, meta: false }, win, pane);
+      // kill-pane / kill-window with no confirm-before: at once.
+      if (a.now && S.confirm) { var yes = S.confirm.yes; S.confirm = null; yes(); }
+    }
+    if (b.repeat) armRepeat(); else if (a.resize) S.repeatUntil = 0;
+    return true;
   }
 
   // tmux's resize bindings (repeatable).
@@ -640,13 +654,6 @@
     if (k.alt && !k.ctrl && /^Digit[1-5]$/.test(k.code || '')) {
       T.applyLayout(win, T.LAYOUTS[Number(k.code.slice(5)) - 1]);
       S.lastAction = 'layout';
-      return true;
-    }
-    // vim-tmux-navigator gives Ctrl+l to moving, so it binds 合図 → Ctrl+l
-    // to the shell's clear screen instead.
-    if (S.nav === 'vim' && k.ctrl && !k.alt && !k.meta && String(key).toLowerCase() === 'l') {
-      if (pane.mode !== 'copy') pane.lines.push({ clear: true });
-      S.lastAction = 'brief';
       return true;
     }
     if (k.ctrl || k.alt) { message('そのキーには割り当てがない'); S.lastAction = 'unbound'; return true; }
@@ -1079,9 +1086,7 @@
     if (!best) return null;
     var p = T.findPane(S.session, id);
     var name = p && p.pane.name ? p.pane.name : 'その間';
-    var m = S.nav === 'vim'
-      ? mv([NAV_LABELS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + NAV_LABELS[best.d] + ' で渡る（合図なし）', true)
-      : mv([ARROWS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + ARROWS[best.d] + ' を押して渡る');
+    var m = mv([ARROWS[best.d]], name + 'は' + DIR_WORDS[best.d] + '。' + ARROWS[best.d] + ' を押して渡る');
     m.alt = altMoves(win, id);
     return m;
   }
@@ -1091,12 +1096,76 @@
   function altMoves(win, id) {
     var out = [];
     if (win.last === id && T.findPane(S.session, id)) {
-      out.push(S.nav === 'vim' ? mv([NAV_LABELS.last], 'さっきいた間へ戻る', true) : mv([';'], 'さっきいた間へ戻る'));
+      out.push(mv([';'], 'さっきいた間へ戻る'));
     }
     var ps = T.panesOf(win);
     var at = ps.findIndex(function (q) { return q.id === win.active; });
     if (ps.length > 2 && ps[(at + 1) % ps.length].id === id) out.push(mv(['o'], '次の間へ順に移る'));
     else if (ps.length === 2) out.push(mv(['o'], 'もう一つの間へ移る'));
+    return out;
+  }
+
+  // ---- the 指南 in the player's own keys ----------------------------------
+
+  // The default key labels of the 指南, as what they do.
+  var LABEL_SIG = {
+    '%': 'k:%', '"': 'k:"', '←': 'k:ArrowLeft', '→': 'k:ArrowRight', '↑': 'k:ArrowUp', '↓': 'k:ArrowDown',
+    z: 'k:z', x: 'k:x', c: 'k:c', ',': 'k:,', n: 'k:n', p: 'k:p', l: 'k:l', '[': 'k:[', ']': 'k:]',
+    '{': 'k:{', '}': 'k:}', '&': 'k:&', o: 'k:o', ';': 'k:;', ':': 'k::', $: 'k:$', s: 'k:s', d: 'k:d', Space: 'k: '
+  };
+  ['L', 'R', 'U', 'D'].forEach(function (d) { LABEL_SIG['Ctrl+' + ARROWS[d]] = 'r:' + d + ':1'; LABEL_SIG['Option+' + ARROWS[d]] = 'r:' + d + ':5'; });
+  var ARROW_KEY = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown' };
+  // What to type at : when the player's file leaves an action with no key.
+  var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': 'rename-window 名前', 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach' };
+
+  function sigOf(act) { return act.key != null ? 'k:' + act.key : act.resize ? 'r:' + act.resize : null; }
+
+  // The default key event behind a label, to see whether the file took it away.
+  function labelEvent(label) {
+    var r = /^(Ctrl|Option)\+(.)$/.exec(label);
+    if (r) return { key: ARROW_KEY[r[2]], ctrl: r[1] === 'Ctrl', alt: r[1] === 'Option', shift: false };
+    var key = label === 'Space' ? ' ' : ARROW_KEY[label] || label;
+    return { key: key, ctrl: false, alt: false, shift: false };
+  }
+
+  // A prefixed default label → {label, pfx, n} in the player's keys, the
+  // same label if it still works, or {none} if the file left no key for it.
+  function ownKey(label) {
+    var sig = LABEL_SIG[label];
+    if (!S.conf || !sig) return { label: label, pfx: true, same: true };
+    var want = sig.replace(/:\d+$/, ''), found = null;
+    S.conf.binds.forEach(function (b) {
+      if (sigOf(b.act) !== want) return;
+      if (!found || (b.table === 'root' && found.table !== 'root') || (b.table === found.table)) found = b;
+    });
+    if (found) return { label: found.key.label, pfx: found.table === 'prefix', n: found.act.n, root: found.table === 'root' };
+    if (!CF.overridden(S.conf, labelEvent(label))) return { label: label, pfx: true, same: true };
+    return { none: true, cmd: CMD_FOR[want] };
+  }
+
+  function ownMove(m) {
+    if (!m || !m.pfx || m.keys.length !== 1) return m;
+    var o = ownKey(m.keys[0]);
+    if (o.same) return m;
+    if (o.none) {
+      return o.cmd ? mv([':'], 'この設定ではキーがない。: を押して ' + o.cmd + ' と打ち Enter')
+        : mv([], 'この設定ではこの操作のキーがない', true);
+    }
+    var text = m.text.replace(m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）/g, '');
+    if (o.n) text = text.replace(/（1 回[^）]*）/, '（1 回 ' + o.n + ' マス' + (o.n < 5 ? '。続けて押す' : '') + '）');
+    if (o.root) text += '（合図なし）';
+    return { pfx: o.pfx, keys: [o.label], text: text };
+  }
+
+  // The move the 指南 shows now, in the player's keys.
+  function guideMove(b) {
+    var m = b.q.next();
+    if (!m || !S.conf) return m;
+    var out = ownMove(m);
+    if (m.alt) {
+      out = { pfx: out.pfx, keys: out.keys, text: out.text };
+      out.alt = m.alt.map(ownMove).filter(function (a) { return a.keys.length && a.keys[0] !== ':' && a.keys[0] !== out.keys[0]; });
+    }
     return out;
   }
 
@@ -1612,7 +1681,7 @@
       keys: b.keys, n: b.qs.length, avg: time / b.qs.length
     };
     var sum = REC.add({
-      course: b.course.id, prefix: S.prefix, nav: S.nav === 'vim' ? 'vim' : undefined,
+      course: b.course.id, prefix: S.conf ? S.conf.prefix.label : 'C-b', conf: S.conf ? 1 : undefined,
       time: +time.toFixed(2), raw: +raw.toFixed(2), misses: b.misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: b.qs.length, qs: b.qlog
     });
@@ -1749,7 +1818,7 @@
     if (!el || !b) return;
     var playing = b.phase === 'play' && b.q;
     var fold = playing && folded(b);
-    var move = playing && !fold ? b.q.next() : null;
+    var move = playing && !fold ? guideMove(b) : null;
     var key = [b.i, b.phase, b.stage, fold ? 1 : 0, S.armed ? 1 : 0, S.confirm ? 1 : 0, S.prompt ? 1 : 0, move ? move.text : ''].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
@@ -1762,12 +1831,19 @@
       return;
     }
     html += '<div class="sz-q">' + esc(qText(b)) + '</div>';
-    var keys = [];
-    b.q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
+    var keys = [], rootKeys = [];
+    b.q.show.forEach(function (a) {
+      (LV.KEYS[a] || []).forEach(function (k) {
+        var o = ownKey(k);
+        if (o.none) return;
+        var list = o.pfx ? keys : rootKeys;
+        if (list.indexOf(o.label) < 0) list.push(o.label);
+      });
+    });
     var lit = move ? move.keys : [];
     var pfxCls = 'pfx' + (move && move.pfx ? (S.armed ? ' done' : ' next') : '');
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
-    if (S.nav === 'vim' && keys.indexOf('←') >= 0) html += '<div class="sz-keys"><span class="arr">合図なし</span>' + keycaps(['Ctrl+h', 'Ctrl+j', 'Ctrl+k', 'Ctrl+l', 'Ctrl+\\'], lit) + '</div>';
+    if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">合図なし</span>' + keycaps(rootKeys, lit) + '</div>';
     html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
     if (move) {
       html += '<div class="shinan"><div class="shinan-t">指南</div><ol>' +
@@ -2338,6 +2414,12 @@
 
   // Turn a key label from levels.js into a key object for the phone key bar.
   function keyFromLabel(label) {
+    var own = /^(Ctrl\+)?((?:Alt|Option)\+)?(Shift\+)?(.+)$/.exec(label);
+    if (own && (own[1] || own[2] || own[3]) && label.length > 2) {
+      var ak = own[4], AK = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown', Space: ' ', Esc: 'Escape', BSpace: 'Backspace' };
+      ak = AK[ak] || ak;
+      return { key: ak, ctrl: !!own[1], alt: !!own[2], shift: !!own[3], code: /^[a-z]$/i.test(ak) ? 'Key' + ak.toUpperCase() : /^[0-9]$/.test(ak) ? 'Digit' + ak : ak === '\\' ? 'Backslash' : undefined };
+    }
     var m = /^([CM])-(.+)$/.exec(label);
     var arrows = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown' };
     if (m) {
@@ -2364,11 +2446,11 @@
       seen[label] = true;
       keys.push({ label: label, k: k, cls: cls || '' });
     }
-    add(S.prefix === 'C-a' ? 'C-a' : 'C-b', { key: prefixKey(), ctrl: true }, 'k-prefix');
+    add(prefixLabel(), prefixEvent(), 'k-prefix');
     add('Esc', { key: 'Escape' });
     add('←', { key: 'ArrowLeft' }); add('↑', { key: 'ArrowUp' }); add('↓', { key: 'ArrowDown' }); add('→', { key: 'ArrowRight' });
     var labels = [];
-    if (S.run && S.run.q) S.run.q.show.forEach(function (a) { labels = labels.concat(LV.KEYS[a] || []); });
+    if (S.run && S.run.q) S.run.q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (l) { var o = ownKey(l); if (!o.none) labels.push(o.label); }); });
     labels.forEach(function (label) { add(label, keyFromLabel(label), 'k-level'); });
     if (S.confirm) add('y', { key: 'y' });
     if (S.detached || S.prompt) add('Enter', { key: 'Enter' });
@@ -2547,6 +2629,12 @@
   function shareRun(runId) {
     var r = S.result;
     if (!NET || !r) return;
+    // Own keys: kept in step between devices, never on the boards.
+    if (S.conf && !REC.courseOf(r.course).practice) {
+      r.board = { state: 'own' };
+      if (NET.state().key) NET.sync().catch(function () {});
+      return;
+    }
     // Nothing leaves the browser until the player gives a name or a 合言葉.
     if (!NET.state().key) { r.board = REC.courseOf(r.course).practice ? null : { state: 'noname' }; return; }
     // 稽古 is kept in step between devices but never goes on the boards.
@@ -2584,6 +2672,7 @@
     if (b.state === 'sending') html += '<p class="em-board">今日の番付に載せている……</p>';
     if (b.state === 'ok') html += '<p class="em-board">今日の番付 <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">番付を見る</a></p>';
     if (b.state === 'refused') html += '<p class="em-board dim">この記録は番付に載せられなかった（手で解いた記録だけが載る）。</p>';
+    if (b.state === 'own') html += '<p class="em-board dim">自分のキー設定で遊んだので、番付には載らない（絵巻には残る）。</p>';
     if (b.state === 'noname') {
       html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日の番付に載る</label>' +
         '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">番付に載せる</button></span>' +
@@ -2819,6 +2908,32 @@
     if (sink && S.screen === 'game' && document.activeElement !== sink) sink.focus({ preventScroll: true });
   }
 
+  // ---- the player's .tmux.conf ---------------------------------------------
+
+  function applyConf(text, save) {
+    var c = CF.parse(text);
+    S.confText = text;
+    S.conf = c.custom ? c : null;
+    if (save) store.save({ conf: text, nav: null });
+    renderConfReport(c, text);
+    syncBody();
+    if (S.screen === 'title') renderTitle();
+  }
+
+  function renderConfReport(c, text) {
+    var el = $('#conf-report');
+    if (!el) return;
+    if (!String(text || '').trim()) { el.innerHTML = ''; return; }
+    var row = function (x, note) { return '<li><code><i class="no">' + x.no + '</i>' + esc(x.line) + '</code><span' + (note === x.why ? ' class="err"' : '') + '>' + esc(note) + '</span></li>'; };
+    var html = '';
+    html += '<h4>使う ' + c.used.length + ' 行' + (c.custom ? '（合図 ' + esc(c.prefix.label) + '）' : '') + '</h4>';
+    html += c.used.length ? '<ul>' + c.used.map(function (x) { return row(x, x.say); }).join('') + '</ul>' : '<p>ゲームで使える行がなかった。既定のキーで遊ぶ。</p>';
+    if (c.skipped.length) {
+      html += '<details><summary>読み飛ばした ' + c.skipped.length + ' 行</summary><ul>' + c.skipped.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
+    }
+    el.innerHTML = html;
+  }
+
   // ---- wiring ------------------------------------------------------------
 
   function init() {
@@ -2829,8 +2944,18 @@
     // looping decoration) unless the player asks for motion.
     S.detail = saved.detail === true;
     S.quiet = saved.quiet !== false;
-    S.nav = saved.nav === 'vim' ? 'vim' : 'default';
-    $$('[data-nav]').forEach(function (x) { x.addEventListener('click', function () { S.nav = x.dataset.nav; store.save({ nav: S.nav }); syncBody(); }); });
+    // The player's .tmux.conf (the vim-tmux-navigator switch of before
+    // becomes the plugin line).
+    var ct = typeof saved.conf === 'string' ? saved.conf : saved.nav === 'vim' ? CF.SAMPLE_NAVIGATOR : '';
+    $('#conf-text').value = ct;
+    applyConf(ct, false);
+    $('#conf-apply').addEventListener('click', function () { applyConf($('#conf-text').value, true); });
+    $('#conf-sample').addEventListener('click', function () {
+      var t = $('#conf-text');
+      if (!/vim-tmux-navigator/.test(t.value)) t.value = (t.value && !/\n$/.test(t.value) ? t.value + '\n' : t.value) + CF.SAMPLE_NAVIGATOR;
+      applyConf(t.value, true);
+    });
+    $('#conf-reset').addEventListener('click', function () { $('#conf-text').value = ''; applyConf('', true); });
     $('.detail-toggle').addEventListener('click', function () { S.detail = !S.detail; store.save({ detail: S.detail }); syncBody(); if (S.screen === 'game') render(); focusSink(); });
     $('.quiet-toggle').addEventListener('click', function () { S.quiet = !S.quiet; store.save({ quiet: S.quiet }); syncBody(); });
 
@@ -2959,11 +3084,11 @@
             folded: b.q && b.phase === 'play' ? folded(b) : false,
             goals: b.q && b.phase === 'play' ? goalMarks().length : 0,
             goal: b.type === 'select_window' ? S.q0 : null,
-            next: b.q && b.phase === 'play' ? b.q.next() : null
+            next: b.q && b.phase === 'play' ? guideMove(b) : null
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
-          quiet: S.quiet, detail: S.detail, nav: S.nav,
+          quiet: S.quiet, detail: S.detail, conf: S.conf ? { prefix: S.conf.prefix.label, binds: S.conf.binds.length, navigator: S.conf.navigator } : null,
           cols: S.cols, rows: S.rows
         };
       }
