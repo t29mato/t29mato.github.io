@@ -504,6 +504,16 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   pointer-events: none; opacity: 0; white-space: nowrap; box-shadow: var(--shadow);
 }
 .banner.show { animation: pop 700ms ease-out forwards; }
+/* 成: the seal on a solved question, while its rooms finish moving. */
+.seal {
+  position: absolute; right: 18px; top: 14px; z-index: 21; width: 64px; height: 64px;
+  display: grid; place-items: center; border: 3px solid var(--shu); border-radius: 50%;
+  color: var(--shu); background: rgba(255, 250, 240, 0.85);
+  font-family: var(--mincho); font-weight: 700; font-size: 34px;
+  pointer-events: none; opacity: 0; transform: rotate(-8deg);
+}
+.seal.show { animation: stamp 260ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .seal.show { animation: none; opacity: 0.9; } }
 .banner.go { color: var(--shu); }
 @keyframes pop {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }

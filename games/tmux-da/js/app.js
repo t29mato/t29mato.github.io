@@ -485,6 +485,7 @@
   // k: {key, code, ctrl, alt, shift, meta}. Returns true when consumed.
   function handleKey(k) {
     if (S.screen !== 'game') return false;
+    if (S.run && S.run.phase === 'clear' && !isModifierOnly(k.key)) afterClear();
     if (S.run && S.run.phase !== 'play') return !isModifierOnly(k.key);
     if (isModifierOnly(k.key)) return false;
     S.lastAction = null;
@@ -1367,6 +1368,7 @@
     b.streak = 0;
     b.qlog = [];
     $('#sashizu').dataset.key = '';
+    seal(false);
     var n = 3;
     var NUM = { 3: '三', 2: '二', 1: '一' };
     banner(NUM[n], 'count');
@@ -1466,11 +1468,39 @@
       // Against the ghost: where you are now versus where it was here.
       if (b.ghost && b.ghost.cum) b.ghostDiff = (performance.now() - b.start) / 1000 + b.penalty - b.ghost.cum[b.i];
       if (b.streak % 5 === 0) chip('good', '五連の仕掛け ・ 手際よし');
-      b.i += 1;
-      if (b.i >= b.qs.length) { finishRun(); return; }
-      loadQuestion();
+      // Hold the solved rooms on screen while they finish moving, under a
+      // 成 seal. The clock stops for it; any key goes on at once.
+      b.phase = 'clear';
+      b.clearAt = performance.now();
+      clearInterval(S.clock);
+      seal(true);
       render();
+      b.timer = setTimeout(function () { if (S.run === b) afterClear(); }, reduceMotion ? 250 : CLEAR_HOLD);
     }
+  }
+
+  var CLEAR_HOLD = 650;
+
+  function seal(on) {
+    var el = $('#seal');
+    if (!el) return;
+    el.classList.remove('show');
+    if (on) { void el.offsetWidth; el.classList.add('show'); }
+  }
+
+  function afterClear() {
+    var b = S.run;
+    if (!b || b.phase !== 'clear') return;
+    clearTimeout(b.timer);
+    var d = performance.now() - b.clearAt;
+    b.start += d;
+    b.phase = 'play';
+    seal(false);
+    b.i += 1;
+    if (b.i >= b.qs.length) { finishRun(); return; }
+    loadQuestion();
+    render();
+    startClock();
   }
 
   function miss() {
@@ -1663,7 +1693,7 @@
     renderOrder(b, playing, move, fold);
     var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
-      html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : '') + '</div>';
+      html += '<div class="sz-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
       el.innerHTML = html;
       return;
     }
@@ -1705,7 +1735,7 @@
     var n = b.qs.length;
     var head = '<span class="ob-n">' + kanji(Math.min(b.i + 1, n)) + '／' + kanji(n) + '</span>';
     if (!playing) {
-      el.innerHTML = head + '<b class="ob-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : '') + '</b>';
+      el.innerHTML = head + '<b class="ob-q">' + (b.phase === 'count' ? '屋敷に入る……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</b>';
       return;
     }
     var html = head + '<b class="ob-q">' + esc(qText(b)) + '</b>';
@@ -1755,8 +1785,8 @@
   function renderClock() {
     var b = S.run;
     if (!b) return;
-    var live = b.phase === 'play' || b.phase === 'pause';
-    var now = b.phase === 'pause' ? b.pausedAt : performance.now();
+    var live = b.phase === 'play' || b.phase === 'pause' || b.phase === 'clear';
+    var now = b.phase === 'pause' ? b.pausedAt : b.phase === 'clear' ? b.clearAt : performance.now();
     var t = $('#playbar .pb-time span');
     if (t) t.textContent = (live ? (now - b.start) / 1000 + b.penalty : 0).toFixed(1);
     var used = live ? (now - b.qStart) / 1000 : 0;
@@ -2365,6 +2395,7 @@
   function leaveRun() {
     if (S.run) { clearTimeout(S.run.timer); clearInterval(S.clock); }
     S.run = null;
+    seal(false);
   }
 
   function sec(t) { return t.toFixed(1) + ' 秒'; }
