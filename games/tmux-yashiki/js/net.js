@@ -81,7 +81,7 @@
   // Enter a finished run on the boards (only with a name).
   function submit(run) {
     var s = read();
-    if (!s.key || !s.name || s.boards === false || (run && run.conf)) return Promise.resolve(null);
+    if (!s.key || !s.name || s.boards === false) return Promise.resolve(null);
     return call('POST', '/v1/scores', { key: s.key, run: run });
   }
 

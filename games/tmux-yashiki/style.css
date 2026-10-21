@@ -817,3 +817,14 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .yashiki .st-win.goal-tab { outline-color: #111; }
 .yashiki .st-win .goal-tag { background: #111; color: var(--t-yellow); }
 .yashiki .seal { border-color: var(--t-green); color: var(--t-green); background: rgba(13, 17, 23, 0.85); }
+/* the guide card: the one place the order lives, on the arrow or the pane */
+.yashiki .guide-card.motd {
+  position: absolute; z-index: 8; max-width: min(420px, calc(100% - 12px)); pointer-events: none;
+  background: #161b22; border: 2px solid var(--t-yellow); border-radius: 6px; padding: 8px 12px 9px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); color: #c9d1d9;
+}
+.yashiki .guide-card .gc-tag { display: inline-block; margin-bottom: 4px; font-family: var(--sans); font-size: 12px; font-weight: 700; color: #111; background: var(--t-yellow); padding: 0 8px; border-radius: 3px; }
+.yashiki .guide-card .ob-q { font-size: 16px; }
+.yashiki .guide-card .ob-guide { margin-top: 6px; }
+.yashiki .guide-card .ob-keys kbd { font-size: 14px; padding: 2px 9px; }
+.yashiki .goal.close .goal-tag + .gc-tag { display: none; }

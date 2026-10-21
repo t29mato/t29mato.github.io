@@ -1260,12 +1260,33 @@
 
   // The resize key that can move something: sideways if the pane has a
   // left-right split above it, else up or down.
+  // Tried on a copy of the window first, so the 指南 never points a way
+  // that is already as far as it goes (a narrow pane in a crowded window).
   function resizeMove() {
     var win = T.activeWindow(S.session);
     var r = T.rectOf(win, win.active, S.cols, S.rows);
-    var i = hasAxis(win, win.active, 'lr') ? (r && r.x === 0 ? 1 : 0) : (r && r.y === 0 ? 3 : 2);
-    var label = LV.KEYS.resize[i];
-    return mv([label], label + ' を押す' + (/^Option/.test(label) ? '（1 回で 5 マス）' : '（1 回 1 マス。続けて 5 回）'));
+    var order = hasAxis(win, win.active, 'lr') ? (r && r.x === 0 ? [1, 0, 3, 2] : [0, 1, 3, 2]) : (r && r.y === 0 ? [3, 2, 1, 0] : [2, 3, 1, 0]);
+    var DIRS = ['L', 'R', 'U', 'D'];
+    var pick = order[0];
+    for (var k = 0; k < order.length; k++) {
+      var i = order[k], label = LV.KEYS.resize[i], d = DIRS[i];
+      var step = /^Option/.test(label) ? 5 : 1;
+      var copy = JSON.parse(JSON.stringify(win));
+      var axis = d === 'L' || d === 'R' ? 'lr' : 'tb';
+      for (var n = 0; n < 6; n++) T.resizePane(copy, win.active, axis, d === 'L' || d === 'U' ? -step : step, S.cols, S.rows);
+      var cr = T.rectOf(copy, win.active, S.cols, S.rows);
+      if (cr && r && (Math.abs(cr.w - S.q0.w) >= 5 || Math.abs(cr.h - S.q0.h) >= 3)) { pick = i; break; }
+    }
+    var lb = LV.KEYS.resize[pick];
+    return mv([lb], lb + ' を押す' + (/^Option/.test(lb) ? '（1 回で 5 マス）' : '（1 回 1 マス。続けて 5 回）'));
+  }
+
+  // How far the active pane has moved since the question began.
+  function resizedBy() {
+    var w = T.activeWindow(S.session);
+    var rr = T.rectOf(w, w.active, S.cols, S.rows);
+    if (!rr || !S.q0) return 0;
+    return Math.max(Math.abs(rr.w - S.q0.w), Math.abs(rr.h - S.q0.h));
   }
 
   function swapMove() {
@@ -1356,7 +1377,7 @@
     },
     resize: {
       text: 'このペインの大きさを変える（resize）', cmd: 'resize-pane -L/-R/-U/-D', allow: ['resize'], show: ['resize'],
-      goal: function () { return [{ pane: activeId(), mark: 'resize', tag: '5 マス以上動かす' }]; },
+      goal: function () { var d = resizedBy(); return [{ pane: activeId(), mark: 'resize', tag: d ? 'いま ' + d + ' マス動いた（5 マスで成功）' : '境目を 5 マス以上動かす' }]; },
       setup: function () {
         needUnzoom(); needPanes(2);
         var win = T.activeWindow(S.session);
@@ -2027,7 +2048,7 @@
     //   # 3/15  ペイン 2 を閉じる   tmux: kill-pane
     //   # ▶ Ctrl+b → →   → を押す（右へ）
     var n = b.qs.length;
-    var c = '<span class="ob-c">#</span> ';
+    var c = '';
     var html = '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> <b class="ob-q">' + esc(qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(b.q.cmd) + '</span></div>';
     if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join('。')) + '</div>';
     if (move) {
@@ -2038,7 +2059,7 @@
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
       html += '<div class="ob-guide">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
-      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + '  別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
+      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + '別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
       html += '<div class="ob-guide learnt">' + c + '覚えた ✓<span class="ob-txt">手順は目安を過ぎたら出る</span></div>';
     }
@@ -2219,7 +2240,7 @@
       body.dataset.paneBody = p.id;
       // The order is printed just above the prompt of the pane you stand in.
       // In copy mode the text scrolls, so it is pinned to the pane's foot.
-      var order = isActive && playing ? '<div class="motd">' + motdHTML(run, move, fold) + '</div>' : '';
+      var order = '';
       body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
         linesHTML(p.lines, p.mode === 'copy' ? p : null) +
         (p.mode === 'copy' ? '' : order) +
@@ -2286,8 +2307,8 @@
       view.borders = bhtml;
     }
     // 完成図: what this question wants changed, marked on the rooms.
-    $$(':scope > .goal, :scope > .goal-arrow, :scope > .goal-key', term).forEach(function (x) { x.remove(); });
-    var labelled = false;
+    $$(':scope > .goal, :scope > .goal-arrow, :scope > .goal-key, :scope > .guide-card', term).forEach(function (x) { x.remove(); });
+    var labelled = false, anchor = null;
     marks.forEach(function (g) {
       if (!g.pane) return;
       var r = null;
@@ -2299,12 +2320,23 @@
       d.className = 'goal ' + (g.mark || 'go');
       d.style.cssText = 'left:' + (box.x * cw) + 'px;top:' + (box.y * ch) + 'px;width:' + (box.w * cw) + 'px;height:' + (box.h * ch) + 'px';
       // On the room you stand in, the tag goes under the order.
-      d.innerHTML = '<span class="goal-tag"' + (r === active && !full && motdH ? ' style="top:' + (24 + motdH) + 'px"' : '') + '>' + esc(g.tag) + '</span>';
+      // The pane you stand in: the guide card sits on it and carries the tag.
+      var here = r === active || full;
+      d.innerHTML = here && !anchor ? '' : '<span class="goal-tag">' + esc(g.tag) + '</span>';
       term.appendChild(d);
-      // Another room: an arrow from where you stand to it, with the keys.
-      // Only the first gets the keys: the move goes there first.
-      if (active && r !== active && !win.zoomed) { term.insertAdjacentHTML('beforeend', arrowHTML(active, r, cw, ch, motdH, fold || labelled ? '' : moveLabel(move))); labelled = true; }
+      if (here && !anchor) anchor = { x: (box.x + box.w / 2) * cw, y: (box.y + box.h / 2) * ch, tag: g.tag };
+      // Another pane: an arrow from where you stand to it; the guide card
+      // sits on the first arrow, where the eyes go.
+      if (active && r !== active && !win.zoomed) {
+        term.insertAdjacentHTML('beforeend', arrowHTML(active, r, cw, ch, 0, ''));
+        if (!labelled) anchor = { x: arrowMid.x, y: arrowMid.y };
+        labelled = true;
+      }
     });
+    // Nothing marked on a pane (a window question): the card goes on the
+    // arrow to the tab (renderTabArrow). Otherwise in the middle of your pane.
+    if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
+    if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), anchor.tag, '');
     var pk = $(':scope > .picker', term);
     if (pk) pk.remove();
     if (S.picker) term.insertAdjacentHTML('beforeend', pickerHTML());
@@ -2361,10 +2393,25 @@
     return arrowSVG(f.x, f.y, (t.x + t.w / 2) * cw, (t.y + t.h / 2) * ch, 34, label, '');
   }
 
+  var arrowMid = { x: 0, y: 0 };
+
+  // The guide card: the order and the keys, in the one place the eyes go
+  // (on the arrow, or on the pane to change). Kept inside the terminal.
+  function placeCard(term, x, y, inner, tag, cls) {
+    var el = document.createElement('div');
+    el.className = 'guide-card motd' + (cls ? ' ' + cls : '');
+    el.innerHTML = (tag ? '<div class="gc-tag">' + esc(tag) + '</div>' : '') + inner;
+    term.appendChild(el);
+    var w = el.offsetWidth, h = el.offsetHeight, W = term.clientWidth, H = term.clientHeight;
+    el.style.left = Math.max(6, Math.min(W - w - 6, x - w / 2)) + 'px';
+    el.style.top = Math.max(6, Math.min(H - h - 6, y - h / 2)) + 'px';
+  }
+
   function arrowSVG(x1, y1, x2, y2, stop, label, cls) {
     var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy) || 1;
     var s0 = Math.min(16, len * 0.1), s1 = Math.min(stop, len * 0.2);
     var ax = x1 + dx / len * s0, ay = y1 + dy / len * s0, bx = x2 - dx / len * s1, by = y2 - dy / len * s1;
+    arrowMid = { x: (ax + bx) / 2, y: (ay + by) / 2 };
     var W = S.cols * S.cellW, H = S.rows * S.cellH;
     return '<svg class="goal-arrow' + (cls ? ' ' + cls : '') + '" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
       '<defs><marker id="ga-head' + cls + '" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>' +
@@ -2377,7 +2424,7 @@
   function renderTabArrow() {
     var term = $('#term');
     if (!term) return;
-    $$(':scope > .goal-arrow.tab, :scope > .goal-key.tab', term).forEach(function (x) { x.remove(); });
+    $$(':scope > .goal-arrow.tab, :scope > .goal-key.tab, :scope > .guide-card.tab', term).forEach(function (x) { x.remove(); });
     var tab = $('#status .goal-tab');
     var act = $(':scope > .pane.active', term);
     if (!tab || !act || S.detached) return;
@@ -2387,7 +2434,11 @@
     var top = ar.top - tr.top + 20 + (motd ? motd.offsetHeight : 0), bottom = ar.bottom - tr.top;
     var x1 = ar.left - tr.left + ar.width / 2, y1 = Math.min(bottom - 10, (top + bottom) / 2);
     var x2 = Math.max(12, Math.min(tr.width - 12, r.left - tr.left + Math.min(r.width / 2, 40))), y2 = tr.height - 4;
-    term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, fold ? '' : moveLabel(b && b.phase === 'play' && b.q ? guideMove(b) : null), 'tab'));
+    term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, '', 'tab'));
+    // A window question: the guide card rides this arrow.
+    if (b && b.phase === 'play' && b.q && !$(':scope > .guide-card:not(.tab)', term)) {
+      placeCard(term, arrowMid.x, arrowMid.y, motdHTML(b, fold ? null : guideMove(b), fold), '', 'tab');
+    }
   }
 
   function tabGoal(name) {
@@ -2826,12 +2877,6 @@
   function shareRun(runId) {
     var r = S.result;
     if (!NET || !r) return;
-    // Own keys: kept in step between devices, never on the boards.
-    if (S.conf && !REC.courseOf(r.course).practice) {
-      r.board = { state: 'own' };
-      if (NET.state().key) NET.sync().catch(function () {});
-      return;
-    }
     // Nothing leaves the browser until the player gives a name or a 合言葉.
     if (!NET.state().key) { r.board = REC.courseOf(r.course).practice ? null : { state: 'noname' }; return; }
     // 稽古 is kept in step between devices but never goes on the boards.
@@ -2869,7 +2914,6 @@
     if (b.state === 'sending') html += '<p class="em-board">今日の番付に載せている……</p>';
     if (b.state === 'ok') html += '<p class="em-board">今日の番付 <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">番付を見る</a></p>';
     if (b.state === 'refused') html += '<p class="em-board dim">この記録は番付に載せられなかった（手で解いた記録だけが載る）。</p>';
-    if (b.state === 'own') html += '<p class="em-board dim">自分のキー設定で遊んだので、番付には載らない（絵巻には残る）。</p>';
     if (b.state === 'noname') {
       html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日の番付に載る</label>' +
         '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">番付に載せる</button></span>' +
