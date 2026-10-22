@@ -5,6 +5,7 @@
   'use strict';
 
   var T = ADV.tmux, LV = ADV.levels, AU = ADV.audio, REC = ADV.records, NET = ADV.net || null;
+  var I18N = ADV.i18n, tx = I18N.t, EN = I18N.lang === 'en';
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
@@ -81,11 +82,11 @@
     b.dataset.detail = S.detail ? '1' : '0';
     b.dataset.quiet = S.quiet ? '1' : '0';
     var dt = $('.detail-toggle');
-    if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? '指示の詳細をしまう' : '手順の詳細を出す'; }
+    if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? tx('指示の詳細をしまう') : tx('手順の詳細を出す'); }
     var cs = $('#conf-state');
-    if (cs) cs.textContent = S.conf ? '自分の設定（合図 ' + prefixLabel() + '）' : '既定';
+    if (cs) cs.textContent = S.conf ? tx('自分の設定（合図 {0}）', prefixLabel()) : tx('既定');
     var qt = $('.quiet-toggle');
-    if (qt) { qt.textContent = S.quiet ? '静' : '動'; qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? '飾りを動かす' : '飾りの動きを止める'); qt.title = S.quiet ? '静か（飾りは止まっている）' : '動く（飾りが動く）'; }
+    if (qt) { qt.textContent = S.quiet ? tx('静') : tx('動'); qt.setAttribute('aria-pressed', S.quiet ? 'true' : 'false'); qt.setAttribute('aria-label', S.quiet ? tx('飾りを動かす') : tx('飾りの動きを止める')); qt.title = S.quiet ? tx('静か（飾りは止まっている）') : tx('動く（飾りが動く）'); }
   }
 
   // ---- theme and sound ------------------------------------------------------
@@ -95,7 +96,7 @@
     else document.documentElement.removeAttribute('data-theme');
     var dark = t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
     $$('.theme-toggle').forEach(function (b) {
-      b.setAttribute('aria-label', dark ? '明るい画面にする' : '暗い画面にする');
+      b.setAttribute('aria-label', dark ? tx('明るい画面にする') : tx('暗い画面にする'));
       b.textContent = dark ? '☀' : '☾';
     });
   }
@@ -113,7 +114,7 @@
     AU.setEnabled(on);
     $$('.sound-toggle').forEach(function (b) {
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.setAttribute('aria-label', on ? '音を消す' : '音を出す');
+      b.setAttribute('aria-label', on ? tx('音を消す') : tx('音を出す'));
       b.textContent = on ? '♪' : '×';
     });
   }
@@ -138,8 +139,8 @@
     if (!cmd) return;
     switch (cmd) {
       case 'help':
-        pane.lines.push('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help');
-        pane.lines.push('tmux の操作は ' + prefixLabel() + ' を押して離してからキーを押す。押すキーは画面の上の指示に出ている');
+        pane.lines.push(tx('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help'));
+        pane.lines.push(tx('tmux の操作は {0} を押して離してからキーを押す。押すキーは画面の上の指示に出ている', prefixLabel()));
         break;
       case 'ls':
         pane.lines.push('kakejiku.txt  makimono.txt  tokonoma/');
@@ -152,15 +153,15 @@
         break;
       case 'cat':
         if (argv[1] === 'makimono.txt') printScroll(pane);
-        else if (argv[1] === 'kakejiku.txt') pane.lines.push('「デタッチしても、セッションはそのまま。」');
-        else pane.lines.push('cat: ' + (argv[1] || '') + ': そんなファイルはない');
+        else if (argv[1] === 'kakejiku.txt') pane.lines.push(tx('「デタッチしても、セッションはそのまま。」'));
+        else pane.lines.push('cat: ' + (argv[1] || '') + ': ' + tx('そんなファイルはない'));
         break;
       case 'clear':
         pane.lines.push({ clear: true });
         break;
       case 'exit':
         if (!T.killPane(win, pane.id)) {
-          if (!T.killWindow(S.session, win.id)) pane.lines.push('最後のペインは閉じられない。');
+          if (!T.killWindow(S.session, win.id)) pane.lines.push(tx('最後のペインは閉じられない。'));
         }
         S.lastAction = 'close';
         break;
@@ -168,7 +169,7 @@
         if (argv[1] === 'ls' || argv[1] === 'list-sessions') sessionLines().forEach(function (l) { pane.lines.push(l); });
         else if (!argv[1] || /^(a|attach|attach-session|new|new-session)$/.test(argv[1])) {
           pane.lines.push('sessions should be nested with care, unset $TMUX to force');
-          pane.lines.push({ html: '<span class="sh-dim">（もう tmux の中にいる。デタッチは ' + esc(prefixLabel()) + ' → ' + esc(LV.HINTS.detach) + '）</span>' });
+          pane.lines.push({ html: '<span class="sh-dim">' + esc(tx('（もう tmux の中にいる。デタッチは {0} → {1}）', prefixLabel(), LV.HINTS.detach)) + '</span>' });
         } else pane.lines.push('usage: tmux [attach|ls]');
         break;
       default:
@@ -196,7 +197,7 @@
       if (/^(a|attach|attach-session)$/.test(sub)) { attach(); return; }
       if (sub === 'ls' || sub === 'list-sessions') { sessionLines().forEach(function (l) { o.lines.push(l); }); return; }
       if (sub === '' || sub === 'new' || sub === 'new-session') {
-        o.lines.push({ html: '<span class="sh-dim">それは新しいセッションを作るコマンド。セッションは裏でそのまま残っている —— tmux attach で戻ろう。</span>' });
+        o.lines.push({ html: '<span class="sh-dim">' + esc(tx('それは新しいセッションを作るコマンド。セッションは裏でそのまま残っている —— tmux attach で戻ろう。')) + '</span>' });
         return;
       }
       o.lines.push('usage: tmux [attach|ls]');
@@ -204,7 +205,7 @@
     }
     switch (cmd) {
       case 'help':
-        o.lines.push('使えるコマンド: tmux attach  tmux ls  ls  echo  clear  help');
+        o.lines.push(tx('使えるコマンド: tmux attach  tmux ls  ls  echo  clear  help'));
         break;
       case 'ls':
         o.lines.push('README.md');
@@ -333,7 +334,7 @@
     clearTimeout(S.hintTimer);
     S.hintTimer = setTimeout(function () {
       if (!S.detached) return;
-      S.outer.lines.push({ html: '<span class="sh-dim">ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。</span>' });
+      S.outer.lines.push({ html: '<span class="sh-dim">' + esc(tx('ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。')) + '</span>' });
       render();
     }, 12000);
     $('#term').classList.add('powering-down');
@@ -400,7 +401,7 @@
   function paneLabel(pane) {
     if (pane.name) return pane.name;
     var h = T.findPane(S.session, pane.id);
-    return 'ペイン ' + (h ? T.paneIndex(S.session, h.win, pane) : '?');
+    return tx('ペイン {0}', h ? T.paneIndex(S.session, h.win, pane) : '?');
   }
 
   // How the order names a window: as the status bar shows it, "1:蔵".
@@ -410,16 +411,17 @@
   // would. Long enough that its top is well off the screen.
   function printScroll(pane) {
     var total = 160;
-    pane.lines.push({ html: '<span class="sh-head">==== log 先頭 ====</span>', text: '==== log 先頭 ====' });
-    pane.lines.push({ html: '<span class="sh-gold">「デタッチしても、セッションはそのまま。」</span>', text: '「デタッチしても、セッションはそのまま。」' });
+    var head = tx('==== log 先頭 ===='), gold = tx('「デタッチしても、セッションはそのまま。」');
+    pane.lines.push({ html: '<span class="sh-head">' + esc(head) + '</span>', text: head });
+    pane.lines.push({ html: '<span class="sh-gold">' + esc(gold) + '</span>', text: gold });
     for (var i = 3; i <= total; i++) {
       // Short enough for a half-width pane on a phone (about 22 cells).
-      var txt = i % 50 === 0 ? '—— 第' + (i / 50 + 1) + '巻 ——' : i % 17 === 0 ? '……墨がかすれる……' : '……長い文が続く……';
+      var txt = i % 50 === 0 ? tx('—— 第{0}巻 ——', i / 50 + 1) : i % 17 === 0 ? tx('……墨がかすれる……') : tx('……長い文が続く……');
       var n = (i < 100 ? ' ' : '') + (i < 10 ? ' ' : '') + i;
       pane.lines.push({ html: '<span class="sh-dim">' + n + '</span>  ' + esc(txt), text: n + '  ' + txt });
     }
     pane.lines.push('');
-    pane.lines.push('一番上の行には何と書いてあった？ コピーモードでスクロールして確かめよう。');
+    pane.lines.push(tx('一番上の行には何と書いてあった？ コピーモードでスクロールして確かめよう。'));
   }
 
   // The house at the start of a run, the same for everyone: window main with one
@@ -447,13 +449,13 @@
   // back from a zoom) gets it here with the smallest change, never a change
   // of focus, and says so in a note under the order.
 
-  function note(text) { S.qNote.push(text); }
+  function note(text) { S.qNote.push(tx(text)); }
 
   function needUnzoom() {
     var win = T.activeWindow(S.session);
     if (!win.zoomed) return;
     win.zoomed = false;
-    note('全画面を解除した');
+    note(tx('全画面を解除した'));
   }
 
   // At least `n` panes in the active window: the biggest pane is split, the
@@ -470,7 +472,7 @@
       nameRoom(T.splitPane(win, big.pane.id, big.w >= big.h * 2.2 ? 'lr' : 'tb', null, true));
       added++;
     }
-    if (added) note('ペインを ' + added + ' つ足した');
+    if (added) note(tx('ペインを {0} つ足した', added));
   }
 
   function needZoom() {
@@ -478,7 +480,7 @@
     var win = T.activeWindow(S.session);
     if (win.zoomed) return;
     win.zoomed = true;
-    note('このペインを全画面にした');
+    note(tx('このペインを全画面にした'));
   }
 
   // At least `n` windows in the session, the new ones behind the active one.
@@ -489,7 +491,7 @@
       nameRoom(T.activePane(w));
       added.push(winLabel(w));
     }
-    if (added.length) note('ウィンドウ ' + added.join('、') + ' を足した');
+    if (added.length) note(tx('ウィンドウ {0} を足した', added.join(tx('、'))));
   }
 
   function freeWing() {
@@ -584,7 +586,7 @@
       if (isPrefix(k)) {
         if (!S.hinted) {
           S.hinted = true;
-          S.outer.lines.push({ html: '<span class="sh-dim">（ここは tmux の外。prefix は効かない。tmux attach で戻ろう）</span>' });
+          S.outer.lines.push({ html: '<span class="sh-dim">' + esc(tx('（ここは tmux の外。prefix は効かない。tmux attach で戻ろう）')) + '</span>' });
         }
         return true;
       }
@@ -597,7 +599,7 @@
 
     // Cmd+V pastes the system clipboard, not tmux's buffer.
     if ((k.meta && !k.ctrl && k.key.toLowerCase() === 'v') || (k.ctrl && k.shift && k.key.toLowerCase() === 'v')) {
-      message('tmux のコピーは tmux の中にある。' + prefixLabel() + ' → ] で貼る');
+      message(tx('tmux のコピーは tmux の中にある。{0} → ] で貼る', prefixLabel()));
       return true;
     }
     if (k.meta) return false;
@@ -709,7 +711,7 @@
       var other = axis === 'lr' ? '↑ / ↓' : '← / →';
       message(win.zoomed ? '全画面中は大きさを変えられない（z で戻す）'
         : T.panesOf(win).length < 2 ? 'ペインが 1 つだけなので動かせない。先に分割しよう'
-        : 'この向きにはもう動かせない。反対向きか、' + other + ' を試そう');
+        : tx('この向きにはもう動かせない。反対向きか、{0} を試そう', other));
     }
   }
 
@@ -735,7 +737,7 @@
       var nb = T.neighbour(win, S.cols, S.rows, moves[key]);
       win.zoomed = z;
       if (nb) T.selectPane(win, nb.id);
-      else message('そちらにペインはない（' + prefixLabel() + ' → % か " で分割）');
+      else message(tx('そちらにペインはない（{0} → % か " で分割）', prefixLabel()));
       S.lastAction = 'focus';
       return true;
     }
@@ -770,7 +772,7 @@
     if (/^[0-9]$/.test(key)) {
       var target = T.windowByIndex(S.session, Number(key));
       if (target) T.selectWindow(S.session, target.id);
-      else message('ウィンドウ ' + key + ' はない');
+      else message(tx('ウィンドウ {0} はない', key));
       S.lastAction = 'select_window';
       return true;
     }
@@ -988,7 +990,7 @@
         return;
       }
     }
-    message('見つからない: ' + pane.search.term);
+    message(tx('見つからない: {0}', pane.search.term));
   }
 
   function yank(pane) {
@@ -999,7 +1001,7 @@
     pane.sel = null;
     pane.mode = null;
     S.lastAction = 'yank';
-    message('コピーした: ' + S.clipboard.split('\n')[0].trim().slice(0, 40));
+    message(tx('コピーした: {0}', S.clipboard.split('\n')[0].trim().slice(0, 40)));
   }
 
   function paste(pane) {
@@ -1038,8 +1040,9 @@
     S.repeatTimer = setTimeout(function () { if (S.screen === 'game') render(); }, 520);
   }
 
+  // message, note, chip and banner take Japanese and show it in the page's language.
   function message(text) {
-    S.message = text;
+    S.message = tx(text);
     clearTimeout(S.messageTimer);
     S.messageTimer = setTimeout(function () { S.message = null; renderStatus(); }, 1800);
   }
@@ -1138,7 +1141,7 @@
 
   // A move the guide can show: the prefix first or not, the key labels to
   // light (as in LV.KEYS), and what to do in words.
-  function mv(keys, text, noPrefix) { return { pfx: !noPrefix, keys: keys, text: text }; }
+  function mv(keys, text, noPrefix) { return { pfx: !noPrefix, keys: keys, text: tx(text) }; }
 
   var ARROWS = { L: '←', R: '→', U: '↑', D: '↓' };
   var DIR_WORDS = { L: '左', R: '右', U: '上', D: '下' };
@@ -1163,8 +1166,9 @@
     win.zoomed = z;
     if (!best) return null;
     var p = T.findPane(S.session, id);
-    var where = DIR_WORDS[best.d] + (best.dist < 0 && p ? 'の' + paneLabel(p.pane) + ' へ' : 'へ');
-    var m = mv([ARROWS[best.d]], ARROWS[best.d] + ' を押す（' + where + '）');
+    var dir = tx(DIR_WORDS[best.d]);
+    var where = best.dist < 0 && p ? tx('{0}の{1} へ', dir, paneLabel(p.pane)) : tx('{0}へ', dir);
+    var m = mv([ARROWS[best.d]], tx('{0} を押す（{1}）', ARROWS[best.d], where));
     m.alt = altMoves(win, id);
     return m;
   }
@@ -1194,7 +1198,7 @@
   ['L', 'R', 'U', 'D'].forEach(function (d) { LABEL_SIG['Ctrl+' + ARROWS[d]] = 'r:' + d + ':1'; LABEL_SIG['Option+' + ARROWS[d]] = 'r:' + d + ':5'; });
   var ARROW_KEY = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown' };
   // What to type at : when the player's file leaves an action with no key.
-  var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': 'rename-window 名前', 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach' };
+  var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': tx('rename-window 名前'), 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach' };
 
   function sigOf(act) { return act.key != null ? 'k:' + act.key : act.resize ? 'r:' + act.resize : null; }
 
@@ -1226,12 +1230,12 @@
     var o = ownKey(m.keys[0]);
     if (o.same) return m;
     if (o.none) {
-      return o.cmd ? mv([':'], 'この設定ではキーがない。: を押して ' + o.cmd + ' と打ち Enter')
+      return o.cmd ? mv([':'], tx('この設定ではキーがない。: を押して {0} と打ち Enter', o.cmd))
         : mv([], 'この設定ではこの操作のキーがない', true);
     }
-    var text = m.text.replace(m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）/g, '');
-    if (o.n) text = text.replace(/（1 回[^）]*）/, '（1 回 ' + o.n + ' マス' + (o.n < 5 ? '。続けて押す' : '') + '）');
-    if (o.root) text += '（prefix なし）';
+    var text = m.text.replace(m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）| \(Shift\+\d\)| \(double quote\)/g, '');
+    if (o.n) text = text.replace(/（1 回[^）]*）| \(\d+ cells? per press[^)]*\)/, tx('（1 回 {0} マス{1}）', o.n, o.n < 5 ? tx('。続けて押す') : ''));
+    if (o.root) text += tx('（prefix なし）');
     return { pfx: o.pfx, keys: [o.label], text: text };
   }
 
@@ -1256,7 +1260,7 @@
   function windowMove(id, verb) {
     var w = T.windowById(S.session, id);
     if (!w) return null;
-    return mv(['0-9'], w.index + ' を押す（' + winLabel(w) + (verb || ' へ') + '）');
+    return mv(['0-9'], tx(verb ? '{0} を押す（{1} に戻る）' : '{0} を押す（{1} へ）', w.index, winLabel(w)));
   }
 
   // The resize key that can move something: sideways if the pane has a
@@ -1279,7 +1283,7 @@
       if (cr && r && (Math.abs(cr.w - S.q0.w) >= 5 || Math.abs(cr.h - S.q0.h) >= 3)) { pick = i; break; }
     }
     var lb = LV.KEYS.resize[pick];
-    return mv([lb], lb + ' を押す' + (/^Option/.test(lb) ? '（1 回で 5 マス）' : '（1 回 1 マス。続けて 5 回）'));
+    return mv([lb], tx(/^Option/.test(lb) ? '{0} を押す（1 回で 5 マス）' : '{0} を押す（1 回 1 マス。続けて 5 回）', lb));
   }
 
   // How far the active pane has moved since the question began.
@@ -1325,7 +1329,7 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = function () { return paneLabel(p) + ' へ移動する'; };
+        S.qText = function () { return tx('{0} へ移動する', paneLabel(p)); };
       },
       check: function () { return activeId() === S.target; },
       next: function () { return moveTo(S.target); }
@@ -1351,7 +1355,7 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = function () { return paneLabel(p) + ' を閉じる'; };
+        S.qText = function () { return tx('{0} を閉じる', paneLabel(p)); };
       },
       check: function () { return !paneExists(S.target); },
       next: function () { return closeMove(S.target); }
@@ -1371,14 +1375,14 @@
         var w = pick(r, otherWindows());
         S.q0 = w.id;
         S.qGoal = { index: w.index, name: w.name };
-        S.qText = 'ウィンドウ ' + winLabel(w) + ' へ移動する';
+        S.qText = tx('ウィンドウ {0} へ移動する', winLabel(w));
       },
       check: function () { return S.session.active === S.q0; },
       next: function () { return windowMove(S.q0); }
     },
     resize: {
       text: 'このペインの大きさを変える（resize）', cmd: 'resize-pane -L/-R/-U/-D', allow: ['resize'], show: ['resize'],
-      goal: function () { var d = resizedBy(); return [{ pane: activeId(), mark: 'resize', tag: d ? 'いま ' + d + ' マス動いた（5 マスで成功）' : '境目を 5 マス以上動かす' }]; },
+      goal: function () { var d = resizedBy(); return [{ pane: activeId(), mark: 'resize', tag: d ? tx('いま {0} マス動いた（5 マスで成功）', d) : '境目を 5 マス以上動かす' }]; },
       setup: function () {
         needUnzoom(); needPanes(2);
         var win = T.activeWindow(S.session);
@@ -1400,24 +1404,24 @@
         // The pane you are in, unless it is at the top left already.
         var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
         S.target = p.id;
-        S.qText = function () { return paneLabel(p) + ' を左上まで動かす（swap）'; };
+        S.qText = function () { return tx('{0} を左上まで動かす（swap）', paneLabel(p)); };
       },
       check: function () { return isFirst(S.target); },
       next: swapMove
     },
     rename: {
       text: 'ウィンドウの名前を変える（rename）', cmd: 'rename-window', allow: ['rename'], show: ['rename'],
-      goal: function () { return [{ tab: S.q0.win, tag: S.q0.name + ' に' }]; },
+      goal: function () { return [{ tab: S.q0.win, tag: tx('{0} に', S.q0.name) }]; },
       setup: function (r) {
         var win = T.activeWindow(S.session);
         var name = pick(r, ['dev', 'log', 'ssh', 'edit', 'build'].filter(function (n) { return n !== win.name; }));
         S.q0 = { win: win.id, name: name };
         S.qGoal = name;
-        S.qText = 'ウィンドウの名前を「' + name + '」にする（rename）';
+        S.qText = tx('ウィンドウの名前を「{0}」にする（rename）', name);
       },
       check: function () { var w = T.windowById(S.session, S.q0.win); return !!w && w.name === S.q0.name; },
       next: function () {
-        if (S.prompt) return mv([], 'Ctrl+u で今の名前を消し、' + S.q0.name + ' と打って Enter', true);
+        if (S.prompt) return mv([], tx('Ctrl+u で今の名前を消し、{0} と打って Enter', S.q0.name), true);
         return mv([','], ', を押す（カンマ）。名前の入力欄が出る');
       }
     },
@@ -1429,7 +1433,7 @@
         var w = pick(r, otherWindows());
         S.q0 = w.id;
         S.qGoal = { index: w.index, name: w.name };
-        S.qText = 'ウィンドウ ' + winLabel(w) + ' を閉じる';
+        S.qText = tx('ウィンドウ {0} を閉じる', winLabel(w));
       },
       check: function () { return !T.windowById(S.session, S.q0); },
       next: function () {
@@ -1467,13 +1471,13 @@
         needUnzoom(); needPanes(2);
         var p = pick(r, otherPanes());
         S.target = p.id;
-        S.qText = function () { return paneLabel(p) + ' へ移動して全画面にする'; };
+        S.qText = function () { return tx('{0} へ移動して全画面にする', paneLabel(p)); };
       },
       check: function () { var w = T.activeWindow(S.session); return w.active === S.target && w.zoomed; },
       step: function () {
         var p = T.findPane(S.session, S.target);
         if (!p) return null;
-        return activeId() !== S.target ? [1, 2, paneLabel(p.pane) + ' へ移動する'] : [2, 2, '全画面にする'];
+        return activeId() !== S.target ? [1, 2, tx('{0} へ移動する', paneLabel(p.pane))] : [2, 2, '全画面にする'];
       },
       next: function () { return moveTo(S.target) || mv(['z'], 'z を押す（全画面に）'); }
     },
@@ -1515,12 +1519,12 @@
         S.q0 = [a.id, b.id];
         // Said once: a closed pane has no number any more.
         var la = paneLabel(a), lb = paneLabel(b);
-        S.qText = function () { return (paneExists(a.id) ? paneLabel(a) : la) + ' と ' + (paneExists(b.id) ? paneLabel(b) : lb) + ' を閉じる'; };
+        S.qText = function () { return tx('{0} と {1} を閉じる', paneExists(a.id) ? paneLabel(a) : la, paneExists(b.id) ? paneLabel(b) : lb); };
       },
       check: function () { return !paneExists(S.q0[0]) && !paneExists(S.q0[1]); },
       step: function () {
         var left = S.q0.filter(paneExists), h = left.length && T.findPane(S.session, left[0]);
-        return h ? [3 - left.length, 2, paneLabel(h.pane) + ' を閉じる'] : null;
+        return h ? [3 - left.length, 2, tx('{0} を閉じる', paneLabel(h.pane))] : null;
       },
       next: function () {
         var left = S.q0.filter(paneExists);
@@ -1535,14 +1539,14 @@
         S.q0 = { n: S.session.windows.length, home: win.id };
         S.q1 = false;
         S.qGoal = { index: win.index, name: win.name };
-        S.qText = '新しいウィンドウを作って、' + winLabel(win) + ' に戻る';
+        S.qText = tx('新しいウィンドウを作って、{0} に戻る', winLabel(win));
       },
       check: function () {
         if (S.session.windows.length > S.q0.n) S.q1 = true;
         return S.q1 && S.session.active === S.q0.home;
       },
-      step: function () { var w = T.windowById(S.session, S.q0.home); if (!w) return null; return S.q1 ? [2, 2, winLabel(w) + ' に戻る'] : [1, 2, '新しいウィンドウを作る']; },
-      next: function () { return S.q1 ? windowMove(S.q0.home, ' に戻る') : mv(['c'], 'c を押す（新しいウィンドウ）'); }
+      step: function () { var w = T.windowById(S.session, S.q0.home); if (!w) return null; return S.q1 ? [2, 2, tx('{0} に戻る', winLabel(w))] : [1, 2, '新しいウィンドウを作る']; },
+      next: function () { return S.q1 ? windowMove(S.q0.home, true) : mv(['c'], 'c を押す（新しいウィンドウ）'); }
     },
     swap_zoom: {
       text: 'ペインを左上まで動かして全画面にする', cmd: 'swap-pane → resize-pane -Z', allow: ['swap', 'zoom'], show: ['swap', 'zoom'],
@@ -1551,7 +1555,7 @@
         needUnzoom(); needPanes(2);
         var p = isFirst(activeId()) ? pick(r, otherPanes()) : T.activePane(T.activeWindow(S.session));
         S.target = p.id;
-        S.qText = function () { return paneLabel(p) + ' を左上まで動かして全画面にする'; };
+        S.qText = function () { return tx('{0} を左上まで動かして全画面にする', paneLabel(p)); };
       },
       check: function () {
         var h = T.findPane(S.session, S.target);
@@ -1560,7 +1564,7 @@
       step: function () {
         var p = T.findPane(S.session, S.target);
         if (!p) return null;
-        return isFirst(S.target) ? [2, 2, '全画面にする'] : [1, 2, paneLabel(p.pane) + ' を左上まで動かす'];
+        return isFirst(S.target) ? [2, 2, '全画面にする'] : [1, 2, tx('{0} を左上まで動かす', paneLabel(p.pane))];
       },
       next: function () { return isFirst(S.target) ? (moveTo(S.target) || mv(['z'], 'z を押す（全画面に）')) : swapMove(); }
     }
@@ -1587,7 +1591,7 @@
     rename: '名前を変える', kill_window: 'ウィンドウを閉じる', copy_top: 'スクロール', find_zoom: '移動して全画面', trident: '三分割',
     two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面'
   };
-  function typeName(t) { return TYPE_NAMES[t] || t; }
+  function typeName(t) { return TYPE_NAMES[t] ? tx(TYPE_NAMES[t]) : t; }
 
   // A new order, avoiding the same question twice in a row where it can.
   // `rand` makes it repeatable (today's order); Math.random otherwise.
@@ -1689,7 +1693,7 @@
     $('#sashizu').dataset.key = '';
     seal(false);
     var n = 3;
-    var NUM = { 3: '三', 2: '二', 1: '一' };
+    var NUM = { 3: kanji(3), 2: kanji(2), 1: kanji(1) };
     banner(NUM[n], 'count');
     AU.se('tick');
     var step = function () {
@@ -1765,7 +1769,7 @@
     S.clipboard = '';
   }
 
-  function qText(b) { var t = S.qText; return typeof t === 'function' ? t() : t || b.q.text; }
+  function qText(b) { var t = S.qText; return typeof t === 'function' ? t() : t || tx(b.q.text); }
 
   // After every key: a miss, or the question solved.
   function runTick() {
@@ -1828,7 +1832,7 @@
     b.penalty += LV.MISS_PENALTY;
     if (b.qlog[b.i]) b.qlog[b.i].m += 1;
     AU.se('miss');
-    chip('miss', '操作ミス +' + LV.MISS_PENALTY + ' 秒');
+    chip('miss', tx('操作ミス +{0} 秒', LV.MISS_PENALTY));
     termFlash('miss');
     shake();
   }
@@ -1912,12 +1916,13 @@
 
   var KANJI = ['〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
   function kanji(n) {
+    if (EN) return String(n);
     if (n < 10) return KANJI[n];
     if (n < 20) return '十' + (n % 10 ? KANJI[n % 10] : '');
     return KANJI[Math.floor(n / 10)] + '十' + (n % 10 ? KANJI[n % 10] : '');
   }
 
-  function fmt(t) { return t == null ? '—' : t.toFixed(1) + '秒'; }
+  function fmt(t) { return t == null ? '—' : tx('{0}秒', t.toFixed(1)); }
 
   // A course's floor plan as a small grid: more rooms, a bigger house.
   function planHTML(c) {
@@ -1940,21 +1945,21 @@
   // 腕前: the level from the latest five runs, its title, and how much
   // faster per question the next level is. A still bar, no motion.
   function skillHTML(sk, from) {
-    if (!sk) return '<div class="sk-none">腕前 ―　一度はじめると、ここに Lv が出る</div>';
+    if (!sk) return '<div class="sk-none">' + esc(tx('腕前 ―　一度はじめると、ここに Lv が出る')) + '</div>';
     var cur = LV.paceFor(sk.lv), nxt = sk.next;
     var frac = nxt != null ? Math.max(0, Math.min(1, (cur - sk.pace) / (cur - nxt))) : 1;
     var up = from && from.lv < sk.lv;
-    return '<div class="sk-row"><span class="sk-lab">腕前</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
-      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span><b class="sk-title">' + esc(sk.title) + '</b></div>' +
+    return '<div class="sk-row"><span class="sk-lab">' + tx('腕前') + '</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
+      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span><b class="sk-title">' + esc(tx(sk.title)) + '</b></div>' +
       '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
-      '<div class="sk-note">' + (nxt != null ? '次の Lv.' + (sk.lv + 1) + ' まで、1 問あたり ' + sk.toNext.toFixed(2) + ' 秒速く' : '最高の Lv。') +
-      '（直近 ' + sk.runs + ' 回の平均 ' + sk.pace.toFixed(2) + ' 秒／問）</div>';
+      '<div class="sk-note">' + (nxt != null ? tx('次の Lv.{0} まで、1 問あたり {1} 秒速く', sk.lv + 1, sk.toNext.toFixed(2)) : tx('最高の Lv。')) +
+      tx('（直近 {0} 回の平均 {1} 秒／問）', sk.runs, sk.pace.toFixed(2)) + '</div>';
   }
 
   // The top bar: the 腕前, always in view.
   function renderMeta(all) {
     var sk = REC.skill(all);
-    $('#title-meta').textContent = sk ? '腕前 Lv.' + sk.lv + ' ' + sk.title : '合図 ' + prefixLabel();
+    $('#title-meta').textContent = sk ? tx('腕前 Lv.{0} {1}', sk.lv, tx(sk.title)) : tx('合図 {0}', prefixLabel());
   }
 
   function renderTitle() {
@@ -1963,7 +1968,7 @@
     var weak = REC.weakTypes(3);
     var kb = $('#btn-keiko');
     kb.hidden = !weak.length;
-    if (weak.length) $('#keiko-sub').textContent = '苦手: ' + weak.map(function (t) { return typeName(t); }).join('・');
+    if (weak.length) $('#keiko-sub').textContent = tx('苦手: {0}', weak.map(function (t) { return typeName(t); }).join(tx('・')));
     var pick = lastCourse(all);
     var html = '';
     LV.COURSES.forEach(function (c) {
@@ -1973,18 +1978,18 @@
       html += '<li><button type="button" class="wing' + (c.id === pick ? ' hot' : '') + '" data-course="' + c.id + '">' +
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
-        '<span class="wing-n">' + c.qs.length + ' 問題</span>' +
+        '<span class="wing-n">' + tx('{0} 問題', c.qs.length) + '</span>' +
         '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span></span>' +
-        '<span class="wing-desc">目安 ' + c.limit + ' 秒／問。' + esc(c.desc) + '</span></span>' +
-        '<span class="wing-best"><small>自己ベスト</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
-        '<small>' + (runs.length ? (a5 != null ? '五回平均 ' + a5.toFixed(1) + ' ・ ' : '') + runs.length + ' 回' : 'お手本 ' + LV.par(c) + ' 秒') + '</small></span>' +
+        '<span class="wing-desc">' + tx('目安 {0} 秒／問。', c.limit) + esc(c.desc) + '</span></span>' +
+        '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
+        '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small></span>' +
         '</button></li>';
     });
     $('#course-list').innerHTML = html;
-    $('#enter-sub').textContent = REC.courseOf(pick).title + ' から';
+    $('#enter-sub').textContent = tx('{0} から', REC.courseOf(pick).title);
     $('#btn-enter').dataset.course = pick;
     var n = (all.runs || []).length;
-    $('#records-sub').textContent = n ? '通算 ' + n + ' 回' : '上達を見る';
+    $('#records-sub').textContent = n ? tx('通算 {0} 回', n) : tx('上達を見る');
     renderMeta(all);
   }
 
@@ -2012,9 +2017,9 @@
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     var n = b.qs.length;
-    var html = '<div class="sz-lab"><span>指 図</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
+    var html = '<div class="sz-lab"><span>' + tx('指 図') + '</span><b>' + kanji(Math.min(b.i + 1, n)) + ' ／ ' + kanji(n) + '</b></div>';
     if (!playing) {
-      html += '<div class="sz-q">' + (b.phase === 'count' ? 'はじめる……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
+      html += '<div class="sz-q">' + tx(b.phase === 'count' ? 'はじめる……' : b.phase === 'pause' ? '一時停止中' : b.phase === 'clear' ? '成った' : '') + '</div>';
       el.innerHTML = html;
       return;
     }
@@ -2030,21 +2035,21 @@
     });
     var lit = move ? move.keys : [];
     var pfxCls = 'pfx' + (move && move.pfx ? (S.armed ? ' done' : ' next') : '');
-    if (S.qNote.length) html += '<div class="sz-note">' + esc(S.qNote.join('。')) + '</div>';
+    if (S.qNote.length) html += '<div class="sz-note">' + esc(S.qNote.join(tx('。'))) + '</div>';
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
-    if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">prefix なし</span>' + keycaps(rootKeys, lit) + '</div>';
-    html += '<div class="sz-cmd">tmux: <code>' + esc(b.q.cmd) + '</code></div>';
+    if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">' + tx('prefix なし') + '</span>' + keycaps(rootKeys, lit) + '</div>';
+    html += '<div class="sz-cmd">tmux: <code>' + esc(tx(b.q.cmd)) + '</code></div>';
     if (move) {
-      html += '<div class="shinan"><div class="shinan-t">手順</div><ol>' +
+      html += '<div class="shinan"><div class="shinan-t">' + tx('手順') + '</div><ol>' +
         steps(move).map(function (s, i, all) {
           var now = all.findIndex(function (x) { return !x.done; });
           return '<li class="' + (s.done ? 'done' : i === now ? 'now' : '') + '"><span class="no">' + kanji(i + 1) + '</span>' + esc(s.text) + tick(s.done) + '</li>';
         }).join('') + '</ol></div>';
-      if (move.alt && move.alt.length) html += '<span class="sz-alt">別解: ' + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join('、') + '</span>';
+      if (move.alt && move.alt.length) html += '<span class="sz-alt">' + tx('別解: ') + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join(tx('、')) + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">覚えた問題。手順は目安を過ぎたら出る。</p>';
+      html += '<p class="learnt-note">' + tx('覚えた問題。手順は目安を過ぎたら出る。') + '</p>';
     }
-    html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>目安 ' + b.limit + ' 秒</span><b class="andon-over"></b></div>' +
+    html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>' + tx('目安 {0} 秒', b.limit) + '</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
     html += '</div>';
     el.innerHTML = html;
@@ -2053,7 +2058,7 @@
 
   function steps(move) {
     var list = [];
-    if (move.pfx) list.push({ text: prefixLabel() + ' を押して離す（prefix）', key: prefixLabel(), done: S.armed });
+    if (move.pfx) list.push({ text: tx('{0} を押して離す（prefix）', prefixLabel()), key: prefixLabel(), done: S.armed });
     list.push({ text: move.text, keys: move.keys, done: false });
     return list;
   }
@@ -2080,9 +2085,9 @@
     var st = b.q.step && b.q.step();
     var html = st ? '<div class="ob-whole">' + c + esc(qText(b)) + '</div>' : '';
     html += '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> ' +
-      (st ? '<span class="ob-step">' + (st[0] ? '手順 ' + st[0] + '/' + st[1] : 'やり直し') + '</span> ' : '') +
-      '<b class="ob-q">' + esc(st ? st[2] : qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(b.q.cmd) + '</span></div>';
-    if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join('。')) + '</div>';
+      (st ? '<span class="ob-step">' + (st[0] ? tx('手順 {0}/{1}', st[0], st[1]) : tx('やり直し')) + '</span> ' : '') +
+      '<b class="ob-q">' + esc(st ? tx(st[2]) : qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(tx(b.q.cmd)) + '</span></div>';
+    if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join(tx('。'))) + '</div>';
     if (move) {
       var keys = '';
       steps(move).forEach(function (s, i) {
@@ -2091,9 +2096,9 @@
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
       html += '<div class="ob-guide">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
-      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + '別解 ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
+      if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
-      html += '<div class="ob-guide learnt">' + c + '覚えた ✓<span class="ob-txt">手順は目安を過ぎたら出る</span></div>';
+      html += '<div class="ob-guide learnt">' + c + tx('覚えた ✓') + '<span class="ob-txt">' + tx('手順は目安を過ぎたら出る') + '</span></div>';
     }
     return html;
   }
@@ -2102,10 +2107,10 @@
   // or behind you are. It changes only when a question is solved.
   function ghostHTML(b) {
     if (!b.ghost) return '';
-    var who = b.ghost.today ? '今日の一番 ' + b.ghost.name : '自分のベスト';
+    var who = b.ghost.today ? tx('今日の一番 {0}', b.ghost.name) : tx('自分のベスト');
     var d = b.ghostDiff;
-    var txt = d == null ? b.ghost.time.toFixed(1) + '秒' : (d <= 0 ? '−' : '+') + Math.abs(d).toFixed(1) + '秒';
-    return '<span class="pb-ghost' + (d == null ? '' : d <= 0 ? ' ahead' : ' behind') + '" title="影: ' + esc(who) + '">影 <small>' + esc(who) + '</small> <b>' + txt + '</b></span>';
+    var txt = d == null ? tx('{0}秒', b.ghost.time.toFixed(1)) : tx('{0}秒', (d <= 0 ? '−' : '+') + Math.abs(d).toFixed(1));
+    return '<span class="pb-ghost' + (d == null ? '' : d <= 0 ? ' ahead' : ' behind') + '" title="' + esc(tx('影: {0}', who)) + '">' + tx('影') + ' <small>' + esc(who) + '</small> <b>' + txt + '</b></span>';
   }
 
   function renderPlaybar() {
@@ -2115,12 +2120,12 @@
     var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0, b.ghost ? b.ghost.name : '', b.ghostDiff].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
-    el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + ' ・ 問題 <b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
-      (b.streak >= 3 ? '<span class="pb-streak">' + b.streak + ' 連</span>' : '') +
+    el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + tx(' ・ 問題 ') + '<b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
+      (b.streak >= 3 ? '<span class="pb-streak">' + tx('{0} 連', b.streak) + '</span>' : '') +
       '<span class="pb-sp"></span>' +
-      (b.misses ? '<span class="pb-pen">操作ミス ' + b.misses + '（+' + b.penalty + '秒）</span>' : '') +
+      (b.misses ? '<span class="pb-pen">' + tx('操作ミス {0}（+{1}秒）', b.misses, b.penalty) + '</span>' : '') +
       ghostHTML(b) +
-      '<span class="pb-time"><span>0.0</span><small>秒</small></span>';
+      '<span class="pb-time"><span>0.0</span><small>' + tx('秒') + '</small></span>';
     renderClock();
   }
 
@@ -2138,7 +2143,7 @@
     if (left) left.style.width = Math.max(0, (b.limit - used) / b.limit * 100) + '%';
     if (over) over.style.width = Math.min(100, Math.max(0, (used - b.limit) / (b.limit * (LV.GUIDE_AT - 1)) * 100)) + '%';
     // Past the 目安 the panel goes still: no counting seconds to distract.
-    if (o) o.textContent = used > b.limit ? '目安を過ぎた' : '';
+    if (o) o.textContent = used > b.limit ? tx('目安を過ぎた') : '';
   }
 
   // Short notes under the order: a streak, a wrong key.
@@ -2147,7 +2152,7 @@
     if (!box) return;
     var c = document.createElement('span');
     c.className = 'chip ' + kind;
-    c.textContent = text;
+    c.textContent = tx(text);
     box.insertBefore(c, box.firstChild);
     while (box.children.length > 2) box.removeChild(box.lastChild);
     setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 2200);
@@ -2369,7 +2374,7 @@
     // arrow to the tab (renderTabArrow). Otherwise in the middle of your pane.
     if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
     // Where you stand, said in words on the pane itself: the card never covers it.
-    if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + (active.x * cw + 6) + 'px;top:' + (active.y * ch + 6) + 'px">いまここ</span>');
+    if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + (active.x * cw + 6) + 'px;top:' + (active.y * ch + 6) + 'px">' + tx('いまここ') + '</span>');
     // A step chip already says what to do here; the tag would repeat it.
     if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), run.q.step && run.q.step() ? '' : anchor.tag, '');
     var pk = $(':scope > .picker', term);
@@ -2508,7 +2513,7 @@
   function goalMarks() {
     var b = S.run;
     if (!b || b.phase !== 'play' || !b.q || !b.q.goal || S.detached) return [];
-    try { return b.q.goal() || []; } catch (e) { return []; }
+    try { return (b.q.goal() || []).map(function (g) { var o = {}; for (var k in g) o[k] = g[k]; if (o.tag) o.tag = tx(o.tag); return o; }); } catch (e) { return []; }
   }
 
   function markCursor(el, p) {
@@ -2518,8 +2523,8 @@
   }
 
   function pickerHTML() {
-    var html = '<div class="picker" role="listbox" aria-label="セッション">';
-    html += '<div class="picker-head">(choose-tree)  ↑↓ で選んで Enter</div>';
+    var html = '<div class="picker" role="listbox" aria-label="' + tx('セッション') + '">';
+    html += '<div class="picker-head">' + tx('(choose-tree)  ↑↓ で選んで Enter') + '</div>';
     S.sessions.forEach(function (s, i) {
       html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + '">(' + i + ') ' + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '') + '</div>';
     });
@@ -2708,7 +2713,7 @@
     else if (Date.now() < S.repeatUntil) html += '<span class="st-prefix repeat">REPEAT</span>';
     var ap = T.activePane(win);
     if (ap.mode === 'copy') html += '<span class="st-mode">COPY' + (ap.sel != null ? ' SEL' : '') + '</span>';
-    if (S.clipboard) html += '<span class="st-clip" title="コピーした内容">📋</span>';
+    if (S.clipboard) html += '<span class="st-clip" title="' + tx('コピーした内容') + '">📋</span>';
     html += '<span class="st-host">"dojo"</span><span class="st-clock">' + clock() + '</span></span>';
     bar.innerHTML = html;
   }
@@ -2773,7 +2778,7 @@
   function banner(text, kind) {
     var el = $('#banner');
     if (!el) return;
-    el.textContent = text;
+    el.textContent = tx(text);
     el.className = 'banner ' + (kind || '');
     void el.offsetWidth;
     el.classList.add('show');
@@ -2862,18 +2867,19 @@
     seal(false);
   }
 
-  function sec(t) { return t.toFixed(1) + ' 秒'; }
+  function sec(t) { return tx('{0} 秒', t.toFixed(1)); }
 
   // The last few runs as bars, oldest first; the shape matters, not the numbers.
   function spark(list) {
     if (!list || list.length < 2) return '';
     var max = Math.max.apply(null, list.map(function (r) { return r.time; }));
-    return '<div class="spark" aria-label="直近 ' + list.length + ' 回のタイム">' + list.map(function (r, i) {
+    return '<div class="spark" aria-label="' + tx('直近 {0} 回のタイム', list.length) + '">' + list.map(function (r, i) {
       return '<i class="' + (r.rec ? 'rec' : '') + (i === list.length - 1 ? ' now' : '') + '" style="height:' + Math.max(8, Math.round(r.time / max * 100)) + '%"></i>';
     }).join('') + '</div>';
   }
 
   function wareki(d) {
+    if (EN) return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
   }
 
@@ -2886,48 +2892,48 @@
     var c = REC.courseOf(r.course);
     var diff = r.time - r.par;
     var verdict = diff <= 0
-      ? 'お手本 ' + r.par + ' 秒を <b>' + Math.abs(diff).toFixed(1) + ' 秒</b> 上回った'
-      : 'お手本 ' + r.par + ' 秒まで あと <b>' + diff.toFixed(1) + ' 秒</b>';
+      ? tx('お手本 {0} 秒を <b>{1} 秒</b> 上回った', r.par, Math.abs(diff).toFixed(1))
+      : tx('お手本 {0} 秒まで あと <b>{1} 秒</b>', r.par, diff.toFixed(1));
     var sub = '';
-    if (r.count === 1) sub = 'はじめての挑戦。これが出発点。';
-    else if (r.record) sub = '★ 自己ベスト更新（' + r.best.toFixed(1) + ' → ' + r.time.toFixed(1) + '）';
-    else if (r.delta < 0) sub = '前回より ' + Math.abs(r.delta).toFixed(1) + ' 秒 速い。自己ベストまで あと ' + r.bestDelta.toFixed(1) + ' 秒';
-    else sub = '前回より ' + r.delta.toFixed(1) + ' 秒 遅い。自己ベストまで あと ' + r.bestDelta.toFixed(1) + ' 秒';
-    if (r.ao5 != null) sub += ' ・ 五回平均 ' + (r.ao5Prev != null ? r.ao5Prev.toFixed(1) + ' → ' : '') + r.ao5.toFixed(1);
+    if (r.count === 1) sub = tx('はじめての挑戦。これが出発点。');
+    else if (r.record) sub = tx('★ 自己ベスト更新（{0} → {1}）', r.best.toFixed(1), r.time.toFixed(1));
+    else if (r.delta < 0) sub = tx('前回より {0} 秒 速い。自己ベストまで あと {1} 秒', Math.abs(r.delta).toFixed(1), r.bestDelta.toFixed(1));
+    else sub = tx('前回より {0} 秒 遅い。自己ベストまで あと {1} 秒', r.delta.toFixed(1), r.bestDelta.toFixed(1));
+    if (r.ao5 != null) sub += tx(' ・ 五回平均 {0}', (r.ao5Prev != null ? r.ao5Prev.toFixed(1) + ' → ' : '') + r.ao5.toFixed(1));
     var rankLine = r.rankUp
-      ? '称号が「' + esc(r.rankFrom) + '」から <b>' + esc(r.rank) + '</b> に上がった'
-      : '称号 <b>' + esc(r.rank) + '</b>';
+      ? tx('称号が「{0}」から <b>{1}</b> に上がった', esc(tx(r.rankFrom)), esc(tx(r.rank)))
+      : tx('称号 <b>{0}</b>', esc(tx(r.rank)));
     var slow = r.slow ? Q[r.slow] : null;
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });
     var isRec = !!(r.record && r.count > 1);
     el.classList.toggle('is-rec', isRec);
     el.innerHTML =
-      '<div class="em-hd">絵 巻 ・ ' + kanji(Math.min(r.count, 99)) + ' 回 目</div>' +
-      '<h2 class="em-title">' + (c.practice ? '稽古を終えた。' : '奥の間に辿り着いた。') + '</h2>' +
-      '<div class="em-sub">' + esc(c.title) + ' ・ 問題 ' + r.n + ' ・ ' + wareki(r.at) + '</div>' +
-      '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>秒</small></div>' +
+      '<div class="em-hd">' + tx('絵 巻 ・ {0} 回 目', kanji(Math.min(r.count, 99))) + '</div>' +
+      '<h2 class="em-title">' + (c.practice ? tx('稽古を終えた。') : tx('奥の間に辿り着いた。')) + '</h2>' +
+      '<div class="em-sub">' + esc(tx('{0} ・ 問題 {1} ・ {2}', c.title, r.n, wareki(r.at))) + '</div>' +
+      '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
       '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
-      '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2') + '</span><span>' + rankLine + '</span></div>' +
+      '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + (EN ? esc(tx(r.rank)) : esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2')) + '</span><span>' + rankLine + '</span></div>' +
       '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
       learntHTML(r) +
       '<dl class="em-facts">' +
-      '<div><dt>1 問あたり</dt><dd>' + r.avg.toFixed(2) + '秒</dd></div>' +
-      '<div><dt>実時間</dt><dd>' + r.raw.toFixed(1) + '秒</dd></div>' +
-      '<div><dt>操作ミス</dt><dd>' + r.misses + '（+' + (r.misses * LV.MISS_PENALTY) + '秒）</dd></div>' +
-      '<div><dt>目安超え</dt><dd>' + r.overs + ' 問題</dd></div>' +
-      '<div><dt>自己ベスト</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
-      '<div><dt>押したキー</dt><dd>' + r.keys + '</dd></div>' +
+      '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
+      '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
+      '<div><dt>' + tx('操作ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
+      '<div><dt>' + tx('目安超え') + '</dt><dd>' + tx('{0} 問題', r.overs) + '</dd></div>' +
+      '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
+      '<div><dt>' + tx('押したキー') + '</dt><dd>' + r.keys + '</dd></div>' +
       '</dl>' +
       resultNetHTML(r) +
       spark(r.spark) +
-      '<div class="spark-l"><span>' + (slow ? 'いちばん時間がかかった問題: ' + esc(slow.text) + '（' + esc(prefixLabel()) + ' → ' + slowKeys.map(esc).join(' ') + '）' : r.overs ? '' : '目安超えなし。どの問題も目安のうちに解いた') + '</span>' +
-      (r.spark && r.spark.length > 1 ? '<span>■ 自己ベスト ■ 今回</span>' : '') + '</div>' +
-      (r.tip ? '<div class="tips"><div class="tips-head">豆知識</div><p>' + esc(r.tip) + '</p></div>' : '') +
-      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? 'もう一度 稽古' : 'もう一度') + '<kbd class="hk">Enter</kbd></button>' +
-      (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">苦手を稽古<kbd class="hk">K</kbd></button>' : '') +
-      '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">記録を見る<kbd class="hk">R</kbd></button>' +
-      '<button type="button" class="btn ghost" data-title="1">コース選択へ<kbd class="hk">Esc</kbd></button></div>';
+      '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
+      (r.spark && r.spark.length > 1 ? '<span>' + tx('■ 自己ベスト ■ 今回') + '</span>' : '') + '</div>' +
+      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
+      '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? tx('もう一度 稽古') : tx('もう一度')) + '<kbd class="hk">Enter</kbd></button>' +
+      (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">' + tx('苦手を稽古') + '<kbd class="hk">K</kbd></button>' : '') +
+      '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">' + tx('記録を見る') + '<kbd class="hk">R</kbd></button>' +
+      '<button type="button" class="btn ghost" data-title="1">' + tx('コース選択へ') + '<kbd class="hk">Esc</kbd></button></div>';
     renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
@@ -2960,8 +2966,8 @@
   // and types that slipped (their 手順 is back).
   function learntHTML(r) {
     var html = '';
-    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">覚えた: <b>' + r.learntNew.map(typeName).map(esc).join('・') + '</b>（次から手順を畳む）</p>';
-    if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">もう一度: ' + r.learntLost.map(typeName).map(esc).join('・') + '（手順を出す）</p>';
+    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">' + tx('覚えた: ') + '<b>' + r.learntNew.map(typeName).map(esc).join(tx('・')) + '</b>' + tx('（次から手順を畳む）') + '</p>';
+    if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">' + tx('もう一度: {0}（手順を出す）', r.learntLost.map(typeName).map(esc).join(tx('・'))) + '</p>';
     return html;
   }
 
@@ -2969,17 +2975,17 @@
     var html = '';
     if (r.ghost) {
       var d = r.ghost.diff;
-      html += '<p class="em-ghost' + (d <= 0 ? ' win' : '') + '">影（' + esc(r.ghost.name === '自分' ? '自分のベスト' : r.ghost.name) + ' ' + r.ghost.time.toFixed(1) + '秒）に ' +
-        (d <= 0 ? '<b>' + Math.abs(d).toFixed(1) + ' 秒差で勝った</b>' : Math.abs(d).toFixed(1) + ' 秒差で負けた') + '</p>';
+      html += '<p class="em-ghost' + (d <= 0 ? ' win' : '') + '">' + tx(d <= 0 ? '影（{0} {1}秒）に <b>{2} 秒差で勝った</b>' : '影（{0} {1}秒）に {2} 秒差で負けた',
+        esc(r.ghost.name === '自分' ? tx('自分のベスト') : r.ghost.name), r.ghost.time.toFixed(1), Math.abs(d).toFixed(1)) + '</p>';
     }
     var b = r.board;
     if (!b) return html;
-    if (b.state === 'sending') html += '<p class="em-board">今日のランキングに載せている……</p>';
-    if (b.state === 'ok') html += '<p class="em-board">今日のランキング <b>' + b.rank + ' 位</b> ／ ' + b.total + ' 人 ・ <a href="#" data-board="' + r.course + '">ランキングを見る</a></p>';
-    if (b.state === 'refused') html += '<p class="em-board dim">この記録はランキングに載せられなかった（手で解いた記録だけが載る）。</p>';
+    if (b.state === 'sending') html += '<p class="em-board">' + tx('今日のランキングに載せている……') + '</p>';
+    if (b.state === 'ok') html += '<p class="em-board">' + tx('今日のランキング <b>{0} 位</b> ／ {1} 人', b.rank, b.total) + ' ・ <a href="#" data-board="' + r.course + '">' + tx('ランキングを見る') + '</a></p>';
+    if (b.state === 'refused') html += '<p class="em-board dim">' + tx('この記録はランキングに載せられなかった（手で解いた記録だけが載る）。') + '</p>';
     if (b.state === 'noname') {
-      html += '<form class="em-board name-form" data-name-form="result"><label>名前を付けると、今日のランキングに載る</label>' +
-        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="名前（12 文字まで）"><button type="submit" class="btn">ランキングに載せる</button></span>' +
+      html += '<form class="em-board name-form" data-name-form="result"><label>' + tx('名前を付けると、今日のランキングに載る') + '</label>' +
+        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx('ランキングに載せる') + '</button></span>' +
         '<small class="nf-msg"></small></form>';
     }
     return html;
@@ -2990,7 +2996,7 @@
     var input = form.querySelector('input'), msg = form.querySelector('.nf-msg');
     var name = input.value.trim();
     if (!name) { input.focus(); return; }
-    msg.textContent = '送っている……';
+    msg.textContent = tx('送っている……');
     NET.setName(name).then(function () { return NET.sync(); }).then(function () {
       AU.se('hit', 1);
       if (form.dataset.nameForm === 'result' && S.result) {
@@ -3005,32 +3011,32 @@
       }
       renderRecords();
     }).catch(function (e) {
-      msg.textContent = e && e.status === 409 ? 'その名前は他の人が使っている。別の名前で。' :
-        e && e.status === 400 ? '使えない名前。12 文字まで。' : 'つながらなかった。あとでもう一度。';
+      msg.textContent = tx(e && e.status === 409 ? 'その名前は他の人が使っている。別の名前で。' :
+        e && e.status === 400 ? '使えない名前。12 文字まで。' : 'つながらなかった。あとでもう一度。');
     });
   }
 
   // ランキング: each player's best for the course, today / this week / ever.
   function renderBoard(body, id) {
     var span = S.boardSpan || 'today';
-    var seg = '<div class="seg rec-span" role="group" aria-label="期間">' +
+    var seg = '<div class="seg rec-span" role="group" aria-label="' + tx('期間') + '">' +
       [['today', '今日'], ['week', '今週'], ['all', '全期間']].map(function (x) {
-        return '<button type="button" data-span="' + x[0] + '" aria-pressed="' + (x[0] === span ? 'true' : 'false') + '">' + x[1] + '</button>';
+        return '<button type="button" data-span="' + x[0] + '" aria-pressed="' + (x[0] === span ? 'true' : 'false') + '">' + tx(x[1]) + '</button>';
       }).join('') + '</div>';
     var me = NET ? NET.state().name : null;
     var key = id + '|' + span;
     var cached = S.boardCache && S.boardCache[key];
     var table = function (rows) {
-      if (!rows.length) return '<p class="rec-empty">' + (span === 'today' ? 'まだ今日の記録はない。一番乗りの好機。' : 'まだ記録がない。') + '</p>';
-      return '<table class="rec-table board"><thead><tr><th>位</th><th>名前</th><th>タイム</th><th class="r-note">日付</th></tr></thead><tbody>' +
+      if (!rows.length) return '<p class="rec-empty">' + tx(span === 'today' ? 'まだ今日の記録はない。一番乗りの好機。' : 'まだ記録がない。') + '</p>';
+      return '<table class="rec-table board"><thead><tr><th>' + tx('位') + '</th><th>' + tx('名前') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('日付') + '</th></tr></thead><tbody>' +
         rows.map(function (r) {
-          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
+          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
         }).join('') + '</tbody></table>';
     };
-    var note = me ? '<p class="rec-empty">「' + esc(me) + '」として載る。名前は「引き継ぎ」で変えられる。</p>'
-      : '<p class="rec-empty">名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。</p>';
-    body.innerHTML = '<div class="rec-panel"><div class="rec-head">ランキング ・ ' + esc(REC.courseOf(id).title) + '</div>' + seg +
-      '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">読み込み中……</p>') + '</div>' + note + '</div>';
+    var note = me ? '<p class="rec-empty">' + tx('「{0}」として載る。名前は「引き継ぎ」で変えられる。', esc(me)) + '</p>'
+      : '<p class="rec-empty">' + tx('名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。') + '</p>';
+    body.innerHTML = '<div class="rec-panel"><div class="rec-head">' + tx('ランキング ・ {0}', esc(REC.courseOf(id).title)) + '</div>' + seg +
+      '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">' + tx('読み込み中……') + '</p>') + '</div>' + note + '</div>';
     if (cached && Date.now() - cached.at < 15000) return;
     if (!NET) return;
     // Looking at the boards is the player's choice; reading sends nothing of theirs.
@@ -3040,7 +3046,7 @@
       if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || 'today') === span) renderRecords();
     }).catch(function () {
       var bb = $('#records-body .board-body');
-      if (bb && !cached) bb.innerHTML = '<p class="rec-empty">ランキングにつながらなかった。通信できるときにもう一度。</p>';
+      if (bb && !cached) bb.innerHTML = '<p class="rec-empty">' + tx('ランキングにつながらなかった。通信できるときにもう一度。') + '</p>';
     });
   }
 
@@ -3048,30 +3054,30 @@
   function renderSync(body) {
     var st = NET ? NET.state() : {};
     var keyHTML = st.key
-      ? '<div class="sync-key"><code>' + esc(st.key) + '</code><button type="button" class="btn" data-copy-key>写す</button></div>' +
-        '<p class="rec-empty">別の端末でこの合言葉を入れると、同じ記録が見られる。他の人には教えない。' + (st.syncedAt ? '最後に合わせた: ' + esc(recDate(st.syncedAt)) + ' ' + esc(st.syncedAt.slice(11, 16)) + '（UTC）' : '') + '</p>'
-      : '<p class="rec-empty">まだ合言葉がない。一度遊ぶか、下の「今すぐ合わせる」で作られる。</p>';
+      ? '<div class="sync-key"><code>' + esc(st.key) + '</code><button type="button" class="btn" data-copy-key>' + tx('写す') + '</button></div>' +
+        '<p class="rec-empty">' + tx('別の端末でこの合言葉を入れると、同じ記録が見られる。他の人には教えない。') + (st.syncedAt ? tx('最後に合わせた: {0}（UTC）', esc(recDate(st.syncedAt)) + ' ' + esc(st.syncedAt.slice(11, 16))) : '') + '</p>'
+      : '<p class="rec-empty">' + tx('まだ合言葉がない。一度遊ぶか、下の「今すぐ合わせる」で作られる。') + '</p>';
     body.innerHTML =
-      '<div class="rec-panel"><div class="rec-head">この端末の合言葉</div>' + keyHTML +
-      '<div class="cta"><button type="button" class="btn" data-sync-now>今すぐ合わせる</button></div><p class="sync-msg rec-empty" data-sync-msg></p></div>' +
-      '<div class="rec-panel"><div class="rec-head">別の端末の合言葉を入れる</div>' +
-      '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="例: matsu-kaze-tsuru-482"><button type="submit" class="btn">この合言葉にする</button></span>' +
-      '<small class="nf-msg">この端末の記録も、その合言葉の側に合わさる。</small></form></div>' +
-      '<div class="rec-panel"><div class="rec-head">ランキングの名前</div>' +
-      '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" value="' + esc(st.name || '') + '" placeholder="名前（12 文字まで）"><button type="submit" class="btn">' + (st.name ? '変える' : '付ける') + '</button></span>' +
-      '<small class="nf-msg">' + (st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
+      '<div class="rec-panel"><div class="rec-head">' + tx('この端末の合言葉') + '</div>' + keyHTML +
+      '<div class="cta"><button type="button" class="btn" data-sync-now>' + tx('今すぐ合わせる') + '</button></div><p class="sync-msg rec-empty" data-sync-msg></p></div>' +
+      '<div class="rec-panel"><div class="rec-head">' + tx('別の端末の合言葉を入れる') + '</div>' +
+      '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="' + tx('例: matsu-kaze-tsuru-482') + '"><button type="submit" class="btn">' + tx('この合言葉にする') + '</button></span>' +
+      '<small class="nf-msg">' + tx('この端末の記録も、その合言葉の側に合わさる。') + '</small></form></div>' +
+      '<div class="rec-panel"><div class="rec-head">' + tx('ランキングの名前') + '</div>' +
+      '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" value="' + esc(st.name || '') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx(st.name ? '変える' : '付ける') + '</button></span>' +
+      '<small class="nf-msg">' + tx(st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
   }
 
   function syncNow(msgEl) {
     if (!NET) return;
-    if (msgEl) msgEl.textContent = '合わせている……';
+    if (msgEl) msgEl.textContent = tx('合わせている……');
     NET.sync().then(function (res) {
       renderRecords();
       var m = $('[data-sync-msg]');
-      if (m) m.textContent = res.added ? res.added + ' 回分の記録が加わった。' : '合わせた。この端末の記録はそろっている。';
+      if (m) m.textContent = res.added ? tx('{0} 回分の記録が加わった。', res.added) : tx('合わせた。この端末の記録はそろっている。');
     }).catch(function () {
       var m = $('[data-sync-msg]');
-      if (m) m.textContent = 'つながらなかった。通信できるときにもう一度。';
+      if (m) m.textContent = tx('つながらなかった。通信できるときにもう一度。');
     });
   }
 
@@ -3107,14 +3113,14 @@
     var svg = '<svg class="rec-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">';
     list.forEach(function (r, i) {
       svg += '<rect class="bar' + (r.rec ? ' rec' : '') + (i === list.length - 1 ? ' now' : '') + '" x="' + (i * 10 + 1.5) + '" y="' + y(r.time) + '" width="7" height="' + (H - y(r.time)) + '"><title>' +
-        esc(recDate(r.at) + ' ' + r.time.toFixed(1) + '秒 操作ミス ' + r.misses) + '</title></rect>';
+        esc(tx('{0} {1}秒 操作ミス {2}', recDate(r.at), r.time.toFixed(1), r.misses)) + '</title></rect>';
     });
     svg += '<line class="par" x1="0" x2="' + W + '" y1="' + y(par) + '" y2="' + y(par) + '" vector-effect="non-scaling-stroke"/>';
     if (best != null) svg += '<line class="best" x1="0" x2="' + W + '" y1="' + y(best) + '" y2="' + y(best) + '" vector-effect="non-scaling-stroke"/>';
     svg += '</svg>';
-    var lbl = '<span class="lbl par-l" style="top:' + y(par) + '%">お手本 ' + par + '秒</span>';
-    if (best != null) lbl += '<span class="lbl best-l" style="top:' + y(best) + '%">自己ベスト ' + best.toFixed(1) + '秒</span>';
-    return '<div id="rec-chart" class="rec-chart" role="img" aria-label="タイムの移り変わり">' + svg + lbl + '</div>';
+    var lbl = '<span class="lbl par-l" style="top:' + y(par) + '%">' + tx('お手本 {0}秒', par) + '</span>';
+    if (best != null) lbl += '<span class="lbl best-l" style="top:' + y(best) + '%">' + tx('自己ベスト {0}秒', best.toFixed(1)) + '</span>';
+    return '<div id="rec-chart" class="rec-chart" role="img" aria-label="' + tx('タイムの移り変わり') + '">' + svg + lbl + '</div>';
   }
 
   // Every day's best since the first run: the long view of getting faster.
@@ -3134,12 +3140,12 @@
       '<polyline class="line" points="' + pts + '" vector-effect="non-scaling-stroke"/>' +
       '</svg>' +
       // Dots as HTML so the stretched SVG does not squash them.
-      days.map(function (d, i) { return '<i class="dot" style="left:' + (x(i) / W * 100) + '%;top:' + y(d.time) + '%" title="' + esc(d.day + ' ' + d.time.toFixed(1) + '秒') + '"></i>'; }).join('');
-    return '<div class="rec-panel"><div class="rec-head">日ごとのベスト（全期間 ' + days.length + ' 日）</div>' +
-      '<div class="rec-chart daily-chart">' + svg + '<span class="lbl par-l" style="top:' + y(par) + '%">お手本 ' + par + '秒</span></div>' +
-      '<div class="daily-l"><span>' + esc(first.day.slice(5).replace('-', '/')) + ' ' + first.time.toFixed(1) + '秒</span>' +
-      '<span>' + (gain > 0 ? '<b>−' + gain.toFixed(1) + ' 秒</b>' : '') + '</span>' +
-      '<span>' + esc(last.day.slice(5).replace('-', '/')) + ' ' + last.time.toFixed(1) + '秒</span></div></div>';
+      days.map(function (d, i) { return '<i class="dot" style="left:' + (x(i) / W * 100) + '%;top:' + y(d.time) + '%" title="' + esc(d.day + ' ' + tx('{0}秒', d.time.toFixed(1))) + '"></i>'; }).join('');
+    return '<div class="rec-panel"><div class="rec-head">' + tx('日ごとのベスト（全期間 {0} 日）', days.length) + '</div>' +
+      '<div class="rec-chart daily-chart">' + svg + '<span class="lbl par-l" style="top:' + y(par) + '%">' + tx('お手本 {0}秒', par) + '</span></div>' +
+      '<div class="daily-l"><span>' + esc(first.day.slice(5).replace('-', '/')) + ' ' + tx('{0}秒', first.time.toFixed(1)) + '</span>' +
+      '<span>' + (gain > 0 ? '<b>' + tx('−{0} 秒', gain.toFixed(1)) + '</b>' : '') + '</span>' +
+      '<span>' + esc(last.day.slice(5).replace('-', '/')) + ' ' + tx('{0}秒', last.time.toFixed(1)) + '</span></div></div>';
   }
 
   function renderRecords() {
@@ -3154,29 +3160,29 @@
     if (tab === 'sync') { renderSync(body); return; }
     var st = REC.stats(id);
     if (!st) {
-      body.innerHTML = '<div class="rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の記録は、まだ白紙。</p><p>一度はじめると、ここに上達が描かれていく。</p></div>' +
-        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に入る</button></div>' + rankPanel(c, '');
+      body.innerHTML = '<div class="rec-log"><p>' + tx('{0}（{1}）の記録は、まだ白紙。', esc(c.title), esc(c.mode)) + '</p><p>' + tx('一度はじめると、ここに上達が描かれていく。') + '</p></div>' +
+        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + tx('{0}に入る', esc(c.title)) + '</button></div>' + rankPanel(c, '');
       return;
     }
     var gain = st.first.time - st.best;
     var head = st.count === 1
-      ? '<p>挑戦 1 回。もう一度入ると、ここに上達が出る。</p>'
-      : '<p>はじめて ' + sec(st.first.time) + ' → 自己ベスト ' + sec(st.best) + (gain > 0 ? '（<b>−' + gain.toFixed(1) + ' 秒</b>）' : '') + '</p>';
+      ? '<p>' + tx('挑戦 1 回。もう一度入ると、ここに上達が出る。') + '</p>'
+      : '<p>' + tx('はじめて {0} → 自己ベスト {1}', sec(st.first.time), sec(st.best)) + (gain > 0 ? '（<b>' + tx('−{0} 秒', gain.toFixed(1)) + '</b>）' : '') + '</p>';
     var a5 = ao5(st.runs);
     var tiles =
       '<div class="rec-tiles">' +
-      '<div class="rec-tile"><small>自己ベスト</small><b>' + fmt(st.best) + '</b></div>' +
-      '<div class="rec-tile"><small>称号</small><b>' + esc(st.bestRank || '—') + '</b></div>' +
-      '<div class="rec-tile"><small>挑戦回数</small><b>' + st.count + ' 回</b></div>' +
-      '<div class="rec-tile"><small>五回平均</small><b>' + fmt(a5) + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('自己ベスト') + '</small><b>' + fmt(st.best) + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('称号') + '</small><b>' + esc(st.bestRank ? tx(st.bestRank) : '—') + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('挑戦回数') + '</small><b>' + tx('{0} 回', st.count) + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('五回平均') + '</small><b>' + fmt(a5) + '</b></div>' +
       '</div>';
-    var chart = '<div class="rec-panel"><div class="rec-head">タイムの移り変わり（直近 ' + Math.min(20, st.count) + ' 回）</div>' + recChart(st.runs, c, st.best) + '</div>' +
+    var chart = '<div class="rec-panel"><div class="rec-head">' + tx('タイムの移り変わり（直近 {0} 回）', Math.min(20, st.count)) + '</div>' + recChart(st.runs, c, st.best) + '</div>' +
       dailyChart(REC.dailyBest(id), c);
     var rows = st.runs.slice(0, 20).map(function (r) {
-      var note = r.legacy ? '旧記録' : 'ミス ' + r.misses + (r.overs ? ' ・ 目安超え ' + r.overs : '') + (r.timeouts ? ' ・ 時間切れ ' + r.timeouts : '');
-      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
+      var note = r.legacy ? tx('旧記録') : tx('ミス {0}', r.misses) + (r.overs ? tx(' ・ 目安超え {0}', r.overs) : '') + (r.timeouts ? tx(' ・ 時間切れ {0}', r.timeouts) : '');
+      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(tx(r.rank)) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
-    var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">内訳</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    var table = '<div class="rec-panel"><div class="rec-head">' + tx('直近の記録') + '</div><table class="rec-table"><thead><tr><th>' + tx('日付') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('内訳') + '</th><th>' + tx('称号') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + rankPanel(c, st.bestRank) + chart + weakPanel(id) + learntPanel() + table;
   }
 
@@ -3185,28 +3191,28 @@
   function rankPanel(c, mine) {
     var n = c.qs.length, mul = c.rankMul || 1;
     var rows = LV.RANKS.map(function (r, i) {
-      var t = isFinite(r.max) ? Math.round(r.max * mul * n) + ' 秒以内' : Math.round(LV.RANKS[i - 1].max * mul * n) + ' 秒より遅い';
-      var per = isFinite(r.max) ? '1 問 ' + (r.max * mul).toFixed(1) + ' 秒' : '';
-      return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(r.title) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? 'いまここ' : '') + '</td></tr>';
+      var t = isFinite(r.max) ? tx('{0} 秒以内', Math.round(r.max * mul * n)) : tx('{0} 秒より遅い', Math.round(LV.RANKS[i - 1].max * mul * n));
+      var per = isFinite(r.max) ? tx('1 問 {0} 秒', (r.max * mul).toFixed(1)) : '';
+      return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(tx(r.title)) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? tx('いまここ') : '') + '</td></tr>';
     }).join('');
-    return '<div class="rec-panel rec-ranks"><div class="rec-head">称号の一覧（' + esc(c.title) + '・' + n + ' 問）</div><table class="rec-table"><thead><tr><th>称号</th><th>タイム</th><th class="r-note">目安</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('目安') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   function weakPanel(id) {
     var w = REC.weakness(id, 10);
-    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">目安を超えがちな問題</div><p class="rec-empty">2 回入ると、苦手な問題が見えてくる。</p></div>';
+    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">' + tx('目安を超えがちな問題') + '</div><p class="rec-empty">' + tx('2 回入ると、苦手な問題が見えてくる。') + '</p></div>';
     var row = function (e) {
       var q = Q[e.type];
       var keys = [];
       q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
-      return '<li><span class="w-text">' + esc(q.text) + '</span>' +
-        '<span class="w-num">平均 ' + e.avg.toFixed(1) + '秒 ・ 違い ' + Math.round(e.missRate * 100) + '%' + (e.overs ? ' ・ 目安超え ' + e.overs : '') + '</span>' +
+      return '<li><span class="w-text">' + esc(tx(q.text)) + '</span>' +
+        '<span class="w-num">' + tx('平均 {0}秒 ・ 違い {1}%', e.avg.toFixed(1), Math.round(e.missRate * 100)) + (e.overs ? tx(' ・ 目安超え {0}', e.overs) : '') + '</span>' +
         '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span></li>';
     };
-    return '<div class="rec-panel rec-weak"><div class="rec-head">目安を超えがちな問題（直近 ' + w.runs + ' 回）</div><ol class="weak-list">' +
+    return '<div class="rec-panel rec-weak"><div class="rec-head">' + tx('目安を超えがちな問題（直近 {0} 回）', w.runs) + '</div><ol class="weak-list">' +
       w.weak.map(row).join('') + '</ol>' +
-      (w.strong ? '<p class="w-strong">得意: <b>' + esc(Q[w.strong.type].text) + '</b> 平均 ' + w.strong.avg.toFixed(1) + '秒</p>' : '') +
-      (REC.weakTypes(3).length ? '<div class="cta"><button type="button" class="btn" data-course="keiko">苦手だけ稽古する（' + REC.weakTypes(3).map(typeName).join('・') + '）</button></div>' : '') +
+      (w.strong ? '<p class="w-strong">' + tx('得意: ') + '<b>' + esc(tx(Q[w.strong.type].text)) + '</b> ' + tx('平均 {0}秒', w.strong.avg.toFixed(1)) + '</p>' : '') +
+      (REC.weakTypes(3).length ? '<div class="cta"><button type="button" class="btn" data-course="keiko">' + tx('苦手だけ稽古する（{0}）', REC.weakTypes(3).map(typeName).join(tx('・'))) + '</button></div>' : '') +
       '</div>';
   }
 
@@ -3216,10 +3222,10 @@
     var types = Object.keys(TYPE_NAMES).filter(function (t) { return l[t]; });
     if (!types.length) return '';
     var done = types.filter(function (t) { return l[t].learnt; });
-    return '<div class="rec-panel learnt-list"><div class="rec-head">覚えた問題 ' + done.length + ' ／ ' + types.length + '</div><ul>' +
+    return '<div class="rec-panel learnt-list"><div class="rec-head">' + tx('覚えた問題 {0} ／ {1}', done.length, types.length) + '</div><ul>' +
       types.map(function (t) {
         var e = l[t];
-        return '<li class="' + (e.learnt ? 'ok' : '') + '">' + esc(typeName(t)) + '<small>' + (e.learnt ? '覚えた' : 'あと ' + (LV.LEARNT_AFTER - e.streak)) + '</small></li>';
+        return '<li class="' + (e.learnt ? 'ok' : '') + '">' + esc(typeName(t)) + '<small>' + (e.learnt ? tx('覚えた') : tx('あと {0}', LV.LEARNT_AFTER - e.streak)) + '</small></li>';
       }).join('') + '</ul></div>';
   }
 
@@ -3249,10 +3255,10 @@
     if (!String(text || '').trim()) { el.innerHTML = ''; return; }
     var row = function (x, note) { return '<li><code><i class="no">' + x.no + '</i>' + esc(x.line) + '</code><span' + (note === x.why ? ' class="err"' : '') + '>' + esc(note) + '</span></li>'; };
     var html = '';
-    html += '<h4>使う ' + c.used.length + ' 行' + (c.custom ? '（合図 ' + esc(c.prefix.label) + '）' : '') + '</h4>';
-    html += c.used.length ? '<ul>' + c.used.map(function (x) { return row(x, x.say); }).join('') + '</ul>' : '<p>ゲームで使える行がなかった。既定のキーで遊ぶ。</p>';
+    html += '<h4>' + tx('使う {0} 行', c.used.length) + (c.custom ? tx('（合図 {0}）', esc(c.prefix.label)) : '') + '</h4>';
+    html += c.used.length ? '<ul>' + c.used.map(function (x) { return row(x, x.say); }).join('') + '</ul>' : '<p>' + tx('ゲームで使える行がなかった。既定のキーで遊ぶ。') + '</p>';
     if (c.skipped.length) {
-      html += '<details><summary>読み飛ばした ' + c.skipped.length + ' 行</summary><ul>' + c.skipped.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
+      html += '<details><summary>' + tx('読み飛ばした {0} 行', c.skipped.length) + '</summary><ul>' + c.skipped.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
     }
     el.innerHTML = html;
   }
@@ -3260,6 +3266,13 @@
   // ---- wiring ------------------------------------------------------------
 
   function init() {
+    I18N.apply();
+    $$('.lang-toggle').forEach(function (b) {
+      b.textContent = EN ? '日本語' : 'EN';
+      b.setAttribute('lang', EN ? 'ja' : 'en');
+      b.setAttribute('aria-label', EN ? '日本語にする' : 'Switch to English');
+      b.addEventListener('click', function () { I18N.set(EN ? 'ja' : 'en'); });
+    });
     var saved = store.load();
     applyTheme(saved.theme === 'dark' || saved.theme === 'light' ? saved.theme : null);
     applySound(saved.sound !== false);
@@ -3326,7 +3339,7 @@
       if (e.target.closest('[data-sync-now]')) { syncNow($('[data-sync-msg]')); return; }
       if (e.target.closest('[data-copy-key]')) {
         var k = NET && NET.state().key;
-        var done = function () { var m = $('[data-sync-msg]'); if (m) m.textContent = '合言葉を写した。'; };
+        var done = function () { var m = $('[data-sync-msg]'); if (m) m.textContent = tx('合言葉を写した。'); };
         if (k && navigator.clipboard) navigator.clipboard.writeText(k).then(done, function () {});
         return;
       }
@@ -3335,7 +3348,7 @@
       if (e.target.closest('#btn-records-back')) { showScreen(S.recordsFrom === 'result' && S.result ? 'result' : 'title'); return; }
       if (e.target.closest('#btn-records-clear')) {
         var linked = NET && NET.state().key;
-        if (!window.confirm(linked ? 'この端末の記録をすべて消して、合言葉も外す？（合言葉の側の記録は残る）' : '記録の記録をすべて消す？')) return;
+        if (!window.confirm(tx(linked ? 'この端末の記録をすべて消して、合言葉も外す？（合言葉の側の記録は残る）' : '記録の記録をすべて消す？'))) return;
         REC.clearArena();
         if (linked) NET.forget();
         renderRecords();
@@ -3349,14 +3362,14 @@
       if (f.matches('[data-key-form]')) {
         e.preventDefault();
         var msg = f.querySelector('.nf-msg');
-        msg.textContent = '合わせている……';
+        msg.textContent = tx('合わせている……');
         NET.useKey(f.querySelector('input').value).then(function (res) {
           renderRecords();
           var m = $('[data-sync-msg]');
-          if (m) m.textContent = '合言葉を切り替えた。' + (res.added ? res.added + ' 回分の記録が加わった。' : '');
+          if (m) m.textContent = tx('合言葉を切り替えた。') + (res.added ? tx('{0} 回分の記録が加わった。', res.added) : '');
         }).catch(function (err) {
-          msg.textContent = err && err.status === 404 ? 'その合言葉は見つからない。綴りを確かめて。' :
-            err && err.message === 'bad key' ? '合言葉の形が違う（例: matsu-kaze-tsuru-482）。' : 'つながらなかった。あとでもう一度。';
+          msg.textContent = tx(err && err.status === 404 ? 'その合言葉は見つからない。綴りを確かめて。' :
+            err && err.message === 'bad key' ? '合言葉の形が違う（例: matsu-kaze-tsuru-482）。' : 'つながらなかった。あとでもう一度。');
         });
       }
     });

@@ -14,47 +14,48 @@
 <header class="topbar">
   <a class="brand to-title" href="#" role="button">
     <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span class="brand-name"><em>tmux</em>道場</span>
+    <span class="brand-name"><em>tmux</em><span data-t>道場</span></span>
   </a>
   <div class="topbar-right">
     <span id="title-meta" class="meta"></span>
-    <button type="button" class="quiet-toggle" aria-pressed="true" aria-label="飾りを動かす">静</button>
-    <button type="button" class="sound-toggle" aria-pressed="true" aria-label="音を消す">♪</button>
-    <button type="button" class="theme-toggle" aria-label="テーマを切り替える">☾</button>
+    <button type="button" class="lang-toggle" lang="en" aria-label="Switch to English">EN</button>
+    <button type="button" class="quiet-toggle" aria-pressed="true" data-t-aria="飾りを動かす" aria-label="飾りを動かす">静</button>
+    <button type="button" class="sound-toggle" aria-pressed="true" data-t-aria="音を消す" aria-label="音を消す">♪</button>
+    <button type="button" class="theme-toggle" data-t-aria="テーマを切り替える" aria-label="テーマを切り替える">☾</button>
   </div>
 </header>
 
 <!-- ===== title ===== -->
 <main id="title-screen" class="screen title">
   <section class="hero">
-    <p class="eyebrow">指が覚えるまで、何度でも。</p>
-    <h1 class="hero-title"><span class="en">tmux</span>道場</h1>
-    <p class="lead">本物の tmux と同じ画面で、<b>分割</b>・<b>移動</b>・<b>全画面</b>・<b>ウィンドウ</b>・<b>コピーモード</b>の問題を次々に解く。<br>押すキーはいつも画面に出ている。速さを競ううちに、指が覚える。</p>
+    <p class="eyebrow" data-t>指が覚えるまで、何度でも。</p>
+    <h1 class="hero-title"><span class="en">tmux</span><span data-t>道場</span></h1>
+    <p class="lead" data-t>本物の tmux と同じ画面で、<b>分割</b>・<b>移動</b>・<b>全画面</b>・<b>ウィンドウ</b>・<b>コピーモード</b>の問題を次々に解く。<br>押すキーはいつも画面に出ている。速さを競ううちに、指が覚える。</p>
     <div id="skill" class="skill"></div>
     <div class="cta">
-      <button type="button" id="btn-enter" class="btn primary">はじめる<small id="enter-sub">入門 から</small><kbd class="hk">Enter</kbd></button>
-      <button type="button" id="btn-records" class="btn ghost">記録<small id="records-sub">上達を見る</small><kbd class="hk">R</kbd></button>
-      <button type="button" id="btn-board" class="btn ghost">ランキング<small>みんなの速さ</small><kbd class="hk">B</kbd></button>
-      <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden>苦手の稽古<small id="keiko-sub">苦手だけ</small><kbd class="hk">K</kbd></button>
+      <button type="button" id="btn-enter" class="btn primary"><span data-t>はじめる</span><small id="enter-sub">入門 から</small><kbd class="hk">Enter</kbd></button>
+      <button type="button" id="btn-records" class="btn ghost"><span data-t>記録</span><small id="records-sub">上達を見る</small><kbd class="hk">R</kbd></button>
+      <button type="button" id="btn-board" class="btn ghost"><span data-t>ランキング</span><small data-t>みんなの速さ</small><kbd class="hk">B</kbd></button>
+      <button type="button" id="btn-keiko" class="btn ghost" data-course="keiko" hidden><span data-t>苦手の稽古</span><small id="keiko-sub" data-t>苦手だけ</small><kbd class="hk">K</kbd></button>
     </div>
     <details id="conf-box" class="confbox">
-      <summary>キー設定 <b id="conf-state">既定</b></summary>
-      <p>自分の <code>.tmux.conf</code> を貼ると、その割り当てで遊べる。手順もそのキーで出る。読めない行（見た目の設定など）は読み飛ばして、下に理由を出す。自分の設定で遊んだ記録も、既定のキーの記録と同じランキングに載る。</p>
+      <summary><span data-t>キー設定</span> <b id="conf-state">既定</b></summary>
+      <p data-t>自分の <code>.tmux.conf</code> を貼ると、その割り当てで遊べる。手順もそのキーで出る。読めない行（見た目の設定など）は読み飛ばして、下に理由を出す。自分の設定で遊んだ記録も、既定のキーの記録と同じランキングに載る。</p>
       <textarea id="conf-text" rows="8" spellcheck="false" autocomplete="off" aria-label=".tmux.conf" placeholder="set -g prefix C-a&#10;bind | split-window -h&#10;bind - split-window -v&#10;bind h select-pane -L"></textarea>
       <div class="conf-btns">
-        <button type="button" id="conf-apply" class="btn">この設定で遊ぶ</button>
-        <button type="button" id="conf-sample" class="btn ghost">vim-tmux-navigator を足す</button>
-        <button type="button" id="conf-noconfirm" class="btn ghost">確認なしで閉じる を足す</button>
-        <button type="button" id="conf-reset" class="btn ghost">既定に戻す</button>
+        <button type="button" id="conf-apply" class="btn" data-t>この設定で遊ぶ</button>
+        <button type="button" id="conf-sample" class="btn ghost" data-t>vim-tmux-navigator を足す</button>
+        <button type="button" id="conf-noconfirm" class="btn ghost" data-t>確認なしで閉じる を足す</button>
+        <button type="button" id="conf-reset" class="btn ghost" data-t>既定に戻す</button>
       </div>
       <div id="conf-report" class="conf-report"></div>
     </details>
-    <p class="fine">はじめての人は入門へ。1 問 1 キーで、指示を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、ランキングと端末の引き継ぎのために送る。ほかに送るのは、何人が始めて何人が最後まで解いたかの数だけ（名前とは結び付かない）。</p>
+    <p class="fine" data-t>はじめての人は入門へ。1 問 1 キーで、指示を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、ランキングと端末の引き継ぎのために送る。ほかに送るのは、何人が始めて何人が最後まで解いたかの数だけ（名前とは結び付かない）。</p>
   </section>
-  <aside class="plan" aria-label="コース選択">
-    <div class="plan-label">コースを選ぶ</div>
+  <aside class="plan" aria-label="コース選択" data-t-aria="コース選択">
+    <div class="plan-label" data-t>コースを選ぶ</div>
     <ul id="course-list" class="wings"></ul>
-    <p class="plan-note">問題は毎回ちがう順で出る。違う操作は +2 秒。指示には答えの手順がいつも出ている。目安を過ぎても問題は飛ばない。タブを離れると時計が止まる。</p>
+    <p class="plan-note" data-t>問題は毎回ちがう順で出る。違う操作は +2 秒。指示には答えの手順がいつも出ている。目安を過ぎても問題は飛ばない。タブを離れると時計が止まる。</p>
   </aside>
   <div class="facade" aria-hidden="true"><i></i><i class="warm"></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i></i><i class="warm"></i><i></i><i></i><i></i><i class="lit"></i><i></i><i></i><i class="warm"></i></div>
 </main>
@@ -72,18 +73,18 @@
         <div id="banner" class="banner" aria-live="polite"></div>
         <div id="chips" class="chips" aria-live="polite"></div>
         <div id="seal" class="seal" aria-hidden="true">✓</div>
-        <div id="pause" class="pause" hidden><b>一時停止</b><span>時計は止まっている。キーを押すか、ここを押すと再開</span></div>
+        <div id="pause" class="pause" hidden><b data-t>一時停止</b><span data-t>時計は止まっている。キーを押すか、ここを押すと再開</span></div>
         <span id="probe" class="probe" aria-hidden="true">MMMMMMMMMMMMMMMMMMMM</span>
       </div>
       <div id="status" class="status"></div>
     </section>
   </div>
-  <div id="keybar" class="keybar" aria-label="画面上のキー"></div>
+  <div id="keybar" class="keybar" aria-label="画面上のキー" data-t-aria="画面上のキー"></div>
   <div class="game-foot">
-    <button type="button" class="btn ghost quit to-title">やめる</button>
+    <button type="button" class="btn ghost quit to-title" data-t>やめる</button>
     <button type="button" class="btn ghost detail-toggle" aria-pressed="false">手順の詳細を出す</button>
   </div>
-  <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" enterkeyhint="go">
+  <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" data-t-aria="キー入力" enterkeyhint="go">
 </main>
 
 <!-- ===== result ===== -->
@@ -100,22 +101,22 @@
   <div class="emaki wide">
     <div class="rod" aria-hidden="true"></div>
     <section class="emaki-body">
-      <div class="em-hd">絵 巻 ・ 記 録</div>
-      <h2 class="em-title">上達の記録</h2>
-      <div class="seg rec-seg" role="group" aria-label="コース">
-        <button type="button" data-rec-course="easy" aria-pressed="false">入門<small>手ならし</small></button>
-        <button type="button" data-rec-course="normal" aria-pressed="false">中級<small>腕試し</small></button>
-        <button type="button" data-rec-course="hard" aria-pressed="false">上級<small>真剣勝負</small></button>
+      <div class="em-hd" data-t>絵 巻 ・ 記 録</div>
+      <h2 class="em-title" data-t>上達の記録</h2>
+      <div class="seg rec-seg" role="group" aria-label="コース" data-t-aria="コース">
+        <button type="button" data-rec-course="easy" aria-pressed="false"><span data-t>入門</span><small data-t>手ならし</small></button>
+        <button type="button" data-rec-course="normal" aria-pressed="false"><span data-t>中級</span><small data-t>腕試し</small></button>
+        <button type="button" data-rec-course="hard" aria-pressed="false"><span data-t>上級</span><small data-t>真剣勝負</small></button>
       </div>
-      <div class="seg rec-tab" role="group" aria-label="見るもの">
-        <button type="button" data-rec-tab="growth" aria-pressed="true">上達</button>
-        <button type="button" data-rec-tab="board" aria-pressed="false">ランキング</button>
-        <button type="button" data-rec-tab="sync" aria-pressed="false">引き継ぎ</button>
+      <div class="seg rec-tab" role="group" aria-label="見るもの" data-t-aria="見るもの">
+        <button type="button" data-rec-tab="growth" aria-pressed="true" data-t>上達</button>
+        <button type="button" data-rec-tab="board" aria-pressed="false" data-t>ランキング</button>
+        <button type="button" data-rec-tab="sync" aria-pressed="false" data-t>引き継ぎ</button>
       </div>
       <div id="records-body" class="records-body"></div>
       <div class="cta">
-        <button type="button" id="btn-records-back" class="btn">戻る</button>
-        <button type="button" id="btn-records-clear" class="btn ghost">記録を消す</button>
+        <button type="button" id="btn-records-back" class="btn" data-t>戻る</button>
+        <button type="button" id="btn-records-clear" class="btn ghost" data-t>記録を消す</button>
       </div>
     </section>
     <div class="rod" aria-hidden="true"></div>
@@ -124,6 +125,8 @@
 
 <div id="fx" aria-hidden="true"></div>
 
+<script src="js/en.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/conf.js"></script>
 <script src="js/records.js"></script>

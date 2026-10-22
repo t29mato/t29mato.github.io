@@ -54,7 +54,7 @@ games:
     blurb: >-
       Learn tmux on a screen that looks like tmux: split, move, zoom, close
       panes and windows with the real key bindings, against the clock.
-    note: Japanese. Paste your own .tmux.conf to play with your keys; the next keys always sit on the arrow to where you go.
+    note: English and Japanese. Paste your own .tmux.conf to play with your keys; the next keys always sit on the arrow to where you go.
 
   - name: Bomb Rush
     img: /assets/games/bomb-rush.jpg

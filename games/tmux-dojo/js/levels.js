@@ -1,13 +1,15 @@
 // Courses and key data for tmux 道場 (the browser game).
 // A course is a fixed set of questions (問題), asked in a new order each
 // run, on one house that carries on from question to question. Question
-// types live in app.js. Everything the player reads is Japanese; code
-// identifiers stay English.
+// types live in app.js. What the player reads is written in Japanese and
+// shown in English through i18n.js when the page is in English.
 (function () {
   'use strict';
 
   // macOS takes Ctrl+arrows for Mission Control, so on Apple devices the
   // resize keys are shown as Option+arrows (tmux's M-arrow binding).
+  var tx = (window.ADV && window.ADV.i18n && window.ADV.i18n.t) || function (s) { return s; };
+
   var MAC = /Mac|iPhone|iPad/.test((navigator.platform || '') + ' ' + (navigator.userAgent || ''));
 
   // Key labels per action.
@@ -87,7 +89,7 @@
   };
 
   function tipsFor(action) {
-    return TIPS[action] || [];
+    return (TIPS[action] || []).map(function (s) { return tx(s); });
   }
 
   function prefixLabel(prefix) {
@@ -187,6 +189,9 @@
   function par(course, n) {
     return Math.round((n || course.qs.length) * RANKS[1].max * (course.rankMul || 1));
   }
+
+  // Names shown on screen, in the page's language (i18n.js).
+  [].concat(COURSES, [KEIKO]).forEach(function (c) { c.title = tx(c.title); c.mode = tx(c.mode); c.desc = tx(c.desc); });
 
   window.ADV = window.ADV || {};
   window.ADV.levels = {

@@ -86,7 +86,7 @@ kbd.pfx { background: var(--ai); color: #fff; border-color: var(--ai-d); }
   width: 34px; height: 34px; border-radius: 3px; cursor: pointer;
   background: transparent; border: 1px solid var(--line); color: var(--ink);
 }
-.quiet-toggle { font-family: var(--mincho); font-size: 15px; }
+.quiet-toggle { font-family: var(--mincho); font-size: 15px; width: auto; min-width: 34px; padding: 0 6px; }
 .sound-toggle:hover, .theme-toggle:hover, .quiet-toggle:hover { border-color: var(--andon); }
 /* 静かな屋敷: nothing loops (pendulum, steam, flame, the lit windows, the cursor) */
 body[data-quiet="1"] .decor *, body[data-quiet="1"] .facade i, body[data-quiet="1"] .st-prefix { animation: none !important; }
@@ -836,3 +836,6 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .yashiki .pane.active { background: rgba(63, 185, 80, 0.06); }
 .yashiki .ob-whole { font-family: var(--sans); font-size: 12px; color: #8b949e; margin-bottom: 2px; }
 .yashiki .ob-step { font-family: var(--sans); font-size: 12px; font-weight: 700; color: #111; background: var(--t-yellow); padding: 0 6px; border-radius: 3px; }
+/* the language switch: a word, so as wide as it needs */
+.lang-toggle { height: 34px; padding: 0 9px; border-radius: 3px; cursor: pointer; background: transparent; border: 1px solid var(--line); color: var(--ink); font-size: 13px; }
+.lang-toggle:hover { border-color: var(--andon); }

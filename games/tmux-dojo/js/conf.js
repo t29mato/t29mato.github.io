@@ -10,6 +10,12 @@
 (function () {
   'use strict';
 
+  // The report is shown in the page's language (i18n.js); without it, as written.
+  var tx = (window.ADV && window.ADV.i18n && window.ADV.i18n.t) || function (s) {
+    var a = arguments;
+    return s.replace(/\{(\d)\}/g, function (m, i) { return a[+i + 1]; });
+  };
+
   var MAC = /Mac|iPhone|iPad/.test((navigator.platform || '') + ' ' + (navigator.userAgent || ''));
 
   // ---- keys ------------------------------------------------------------------
@@ -141,7 +147,7 @@
     if (/^(split-window|splitw)$/.test(cmd)) return f.h ? { key: '%', say: '左右に分割する' } : { key: '"', say: '上下に分割する' };
     if (/^(select-pane|selectp)$/.test(cmd)) {
       if (f.T) return { why: 'ペインの名前はゲームでは : から付ける' };
-      if (dir) return { key: ARROW[dir], say: { L: '左', R: '右', U: '上', D: '下' }[dir] + 'のペインへ' };
+      if (dir) return { key: ARROW[dir], say: { L: '左のペインへ', R: '右のペインへ', U: '上のペインへ', D: '下のペインへ' }[dir] };
       if (f.l) return { key: ';', say: '直前のペインへ' };
       if (f.t === ':.+' || f.t === '+' || f.t === '.+') return { key: 'o', say: '次のペインへ' };
       return { why: 'その select-pane はゲームにない' };
@@ -151,7 +157,7 @@
       if (f.Z) return { key: 'z', say: '全画面にする・戻す' };
       if (dir) {
         var n = parseInt(rest[0], 10);
-        return { resize: dir, n: n > 0 ? Math.min(n, 50) : 1, say: '境目を' + { L: '左', R: '右', U: '上', D: '下' }[dir] + 'へ' + (n > 0 ? n : 1) + 'マスずらす' };
+        return { resize: dir, n: n > 0 ? Math.min(n, 50) : 1, say: tx('境目を{0}へ{1}マスずらす', tx({ L: '左', R: '右', U: '上', D: '下' }[dir]), n > 0 ? n : 1) };
       }
       return { why: 'その resize-pane はゲームにない' };
     }
@@ -169,7 +175,7 @@
     if (/^(last-window|last)$/.test(cmd)) return { key: 'l', say: '直前のウィンドウへ' };
     if (/^(select-window|selectw)$/.test(cmd)) {
       var t = /^:?(\d)$/.exec(f.t || '');
-      if (t) return { key: t[1], say: t[1] + ' 番のウィンドウへ' };
+      if (t) return { key: t[1], say: tx('{0} 番のウィンドウへ', t[1]) };
       if (f.l) return { key: 'l', say: '直前のウィンドウへ' };
       if (f.n) return { key: 'n', say: '次のウィンドウへ' };
       if (f.p) return { key: 'p', say: '前のウィンドウへ' };
@@ -198,7 +204,7 @@
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
     if (/^(display-panes|displayp)$/.test(cmd)) return { why: 'ペイン番号の表示はゲームにない' };
-    return { why: cmd + ' はゲームにない' };
+    return { why: tx('{0} はゲームにない', cmd) };
   }
 
   // vim-tmux-navigator, as it binds its keys with no options set.
@@ -217,8 +223,8 @@
   // The whole file → {prefix, prefix2, binds, unbinds, unbindAll, used, skipped, navigator, custom}.
   function parse(text) {
     var c = { prefix: parseKey('C-b'), prefix2: null, binds: [], unbinds: [], unbindAll: false, used: [], skipped: [], navigator: false };
-    function use(l, say) { c.used.push({ no: l.no, line: l.text.trim(), say: say }); }
-    function skip(l, why) { c.skipped.push({ no: l.no, line: l.text.trim(), why: why }); }
+    function use(l, say) { c.used.push({ no: l.no, line: l.text.trim(), say: tx(say) }); }
+    function skip(l, why) { c.skipped.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
     function addBind(table, key, act, repeat, l) {
       // A later bind of the same key wins, as in tmux.
       c.binds = c.binds.filter(function (b) { return !(b.table === table && same(b.key, key)); });
@@ -232,9 +238,9 @@
         var p = flags(argv), name = p.rest[0], val = p.rest[1];
         if (name === 'prefix' || name === 'prefix2') {
           var k = val === 'None' ? null : parseKey(val);
-          if (val !== 'None' && !k) return skip(l, 'そのキーは読めない: ' + val);
-          if (name === 'prefix') { if (!k) return skip(l, 'prefix なしでは遊べない'); c.prefix = k; use(l, 'prefix を ' + k.label + ' にする'); }
-          else { c.prefix2 = k; use(l, k ? '2 つ目の prefix を ' + k.label + ' にする' : '2 つ目の prefix をなくす'); }
+          if (val !== 'None' && !k) return skip(l, tx('そのキーは読めない: {0}', val));
+          if (name === 'prefix') { if (!k) return skip(l, 'prefix なしでは遊べない'); c.prefix = k; use(l, tx('prefix を {0} にする', k.label)); }
+          else { c.prefix2 = k; use(l, k ? tx('2 つ目の prefix を {0} にする', k.label) : '2 つ目の prefix をなくす'); }
           return;
         }
         if (name === '@plugin') {
@@ -254,35 +260,35 @@
       if (/^(bind|bind-key)$/.test(cmd)) {
         var b = flags(argv);
         var table = b.f.n ? 'root' : b.f.T ? b.f.T : 'prefix';
-        if (table !== 'root' && table !== 'prefix') return skip(l, table + ' の表のキー（コピーモードなど）はゲームでは変えられない');
+        if (table !== 'root' && table !== 'prefix') return skip(l, tx('{0} の表のキー（コピーモードなど）はゲームでは変えられない', table));
         var key = parseKey(b.rest[0]);
-        if (!key) return skip(l, 'そのキーは読めない: ' + b.rest[0]);
+        if (!key) return skip(l, tx('そのキーは読めない: {0}', b.rest[0]));
         var inner = b.rest.slice(1);
         if (!inner.length) return skip(l, 'コマンドがない');
         // `bind x a \; b`: the first command is the one that counts.
         var act = action(inner);
         if (act.why) return skip(l, act.why);
         addBind(table, key, act, b.f.r, l);
-        return use(l, (table === 'root' ? 'prefix なしで ' : 'prefix → ') + key.label + ' で ' + act.say + (b.f.r ? '（続けて押せる）' : ''));
+        return use(l, tx(table === 'root' ? 'prefix なしで {0} で {1}{2}' : 'prefix → {0} で {1}{2}', key.label, tx(act.say), b.f.r ? tx('（続けて押せる）') : ''));
       }
       if (/^(unbind|unbind-key)$/.test(cmd)) {
         var u = flags(argv);
         var ut = u.f.n ? 'root' : u.f.T ? u.f.T : 'prefix';
         if (u.f.a) {
-          if (ut !== 'prefix') return skip(l, ut + ' の表はゲームでは変えられない');
+          if (ut !== 'prefix') return skip(l, tx('{0} の表はゲームでは変えられない', ut));
           c.unbindAll = true;
           c.binds = c.binds.filter(function (x) { return x.table !== 'prefix'; });
           return use(l, 'prefix のあとのキーを全部外す');
         }
-        if (ut !== 'root' && ut !== 'prefix') return skip(l, ut + ' の表はゲームでは変えられない');
+        if (ut !== 'root' && ut !== 'prefix') return skip(l, tx('{0} の表はゲームでは変えられない', ut));
         var uk = parseKey(u.rest[0]);
-        if (!uk) return skip(l, 'そのキーは読めない: ' + u.rest[0]);
+        if (!uk) return skip(l, tx('そのキーは読めない: {0}', u.rest[0]));
         c.binds = c.binds.filter(function (x) { return !(x.table === ut && same(x.key, uk)); });
         c.unbinds.push({ table: ut, key: uk });
-        return use(l, (ut === 'root' ? '' : 'prefix → ') + uk.label + ' を外す');
+        return use(l, tx(ut === 'root' ? '{0} を外す' : 'prefix → {0} を外す', uk.label));
       }
       if (/^(source-file|source|if-shell|if)$/.test(cmd)) return skip(l, '別のファイルやシェルはゲームでは読めない');
-      return skip(l, cmd + ' はゲームにない');
+      return skip(l, tx('{0} はゲームにない', cmd));
     });
     c.custom = !!(c.used.length || c.binds.length || c.unbinds.length || c.unbindAll || c.prefix.key !== 'b' || !c.prefix.ctrl);
     return c;
