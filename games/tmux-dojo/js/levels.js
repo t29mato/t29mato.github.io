@@ -111,7 +111,7 @@
     {
       id: 'easy', title: '入門', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
-      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1 キー。',
+      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1〜3 手。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
@@ -141,6 +141,9 @@
   // row within the 目安, with no wrong key. Its 手順 then stays folded until
   // the 目安 passes.
   var LEARNT_AFTER = 3;
+
+  // A learnt question's steps stay folded this many seconds, to try from memory.
+  var PEEK_AFTER = 4;
 
   // 腕前 (skill level), Lv 1 to 30, from seconds per question (after
   // penalties, divided by the course's rankMul): 6 秒 is Lv 1, 1.2 秒 Lv 30,
@@ -213,6 +216,7 @@
     paceFor: paceFor,
     dayKey: dayKey,
     MISS_PENALTY: 2,
-    GUIDE_AT: 1.5
+    GUIDE_AT: 1.5,
+    PEEK_AFTER: PEEK_AFTER
   };
 })();

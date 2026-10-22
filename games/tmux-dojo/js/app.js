@@ -421,7 +421,6 @@
       pane.lines.push({ html: '<span class="sh-dim">' + n + '</span>  ' + esc(txt), text: n + '  ' + txt });
     }
     pane.lines.push('');
-    pane.lines.push(tx('一番上の行には何と書いてあった？ コピーモードでスクロールして確かめよう。'));
   }
 
   // The house at the start of a run, the same for everyone: window main with one
@@ -666,6 +665,8 @@
     if (pane.mode === 'copy') return copyModeKey(k, pane);
 
     if (k.key === 'Escape') return true;
+    var nx = S.run && S.run.phase === 'play' && S.run.q ? guideMove(S.run) : null;
+    if (nx && nx.pfx && nx.keys.indexOf(k.key) >= 0 && !k.ctrl && !k.alt) message(tx('{0} がシェルに入った。先に {1}（prefix）を押す', k.key, prefixLabel()));
     return editLine(pane, k, function (line) { runPaneCommand(pane, line); });
   }
 
@@ -1289,8 +1290,8 @@
   // How far the active pane has moved since the question began.
   function resizedBy() {
     var w = T.activeWindow(S.session);
-    var rr = T.rectOf(w, w.active, S.cols, S.rows);
-    if (!rr || !S.q0) return 0;
+    var rr = S.q0 && T.rectOf(w, S.q0.id, S.cols, S.rows);
+    if (!rr) return 0;
     return Math.max(Math.abs(rr.w - S.q0.w), Math.abs(rr.h - S.q0.h));
   }
 
@@ -1382,17 +1383,18 @@
     },
     resize: {
       text: 'このペインの大きさを変える（resize）', cmd: 'resize-pane -L/-R/-U/-D', allow: ['resize'], show: ['resize'],
-      goal: function () { var d = resizedBy(); return [{ pane: activeId(), mark: 'resize', tag: d ? tx('いま {0} マス動いた（5 マスで成功）', d) : '境目を 5 マス以上動かす' }]; },
+      goal: function () { var d = resizedBy(); return [{ pane: S.q0.id, mark: 'resize', tag: d ? tx('いま {0} マス動いた（5 マスで成功）', d) : '境目を 5 マス以上動かす' }]; },
       setup: function () {
         needUnzoom(); needPanes(2);
         var win = T.activeWindow(S.session);
         var rr = T.rectOf(win, win.active, S.cols, S.rows);
-        S.q0 = { w: rr ? rr.w : 0, h: rr ? rr.h : 0 };
+        S.q0 = { id: win.active, w: rr ? rr.w : 0, h: rr ? rr.h : 0 };
       },
+      // Only a resize counts: moving to a pane of another size is not one.
       check: function () {
         var w = T.activeWindow(S.session);
-        var rr = T.rectOf(w, w.active, S.cols, S.rows);
-        return !!rr && !w.zoomed && (Math.abs(rr.w - S.q0.w) >= 5 || Math.abs(rr.h - S.q0.h) >= 3);
+        var rr = T.rectOf(w, S.q0.id, S.cols, S.rows);
+        return S.lastAction === 'resize' && !!rr && !w.zoomed && (Math.abs(rr.w - S.q0.w) >= 5 || Math.abs(rr.h - S.q0.h) >= 3);
       },
       next: resizeMove
     },
@@ -1415,13 +1417,15 @@
       setup: function (r) {
         var win = T.activeWindow(S.session);
         var name = pick(r, ['dev', 'log', 'ssh', 'edit', 'build'].filter(function (n) { return n !== win.name; }));
-        S.q0 = { win: win.id, name: name };
+        S.q0 = { win: win.id, name: name, from: win.name };
         S.qGoal = name;
         S.qText = tx('ウィンドウの名前を「{0}」にする（rename）', name);
       },
       check: function () { var w = T.windowById(S.session, S.q0.win); return !!w && w.name === S.q0.name; },
       next: function () {
-        if (S.prompt) return mv([], tx('Ctrl+u で今の名前を消し、{0} と打って Enter', S.q0.name), true);
+        if (S.prompt) return mv([], tx('Ctrl+u（か Backspace）で今の名前「{0}」を消し、{1} と打って Enter', S.prompt.value, S.q0.name), true);
+        var w = T.windowById(S.session, S.q0.win);
+        if (w && w.name !== S.q0.from && w.name !== S.q0.name) return mv([','], tx('名前が「{0}」になった。もう一度 , を押して、{1} に直す', w.name, S.q0.name));
         return mv([','], ', を押す（カンマ）。名前の入力欄が出る');
       }
     },
@@ -1760,10 +1764,13 @@
     S.qGoal = null;
     S.qNote = [];
     S.target = null;
+    // Copy mode belongs to the question that asked for it.
+    S.session.windows.forEach(function (w) { T.panesOf(w).forEach(function (p) { if (p.mode === 'copy') p.mode = null; }); });
     q.setup(rng(b.seed + ':' + b.i));
     b.q = q;
     b.type = type;
     b.stage = 0;
+    b.peek = false;
     b.qStart = performance.now();
     b.qlog[b.i] = { t: type, s: null, m: 0 };
     S.clipboard = '';
@@ -1846,6 +1853,8 @@
       if (!b || b.phase !== 'play' || S.screen !== 'game') { clearInterval(S.clock); return; }
       var used = (performance.now() - b.qStart) / 1000;
       var stage = used > b.limit ? 1 : 0;
+      // A learnt question: try from memory first, the steps come after a few seconds.
+      if (!b.peek && used > LV.PEEK_AFTER && folded(b)) { b.peek = true; renderSashizu(); renderTerm(); renderTabArrow(); }
       if (stage > b.stage) {
         var log = b.qlog[b.i];
         if (b.stage < 1) { b.overs += 1; log.o = 1; b.streak = 0; }
@@ -1986,7 +1995,7 @@
     var frac = nxt != null ? Math.max(0, Math.min(1, (cur - sk.pace) / (cur - nxt))) : 1;
     var up = from && from.lv < sk.lv;
     return '<div class="sk-row"><span class="sk-lab">' + tx('腕前') + '</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
-      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span><b class="sk-title">' + esc(tx(sk.title)) + '</b></div>' +
+      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span></div>' +
       '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
       '<div class="sk-note">' + (nxt != null ? tx('次の Lv.{0} まで、1 問あたり {1} 秒速く', sk.lv + 1, sk.toNext.toFixed(2)) : tx('最高の Lv。')) +
       tx('（直近 {0} 回の平均 {1} 秒／問）', sk.runs, sk.pace.toFixed(2)) + '</div>';
@@ -1995,7 +2004,7 @@
   // The top bar: the 腕前, always in view.
   function renderMeta(all) {
     var sk = REC.skill(all);
-    $('#title-meta').textContent = sk ? tx('腕前 Lv.{0} {1}', sk.lv, tx(sk.title)) : tx('合図 {0}', prefixLabel());
+    $('#title-meta').textContent = sk ? tx('腕前 Lv.{0}', sk.lv) : tx('合図 {0}', prefixLabel());
   }
 
   function renderTitle() {
@@ -2036,7 +2045,7 @@
   // the 目安 has not passed yet.
   function folded(b) {
     var e = b.learnt && b.learnt[b.qs[b.i]];
-    return !!(e && e.learnt) && b.stage === 0;
+    return !!(e && e.learnt) && b.stage === 0 && !b.peek;
   }
 
   // The 指示, twice: in the house (the order bar under the panes, where the
@@ -2086,7 +2095,7 @@
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">' + tx('別解: ') + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join(tx('、')) + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">' + tx('覚えた問題。手順は目安を過ぎたら出る。') + '</p>';
+      html += '<p class="learnt-note">' + tx('覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>' + tx('目安 {0} 秒', b.limit) + '</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
@@ -2137,7 +2146,7 @@
       html += '<div class="ob-guide">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
       if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
-      html += '<div class="ob-guide learnt">' + c + tx('覚えた ✓') + '<span class="ob-txt">' + tx('手順は目安を過ぎたら出る') + '</span></div>';
+      html += '<div class="ob-guide learnt">' + c + tx('覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
     }
     return html;
   }
@@ -2161,6 +2170,7 @@
     el.dataset.key = key;
     el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + tx(' ・ 問題 ') + '<b>' + Math.min(b.i + 1, b.qs.length) + ' / ' + b.qs.length + '</b></span>' +
       (b.streak >= 3 ? '<span class="pb-streak">' + tx('{0} 連', b.streak) + '</span>' : '') +
+      (S.conf ? '<span class="pb-conf">' + tx('自分のキー設定（prefix {0}）', prefixLabel()) + '</span>' : '') +
       '<span class="pb-sp"></span>' +
       (b.misses ? '<span class="pb-pen">' + tx('操作ミス {0}（+{1}秒）', b.misses, b.penalty) + '</span>' : '') +
       ghostHTML(b) +
@@ -2529,8 +2539,16 @@
     $$(':scope > .goal-arrow.tab, :scope > .goal-key.tab, :scope > .guide-card.tab', term).forEach(function (x) { x.remove(); });
     var tab = $('#status .goal-tab');
     var act = $(':scope > .pane.active', term);
-    if (!tab || !act || S.detached) return;
+    if (!act || S.detached) return;
     var b = S.run, fold = !!(b && folded(b));
+    // The status bar is a prompt now (rename): the card stays, on your pane.
+    if (!tab) {
+      if (b && b.phase === 'play' && b.q && S.prompt && !$(':scope > .guide-card', term)) {
+        var tr0 = term.getBoundingClientRect(), ar0 = act.getBoundingClientRect();
+        placeCard(term, ar0.left - tr0.left + ar0.width / 2, ar0.top - tr0.top + ar0.height / 2, motdHTML(b, fold ? null : guideMove(b), fold), '', 'tab');
+      }
+      return;
+    }
     var tr = term.getBoundingClientRect(), r = tab.getBoundingClientRect(), ar = act.getBoundingClientRect();
     var motd = $(':scope > .motd', act);
     var top = ar.top - tr.top + 20 + (motd ? motd.offsetHeight : 0), bottom = ar.bottom - tr.top;
@@ -2804,11 +2822,15 @@
     labels.forEach(function (label) { add(label, keyFromLabel(label), 'k-level'); });
     if (S.confirm) add('y', { key: 'y' });
     if (S.detached || S.prompt) add('Enter', { key: 'Enter' });
+    // Only the key the guide asks for next stands out.
+    var nx = S.run && S.run.phase === 'play' && S.run.q && !folded(S.run) ? guideMove(S.run) : null;
+    var want = nx ? (nx.pfx && !S.armed ? [prefixLabel()] : nx.keys) : [];
     var html = '';
     keys.forEach(function (x) {
+      if (want.indexOf(x.label) >= 0) x.cls += ' k-next';
       html += '<button type="button" class="key ' + x.cls + '" data-k="' + esc(JSON.stringify(x.k)) + '"' + (x.cls === 'k-prefix' && S.armed ? ' aria-pressed="true"' : '') + '>' + esc(x.label) + '</button>';
     });
-    html += '<button type="button" class="key k-type" data-type="1">abc…</button>';
+    html += '<button type="button" class="key k-type" data-type="1">' + tx('文字を打つ') + '</button>';
     bar.innerHTML = html;
   }
 
@@ -2941,7 +2963,7 @@
     if (r.ao5 != null) sub += tx(' ・ 五回平均 {0}', (r.ao5Prev != null ? r.ao5Prev.toFixed(1) + ' → ' : '') + r.ao5.toFixed(1));
     var rankLine = r.rankUp
       ? tx('称号が「{0}」から <b>{1}</b> に上がった', esc(tx(r.rankFrom)), esc(tx(r.rank)))
-      : tx('称号 <b>{0}</b>', esc(tx(r.rank)));
+      : tx('今回の称号 <b>{0}</b>', esc(tx(r.rank)));
     var slow = r.slow ? Q[r.slow] : null;
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });
@@ -3257,7 +3279,7 @@
     var tiles =
       '<div class="rec-tiles">' +
       '<div class="rec-tile"><small>' + tx('自己ベスト') + '</small><b>' + fmt(st.best) + '</b></div>' +
-      '<div class="rec-tile"><small>' + tx('称号') + '</small><b>' + esc(st.bestRank ? tx(st.bestRank) : '—') + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('最高の称号') + '</small><b>' + esc(st.bestRank ? tx(st.bestRank) : '—') + '</b></div>' +
       '<div class="rec-tile"><small>' + tx('挑戦回数') + '</small><b>' + tx('{0} 回', st.count) + '</b></div>' +
       '<div class="rec-tile"><small>' + tx('五回平均') + '</small><b>' + fmt(a5) + '</b></div>' +
       '</div>';

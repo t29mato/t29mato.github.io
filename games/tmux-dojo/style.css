@@ -853,3 +853,11 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .today small { flex-basis: 100%; color: var(--ink-dim); font-size: 12px; }
 .wing-top:empty { display: none; }
 .wing-top { color: var(--shu); }
+/* the key bar: the next key stands out; a steady height so the panes do not jump */
+.key.k-level { border-color: #9b8a6a; }
+.key.k-next { border-color: var(--andon); background: #fff3d2; box-shadow: 0 0 0 2px var(--andon); }
+.key.k-prefix.k-next { background: var(--andon); color: #2b1a05; }
+@media (max-width: 700px) { .keybar { min-height: calc(3 * 43px + 2 * 6px); align-content: flex-start; } }
+.pb-conf { font-size: 12px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-dim); }
+/* the resize mark sat on the right edge whatever border moves: the card and the green borders say it */
+.yashiki .goal.resize::after { display: none; }
