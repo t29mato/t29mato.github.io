@@ -829,3 +829,8 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .yashiki .guide-card .ob-keys kbd { font-size: 14px; padding: 2px 9px; }
 .yashiki .goal.close .goal-tag + .gc-tag { display: none; }
 .facade { display: none !important; }
+/* where you stand: said in words, above everything */
+.here-tag { display: none; }
+.yashiki .here-tag { display: block; position: absolute; z-index: 9; pointer-events: none; font-family: var(--sans); font-size: 13px; font-weight: 700; line-height: 1.5; color: #04210d; background: var(--t-green); padding: 0 8px; border-radius: 3px; }
+.yashiki .pane.active::after { box-shadow: inset 0 0 0 3px var(--t-green); }
+.yashiki .pane.active { background: rgba(63, 185, 80, 0.06); }

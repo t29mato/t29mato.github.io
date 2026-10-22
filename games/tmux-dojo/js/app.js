@@ -145,7 +145,7 @@
         pane.lines.push('kakejiku.txt  makimono.txt  tokonoma/');
         break;
       case 'pwd':
-        pane.lines.push('/home/yashiki/' + (pane.name || 'ma'));
+        pane.lines.push('/home/dojo/' + (pane.name || 'ma'));
         break;
       case 'echo':
         pane.lines.push(argv.slice(1).join(' '));
@@ -210,7 +210,7 @@
         o.lines.push('README.md');
         break;
       case 'pwd':
-        o.lines.push('/home/yashiki');
+        o.lines.push('/home/dojo');
         break;
       case 'echo':
         o.lines.push(argv.slice(1).join(' '));
@@ -352,7 +352,7 @@
 
   function makeSession(name) {
     var s = T.createSession({ name: name, baseIndex: 0, paneBaseIndex: 0 });
-    var w = T.createWindow(s, name === 'yashiki' ? 'main' : 'zsh');
+    var w = T.createWindow(s, name === 'dojo' ? 'main' : 'zsh');
     s.active = w.id;
     S.sessions.push(s);
     return s;
@@ -379,7 +379,7 @@
 
   function newSession() {
     S.sessions = [];
-    S.session = makeSession('yashiki');
+    S.session = makeSession('dojo');
     S.session.attached = true;
     S.detached = false;
     S.armed = false;
@@ -2307,7 +2307,7 @@
       view.borders = bhtml;
     }
     // 完成図: what this question wants changed, marked on the rooms.
-    $$(':scope > .goal, :scope > .goal-arrow, :scope > .goal-key, :scope > .guide-card', term).forEach(function (x) { x.remove(); });
+    $$(':scope > .goal, :scope > .goal-arrow, :scope > .goal-key, :scope > .guide-card, :scope > .here-tag', term).forEach(function (x) { x.remove(); });
     var labelled = false, anchor = null;
     marks.forEach(function (g) {
       if (!g.pane) return;
@@ -2336,6 +2336,8 @@
     // Nothing marked on a pane (a window question): the card goes on the
     // arrow to the tab (renderTabArrow). Otherwise in the middle of your pane.
     if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
+    // Where you stand, said in words on the pane itself: the card never covers it.
+    if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + (active.x * cw + 6) + 'px;top:' + (active.y * ch + 6) + 'px">いまここ</span>');
     if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), anchor.tag, '');
     var pk = $(':scope > .picker', term);
     if (pk) pk.remove();
@@ -2403,8 +2405,31 @@
     el.innerHTML = (tag ? '<div class="gc-tag">' + esc(tag) + '</div>' : '') + inner;
     term.appendChild(el);
     var w = el.offsetWidth, h = el.offsetHeight, W = term.clientWidth, H = term.clientHeight;
-    el.style.left = Math.max(6, Math.min(W - w - 6, x - w / 2)) + 'px';
-    el.style.top = Math.max(6, Math.min(H - h - 6, y - h / 2)) + 'px';
+    // Never on top of "いまここ" or "ここへ": slide up or down off them,
+    // whichever stays closest to the arrow.
+    var tr = term.getBoundingClientRect();
+    var keep = $$(':scope > .here-tag, :scope > .goal .goal-tag', term).map(function (k) {
+      var r = k.getBoundingClientRect();
+      return { l: r.left - tr.left - 4, t: r.top - tr.top - 4, r: r.right - tr.left + 4, b: r.bottom - tr.top + 4 };
+    });
+    var left = Math.max(6, Math.min(W - w - 6, x - w / 2));
+    var clampY = function (t) { return Math.max(6, Math.min(H - h - 6, t)); };
+    var cover = function (t) {
+      return keep.reduce(function (a, k) {
+        var ox = Math.min(left + w, k.r) - Math.max(left, k.l), oy = Math.min(t + h, k.b) - Math.max(t, k.t);
+        return a + (ox > 0 && oy > 0 ? ox * oy : 0);
+      }, 0);
+    };
+    var tries = [clampY(y - h / 2)];
+    keep.forEach(function (k) { tries.push(clampY(k.t - h), clampY(k.b)); });
+    tries.push(6, clampY(H - h - 6));
+    var best = tries[0];
+    tries.forEach(function (t) {
+      var c = cover(t), cb = cover(best);
+      if (c < cb || (c === cb && Math.abs(t - (y - h / 2)) < Math.abs(best - (y - h / 2)))) best = t;
+    });
+    el.style.left = left + 'px';
+    el.style.top = best + 'px';
   }
 
   function arrowSVG(x1, y1, x2, y2, stop, label, cls) {
@@ -2651,7 +2676,7 @@
     var ap = T.activePane(win);
     if (ap.mode === 'copy') html += '<span class="st-mode">COPY' + (ap.sel != null ? ' SEL' : '') + '</span>';
     if (S.clipboard) html += '<span class="st-clip" title="コピーした内容">📋</span>';
-    html += '<span class="st-host">"yashiki"</span><span class="st-clock">' + clock() + '</span></span>';
+    html += '<span class="st-host">"dojo"</span><span class="st-clock">' + clock() + '</span></span>';
     bar.innerHTML = html;
   }
 
