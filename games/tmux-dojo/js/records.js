@@ -249,6 +249,9 @@
   // only those that ran past the 目安 or are clearly slow (`slow` above),
   // worst first. At most `n`; often none.
   function weakTypes(n) {
+    // As the records say: weak spots show after two runs, not one.
+    var logged = (load().runs || []).filter(function (r) { return r.qs && r.qs.length; }).length;
+    if (logged < 2) return [];
     var qs = allQuestions().slice(-60);
     if (qs.length < 5) return [];
     var by = {}, total = 0;

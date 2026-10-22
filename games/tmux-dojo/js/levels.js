@@ -29,7 +29,7 @@
     layout: ['Space'],
     rename_pane: [':', 'select-pane -T'],
     search: ['[', '?', '/', 'n'],
-    yank: ['Space', 'Enter'],
+    yank: ['Home', 'Space', 'End', 'Enter'],
     paste: [']'],
     kill_window: ['&', 'y'],
     new_session: [':', 'new -s 名前'],
@@ -54,7 +54,7 @@
     layout: 'Space で並べ方が順に変わる（Alt+1〜5 で直接選べる。5 が田の字 tiled）',
     rename_pane: ': → select-pane -T 名前 → Enter',
     search: '[ でコピーモード → ? で上向きに検索（/ は下向き）→ 文字を打って Enter。n で次を探す',
-    yank: 'コピーモードで Space で選び始め、Enter でコピー（emacs 式なら C-Space と M-w）',
+    yank: 'コピーモードで行へ動き、Space で選び始め、Enter でコピー（Space を押した所からカーソルまでが写る。emacs 式なら C-Space と M-w）',
     paste: ']（コピーしたものを貼る）',
     kill_window: '&（Shift+7）→ 確認に y',
     new_session: ':（コマンド入力）→ new -s 名前 → Enter',
@@ -80,7 +80,8 @@
     layout: ['Alt+1〜5 で並べ方を直接選べる。1 は横に均等、2 は縦に均等、5 が田の字（tiled）。'],
     rename_pane: ['ペインの名前は pane-border-status を top にすると、枠の上に出る。'],
     search: ['vi 式は / と ?、emacs 式は C-s と C-r で検索する。n で同じ向きに、N で逆向きに次を探す。'],
-    yank: ['tmux の v は「矩形選択の切り替え」で、y には割り当てがない。v と y で選んでコピーするのは vim の流儀。'],
+    yank: ['tmux の v は「矩形選択の切り替え」で、y には割り当てがない。v と y で選んでコピーするのは vim の流儀。',
+      'コピーモードに入ると、カーソルはシェルのカーソルの場所（プロンプトの行）にある。写るのは Space を押した所からカーソルまで。行の頭は Home（vi 式は 0、emacs 式は C-a）、行の終わりは End（$ / C-e）。'],
     paste: ['prefix → = で、これまでにコピーしたもの（バッファ）の一覧から選んで貼れる。prefix → # で一覧を見るだけ。'],
     kill_window: ['& も確認付き。ウィンドウの中のペインが全部閉じる。'],
     new_session: ['外からは tmux new -s 名前。中からなら prefix → : で new -s 名前。'],
@@ -152,7 +153,7 @@
   // row within half its 目安, with no wrong key, no overrun and without the
   // folded 手順 having been shown. Its 手順 then stays folded until the 目安
   // passes.
-  var LEARNT_AFTER = 3;
+  var LEARNT_AFTER = 5;
 
   // A learnt question's steps stay folded this many seconds, to try from memory.
   var PEEK_AFTER = 4;

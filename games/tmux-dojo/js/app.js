@@ -741,7 +741,22 @@
   function prefixedKey(k, win, pane) {
     var key = k.key;
     var rz = resizeBinding(k);
+    // Ctrl still held from the prefix on an arrow the guide wants plain:
+    // not a 1-cell resize, and not a miss. Said instead.
+    if (rz && k.ctrl && !k.alt && guideWants(ARROWS[rz.dir])) {
+      message(tx('Ctrl を離してから {0} を押す（Ctrl+矢印は大きさを変える）', ARROWS[rz.dir]));
+      S.lastAction = 'brief';
+      return true;
+    }
     if (rz) { resize(win, pane, rz); armRepeat(); S.lastAction = 'resize'; return true; }
+    // Shift forgotten: 5 for %, 7 for &… (US and JIS keyboards). Said, not
+    // counted. A digit that names a window there is still goes to it.
+    var want = guideWants(null);
+    if (want && !k.ctrl && !k.alt && (UNSHIFTED[key] || '').indexOf(want) >= 0 && !(/^[0-9]$/.test(key) && T.windowByIndex(S.session, Number(key)))) {
+      message(tx('Shift を押しながら {0}（{1}）', key, want));
+      S.lastAction = 'brief';
+      return true;
+    }
 
     // Alt+1..5: select-layout (tmux). e.code survives Option's character remap on a Mac.
     if (k.alt && !k.ctrl && /^Digit[1-5]$/.test(k.code || '')) {
@@ -894,6 +909,19 @@
   // slip of the finger, not a miss.
   var DEFAULT_KEYS = '%"zxc&np,[]d$sw(){} :l;oi?q\'=#0123456789'.split('').concat(['PageUp']);
 
+  // The key under each shifted prefix key, on a US and on a JIS keyboard.
+  var UNSHIFTED = { '5': '%', '2': '"', "'": '"', '7': '&', '6': '&', '4': '$', '[': '{', ']': '}', '9': '()', '8': '(', '0': ')' };
+
+  // The one key the guide asks for after the prefix right now (null when it
+  // asks for none, or for something else); with `key`, whether it is that key.
+  function guideWants(key) {
+    var b = S.run;
+    if (!b || b.phase !== 'play' || !b.q) return null;
+    var m = guideMove(b);
+    if (!m || !m.pfx || m.keys.length !== 1) return null;
+    return key == null ? m.keys[0] : m.keys[0] === key;
+  }
+
   var INDEX_PROMPT = 'index';
 
   function unbound(k) {
@@ -984,18 +1012,26 @@
 
   // ---- copy mode -----------------------------------------------------------
 
+  // The lines copy mode can stand on: the printed ones, then the prompt line
+  // (index lines.length), which is where the cursor is when copy mode begins.
   function realLines(pane) {
     var out = [];
     for (var i = 0; i < pane.lines.length; i++) if (!(pane.lines[i] && pane.lines[i].clear)) out.push(i);
+    out.push(pane.lines.length);
     return out;
   }
 
+  function lineAt(pane, j) {
+    return j === pane.lines.length ? promptText(pane) + pane.input : lineText(pane.lines[j]);
+  }
+
+  // As tmux: the copy cursor starts where the shell cursor is, on the prompt.
   function enterCopy(pane) {
     pane.mode = 'copy';
     var el = paneBodyEl(pane.id);
     pane.scrollTop = el ? el.scrollHeight - el.clientHeight : 0;
-    var ls = realLines(pane);
-    pane.cy = ls.length ? ls[ls.length - 1] : 0;
+    pane.cy = pane.lines.length;
+    pane.cx = promptText(pane).length + (pane.cur == null ? pane.input.length : pane.cur);
     pane.sel = null;
   }
 
@@ -1005,6 +1041,20 @@
     if (at < 0) return ls.length ? ls[ls.length - 1] : 0;
     var j = Math.max(0, Math.min(ls.length - 1, at + dir));
     return ls[j];
+  }
+
+  // The cursor onto line j; the column stays where it can.
+  function goLine(pane, j) {
+    pane.cy = j;
+    pane.cx = Math.min(pane.cx || 0, lineAt(pane, j).length);
+  }
+
+  // The selection, start before end: {a: [line, col], b: [line, col]}, both ends in it.
+  function selRange(p) {
+    if (p.sel == null) return null;
+    var a = [p.sel, p.selx || 0], b = [p.cy, Math.min(p.cx || 0, lineAt(p, p.cy).length)];
+    if (a[0] > b[0] || (a[0] === b[0] && a[1] > b[1])) { var t = a; a = b; b = t; }
+    return { a: a, b: b };
   }
 
   function copyModeKey(k, pane) {
@@ -1021,9 +1071,15 @@
     if (copies && pane.sel != null) { yank(pane); return true; }
     if (key === 'v' || key === 'y') { message(key === 'v' ? 'tmux の v は矩形選択の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
     if (key === 'q' || key === 'Escape' || key === 'Enter' || (k.ctrl && (key === 'c' || key === 'g'))) { pane.mode = null; return true; }
-    if (begins) { pane.sel = pane.cy; S.lastAction = 'yank_start'; return true; }
-    if (k.ctrl && key === 'p') { pane.cy = stepLine(pane, pane.cy, -1); pane.reveal = 'edge'; return true; }
-    if (k.ctrl && key === 'n') { pane.cy = stepLine(pane, pane.cy, 1); pane.reveal = 'edge'; return true; }
+    if (begins) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
+    if (k.ctrl && key === 'p') { goLine(pane, stepLine(pane, pane.cy, -1)); pane.reveal = 'edge'; return true; }
+    if (k.ctrl && key === 'n') { goLine(pane, stepLine(pane, pane.cy, 1)); pane.reveal = 'edge'; return true; }
+    // Along the line: ←/→ (h/l), the head (Home, 0, C-a) and the end (End, $, C-e).
+    var len = lineAt(pane, pane.cy).length;
+    if (key === 'ArrowLeft' || key === 'h') { pane.cx = Math.max(0, Math.min(pane.cx || 0, len) - 1); return true; }
+    if (key === 'ArrowRight' || key === 'l') { pane.cx = Math.min(len, (pane.cx || 0) + 1); return true; }
+    if (key === 'Home' || key === '0' || (k.ctrl && key === 'a')) { pane.cx = 0; return true; }
+    if (key === 'End' || key === '$' || (k.ctrl && key === 'e')) { pane.cx = len; return true; }
     if (k.alt && (k.code === 'Comma' || k.code === 'Period')) {
       pane.scrollTop = k.code === 'Comma' ? 0 : max;
       pane.syncCursor = true;
@@ -1044,14 +1100,14 @@
       return true;
     }
     if ((key === 'n' || key === 'N') && pane.search) { search(pane, key === 'n' ? pane.search.dir : -pane.search.dir); S.lastAction = 'search'; return true; }
-    if (key === 'ArrowUp' || key === 'k') { pane.cy = stepLine(pane, pane.cy, -1); pane.reveal = 'edge'; return true; }
-    if (key === 'ArrowDown' || key === 'j') { pane.cy = stepLine(pane, pane.cy, 1); pane.reveal = 'edge'; return true; }
+    if (key === 'ArrowUp' || key === 'k') { goLine(pane, stepLine(pane, pane.cy, -1)); pane.reveal = 'edge'; return true; }
+    if (key === 'ArrowDown' || key === 'j') { goLine(pane, stepLine(pane, pane.cy, 1)); pane.reveal = 'edge'; return true; }
     if (key === 'PageUp' || (k.alt && key === 'v') || (k.ctrl && key === 'b')) pane.scrollTop -= page;
     else if (key === 'PageDown' || (k.ctrl && key === 'v') || (k.ctrl && key === 'f')) pane.scrollTop += page;
     else if (k.ctrl && key === 'u') pane.scrollTop -= page / 2;
     else if (k.ctrl && key === 'd') pane.scrollTop += page / 2;
-    else if (key === 'g' || key === 'Home') pane.scrollTop = 0;
-    else if (key === 'G' || key === 'End') pane.scrollTop = max;
+    else if (key === 'g') pane.scrollTop = 0;
+    else if (key === 'G') pane.scrollTop = max;
     else return true;
     if (pane.scrollTop < 0) pane.scrollTop = 0;
     if (pane.scrollTop > max) pane.scrollTop = max;
@@ -1065,8 +1121,8 @@
     var at = ls.indexOf(pane.cy);
     for (var step = 1; step <= ls.length; step++) {
       var j = ls[((at + dir * step) % ls.length + ls.length) % ls.length];
-      if (lineText(pane.lines[j]).toLowerCase().indexOf(term) >= 0) {
-        pane.cy = j;
+      if (lineAt(pane, j).toLowerCase().indexOf(term) >= 0) {
+        goLine(pane, j);
         if (pane.sel == null) pane.reveal = 'center';
         else pane.reveal = 'edge';
         return;
@@ -1075,10 +1131,17 @@
     message(tx('見つからない: {0}', pane.search.term));
   }
 
+  // From where Space was pressed to the cursor, the character under it
+  // included, as tmux copies.
   function yank(pane) {
-    var a = Math.min(pane.sel, pane.cy), b = Math.max(pane.sel, pane.cy);
+    var r = selRange(pane);
     var out = [];
-    for (var i = a; i <= b; i++) if (!(pane.lines[i] && pane.lines[i].clear)) out.push(lineText(pane.lines[i]).replace(/\s+$/, ''));
+    for (var i = r.a[0]; i <= r.b[0]; i++) {
+      if (pane.lines[i] && pane.lines[i].clear) continue;
+      var t = lineAt(pane, i);
+      var to = i === r.b[0] ? r.b[1] + 1 : t.length;
+      out.push(t.slice(i === r.a[0] ? r.a[1] : 0, to).replace(to >= t.length ? /\s+$/ : /$/, ''));
+    }
     S.clipboard = out.join('\n');
     pane.sel = null;
     pane.mode = null;
@@ -1096,6 +1159,7 @@
     pane.input = pane.input.slice(0, c) + text + pane.input.slice(c);
     pane.cur = c + text.length;
     if (text) pane.pasted = true;
+    S.pasted = text;
   }
 
   // ---- the session picker (choose-tree) ---------
@@ -1182,6 +1246,7 @@
     } else if (S.screen === 'result' && S.result) {
       if (k === 'Enter' || k === ' ') return go(function () { startRun(S.result.course); });
       if ((k === 'k' || k === 'K') && REC.weakTypes(3).length) return go(function () { startRun('keiko'); });
+      if ((k === 'n' || k === 'N') && nextCourse(S.result)) return go(function () { startRun(nextCourse(S.result).id); });
       if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(REC.courseOf(S.result.course).practice ? lastCourse(REC.load()) : S.result.course, 'result'); });
       if (k === 'Escape') return go(function () { showScreen('title'); });
     } else if (S.screen === 'records') {
@@ -1446,13 +1511,16 @@
     return mv([lb], tx(/^Option/.test(lb) ? '{0} を押す（1 回で 5 マス）' : '{0} を押す（1 回 1 マス。続けて 5 回）', lb));
   }
 
-  // How far the active pane has moved since the question began.
+  // How far the pane has moved since the question began, on the axis nearer
+  // its goal (5 cells across, 3 rows down, as Q.resize.check): {axis, n}, or null.
   function resizedBy() {
     var w = T.activeWindow(S.session);
     var rr = S.q0 && T.rectOf(w, S.q0.id, S.cols, S.rows);
     var r0 = baseRect();
-    if (!rr || !r0) return 0;
-    return Math.max(Math.abs(rr.w - r0.w), Math.abs(rr.h - r0.h));
+    if (!rr || !r0) return null;
+    var dw = Math.abs(rr.w - r0.w), dh = Math.abs(rr.h - r0.h);
+    if (!dw && !dh) return null;
+    return dw / 5 >= dh / 3 ? { axis: 'lr', n: dw } : { axis: 'tb', n: dh };
   }
 
   // The shape of the window as a question began, kept as a tree so that a
@@ -1571,7 +1639,12 @@
     },
     resize: {
       steps: 1, text: 'このペインの大きさを変える（resize）', cmd: 'resize-pane -L/-R/-U/-D', allow: ['resize'], show: ['resize'],
-      goal: function () { var d = resizedBy(); return [{ pane: S.q0.id, mark: 'resize', tag: d ? tx('いま {0} マス動いた（5 マスで成功）', d) : '境目を 5 マス以上動かす' }]; },
+      goal: function () {
+        var d = resizedBy();
+        var tag = !d ? '境目を横に 5 マス（縦なら 3 行）動かす'
+          : d.axis === 'lr' ? tx('いま横に {0} マス動いた（5 マスで成功）', d.n) : tx('いま縦に {0} 行動いた（3 行で成功）', d.n);
+        return [{ pane: S.q0.id, mark: 'resize', tag: tag }];
+      },
       setup: function () {
         needUnzoom(); needPanes(2);
         var win = T.activeWindow(S.session);
@@ -1780,21 +1853,23 @@
       next: function () { return S.detached ? attachMove() : mv(['d'], 'd を押す（デタッチ）。tmux の外のシェルに戻る'); }
     },
     yank_paste: {
-      text: 'コピーモードで 1 行コピーして、貼り付ける', cmd: 'copy-mode → paste-buffer', allow: ['copy', 'yank_start', 'yank', 'paste'], show: ['copy', 'yank', 'paste'], steps: 4,
-      goal: function () { return [{ pane: S.q0.id, mark: 'go', tag: S.clipboard ? 'ここに貼り付ける' : '1 行コピーする' }]; },
+      // As in tmux: the copy cursor starts on the prompt, so the line above
+      // is reached with ↑, selected from its head (Home) to its end (End).
+      text: 'cat が出した行をコピーして、貼り付ける', cmd: 'copy-mode → paste-buffer', allow: ['copy', 'yank_start', 'yank', 'paste'], show: ['copy', 'yank', 'paste'], steps: 7,
+      goal: function () { return [{ pane: S.q0.id, mark: 'go', tag: S.clipboard === S.q0.text ? 'ここに貼り付ける' : 'この行をコピーする' }]; },
       setup: function () {
         var pane = T.activePane(T.activeWindow(S.session));
         pane.mode = null;
         pane.pasted = false;
-        // A line to copy, printed last so the copy cursor starts on it.
         pane.lines.push({ html: '<span class="sh-prompt">' + esc(promptText(pane)) + '</span>cat kakejiku.txt' });
         var gold = tx('「デタッチしても、セッションはそのまま。」');
-        pane.lines.push({ html: '<span class="sh-gold">' + esc(gold) + '</span>', text: gold });
-        S.q0 = { id: pane.id };
+        pane.lines.push({ html: '<span class="sh-gold">' + esc(gold) + '</span>', text: gold, cls: 'sh-gold' });
+        S.q0 = { id: pane.id, ln: pane.lines.length - 1, text: gold };
         S.target = pane.id;
       },
-      check: function () { var h = T.findPane(S.session, S.q0.id); return !!h && !!h.pane.pasted; },
-      step: function () { return S.clipboard ? [2, 2, 'ここに貼り付ける'] : [1, 2, '1 行コピーする']; },
+      // Pasted, and the line itself: a copy of some other text is not it.
+      check: function () { return !!T.findPane(S.session, S.q0.id) && S.pasted === S.q0.text; },
+      step: function () { return S.clipboard === S.q0.text ? [2, 2, 'ここに貼り付ける'] : [1, 2, 'この行をコピーする']; },
       next: function () {
         var h = T.findPane(S.session, S.q0.id);
         if (!h) return null;
@@ -1803,10 +1878,19 @@
         var back = moveTo(S.q0.id);
         if (back) return back;
         if (p.mode === 'copy') {
-          if (p.sel == null) return mv(['Space'], 'Space を押す（選び始める）', true);
-          return mv(['Enter'], 'Enter を押す（この行をコピーする）', true);
+          var ln = S.q0.ln;
+          // A selection begun somewhere else: let go of it first.
+          if (p.sel != null && (p.sel !== ln || p.selx !== 0)) return mv(['Esc'], 'Esc を押す（選び直す）', true);
+          if (p.cy > ln) return mv(['↑'], '↑ を押す（コピーする行まで上がる）', true);
+          if (p.cy < ln) return mv(['↓'], '↓ を押す（コピーする行まで下がる）', true);
+          if (p.sel == null) {
+            if (p.cx > 0) return mv(['Home'], 'Home を押す（行の頭へ。vi 式は 0、emacs 式は Ctrl+a）', true);
+            return mv(['Space'], 'Space を押す（ここから選び始める）', true);
+          }
+          if (p.cx < S.q0.text.length) return mv(['End'], 'End を押す（行の終わりまで選ぶ。vi 式は $、emacs 式は Ctrl+e）', true);
+          return mv(['Enter'], 'Enter を押す（選んだところをコピーする）', true);
         }
-        if (S.clipboard) return mv([']'], '] を押す（貼り付ける）');
+        if (S.clipboard === S.q0.text) return mv([']'], '] を押す（貼り付ける）');
         return mv(['['], '[ を押す（コピーモードに入る）');
       }
     }
@@ -1844,7 +1928,9 @@
         var j = Math.floor(rand() * (i + 1));
         var t = a[i]; a[i] = a[j]; a[j] = t;
       }
-      if (a.every(function (x, n) { return n === 0 || a[n - 1] !== x; })) break;
+      // Nor 全画面 right after a new window: the fresh window has one pane,
+      // so the zoom question would have to add one first.
+      if (a.every(function (x, n) { return n === 0 || (a[n - 1] !== x && !(a[n - 1] === 'new_window' && x === 'zoom')); })) break;
     }
     return a;
   }
@@ -2030,6 +2116,7 @@
     // `l` is this question's 目安: the records measure it against that.
     b.qlog[b.i] = { t: type, s: null, m: 0, l: b.limit };
     S.clipboard = '';
+    S.pasted = '';
   }
 
   function qText(b) { var t = S.qText; return typeof t === 'function' ? t() : t || tx(b.q.text); }
@@ -2417,7 +2504,10 @@
         if (s.key) keys += '<kbd class="pfx' + (s.done ? ' done' : ' next') + '">' + esc(s.key) + tick(s.done) + '</kbd>';
         else keys += s.keys.length ? keycaps(s.keys, S.armed || !move.pfx ? s.keys : []) : '<kbd>…</kbd>';
       });
-      html += '<div class="ob-guide">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
+      // A step that is words rather than a key (a name to type, tmux attach,
+      // Esc to close something) keeps its text on a phone too.
+      var prompt = !move.keys.length || move.type || move.keys[0] === 'Esc';
+      html += '<div class="ob-guide' + (prompt ? ' ob-prompt' : '') + '">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
       if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
       html += '<div class="ob-guide learnt">' + c + tx('覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
@@ -2610,8 +2700,8 @@
       var order = '';
       body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
         linesHTML(p.lines, p.mode === 'copy' ? p : null) +
-        (p.mode === 'copy' ? '' : order) +
-        '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive && p.mode !== 'copy') + '</div>';
+        (p.mode === 'copy' ? copyLineHTML(p, p.lines.length, lineAt(p, p.lines.length), '', null)
+          : order + '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive) + '</div>');
       var pin = $(':scope > .motd', el);
       if (order && p.mode === 'copy') {
         if (!pin) { pin = document.createElement('div'); el.appendChild(pin); }
@@ -2728,7 +2818,7 @@
         if (p.syncCursor) {
           // After a page move the cursor lands on the top visible line.
           var lines = $$('[data-ln]', el);
-          for (var i = 0; i < lines.length; i++) if (lines[i].offsetTop >= el.scrollTop) { p.cy = Number(lines[i].dataset.ln); break; }
+          for (var i = 0; i < lines.length; i++) if (lines[i].offsetTop >= el.scrollTop) { goLine(p, Number(lines[i].dataset.ln)); break; }
           p.syncCursor = false;
           markCursor(el, p);
         }
@@ -2835,9 +2925,11 @@
       // Two chips at most, about 70px; one chip under the card takes 44px.
       var below = best + h + 6;
       var hit = function (t, b) { return keep.reduce(function (a, k) { return a + (Math.min(left + 200, k.r) > Math.max(left, k.l) && Math.min(b, k.b) > Math.max(t, k.t) ? 1 : 0); }, 0); };
-      var up = below + 44 > H || hit(below, below + 44) > hit(best - 76, best - 6);
+      // A card on the tab arrow: the arrow leaves from its foot, so the chips go above.
+      var up = below + 44 > H || hit(below, below + 44) > hit(best - 76, best - 6) || (cls === 'tab' && best - 76 >= 0);
       chips.style.cssText = 'left:' + left + 'px;right:auto;' + (up ? 'top:auto;bottom:' + (H - best + 6) + 'px' : 'bottom:auto;top:' + below + 'px');
     }
+    return el;
   }
 
   function arrowSVG(x1, y1, x2, y2, stop, label, cls) {
@@ -2876,11 +2968,14 @@
     var top = ar.top - tr.top + 20 + (motd ? motd.offsetHeight : 0), bottom = ar.bottom - tr.top;
     var x1 = ar.left - tr.left + ar.width / 2, y1 = Math.min(bottom - 10, (top + bottom) / 2);
     var x2 = Math.max(12, Math.min(tr.width - 12, r.left - tr.left + Math.min(r.width / 2, 40))), y2 = tr.height - 4;
-    term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, '', 'tab'));
-    // A window question: the guide card rides this arrow.
+    // A window question: the guide card sits where the arrow's middle would
+    // be, and the arrow then leaves from the card's foot, never behind it.
     if (b && b.phase === 'play' && b.q && !$(':scope > .guide-card:not(.tab)', term)) {
-      placeCard(term, arrowMid.x, arrowMid.y, motdHTML(b, fold ? null : guideMove(b), fold), '', 'tab');
+      var card = placeCard(term, (x1 + x2) / 2, (y1 + y2) / 2, motdHTML(b, fold ? null : guideMove(b), fold), '', 'tab');
+      x1 = card.offsetLeft + card.offsetWidth / 2;
+      y1 = card.offsetTop + card.offsetHeight + 2;
     }
+    term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, '', 'tab'));
   }
 
   function tabGoal(name) {
@@ -2907,6 +3002,8 @@
 
   function markCursor(el, p) {
     $$('.cl', el).forEach(function (x) { x.classList.remove('cl'); });
+    // The cursor cell of the line left behind goes; the next render draws it anew.
+    $$('span.cursor', el).forEach(function (x) { x.className = ''; });
     var line = $('[data-ln="' + p.cy + '"]', el);
     if (line) line.classList.add('cl');
   }
@@ -3064,23 +3161,38 @@
     var out = '';
     var lastClear = -1;
     for (var i = 0; i < lines.length; i++) if (lines[i] && lines[i].clear) lastClear = i;
-    var a = -1, b = -1;
-    if (copyPane && copyPane.sel != null) { a = Math.min(copyPane.sel, copyPane.cy); b = Math.max(copyPane.sel, copyPane.cy); }
     for (var j = 0; j < lines.length; j++) {
       var l = lines[j];
       if (l && l.clear) {
         if (j === lastClear) out += '<div class="sh-clear"></div>';
         continue;
       }
-      var cls = 'sh-line';
-      if (copyPane) {
-        if (j === copyPane.cy) cls += ' cl';
-        if (j >= a && j <= b) cls += ' sel';
-      }
       var body = typeof l === 'string' ? (l === '' ? '&nbsp;' : esc(l)) : l.html;
-      out += '<div class="' + cls + '" data-ln="' + j + '">' + body + '</div>';
+      out += copyPane ? copyLineHTML(copyPane, j, lineText(l), body, l && l.cls) : '<div class="sh-line" data-ln="' + j + '">' + body + '</div>';
     }
     return out;
+  }
+
+  // A line in copy mode: the cursor cell and the selected characters, as
+  // tmux shows them. A line wholly in or out of the selection keeps its
+  // colours; one the cursor or an end of the selection is on is drawn from
+  // its text, under `cls` if it has one.
+  function copyLineHTML(p, j, text, html, cls) {
+    var r = selRange(p), from = -1, to = -1;
+    if (r && j >= r.a[0] && j <= r.b[0]) { from = j === r.a[0] ? r.a[1] : 0; to = j === r.b[0] ? r.b[1] : text.length; }
+    var cur = j === p.cy;
+    var line = 'sh-line' + (cur ? ' cl' : '');
+    if (!cur && from < 0) return '<div class="' + line + '" data-ln="' + j + '">' + html + '</div>';
+    if (!cur && from === 0 && to >= text.length) return '<div class="' + line + ' sel" data-ln="' + j + '">' + html + '</div>';
+    var cx = Math.min(p.cx || 0, text.length), out = '';
+    for (var i = 0; i <= text.length; i++) {
+      var ch = text[i] || '', here = cur && i === cx;
+      if (!ch && !here) break;
+      var c = (i >= from && i <= to ? 'sel ' : '') + (here ? (ch ? 'cursor on-char' : 'cursor') : '');
+      out += c ? '<span class="' + c.trim() + '">' + esc(ch) + '</span>' : esc(ch);
+    }
+    if (cls) out = '<span class="' + cls + '">' + out + '</span>';
+    return '<div class="' + line + '" data-ln="' + j + '">' + (out || '&nbsp;') + '</div>';
   }
 
   function renderStatus() {
@@ -3323,6 +3435,7 @@
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });
     var isRec = !!(r.record && r.count > 1);
+    var up = nextCourse(r);
     el.classList.toggle('is-rec', isRec);
     el.innerHTML =
       '<div class="em-hd">' + tx('{0} 回目', r.count) + '</div>' +
@@ -3349,12 +3462,23 @@
       (r.spark && r.spark.length > 1 ? '<span class="spark-key"><i class="rec"></i>' + tx('自己ベスト') + ' <i class="now"></i>' + tx('今回') + '</span>' : '') + '</div>' +
       (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? tx('もう一度 稽古') : tx('もう一度')) + '<kbd class="hk">Enter</kbd></button>' +
+      (up ? '<button type="button" class="btn primary" data-course="' + up.id + '">' + esc(tx('{0}へ進む', up.title)) + '<kbd class="hk">N</kbd></button>' : '') +
       (!c.practice ? '<button type="button" class="btn" data-course="' + r.course + '" data-shuffle="1">' + tx('順番を変えて') + '</button>' : '') +
       (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">' + tx('苦手を稽古') + '<kbd class="hk">K</kbd></button>' : '') +
       '<button type="button" class="btn" data-records="' + (c.practice ? lastCourse(REC.load()) : r.course) + '">' + tx('記録を見る') + '<kbd class="hk">R</kbd></button>' +
       '<button type="button" class="btn ghost" data-title="1">' + tx('コース選択へ') + '<kbd class="hk">Esc</kbd></button></div>';
     renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
+  }
+
+  // The next house up (入門 → 中級 → 上級) after a run of 三段 or better, while
+  // that house has never been entered: the moment to step up.
+  function nextCourse(r) {
+    var i = LV.COURSES.map(function (c) { return c.id; }).indexOf(r.course);
+    var up = i >= 0 ? LV.COURSES[i + 1] : null;
+    if (!up || REC.runsOf(up.id, REC.load()).length) return null;
+    var at = LV.RANKS.map(function (x) { return x.title; }).indexOf(r.rank);
+    return at >= 0 && at <= 2 ? up : null;
   }
 
   // The three questions that took longest, with their seconds: what to practise.
@@ -3441,7 +3565,7 @@
   // and types that slipped (their 手順 is back).
   function learntHTML(r) {
     var html = '';
-    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">' + tx('覚えた: ') + '<b>' + r.learntNew.map(typeName).map(esc).join(tx('・')) + '</b>' + tx('（次から手順を畳む）') + '</p>';
+    if (r.learntNew && r.learntNew.length) html += '<p class="em-learnt">' + tx('覚えた: ') + '<b>' + r.learntNew.map(typeName).map(esc).join(tx('・')) + '</b>' + tx('（次からは手順を隠す。{0} 秒後に出る）', LV.PEEK_AFTER) + '</p>';
     if (r.learntLost && r.learntLost.length) html += '<p class="em-learnt lost">' + tx('もう一度: {0}（手順を出す）', r.learntLost.map(typeName).map(esc).join(tx('・'))) + '</p>';
     return html;
   }
@@ -3458,6 +3582,7 @@
     if (b.state === 'sending') html += '<p class="em-board">' + tx('今日のランキングに載せている……') + '</p>';
     if (b.state === 'ok') html += '<p class="em-board">' + tx('今日のランキング <b>{0} 位</b> ／ {1} 人', b.rank, b.total) + ' ・ <a href="#" data-board="' + r.course + '">' + tx('ランキングを見る') + '</a></p>';
     if (b.state === 'refused') html += '<p class="em-board dim">' + tx('この記録はランキングに載せられなかった（手で解いた記録だけが載る）。') + '</p>';
+    if (b.state === 'offline') html += '<p class="em-board dim">' + tx('ランキングにつながらなかった（記録には残る）。') + '</p>';
     if (b.state === 'paused') html += '<p class="em-board dim">' + tx('途中で {0} 秒 止まっていたので、今日のランキングには載せない（記録には残る）。', r.paused.toFixed(1)) + '</p>';
     if (b.state === 'shuffled') html += '<p class="em-board dim">' + tx('順番を変えた回は、今日のランキングには載せない（記録には残る）。') + '</p>';
     if (b.state === 'noname') {
@@ -3488,6 +3613,14 @@
       }
       renderRecords();
     }).catch(function (e) {
+      // The run itself failed to go up: the result was redrawn without this
+      // form, so say it there, not in a form that is gone.
+      var r = S.result;
+      if (r && r.board && r.board.state === 'sending') {
+        r.board = { state: e && e.status === 400 ? 'refused' : 'offline' };
+        if (S.screen === 'result') renderResult();
+        return;
+      }
       msg.textContent = tx(e && e.status === 409 ? 'その名前は他の人が使っている。別の名前で。' :
         e && e.status === 400 ? '使えない名前。12 文字まで。' : 'つながらなかった。あとでもう一度。');
     });
@@ -3908,6 +4041,7 @@
           activePane: ap ? ap.id : null,
           panes: win ? T.panesOf(win).map(function (p) { return p.id; }) : [],
           copyMode: ap ? ap.mode === 'copy' : false,
+          copyAt: ap && ap.mode === 'copy' ? { ln: ap.cy, col: ap.cx, sel: ap.sel == null ? null : [ap.sel, ap.selx], lines: ap.lines.length } : null,
           input: ap ? ap.input : null,
           cursor: ap ? (ap.cur == null ? ap.input.length : ap.cur) : null,
           promptValue: S.prompt ? S.prompt.value : null,

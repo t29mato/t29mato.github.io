@@ -479,7 +479,8 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .cursor.on-char { width: auto; height: auto; vertical-align: baseline; color: var(--term-bg); }
 .pane:not(.active) .cursor { display: none; }
 .pane-body.copy .sh-line.cl { background: color-mix(in srgb, var(--ai) 20%, transparent); box-shadow: inset 3px 0 0 var(--ai); }
-.pane-body.copy .sh-line.sel { background: color-mix(in srgb, var(--ai) 60%, transparent); color: #fff; }
+.pane-body.copy .sh-line.sel, .pane-body.copy .sh-line span.sel { background: color-mix(in srgb, var(--ai) 60%, transparent); color: #fff; }
+.pane-body.copy span.sel.cursor.on-char { color: var(--term-bg); }
 
 
 /* outside tmux */
@@ -704,7 +705,8 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .motd .ob-q { font-size: 15px; }
   .ob-q { font-size: 16px; }
   .ob-guide { margin-left: 0; }
-  .ob-txt { display: none; }
+  /* The keys say it all on a phone, unless the step is words (a name to type, Esc). */
+  .ob-guide:not(.ob-prompt) .ob-txt { display: none; }
 }
 @media (max-width: 760px), (pointer: coarse) {
   .keybar { display: flex; }
