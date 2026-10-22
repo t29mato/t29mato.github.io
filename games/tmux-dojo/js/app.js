@@ -1084,6 +1084,7 @@
       if (i >= 0 && LV.COURSES[i]) return go(function () { startRun(LV.COURSES[i].id); });
       if ((k === 'k' || k === 'K') && !$('#btn-keiko').hidden) return go(function () { startRun('keiko'); });
       if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(null, 'title'); });
+      if (k === 'b' || k === 'B') return go(openBoard);
     } else if (S.screen === 'result' && S.result) {
       if (k === 'Enter' || k === ' ') return go(function () { startRun(S.result.course); });
       if ((k === 'k' || k === 'K') && REC.weakTypes(3).length) return go(function () { startRun('keiko'); });
@@ -3075,6 +3076,13 @@
     showScreen('records');
   }
 
+  // Straight to the rankings, from the title: today's board of the course
+  // you played last (入門 for a first visit).
+  function openBoard() {
+    S.recTab = 'board'; S.boardSpan = 'today';
+    openRecords(null, 'title');
+  }
+
   function recDate(at) {
     var d = new Date(at);
     return (d.getMonth() + 1) + '/' + d.getDate();
@@ -3262,6 +3270,7 @@
     document.addEventListener('pointerdown', function () { AU.unlock(); }, true);
     $('#btn-enter').addEventListener('click', function () { startRun($('#btn-enter').dataset.course || 'easy'); });
     $('#btn-records').addEventListener('click', function () { S.recTab = 'growth'; openRecords(null, 'title'); });
+    $('#btn-board').addEventListener('click', openBoard);
     $('#btn-keiko').addEventListener('click', function () { startRun('keiko'); });
     $('#course-list').addEventListener('click', function (e) {
       var b = e.target.closest('[data-course]');
