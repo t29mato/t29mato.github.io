@@ -1871,7 +1871,7 @@
     var time = raw + b.penalty;
     var result = {
       course: b.course.id, time: time, raw: raw, misses: b.misses, overs: b.overs, guides: b.guides,
-      keys: b.keys, n: b.qs.length, avg: time / b.qs.length
+      keys: b.keys, n: b.qs.length, avg: time / b.qs.length, qlog: b.qlog, limit: b.limit
     };
     var sum = REC.add({
       course: b.course.id, prefix: S.conf ? S.conf.prefix.label : 'C-b', conf: S.conf ? 1 : undefined,
@@ -2926,6 +2926,7 @@
       '<div><dt>' + tx('押したキー') + '</dt><dd>' + r.keys + '</dd></div>' +
       '</dl>' +
       resultNetHTML(r) +
+      shareHTML(r) +
       spark(r.spark) +
       '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span>' + tx('■ 自己ベスト ■ 今回') + '</span>' : '') + '</div>' +
@@ -2960,6 +2961,50 @@
     }).catch(function (e) {
       r.board = { state: e && e.status === 400 && NET.state().name ? 'refused' : 'offline' };
     }).then(function () { if (S.screen === 'result' && S.result === r) renderResult(); });
+  }
+
+  // The run as a few lines to paste anywhere, Wordle style: one square a
+  // question (green: under half the 目安, yellow: within it, red: over it or
+  // a wrong key), the time against お手本, the rank and the link.
+  var SITE = 'https://t29mato.github.io/games/tmux-dojo/';
+  function shareText(r) {
+    var c = REC.courseOf(r.course);
+    var sq = (r.qlog || []).map(function (q) {
+      return q.m || q.o ? '🟥' : q.s != null && q.s <= r.limit / 2 ? '🟩' : '🟨';
+    });
+    var rows = [];
+    for (var i = 0; i < sq.length; i += 10) rows.push(sq.slice(i, i + 10).join(''));
+    return tx('tmux 道場 {0} {1}秒（お手本 {2}秒）{3}', c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
+      rows.join('\n') + '\n' + SITE + (EN ? '?lang=en' : '');
+  }
+
+  function shareHTML(r) {
+    if (REC.courseOf(r.course).practice) return '';
+    var text = shareText(r);
+    return '<div class="share"><pre class="share-text">' + esc(text) + '</pre>' +
+      '<div class="share-btns"><button type="button" class="btn" data-share>' + tx('結果をコピー') + '</button>' +
+      '<a class="btn ghost" target="_blank" rel="noopener" href="https://x.com/intent/post?text=' + encodeURIComponent(text) + '">' + tx('X に投稿') + '</a>' +
+      '<small class="share-msg" aria-live="polite"></small></div></div>';
+  }
+
+  function copyShare() {
+    var r = S.result, m = $('#result-body .share-msg');
+    if (!r) return;
+    var text = shareText(r);
+    var said = function (t) { if (m) m.textContent = tx(t); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { said('コピーした。好きな所に貼れる。'); }, function () { selectShare(); said('選んだ。コピーして貼れる。'); });
+    } else { selectShare(); said('選んだ。コピーして貼れる。'); }
+  }
+
+  function selectShare() {
+    var pre = $('#result-body .share-text');
+    if (!pre || !window.getSelection) return;
+    var range = document.createRange();
+    range.selectNodeContents(pre);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 
   // What this run taught: types newly learnt (their 手順 folds from now on)
@@ -3321,6 +3366,7 @@
       });
     });
     $('#result-screen').addEventListener('click', function (e) {
+      if (e.target.closest('[data-share]')) { copyShare(); return; }
       var r = e.target.closest('[data-records]');
       if (r) { S.recTab = 'growth'; openRecords(r.dataset.records || null, 'result'); return; }
       var bd = e.target.closest('[data-board]');

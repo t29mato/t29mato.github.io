@@ -839,3 +839,9 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 /* the language switch: a word, so as wide as it needs */
 .lang-toggle { height: 34px; padding: 0 9px; border-radius: 3px; cursor: pointer; background: transparent; border: 1px solid var(--line); color: var(--ink); font-size: 13px; }
 .lang-toggle:hover { border-color: var(--andon); }
+/* the result to paste: a preview of exactly what is copied */
+.share { margin: 12px 0 4px; display: grid; gap: 8px; }
+.share-text { margin: 0; padding: 10px 12px; background: var(--bg-2); border: 1px dashed var(--line); border-radius: 3px; font-family: var(--mono); font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; user-select: all; }
+.share-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.share-btns .btn { text-decoration: none; }
+.share-msg { color: var(--ink-dim); }
