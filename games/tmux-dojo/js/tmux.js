@@ -5,6 +5,9 @@
 
   var nextPaneId = 0;
   var nextWindowId = 0;
+  // tmux's next_active_point: every pane remembers when it was last active,
+  // so a move with several candidates picks the most recent one.
+  var nextActivePoint = 1;
 
   function createSession(opts) {
     return {
@@ -28,12 +31,21 @@
       input: '',
       mode: null,               // null | 'copy'
       scrollTop: 0,             // copy mode only, in px (set by the renderer)
-      cleared: 0
+      cleared: 0,
+      activePoint: 0
     };
+  }
+
+  // window_set_active_pane: the pane becomes active and stamps its turn.
+  function setActive(win, paneId) {
+    win.active = paneId;
+    var ps = panesOf(win);
+    for (var i = 0; i < ps.length; i++) if (ps[i].id === paneId) ps[i].activePoint = nextActivePoint++;
   }
 
   function createWindow(session, name) {
     var pane = createPane(null);
+    pane.activePoint = nextActivePoint++;
     var used = {};
     session.windows.forEach(function (w) { used[w.index] = true; });
     var index = session.baseIndex;
@@ -159,14 +171,19 @@
     else hit.parent.b = split;
     win.zoomed = false;
     win.layoutName = null;
-    if (!keepFocus) { win.last = win.active; win.active = fresh.id; }
+    if (!keepFocus) { win.last = win.active; setActive(win, fresh.id); }
     return fresh;
   }
 
-  // Returns false if it was the last pane of the window.
+  // Returns false if it was the last pane of the window. As tmux's
+  // window_lost_pane: the focus goes to the last pane, else the previous
+  // one in order, else the next.
   function killPane(win, paneId) {
     var hit = parentOf(win.root, paneId);
     if (!hit || !hit.parent) return false;
+    var before = panesOf(win);
+    var at = -1;
+    for (var k = 0; k < before.length; k++) if (before[k].id === paneId) at = k;
     var sibling = hit.parent.a === hit.node ? hit.parent.b : hit.parent.a;
     var gp = parentOfNode(win.root, hit.parent);
     if (!gp) win.root = sibling;
@@ -178,9 +195,10 @@
       var ps = panesOf(win);
       var pick = null;
       for (var i = 0; i < ps.length; i++) if (ps[i].id === win.last) pick = ps[i];
-      win.active = (pick || leaves(sibling)[0]).id;
+      if (!pick) pick = at > 0 ? before[at - 1] : before[at + 1];
+      setActive(win, pick.id);
       win.last = null;
-    }
+    } else if (win.last === paneId) win.last = null;
     return true;
   }
 
@@ -198,16 +216,16 @@
   function selectPane(win, paneId) {
     if (win.active === paneId) return false;
     win.last = win.active;
-    win.active = paneId;
+    setActive(win, paneId);
     win.zoomed = false;
     return true;
   }
 
   // tmux select-pane -L/-R/-U/-D: the adjacent pane in that direction that
-  // overlaps the active one; ties go to the first in layout order.
-  // The room next to the active one in a direction. As tmux's
-  // window_pane_find_left/right/up/down, it wraps round at the window edge
-  // (the far side's rooms), unless noWrap.
+  // overlaps the active one; among several, the one that was active most
+  // recently (window_pane_choose_best), ties to the first in layout order.
+  // As tmux's window_pane_find_left/right/up/down, it wraps round at the
+  // window edge (the far side's rooms), unless noWrap.
   function neighbour(win, cols, rows, dir, noWrap) {
     var l = layout(win, cols, rows);
     var me = null;
@@ -228,7 +246,7 @@
       if (dir === 'R') ok = edge + 1 === r.x && overlap(r.y, r.h, me.y, me.h);
       if (dir === 'U') ok = r.y + r.h + 1 === edge && overlap(r.x, r.w, me.x, me.w);
       if (dir === 'D') ok = edge + 1 === r.y && overlap(r.x, r.w, me.x, me.w);
-      if (ok && !best) best = r;
+      if (ok && (!best || r.pane.activePoint > best.pane.activePoint)) best = r;
     }
     return best ? best.pane : null;
   }
@@ -237,9 +255,10 @@
 
   // Resize like tmux's layout_resize_pane: find the nearest ancestor split on
   // this axis, and move its border by `n` cells. -L/-U move it towards the
-  // origin, -R/-D away from it; the sign is the caller's choice.
+  // origin, -R/-D away from it; the sign is the caller's choice. A zoomed
+  // window is unzoomed first, as resize-pane does.
   function resizePane(win, paneId, axis, n, cols, rows) {
-    if (win.zoomed) return false;
+    win.zoomed = false;
     var chain = [];
     (function walk(node, path) {
       if (node.type === 'pane') { if (node.pane.id === paneId) chain = path.slice(); return; }
@@ -299,6 +318,8 @@
     return null;
   }
 
+  // As tmux's session_detach of the current window: the last window, else
+  // the previous one, else the next.
   function killWindow(session, winId) {
     var idx = -1;
     for (var i = 0; i < session.windows.length; i++) if (session.windows[i].id === winId) idx = i;
@@ -306,9 +327,9 @@
     session.windows.splice(idx, 1);
     if (session.active === winId) {
       var last = windowById(session, session.last);
-      session.active = (last || session.windows[Math.min(idx, session.windows.length - 1)]).id;
+      session.active = (last || session.windows[Math.max(0, idx - 1)]).id;
       session.last = null;
-    }
+    } else if (session.last === winId) session.last = null;
     return true;
   }
 
@@ -333,6 +354,23 @@
     for (var i = 0; i < ps.length; i++) if (ps[i].id === win.active) at = i;
     var other = ps[((at + step) % ps.length + ps.length) % ps.length];
     return swapPanes(win, win.active, other.id);
+  }
+
+  // rotate-window (prefix C-o): every pane's contents move one place up in
+  // the order (the first goes to the end); the focus stays where it is on
+  // screen, so it lands on the pane that moved in.
+  function rotateWindow(win) {
+    var nodes = [];
+    (function walk(node) { if (node.type === 'pane') nodes.push(node); else { walk(node.a); walk(node.b); } })(win.root);
+    if (nodes.length < 2) return false;
+    var at = 0;
+    for (var i = 0; i < nodes.length; i++) if (nodes[i].pane.id === win.active) at = i;
+    var panes = nodes.map(function (n) { return n.pane; });
+    for (var j = 0; j < nodes.length; j++) nodes[j].pane = panes[(j + 1) % panes.length];
+    win.zoomed = false;
+    win.last = null;
+    setActive(win, nodes[at].pane.id);
+    return true;
   }
 
   // ---- layouts (select-layout / next-layout) --------------------------------
@@ -374,6 +412,7 @@
   window.ADV.tmux = {
     swapPanes: swapPanes,
     swapStep: swapStep,
+    rotateWindow: rotateWindow,
     applyLayout: applyLayout,
     nextLayout: nextLayout,
     LAYOUTS: LAYOUTS,

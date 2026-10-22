@@ -101,30 +101,33 @@
     return prefixLabel(prefix) + ' を押して離してから ' + HINTS[action];
   }
 
-  // `limit` is the 目安 in seconds per question. Past it nothing is skipped;
-  // the 手順 (the answer, step by step) is on screen from the start anyway.
+  // The 目安 is per question now (limitFor below); a course's `limit` is
+  // only what older runs, logged before that, are measured against. Past
+  // the 目安 nothing is skipped; the 手順 is on screen from the start anyway.
   // `rankMul` scales the rank thresholds for courses whose questions take
-  // several keys. Bump `ver` whenever `qs` or the rules change, so older
-  // runs can be told apart in the history (ver 2: no skipping, no +5 秒).
+  // several keys (入門 1.35 keys a question, 中級 1.7, 上級 2.9 on average, so
+  // the same player lands on about the same Lv on each). Bump `ver`
+  // whenever `qs` or the rules change, so older runs can be told apart in
+  // the history (ver 2: no skipping, no +5 秒).
   // The ids stay easy / normal / hard so older records carry over.
   var COURSES = [
     {
       id: 'easy', title: '入門', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
-      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1〜3 手。',
+      desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1〜5 手（閉じるは移動も入る）。',
       qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
     },
     {
-      id: 'normal', title: '中級', mode: '腕試し', limit: 14, rankMul: 1.3, ver: 2,
+      id: 'normal', title: '中級', mode: '腕試し', limit: 14, rankMul: 1.25, ver: 2,
       plan: { cols: 4, rows: 2, cells: 8, lit: 1 },
-      desc: '大きさ・名前・入れ替え・ウィンドウを閉じる・スクロールも混ざる。',
-      qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'focus', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
+      desc: '大きさ・名前・入れ替え・ウィンドウを閉じる・スクロール・デタッチも混ざる。1 問 1〜5 手。',
+      qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'detach_attach', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
     },
     {
-      id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 2, ver: 2,
+      id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 1.6, ver: 2,
       plan: { cols: 5, rows: 4, cells: 20, lit: 6 },
-      desc: '1 問で 2〜3 手。考える前に手が動くか。',
-      qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'find_zoom', 'copy_top', 'two_akima', 'trident', 'kill_window', 'swap_zoom', 'new_and_home', 'focus', 'resize', 'find_zoom']
+      desc: '1 問で 2〜8 手。考える前に手が動くか。',
+      qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'yank_paste', 'copy_top', 'two_akima', 'trident', 'kill_window', 'swap_zoom', 'new_and_home', 'focus', 'resize', 'find_zoom']
     }
   ];
 
@@ -137,18 +140,31 @@
     desc: '目安を超えがちな問題だけを三度ずつ。', qs: []
   };
 
+  // The 目安 of a question, in seconds, from how many moves (prefix + key)
+  // its type takes: a split is one, closing a pane you must walk to is
+  // four, 二つ閉じる eight. A type that says nothing counts as two.
+  var STEPS_DEFAULT = 2;
+  function limitFor(steps) {
+    return 4 + 3 * (typeof steps === 'number' ? steps : STEPS_DEFAULT);
+  }
+
   // A question type counts as learnt (覚えた) after this many solves in a
-  // row within the 目安, with no wrong key. Its 手順 then stays folded until
-  // the 目安 passes.
+  // row within half its 目安, with no wrong key, no overrun and without the
+  // folded 手順 having been shown. Its 手順 then stays folded until the 目安
+  // passes.
   var LEARNT_AFTER = 3;
 
   // A learnt question's steps stay folded this many seconds, to try from memory.
   var PEEK_AFTER = 4;
 
+  // The clock stops while the tab is away. A run paused for longer than
+  // this, in all, stays in the records but is not sent to the ranking.
+  var PAUSE_MAX = 3;
+
   // 腕前 (skill level), Lv 1 to 30, from seconds per question (after
-  // penalties, divided by the course's rankMul): 6 秒 is Lv 1, 1.2 秒 Lv 30,
+  // penalties, divided by the course's rankMul): 10 秒 is Lv 1, 1.2 秒 Lv 30,
   // evenly on a log scale. The title is the run rank for the same pace.
-  var LV_SLOW = 6, LV_FAST = 1.2, LV_MAX = 30;
+  var LV_SLOW = 10, LV_FAST = 1.2, LV_MAX = 30;
   function levelFor(pace) {
     var t = (Math.log(LV_SLOW) - Math.log(pace)) / (Math.log(LV_SLOW) - Math.log(LV_FAST));
     return Math.max(1, Math.min(LV_MAX, 1 + Math.floor(t * (LV_MAX - 1) + 1e-9)));
@@ -165,12 +181,14 @@
     return new Date((d || new Date()).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   }
 
-  // Ranks by average seconds per question, after penalties.
+  // Ranks by average seconds per question, after penalties (and rankMul).
+  // Reading the order and pressing one move takes a practised hand about
+  // 2 秒; 8 秒 is reading the 手順 step by step.
   var RANKS = [
-    { max: 1.6, title: '師範' },
-    { max: 2.4, title: '師範代' },
-    { max: 3.4, title: '三段' },
-    { max: 5, title: '初段' },
+    { max: 2, title: '師範' },
+    { max: 3, title: '師範代' },
+    { max: 5, title: '三段' },
+    { max: 8, title: '初段' },
     { max: Infinity, title: '見習い' }
   ];
 
@@ -211,6 +229,9 @@
     par: par,
     KEIKO: KEIKO,
     LEARNT_AFTER: LEARNT_AFTER,
+    STEPS_DEFAULT: STEPS_DEFAULT,
+    limitFor: limitFor,
+    PAUSE_MAX: PAUSE_MAX,
     LV_MAX: LV_MAX,
     levelFor: levelFor,
     paceFor: paceFor,

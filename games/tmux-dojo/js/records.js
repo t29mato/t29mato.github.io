@@ -172,9 +172,22 @@
     };
   }
 
+  // The 目安 a logged question was measured against: its own (`l`, per
+  // question since the 目安 went per type), else its course's old one.
+  function limitOf(q, c) {
+    return typeof q.l === 'number' ? q.l : c ? c.limit : 10;
+  }
+
+  // A type is weak when it ran past its 目安, took a wrong key, or is clearly
+  // slow: past half its 目安 on average and over WEAK_RATIO times the pace of
+  // the rest (each relative to its 目安). Never from nothing.
+  var WEAK_RATIO = 1.3;
+  function slow(rel, ratio) { return rel > 0.5 && ratio > WEAK_RATIO; }
+
   // Per question type over the latest n runs that logged questions. `o` marks
   // a question that ran past its 目安, `g` one where the 手順 came out; `to`
-  // is a timeout from the old rules, counted at the limit.
+  // is a timeout from the old rules, counted at the limit. `ratio` is the
+  // type's time over its 目安, against the same over every type.
   function weakness(course, n) {
     var c = courseOf(course);
     var runs = runsOf(course).filter(function (r) { return r.qs && r.qs.length; }).slice(0, n || 10);
@@ -182,50 +195,59 @@
     var by = {}, total = 0, count = 0;
     runs.forEach(function (r) {
       r.qs.forEach(function (q) {
-        var s = q.to ? (c ? c.limit : 10) : q.s;
+        var limit = limitOf(q, c);
+        var s = q.to ? limit : q.s;
         if (s == null) return;
-        var e = by[q.t] || (by[q.t] = { type: q.t, sum: 0, n: 0, m: 0, overs: 0, guides: 0 });
-        e.sum += s; e.n += 1; e.m += q.m || 0; e.overs += (q.o || q.to) ? 1 : 0; e.guides += q.g ? 1 : 0;
-        total += s; count += 1;
+        var e = by[q.t] || (by[q.t] = { type: q.t, sum: 0, rel: 0, n: 0, m: 0, overs: 0, guides: 0 });
+        e.sum += s; e.rel += s / limit; e.n += 1; e.m += q.m || 0; e.overs += (q.o || q.to) ? 1 : 0; e.guides += q.g ? 1 : 0;
+        total += s / limit; count += 1;
       });
     });
     var mean = count ? total / count : 0;
     var list = Object.keys(by).map(function (k) {
       var e = by[k];
-      return { type: e.type, avg: e.sum / e.n, missRate: e.m / e.n, overs: e.overs, guides: e.guides, n: e.n, ratio: mean ? (e.sum / e.n) / mean : 1 };
+      return { type: e.type, avg: e.sum / e.n, rel: e.rel / e.n, missRate: e.m / e.n, overs: e.overs, guides: e.guides, n: e.n, ratio: mean ? (e.rel / e.n) / mean : 1 };
     }).filter(function (e) { return e.n >= 2; });
     list.sort(function (a, b) { return b.ratio - a.ratio; });
-    return { runs: runs.length, mean: mean, weak: list.slice(0, 3), strong: list.length > 3 ? list[list.length - 1] : null };
+    var weak = list.filter(function (e) { return e.overs > 0 || e.missRate > 0 || slow(e.rel, e.ratio); });
+    return { runs: runs.length, mean: mean, weak: weak.slice(0, 3), strong: list.length > 3 ? list[list.length - 1] : null };
   }
 
   // ---- learning, across every course -----------------------------------------
 
-  // Every logged question, oldest first, with the 目安 of its course.
+  // Every logged question, oldest first, with its 目安 (limitOf).
   function allQuestions() {
     var out = [];
     (load().runs || []).forEach(function (r) {
       var c = courseOf(r.course);
       if (!c || !r.qs) return;
-      r.qs.forEach(function (q) { if (q && q.t && typeof q.s === 'number') out.push({ t: q.t, s: q.s, m: q.m || 0, o: !!(q.o || q.to), limit: c.limit }); });
+      r.qs.forEach(function (q) { if (q && q.t && typeof q.s === 'number') out.push({ t: q.t, s: q.s, m: q.m || 0, o: !!(q.o || q.to), g: !!q.g, limit: limitOf(q, c) }); });
     });
     return out;
   }
 
-  // Per question type: how many clean solves in a row (within the 目安, no
-  // wrong key) up to now, and whether that makes it learnt.
+  // A solve that counts towards learning a type: within half the 目安, no
+  // wrong key, no overrun, and the folded 手順 never shown (`g`).
+  function clean(q) {
+    return !q.o && !q.m && !q.g && q.s <= q.limit / 2;
+  }
+
+  // Per question type: how many clean solves in a row up to now, and
+  // whether that makes it learnt.
   function learnt() {
     var by = {};
     allQuestions().forEach(function (q) {
       var e = by[q.t] || (by[q.t] = { streak: 0, seen: 0 });
       e.seen += 1;
-      e.streak = !q.o && !q.m && q.s <= q.limit ? e.streak + 1 : 0;
+      e.streak = clean(q) ? e.streak + 1 : 0;
     });
     Object.keys(by).forEach(function (k) { by[k].learnt = by[k].streak >= LV.LEARNT_AFTER; });
     return by;
   }
 
-  // The question types to practise: slowest relative to the others over the
-  // latest 60 logged questions, then most 灯り. At most `n`.
+  // The question types to practise, over the latest 60 logged questions:
+  // only those that ran past the 目安 or are clearly slow (`slow` above),
+  // worst first. At most `n`; often none.
   function weakTypes(n) {
     var qs = allQuestions().slice(-60);
     if (qs.length < 5) return [];
@@ -236,7 +258,8 @@
       e.sum += rel; e.n += 1; e.overs += q.o ? 1 : 0; total += rel;
     });
     var mean = total / qs.length;
-    var list = Object.keys(by).map(function (k) { var e = by[k]; return { type: e.type, score: e.sum / e.n / mean + e.overs / e.n, n: e.n }; });
+    var list = Object.keys(by).map(function (k) { var e = by[k]; return { type: e.type, rel: e.sum / e.n, ratio: e.sum / e.n / mean, overs: e.overs, score: e.sum / e.n / mean + e.overs / e.n, n: e.n }; });
+    list = list.filter(function (e) { return e.overs > 0 || slow(e.rel, e.ratio); });
     list.sort(function (a, b) { return b.score - a.score; });
     return list.slice(0, n || 3).map(function (e) { return e.type; });
   }
@@ -338,6 +361,6 @@
     load: load, add: add, runsOf: runsOf, best: best,
     stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
     learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest, streak: streak, todayBest: todayBest,
-    recordKey: recordKey, courseOf: courseOf
+    recordKey: recordKey, courseOf: courseOf, limitOf: limitOf, WEAK_RATIO: WEAK_RATIO
   };
 })();

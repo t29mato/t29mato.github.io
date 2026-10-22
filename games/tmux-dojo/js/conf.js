@@ -187,10 +187,11 @@
       var tpl = rest.join(' ');
       if (/rename-window/.test(tpl)) return { key: ',', say: 'ウィンドウの名前を変える' };
       if (/rename-session/.test(tpl)) return { key: '$', say: 'セッションの名前を変える' };
+      if (/select-window/.test(tpl)) return { key: "'", say: '番号を打ってウィンドウへ' };
       if (!tpl) return { key: ':', say: 'コマンドを打つ' };
       return { why: 'その command-prompt はゲームにない' };
     }
-    if (/^(copy-mode)$/.test(cmd)) return { key: '[', say: 'スクロールする（コピーモード）' };
+    if (/^(copy-mode)$/.test(cmd)) return f.u ? { key: 'PageUp', say: 'コピーモードに入って 1 ページ上へ' } : { key: '[', say: 'スクロールする（コピーモード）' };
     if (/^(paste-buffer|pasteb)$/.test(cmd)) return { key: ']', say: '貼り付ける' };
     if (/^(swap-pane|swapp)$/.test(cmd)) {
       if (f.U) return { key: '{', say: '前のペインと入れ替える' };
@@ -203,7 +204,10 @@
     if (cmd === 'send-prefix') return { run: 'send-prefix', say: 'prefix をシェルに送る' };
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
-    if (/^(display-panes|displayp)$/.test(cmd)) return { why: 'ペイン番号の表示はゲームにない' };
+    if (/^(display-panes|displayp)$/.test(cmd)) return { key: 'q', say: 'ペインに番号を出す（番号を押すとそこへ）' };
+    if (/^(rotate-window|rotatew)$/.test(cmd)) return { key: 'o', ctrl: true, say: 'ペインを順に回す' };
+    if (/^(choose-buffer)$/.test(cmd)) return { key: '=', say: 'コピーしたものの一覧から貼る' };
+    if (/^(list-buffers|lsb)$/.test(cmd)) return { key: '#', say: 'コピーしたものの一覧を見る' };
     return { why: tx('{0} はゲームにない', cmd) };
   }
 
@@ -222,7 +226,7 @@
 
   // The whole file → {prefix, prefix2, binds, unbinds, unbindAll, used, skipped, navigator, custom}.
   function parse(text) {
-    var c = { prefix: parseKey('C-b'), prefix2: null, binds: [], unbinds: [], unbindAll: false, used: [], skipped: [], navigator: false };
+    var c = { prefix: parseKey('C-b'), prefix2: null, baseIndex: 0, paneBaseIndex: 0, binds: [], unbinds: [], unbindAll: false, used: [], skipped: [], navigator: false };
     function use(l, say) { c.used.push({ no: l.no, line: l.text.trim(), say: tx(say) }); }
     function skip(l, why) { c.skipped.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
     function addBind(table, key, act, repeat, l) {
@@ -234,8 +238,17 @@
       var cmds = words(l.text);
       if (!cmds.length) return;
       var argv = cmds[0], cmd = argv[0];
-      if (/^(set|set-option)$/.test(cmd)) {
+      if (/^(set|set-option|setw|set-window-option)$/.test(cmd)) {
         var p = flags(argv), name = p.rest[0], val = p.rest[1];
+        // Window numbers from 1 (and pane numbers): the status bar and the
+        // number keys follow.
+        if (name === 'base-index' || name === 'pane-base-index') {
+          var bi = parseInt(val, 10);
+          if (!(bi >= 0 && bi <= 9)) return skip(l, tx('その番号は読めない: {0}', val));
+          c[name === 'base-index' ? 'baseIndex' : 'paneBaseIndex'] = bi;
+          return use(l, tx(name === 'base-index' ? 'ウィンドウの番号を {0} から始める' : 'ペインの番号を {0} から始める', bi));
+        }
+        if (/^(setw|set-window-option)$/.test(cmd)) return skip(l, '見た目や動きの設定（ゲームには関係ない）');
         if (name === 'prefix' || name === 'prefix2') {
           var k = val === 'None' ? null : parseKey(val);
           if (val !== 'None' && !k) return skip(l, tx('そのキーは読めない: {0}', val));
@@ -255,7 +268,6 @@
         if (/^(mode-keys|status-keys)$/.test(name)) return skip(l, 'ゲームのコピーモードと入力欄のキーは決まっている');
         return skip(l, '見た目や動きの設定（ゲームには関係ない）');
       }
-      if (/^(setw|set-window-option)$/.test(cmd)) return skip(l, '見た目や動きの設定（ゲームには関係ない）');
       if (/^(run|run-shell)$/.test(cmd) && /tpm/.test(l.text)) return use(l, 'TPM を動かす（プラグインはゲームが再現する）');
       if (/^(bind|bind-key)$/.test(cmd)) {
         var b = flags(argv);
