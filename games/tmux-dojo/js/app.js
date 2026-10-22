@@ -1469,6 +1469,11 @@
         S.qText = function () { return paneLabel(p) + ' へ移動して全画面にする'; };
       },
       check: function () { var w = T.activeWindow(S.session); return w.active === S.target && w.zoomed; },
+      step: function () {
+        var p = T.findPane(S.session, S.target);
+        if (!p) return null;
+        return activeId() !== S.target ? [1, 2, paneLabel(p.pane) + ' へ移動する'] : [2, 2, '全画面にする'];
+      },
       next: function () { return moveTo(S.target) || mv(['z'], 'z を押す（全画面に）'); }
     },
     trident: {
@@ -1479,13 +1484,19 @@
         var s = tridentState();
         if (s === 'start') return [{ pane: S.q0.pane, mark: 'split-v', tag: 'まず左右に' }];
         if (s === 'right') return [{ pane: S.q0.right, mark: 'split-h', tag: '右側を上下に' }];
-        return [];
+        return [{ pane: activeId(), mark: 'close', tag: '閉じてやり直す' }];
       },
       setup: function () {
         var win = T.activeWindow(S.session);
         S.q0 = { pane: win.active, parent: T.parentOf(win.root, win.active).parent };
       },
       check: function () { return tridentState() === 'done'; },
+      step: function () {
+        var s = tridentState();
+        if (s === 'start') return [1, 2, '左右に分割する'];
+        if (s === 'right') return [2, 2, '右側を上下に分割する'];
+        return [0, 2, '形が違う。このペインを閉じてやり直す'];
+      },
       next: function () {
         var s = tridentState();
         if (s === 'start') return mv(['%'], '% を押す（まず左右に）');
@@ -1501,9 +1512,15 @@
         var a = pick(r, otherPanes());
         var b = pick(r, otherPanes().filter(function (p) { return p !== a; }));
         S.q0 = [a.id, b.id];
-        S.qText = function () { return paneLabel(a) + ' と ' + paneLabel(b) + ' を閉じる'; };
+        // Said once: a closed pane has no number any more.
+        var la = paneLabel(a), lb = paneLabel(b);
+        S.qText = function () { return (paneExists(a.id) ? paneLabel(a) : la) + ' と ' + (paneExists(b.id) ? paneLabel(b) : lb) + ' を閉じる'; };
       },
       check: function () { return !paneExists(S.q0[0]) && !paneExists(S.q0[1]); },
+      step: function () {
+        var left = S.q0.filter(paneExists), h = left.length && T.findPane(S.session, left[0]);
+        return h ? [3 - left.length, 2, paneLabel(h.pane) + ' を閉じる'] : null;
+      },
       next: function () {
         var left = S.q0.filter(paneExists);
         return left.length ? closeMove(left[0]) : null;
@@ -1523,6 +1540,7 @@
         if (S.session.windows.length > S.q0.n) S.q1 = true;
         return S.q1 && S.session.active === S.q0.home;
       },
+      step: function () { var w = T.windowById(S.session, S.q0.home); if (!w) return null; return S.q1 ? [2, 2, winLabel(w) + ' に戻る'] : [1, 2, '新しいウィンドウを作る']; },
       next: function () { return S.q1 ? windowMove(S.q0.home, ' に戻る') : mv(['c'], 'c を押す（新しいウィンドウ）'); }
     },
     swap_zoom: {
@@ -1537,6 +1555,11 @@
       check: function () {
         var h = T.findPane(S.session, S.target);
         return !!h && h.win.zoomed && h.win.active === S.target && isFirst(S.target);
+      },
+      step: function () {
+        var p = T.findPane(S.session, S.target);
+        if (!p) return null;
+        return isFirst(S.target) ? [2, 2, '全画面にする'] : [1, 2, paneLabel(p.pane) + ' を左上まで動かす'];
       },
       next: function () { return isFirst(S.target) ? (moveTo(S.target) || mv(['z'], 'z を押す（全画面に）')) : swapMove(); }
     }
@@ -2049,7 +2072,13 @@
     //   # ▶ Ctrl+b → →   → を押す（右へ）
     var n = b.qs.length;
     var c = '';
-    var html = '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> <b class="ob-q">' + esc(qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(b.q.cmd) + '</span></div>';
+    // A question in two steps shows one step at a time; the whole order
+    // stays above it, small.
+    var st = b.q.step && b.q.step();
+    var html = st ? '<div class="ob-whole">' + c + esc(qText(b)) + '</div>' : '';
+    html += '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> ' +
+      (st ? '<span class="ob-step">' + (st[0] ? '手順 ' + st[0] + '/' + st[1] : 'やり直し') + '</span> ' : '') +
+      '<b class="ob-q">' + esc(st ? st[2] : qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(b.q.cmd) + '</span></div>';
     if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join('。')) + '</div>';
     if (move) {
       var keys = '';
@@ -2338,7 +2367,8 @@
     if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
     // Where you stand, said in words on the pane itself: the card never covers it.
     if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + (active.x * cw + 6) + 'px;top:' + (active.y * ch + 6) + 'px">いまここ</span>');
-    if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), anchor.tag, '');
+    // A step chip already says what to do here; the tag would repeat it.
+    if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), run.q.step && run.q.step() ? '' : anchor.tag, '');
     var pk = $(':scope > .picker', term);
     if (pk) pk.remove();
     if (S.picker) term.insertAdjacentHTML('beforeend', pickerHTML());
