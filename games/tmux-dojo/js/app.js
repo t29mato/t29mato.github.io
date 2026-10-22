@@ -3685,7 +3685,7 @@
     var cached = S.boardCache && S.boardCache[key];
     // From a file:// page nothing is fetched: say so instead of loading forever.
     // A local test server (?api=http://localhost…) counts as online from a file:// page.
-    var offline = !NET || (!/^https?:$/.test(location.protocol) && !/^http:\/\/(localhost|127\.0\.0\.1)/.test(NET.API));
+    var offline = !NET || (!/^https?:$/.test(location.protocol) && !/^http:\/\/(localhost|127\.0\.0\.1)|-staging\./.test(NET.API));
     var table = function (rows) {
       if (!rows.length) return '<p class="rec-empty">' + tx(span === 'today' ? 'まだ今日の記録はない。一番乗りの好機。' : 'まだ記録がない。') + '</p>';
       return '<table class="rec-table board"><thead><tr><th>' + tx('位') + '</th><th>' + tx('名前') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('日付') + '</th></tr></thead><tbody>' +

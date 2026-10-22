@@ -12,12 +12,15 @@
   var STORE_KEY = 'tmux-da-net';
   var DEFAULT_API = 'https://tmux-da-api.starrydata-mcp-cloudflare.workers.dev';
 
-  // ?api=http://localhost:8787 points a test page at a local server. Only a
-  // local one: a link must not be able to send the 合言葉 anywhere else.
+  // ?api=http://localhost:8787 points a test page at a local server, ?api=staging
+  // at the staging Worker. Nothing else: a link must not be able to send the
+  // 合言葉 anywhere else.
   var API = (function () {
     try {
       var q = new URLSearchParams(window.location.search).get('api');
       if (q && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(q)) return q.replace(/\/$/, '');
+      // ?api=staging: the staging Worker and its own database (test players go there).
+      if (q === 'staging') return 'https://tmux-da-api-staging.starrydata-mcp-cloudflare.workers.dev';
     } catch (e) { /* old browsers: the default */ }
     return DEFAULT_API;
   })();
