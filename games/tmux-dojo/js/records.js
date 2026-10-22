@@ -267,6 +267,64 @@
     return list.slice(0, n || 3).map(function (e) { return e.type; });
   }
 
+  // ---- 稽古 (the recall drill) ------------------------------------------------
+
+  // The latest logged questions, oldest first, with `extra` (the drill's
+  // own so far) after them: what the next pick is weighed against.
+  var DRILL_RECENT = 80;
+  function drillRecent(extra) {
+    return allQuestions().slice(-DRILL_RECENT).concat(extra || []).slice(-DRILL_RECENT);
+  }
+
+  // How much a question type wants asking: how often its keys are needed
+  // (LV.DRILL_FREQ) times how it has gone lately. A type missed, overrun or
+  // peeked at every time weighs four times a clean one, a type never seen
+  // weighs double, and one asked a moment ago weighs half, so the types
+  // come spaced out.
+  var DRILL_SPACE = 40;
+  function drillWeight(type, recent) {
+    var freq = LV.DRILL_FREQ[type] || 1;
+    var n = 0, bad = 0, gap = recent.length;
+    for (var i = 0; i < recent.length; i++) {
+      var q = recent[i];
+      if (q.t !== type) continue;
+      n += 1;
+      if (q.m || q.o || q.g) bad += 1;
+      gap = recent.length - 1 - i;
+    }
+    var weak = n ? 1 + 3 * bad / n : 2;
+    var space = n ? 0.5 + 0.5 * Math.min(gap, DRILL_SPACE) / DRILL_SPACE : 1;
+    return freq * weak * space;
+  }
+
+  // The next type to ask, by weight; never `last` again.
+  function drillPick(types, recent, last, rand) {
+    var cands = types.filter(function (t) { return t !== last; });
+    if (!cands.length) cands = types.slice();
+    var ws = cands.map(function (t) { return drillWeight(t, recent); });
+    var total = ws.reduce(function (s, w) { return s + w; }, 0);
+    var r = (rand || Math.random)() * total;
+    for (var i = 0; i < cands.length; i++) { r -= ws[i]; if (r < 0) return cands[i]; }
+    return cands[cands.length - 1];
+  }
+
+  // The longest run of questions solved from memory: no 手順 shown, no
+  // wrong key, within the 目安.
+  function drillStreak(qs) {
+    var best = 0, cur = 0;
+    (qs || []).forEach(function (q) {
+      if (q && typeof q.s === 'number' && !q.g && !q.m && !q.o) { cur += 1; if (cur > best) best = cur; } else cur = 0;
+    });
+    return best;
+  }
+
+  // The best such streak of any drill so far.
+  function drillBest(all) {
+    var best = 0;
+    runsOf(LV.KEIKO.id, all).forEach(function (r) { if (r.drill) best = Math.max(best, drillStreak(r.qs)); });
+    return best;
+  }
+
   // 腕前: the pace of the latest five runs on the three houses (seconds per
   // question, after penalties, over rankMul), its level and the next one.
   function skill(all) {
@@ -364,6 +422,7 @@
     load: load, add: add, runsOf: runsOf, best: best,
     stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
     learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest, streak: streak, todayBest: todayBest,
+    drillRecent: drillRecent, drillWeight: drillWeight, drillPick: drillPick, drillStreak: drillStreak, drillBest: drillBest,
     recordKey: recordKey, courseOf: courseOf, limitOf: limitOf, WEAK_RATIO: WEAK_RATIO
   };
 })();

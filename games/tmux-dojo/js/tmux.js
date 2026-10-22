@@ -43,8 +43,9 @@
     for (var i = 0; i < ps.length; i++) if (ps[i].id === paneId) ps[i].activePoint = nextActivePoint++;
   }
 
-  function createWindow(session, name) {
-    var pane = createPane(null);
+  // `pane`: an existing pane to build the window round (break-pane).
+  function createWindow(session, name, pane) {
+    pane = pane || createPane(null);
     pane.activePoint = nextActivePoint++;
     var used = {};
     session.windows.forEach(function (w) { used[w.index] = true; });
@@ -200,6 +201,19 @@
       win.last = null;
     } else if (win.last === paneId) win.last = null;
     return true;
+  }
+
+  // break-pane: the pane leaves its window for a new one of its own, which
+  // becomes the current window (as tmux does without -d). The window it
+  // left keeps its other panes; a window of one pane cannot be broken.
+  function breakPane(session, win, paneId) {
+    var hit = parentOf(win.root, paneId);
+    if (!hit || !hit.parent) return null;
+    var pane = hit.node.pane;
+    killPane(win, paneId);
+    var fresh = createWindow(session, null, pane);
+    selectWindow(session, fresh.id);
+    return fresh;
   }
 
   function parentOfNode(root, target) {
@@ -431,6 +445,7 @@
     rectOf: rectOf,
     splitPane: splitPane,
     killPane: killPane,
+    breakPane: breakPane,
     killWindow: killWindow,
     selectPane: selectPane,
     neighbour: neighbour,

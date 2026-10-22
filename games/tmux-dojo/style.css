@@ -477,6 +477,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .sh-dim { color: var(--term-dim); }
 .sh-head { color: var(--ai); font-weight: 700; }
 .sh-gold { color: #9a5b12; font-weight: 700; }
+.sh-err { color: var(--shu); font-weight: 700; }
 .sh-clear { height: 100vh; }
 /* a steady block: nothing on the screen blinks */
 .cursor { display: inline-block; width: 1ch; height: 18px; vertical-align: -3px; background: var(--term-fg); }
@@ -605,6 +606,11 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .em-facts div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 4px 0; }
 .em-facts dt { color: var(--sumi-dim); }
 .em-facts dd { margin: 0; font-family: var(--mono); }
+.em-types { margin-top: 14px; }
+.em-types .rec-table td.c-n { text-align: right; }
+.em-next { margin: 12px 0 0; font-size: 14.5px; }
+.em-next b { color: var(--shu); }
+.rec-drill .cta { margin-top: 8px; }
 .spark { display: flex; align-items: flex-end; gap: 5px; height: 44px; margin: 14px 0 0; padding: 0 4px; }
 .spark i { flex: 1; background: #cdbd9a; border-radius: 2px 2px 0 0; }
 .spark i.rec { background: var(--shu); }
@@ -790,6 +796,7 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .yashiki .sh-dim { color: var(--term-dim); }
 .yashiki .sh-head { color: var(--t-blue); }
 .yashiki .sh-gold { color: var(--t-yellow); }
+.yashiki .sh-err { color: var(--t-red); }
 .yashiki .cursor { background: var(--term-fg); }
 .yashiki .cursor.on-char { color: var(--term-bg); }
 /* the order: comment lines above the prompt */

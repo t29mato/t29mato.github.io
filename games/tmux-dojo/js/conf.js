@@ -115,7 +115,8 @@
     bind: 'TN', 'bind-key': 'TN', unbind: 'T', 'unbind-key': 'T', set: 't', 'set-option': 't', setw: 't', 'set-window-option': 't',
     'split-window': 'cltFe', splitw: 'cltFe', 'select-pane': 'tT', selectp: 'tT', 'select-window': 't', selectw: 't',
     'resize-pane': 'txy', resizep: 'txy', 'confirm-before': 'pct', confirm: 'pct', 'command-prompt': 'IpFtT',
-    'new-window': 'cntFe', neww: 'cntFe', 'swap-pane': 'st', swapp: 'st', 'kill-pane': 't', killp: 't', 'kill-window': 't', killw: 't'
+    'new-window': 'cntFe', neww: 'cntFe', 'swap-pane': 'st', swapp: 'st', 'kill-pane': 't', killp: 't', 'kill-window': 't', killw: 't',
+    'break-pane': 'nst', breakp: 'nst'
   };
 
   function flags(argv) {
@@ -163,6 +164,7 @@
     }
     if (/^(kill-pane|killp)$/.test(cmd)) return { key: 'x', now: true, say: 'ペインを閉じる（確認なし）' };
     if (/^(kill-window|killw)$/.test(cmd)) return { key: '&', now: true, say: 'ウィンドウを閉じる（確認なし）' };
+    if (/^(break-pane|breakp)$/.test(cmd)) return f.d ? { why: 'break-pane -d はゲームにない' } : { key: '!', say: 'ペインを別のウィンドウにする' };
     if (cmd === 'confirm-before' || cmd === 'confirm') {
       var inner = rest.length === 1 ? words(rest[0])[0] || [] : rest;
       var a = inner.length ? action(inner) : { why: 'confirm-before の中身がない' };

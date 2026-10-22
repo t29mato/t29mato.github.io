@@ -24,6 +24,9 @@
     rename: [','],
     select_window: ['n', 'p', '0-9'],
     copy: ['[', 'PageUp', 'g', 'q'],
+    page: ['[', 'PageUp', 'PageDown', 'q'],
+    last_window: ['l'],
+    break_pane: ['!'],
     detach: ['d'],
     swap: ['{', '}'],
     layout: ['Space'],
@@ -49,6 +52,9 @@
     select_window: 'n / p（次・前）か、番号キー',
     rename: ',（カンマ）→ 名前を入力して Enter',
     copy: '[ （抜けるときは q）',
+    page: '[ でコピーモード → PageUp で 1 ページ上へ（PageDown で下へ。抜けるときは q）',
+    last_window: 'l（直前のウィンドウへ戻る）',
+    break_pane: '!（Shift+1）。このペインが新しいウィンドウになる',
     detach: 'd',
     swap: '{ で前のペインと、} で次のペインと入れ替える（自分のペインが動く）',
     layout: 'Space で並べ方が順に変わる（Alt+1〜5 で直接選べる。5 が田の字 tiled）',
@@ -75,6 +81,9 @@
     rename: ['ウィンドウ名は、普段は実行中のコマンド名に自動で変わる（automatic-rename）。名前を付けると、そのウィンドウでは自動で変わらなくなる。'],
     select_window: ['prefix → l で直前のウィンドウへ。prefix → w で一覧から選べる。', "prefix → ' で番号を打って飛べる。10 番以降に便利。"],
     copy: ['prefix → PageUp で、コピーモードに入りながら 1 ページ上へ。', 'コピーモードの方式は mode-keys で決まる。EDITOR か VISUAL に vi が入っていれば vi 式、それ以外は emacs 式。'],
+    page: ['コピーモードの 1 ページは PageUp / PageDown。vi 式は Ctrl+u / Ctrl+d で半ページ、emacs 式は Alt+v / Ctrl+v で 1 ページ。', 'prefix → PageUp なら、コピーモードに入りながら 1 ページ上へ。'],
+    last_window: ['prefix → l は last-window。二つのウィンドウを行き来するなら、番号より速い。ステータスバーでは直前のウィンドウに - が付く。'],
+    break_pane: ['! は break-pane。逆に、別のウィンドウのペインをここに連れてくるのは join-pane（prefix → : で join-pane -s 番号）。'],
     detach: ['デタッチしてもセッションは裏で動き続ける。SSH が切れても作業は残る。tmux a は tmux attach の略。',
       'セッションが二つ以上あるときは tmux attach -t 名前 で選んで入る。-t を省くと、最後に使っていたセッションに入る。'],
     swap: ['prefix → C-o で、ウィンドウのペイン全部を回転させる（rotate-window）。'],
@@ -124,24 +133,35 @@
     {
       id: 'normal', title: '中級', mode: '腕試し', limit: 14, rankMul: 1.25, ver: 2,
       plan: { cols: 4, rows: 2, cells: 8, lit: 1 },
-      desc: '大きさ・名前・入れ替え・ウィンドウを閉じる・スクロール・デタッチも混ざる。1 問 1〜5 手。',
-      qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'detach_attach', 'resize', 'kill_window', 'unzoom', 'close', 'split_lr', 'rename', 'focus']
+      desc: '大きさ・名前・入れ替え・ウィンドウを閉じる／戻る・ペインを別ウィンドウに・ページ送り・デタッチも混ざる。1 問 1〜5 手。',
+      qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'detach_attach', 'last_window', 'break_pane', 'unzoom', 'close', 'split_lr', 'rename', 'copy_page']
     },
     {
       id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 1.6, ver: 2,
       plan: { cols: 5, rows: 4, cells: 20, lit: 6 },
-      desc: '1 問で 2〜8 手。セッションを作る・移る・attach -t で入るも混ざる。考える前に手が動くか。',
-      qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'yank_paste', 'copy_top', 'session_new', 'trident', 'kill_window', 'session_switch', 'session_attach', 'focus', 'resize', 'find_zoom']
+      desc: '1 問で 2〜8 手。セッションを作る・移る・attach -t で入る、履歴の検索も混ざる。考える前に手が動くか。',
+      qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'yank_paste', 'copy_top', 'session_new', 'trident', 'kill_window', 'session_switch', 'session_attach', 'focus', 'resize', 'copy_search']
     }
   ];
 
-  // 苦手の稽古: only the question types you are slowest at, three times each.
-  // Its questions are picked per run (records.js weakTypes), so it has no
-  // board and no ghost; its runs still count towards what you have learnt.
+  // 稽古: the recall drill. Questions without their 手順 (they come out after
+  // PEEK_AFTER seconds or a wrong key), picked one at a time by how often
+  // the key is needed in real tmux (DRILL_FREQ) and how it has gone lately
+  // (records.js drillPick), for as long as the player likes. No board, no
+  // ghost; its runs still count towards what you have learnt.
   var KEIKO = {
-    id: 'keiko', title: '苦手の稽古', mode: '苦手稽古', limit: 14, rankMul: 1.3, ver: 2, practice: true,
+    id: 'keiko', title: '稽古', mode: '手順なし', limit: 14, rankMul: 1.3, ver: 2, practice: true, drill: true,
     plan: { cols: 3, rows: 3, cells: 9, lit: 4 },
-    desc: '目安を超えがちな問題だけを三度ずつ。', qs: []
+    desc: '手順を見ずに思い出す。問題は終わりなく続き、やめると結果が出る。', qs: []
+  };
+
+  // How often each question's keys are needed in real tmux: 3 all day,
+  // 2 now and then, 1 rarely (the long combos). Unknown types count as 1.
+  var DRILL_FREQ = {
+    focus: 3, split_lr: 3, split_tb: 3, zoom: 3, unzoom: 3, new_window: 3, select_window: 3, last_window: 3,
+    copy_top: 3, copy_page: 3, copy_search: 3, close: 3, detach_attach: 3,
+    resize: 2, rename: 2, swap: 2, kill_window: 2, break_pane: 2, session_new: 2, session_switch: 2, session_attach: 2,
+    find_zoom: 1, trident: 1, two_akima: 1, new_and_home: 1, swap_zoom: 1, yank_paste: 1
   };
 
   // The 目安 of a question, in seconds, from how many moves (prefix + key)
@@ -232,6 +252,7 @@
     rankFor: rankFor,
     par: par,
     KEIKO: KEIKO,
+    DRILL_FREQ: DRILL_FREQ,
     LEARNT_AFTER: LEARNT_AFTER,
     STEPS_DEFAULT: STEPS_DEFAULT,
     limitFor: limitFor,
