@@ -312,6 +312,10 @@ kbd.pfx.next { background: var(--ai); }
 .st-win.goal-tab.close { outline-color: #ff8a80; }
 .st-win.goal-tab.new { color: var(--andon-2); }
 .st-win .goal-tag { position: static; margin-left: 6px; font-size: 11px; padding: 0 5px; }
+/* the session questions mark the [name] on the status bar and its row in the list */
+.st-session.goal-tab { outline: 2px dashed var(--andon); outline-offset: 1px; }
+.st-session .goal-tag, .picker-row .goal-tag { position: static; margin-left: 6px; font-size: 11px; padding: 0 5px; transform: none; }
+.picker-row.goal-row { outline: 2px dashed var(--andon); outline-offset: -2px; }
 /* 腕前 */
 .skill { margin-top: 18px; max-width: 460px; }
 .sk-row { display: flex; align-items: baseline; gap: 10px; }
@@ -513,7 +517,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .st-msg { color: var(--andon-2); font-weight: 700; }
 .st-clip { font-size: 12px; }
 
-.picker { position: absolute; left: 6%; right: 6%; top: 12%; z-index: 8; background: var(--washi); border: 2px solid var(--ai); box-shadow: var(--shadow); padding: 4px 0; }
+.picker { position: absolute; left: 6%; right: 6%; top: 12%; z-index: 8; background: var(--washi); color: var(--sumi); border: 2px solid var(--ai); box-shadow: var(--shadow); padding: 4px 0; }
 .picker-head { color: var(--term-dim); padding: 0 1ch 4px; border-bottom: 1px solid var(--paper-line); }
 .picker-row { padding: 0 1ch; }
 .picker-row.on { background: var(--ai); color: #fff; font-weight: 700; }
@@ -819,6 +823,9 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .yashiki .st-host { color: var(--status-fg); }
 .yashiki .st-win.goal-tab { outline-color: #111; }
 .yashiki .st-win .goal-tag { background: #111; color: var(--t-yellow); }
+.yashiki .st-session.goal-tab { outline-color: #111; }
+.yashiki .st-session .goal-tag, .yashiki .picker-row .goal-tag { background: #111; color: var(--t-yellow); transform: none; }
+.yashiki .picker-row.goal-row { outline-color: var(--t-yellow); }
 .yashiki .seal { border-color: var(--t-green); color: var(--t-green); background: rgba(13, 17, 23, 0.85); }
 /* the guide card: the one place the order lives, on the arrow or the pane */
 .yashiki .guide-card.motd {

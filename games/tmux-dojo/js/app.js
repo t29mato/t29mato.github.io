@@ -39,8 +39,9 @@
   var S = {
     screen: 'title',       // 'title' | 'game' | 'result' | 'records'
     prefix: 'C-b',
-    sessions: [],
+    sessions: [],          // by name, as tmux keeps them (tmux ls, ( and ), the list)
     session: null,
+    lastSession: null,     // the session before the last switch (prefix L)
     armed: false,          // prefix pressed, waiting for the key
     repeatUntil: 0,        // tmux repeat-time window for -r bindings
     graceUntil: 0,         // trailing repeat keys after a solve are ignored
@@ -191,18 +192,26 @@
     if (!cmd) return;
     if (cmd === 'tmux') {
       var sub = argv[1] || '';
-      if (/^(a|attach|attach-session)$/.test(sub)) { attach(); return; }
-      if (sub === 'ls' || sub === 'list-sessions') { sessionLines().forEach(function (l) { o.lines.push(l); }); return; }
+      if (/^(a|attach|attach-session)$/.test(sub)) {
+        // -t names the session; without it tmux takes the one last used.
+        var ti = argv.indexOf('-t'), tn = ti > 0 ? (argv[ti + 1] || '') : null;
+        if (tn === null) { attach(); return; }
+        var ts = sessionByName(tn);
+        if (ts) attach(ts);
+        else o.lines.push('can\'t find session: ' + tn);
+        return;
+      }
+      if (sub === 'ls' || sub === 'list-sessions') { sessionLines().forEach(function (l) { o.lines.push(l); }); o.ls = true; return; }
       if (sub === '' || sub === 'new' || sub === 'new-session') {
         o.lines.push({ html: '<span class="sh-dim">' + esc(tx('それは新しいセッションを作るコマンド。セッションは裏でそのまま残っている —— tmux attach で戻ろう。')) + '</span>' });
         return;
       }
-      o.lines.push('usage: tmux [attach|ls]');
+      o.lines.push('usage: tmux [attach [-t name]|ls]');
       return;
     }
     switch (cmd) {
       case 'help':
-        o.lines.push(tx('使えるコマンド: tmux attach  tmux ls  ls  echo  clear  help'));
+        o.lines.push(tx('使えるコマンド: tmux attach  tmux attach -t 名前  tmux ls  ls  echo  clear  help'));
         break;
       case 'ls':
         o.lines.push('README.md');
@@ -331,15 +340,18 @@
     clearTimeout(S.hintTimer);
     S.hintTimer = setTimeout(function () {
       if (!S.detached) return;
-      S.outer.lines.push({ html: '<span class="sh-dim">' + esc(tx('ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。')) + '</span>' });
+      // Several sessions: -t picks one; without it tmux takes the last used.
+      S.outer.lines.push({ html: '<span class="sh-dim">' + esc(tx(S.sessions.length > 1 ? 'ヒント: セッションは裏でそのまま残っている。tmux ls で一覧、tmux attach -t 名前 で入る（-t なしなら最後にいたセッションへ）。' : 'ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。')) + '</span>' });
       render();
     }, S.run && S.run.phase === 'play' ? 300 : 12000);
     $('#term').classList.add('powering-down');
     setTimeout(function () { $('#term').classList.remove('powering-down'); }, reduceMotion ? 0 : 700);
   }
 
-  function attach() {
+  // `s`: the session named with -t; none: the one detached from.
+  function attach(s) {
     S.detached = false;
+    if (s) switchSession(s);
     S.session.attached = true;
     clearTimeout(S.hintTimer);
     $('#term').classList.add('powering-up');
@@ -353,7 +365,20 @@
     var w = T.createWindow(s, name === 'dojo' ? 'main' : 'zsh');
     s.active = w.id;
     S.sessions.push(s);
+    sortSessions();
     return s;
+  }
+
+  // tmux keeps its sessions by name: tmux ls, the list and ( ) go in that order.
+  function sortSessions() {
+    S.sessions.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+  }
+
+  function renameSession(s, name) {
+    if (!name || sessionByName(name)) return false;
+    s.name = name;
+    sortSessions();
+    return true;
   }
 
   function sessionByName(name) {
@@ -364,6 +389,7 @@
   function switchSession(s) {
     if (!s || s === S.session) return false;
     S.session.attached = false;
+    S.lastSession = S.session;
     S.session = s;
     s.attached = true;
     return true;
@@ -377,6 +403,7 @@
 
   function newSession() {
     S.sessions = [];
+    S.lastSession = null;
     S.session = makeSession('dojo');
     S.session.attached = true;
     S.detached = false;
@@ -429,6 +456,7 @@
   // pane of main and from then on goes only where the player takes it.
   function buildHouse() {
     newSession();
+    S.houseAt = Date.now();
     var home = S.session.windows[0];
     var p0 = T.activePane(home);
     var p1 = T.splitPane(home, p0.id, 'lr', null, true);
@@ -498,6 +526,25 @@
     S.session.windows.forEach(function (w) { used[w.name] = true; });
     for (var i = 0; i < WINGS.length; i++) if (!used[WINGS[i]]) return WINGS[i];
     return 'zsh';
+  }
+
+  // Session names the orders use: short words a real session might be called.
+  var SESSION_NAMES = ['work', 'ssh', 'memo', 'log', 'sub', 'test'];
+
+  function freeSessionName() {
+    for (var i = 0; i < SESSION_NAMES.length; i++) if (!sessionByName(SESSION_NAMES[i])) return SESSION_NAMES[i];
+    return freshName();
+  }
+
+  // At least `n` sessions, made in the background: the player stays where they are.
+  function needSessions(n) {
+    var added = [];
+    while (S.sessions.length < n) added.push(makeSession(freeSessionName()).name);
+    if (added.length) note(tx('セッション {0} を足した', added.join(tx('、'))));
+  }
+
+  function otherSessions() {
+    return S.sessions.filter(function (s) { return s !== S.session; });
   }
 
   // The panes of the active window other than the one the player is in,
@@ -866,7 +913,7 @@
     if (key === '$') {
       S.lastAction = 'rename_session';
       var sess = S.session;
-      S.prompt = { label: '(rename-session)', value: sess.name, done: function (v) { if (v.trim() && !sessionByName(v.trim())) sess.name = v.trim(); } };
+      S.prompt = { label: '(rename-session)', value: sess.name, done: function (v) { renameSession(sess, v.trim()); } };
       return true;
     }
     if (key === 's' || key === 'w') { openPicker(); S.lastAction = 'choose'; return true; }
@@ -874,6 +921,13 @@
       var at = S.sessions.indexOf(S.session);
       var n = S.sessions.length;
       switchSession(S.sessions[((at + (key === ')' ? 1 : -1)) % n + n) % n]);
+      S.lastAction = 'choose';
+      return true;
+    }
+    if (key === 'L') {
+      // switch-client -l: the session you were in before.
+      if (S.lastSession && S.sessions.indexOf(S.lastSession) >= 0) switchSession(S.lastSession);
+      else message('no last session');
       S.lastAction = 'choose';
       return true;
     }
@@ -962,9 +1016,15 @@
       if (argv.indexOf('-d') < 0) switchSession(s);
       S.lastAction = 'new_session';
     } else if (/^(rename-session|rename)$/.test(cmd)) {
-      var nn = argv.slice(1).join(' ').trim();
-      if (nn && !sessionByName(nn)) S.session.name = nn;
+      renameSession(S.session, argv.slice(1).join(' ').trim());
       S.lastAction = 'rename_session';
+    } else if (/^(switch-client|switchc)$/.test(cmd)) {
+      var sw = flag('-t') !== null ? sessionByName(flag('-t'))
+        : argv.indexOf('-l') > 0 ? S.lastSession
+        : S.sessions[((S.sessions.indexOf(S.session) + (argv.indexOf('-p') > 0 ? -1 : 1)) % S.sessions.length + S.sessions.length) % S.sessions.length];
+      if (sw && S.sessions.indexOf(sw) >= 0) switchSession(sw);
+      else message(flag('-t') !== null ? 'can\'t find session: ' + flag('-t') : 'no last session');
+      S.lastAction = 'choose';
     } else if (/^(new-window|neww)$/.test(cmd)) {
       var w = T.createWindow(S.session, flag('-n') || 'zsh');
       T.selectWindow(S.session, w.id);
@@ -1368,7 +1428,7 @@
     '%': 'k:%', '"': 'k:"', '←': 'k:ArrowLeft', '→': 'k:ArrowRight', '↑': 'k:ArrowUp', '↓': 'k:ArrowDown',
     z: 'k:z', x: 'k:x', c: 'k:c', ',': 'k:,', n: 'k:n', p: 'k:p', l: 'k:l', '[': 'k:[', ']': 'k:]',
     '{': 'k:{', '}': 'k:}', '&': 'k:&', o: 'k:o', ';': 'k:;', ':': 'k::', $: 'k:$', s: 'k:s', d: 'k:d', Space: 'k: ',
-    q: 'k:q', PageUp: 'k:PageUp', "'": "k:'"
+    q: 'k:q', PageUp: 'k:PageUp', "'": "k:'", '(': 'k:(', ')': 'k:)', L: 'k:L'
   };
   ['L', 'R', 'U', 'D'].forEach(function (d) { LABEL_SIG['Ctrl+' + ARROWS[d]] = 'r:' + d + ':1'; LABEL_SIG['Option+' + ARROWS[d]] = 'r:' + d + ':5'; });
   var ARROW_KEY = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown' };
@@ -1437,7 +1497,8 @@
   // open prompt (a name, a window number) and is kept.
   function openFirst(b, m) {
     if (S.detached) return m && m.type ? m : attachMove();
-    if (S.picker) return mv(['Esc'], 'Esc で一覧を閉じる', true);
+    // A move marked `picker` works inside the open session list.
+    if (S.picker && !(m && m.picker && !S.picker.kind)) return mv(['Esc'], 'Esc で一覧を閉じる', true);
     if (S.prompt && !(m && m.prompt)) return mv(['Esc'], 'Esc で入力欄を閉じる', true);
     return null;
   }
@@ -1446,6 +1507,34 @@
     var m = mv(['Enter'], 'tmux attach と打って Enter（tmux に戻る）', true);
     m.type = 'tmux attach';
     return m;
+  }
+
+  // To session `target`: inside the open list with ↑ ↓ and Enter; else by
+  // ( or ) when it is next door in the name order (L when it is the one you
+  // left), or s for the list. `viaList` puts s first: the list is the lesson.
+  function sessionMove(target, viaList) {
+    if (!target || target === S.session) return null;
+    var ti = S.sessions.indexOf(target), at = S.sessions.indexOf(S.session), n = S.sessions.length;
+    if (ti < 0) return null;
+    if (S.picker && !S.picker.kind) {
+      var m;
+      if (S.picker.idx === ti) m = mv(['Enter'], tx('Enter を押す（{0} に移る）', target.name), true);
+      else {
+        var down = (ti - S.picker.idx + n) % n, up = (S.picker.idx - ti + n) % n;
+        m = down <= up ? mv(['↓'], tx('↓ を押す（{0} の行まで）', target.name), true) : mv(['↑'], tx('↑ を押す（{0} の行まで）', target.name), true);
+      }
+      m.picker = true;
+      return m;
+    }
+    var ways = [];
+    if ((at - 1 + n) % n === ti) ways.push(mv(['('], tx('( を押す（前のセッション {0} へ）', target.name)));
+    else if ((at + 1) % n === ti) ways.push(mv([')'], tx(') を押す（次のセッション {0} へ）', target.name)));
+    if (S.lastSession === target) ways.push(mv(['L'], tx('L を押す（直前のセッション {0} に戻る）', target.name)));
+    var list = mv(['s'], 's を押す（セッションの一覧が出る）');
+    if (viaList) ways.unshift(list); else ways.push(list);
+    var out = ways.shift();
+    out.alt = ways;
+    return out;
   }
 
   // What a question is about may be gone (a slip closed it), or a shape may
@@ -1459,6 +1548,8 @@
     if (t === 'select_window') return !T.windowById(S.session, S.q0);
     if (t === 'new_and_home') return !T.windowById(S.session, S.q0.home);
     if (t === 'rename') return !T.windowById(S.session, S.q0.win);
+    // (A session renamed under the order keeps it: the order follows the new name.)
+    if (t === 'session_switch' || t === 'session_attach') return S.sessions.indexOf(S.q0.target) < 0;
     return !!S.target && !paneExists(S.target);
   }
 
@@ -1908,6 +1999,84 @@
         if (S.clipboard === S.q0.text) return mv([']'], '] を押す（貼り付ける）');
         return mv(['['], '[ を押す（コピーモードに入る）');
       }
+    },
+    // The session questions name the session on the status bar ([name]).
+    // A session made with new -s is switched to, as in tmux, so the second
+    // step is the way back.
+    session_new: {
+      steps: 4, text: '新しいセッションを作って、元のセッションに戻る', cmd: 'new-session -s 名前 → switch-client', allow: ['new_session', 'choose'], show: ['new_session', 'choose'],
+      goal: function () { return S.q1 ? [{ sess: S.q0.home, tag: tx('{0} に戻る', S.q0.home.name) }] : [{ sess: '+', tag: tx('「{0}」を作る', S.q0.name) }]; },
+      setup: function (r) {
+        var home = S.session;
+        var name = pick(r, SESSION_NAMES.filter(function (nm) { return !sessionByName(nm); })) || freshName();
+        S.q0 = { name: name, home: home, had: S.sessions.slice() };
+        S.q1 = false;
+        S.qGoal = { name: name, home: home.name };
+        S.qText = function () { return tx('セッション「{0}」を作って、{1} に戻る', name, home.name); };
+      },
+      check: function () {
+        if (sessionByName(S.q0.name)) S.q1 = true;
+        return S.q1 && S.session === S.q0.home;
+      },
+      step: function () { return S.q1 ? [2, 2, tx('{0} に戻る', S.q0.home.name)] : [1, 2, tx('セッション「{0}」を作る', S.q0.name)]; },
+      next: function () {
+        if (S.q1) return sessionMove(S.q0.home);
+        if (S.prompt && S.prompt.label === ':') {
+          var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して new -s {0} と打って Enter' : 'new -s {0} と打って Enter（セッションができて、そこに移る）', S.q0.name), true);
+          pm.prompt = true;
+          pm.type = 'new -s ' + S.q0.name;
+          return pm;
+        }
+        // A session of another name came out: said; the order stands.
+        var extra = S.sessions.filter(function (s) { return S.q0.had.indexOf(s) < 0; })[0];
+        if (extra) return mv([':'], tx('セッション「{0}」ができた。もう一度 : を押して new -s {1}', extra.name, S.q0.name));
+        return mv([':'], ': を押す（コマンドの入力欄が出る）');
+      }
+    },
+    session_switch: {
+      steps: 3, text: 'ほかのセッションへ移る', cmd: 'choose-tree → switch-client', allow: ['choose'], show: ['choose'],
+      goal: function () { return [{ sess: S.q0.target, tag: tx('{0} へ', S.q0.target.name) }]; },
+      setup: function (r) {
+        needSessions(3);
+        var t = pick(r, otherSessions());
+        S.q0 = { target: t };
+        S.qGoal = { name: t.name };
+        S.qText = function () { return tx('セッション {0} へ移る', t.name); };
+      },
+      check: function () { return S.session === S.q0.target; },
+      next: function () { return sessionMove(S.q0.target, true); }
+    },
+    session_attach: {
+      // tmux ls is shown on the way (it is how you learn the name outside)
+      // but not required: attach -t straight away passes too.
+      steps: 4, text: 'デタッチして、tmux attach -t 名前 でほかのセッションに入る', cmd: 'detach-client → tmux attach -t 名前', allow: ['detach'], show: ['detach'],
+      goal: function () { return [{ sess: S.q0.target, tag: tx('外から {0} に入る', S.q0.target.name) }]; },
+      setup: function (r) {
+        needSessions(2);
+        var t = pick(r, otherSessions());
+        S.q0 = { target: t };
+        // Already outside (a slip): the first step is done.
+        S.q1 = S.detached;
+        S.qGoal = { name: t.name };
+        S.qText = function () { return tx('デタッチして、tmux attach -t {0} で {0} に入る', t.name); };
+      },
+      check: function () {
+        if (S.detached) S.q1 = true;
+        return S.q1 && !S.detached && S.session === S.q0.target;
+      },
+      step: function () {
+        if (!S.detached && !S.q1) return [1, 3, 'デタッチする'];
+        if (S.detached && !S.outer.ls) return [2, 3, 'tmux ls で一覧を見る'];
+        return [3, 3, tx('tmux attach -t {0} で入る', S.q0.target.name)];
+      },
+      next: function () {
+        var name = S.q0.target.name;
+        // Back inside but not there (tmux attach without -t): out again.
+        if (!S.detached) return mv(['d'], S.q1 ? tx('d を押す（もう一度デタッチして、-t {0} で入り直す）', name) : 'd を押す（デタッチ）。tmux の外のシェルに戻る');
+        var m = S.outer.ls ? mv(['Enter'], tx('tmux attach -t {0} と打って Enter（{0} に入る）', name), true) : mv(['Enter'], 'tmux ls と打って Enter（セッションの一覧が出る）', true);
+        m.type = S.outer.ls ? 'tmux attach -t ' + name : 'tmux ls';
+        return m;
+      }
     }
   };
 
@@ -1930,7 +2099,8 @@
     split_lr: '左右に分割', split_tb: '上下に分割', focus: 'ペイン移動', zoom: '全画面', unzoom: '全画面を戻す',
     close: 'ペインを閉じる', new_window: 'ウィンドウ作成', select_window: 'ウィンドウ移動', resize: '大きさ変更', swap: '入れ替え',
     rename: '名前を変える', kill_window: 'ウィンドウを閉じる', copy_top: 'スクロール', find_zoom: '移動して全画面', trident: '三分割',
-    two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチと復帰', yank_paste: 'コピーと貼り付け'
+    two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチと復帰', yank_paste: 'コピーと貼り付け',
+    session_new: 'セッション作成', session_switch: 'セッション移動', session_attach: 'attach -t で入る'
   };
   function typeName(t) { return TYPE_NAMES[t] ? tx(TYPE_NAMES[t]) : t; }
 
@@ -2845,7 +3015,7 @@
     });
     // Nothing marked on a pane (a window question): the card goes on the
     // arrow to the tab (renderTabArrow). Otherwise in the middle of your pane.
-    if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
+    if (playing && !anchor && active && !marks.some(function (g) { return g.tab || g.sess; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
     // Where you stand, said in words on the pane itself: the card never covers it.
     if (playing && active) placeHereTag(term, active, cw, ch, win.zoomed, T.activePane(win).mode === 'copy');
     // A step chip already says what to do here; the tag would repeat it.
@@ -3062,10 +3232,21 @@
     }
     var html = '<div class="picker" role="listbox" aria-label="' + tx('セッション') + '">';
     html += '<div class="picker-head">' + tx('(choose-tree)  ↑↓ で選んで Enter') + '</div>';
+    var sg = sessGoal();
     S.sessions.forEach(function (s, i) {
-      html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + '">(' + i + ') ' + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '') + '</div>';
+      var g = sg && sg.sess === s;
+      html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + (g ? ' goal-row' : '') + '">(' + i + ') ' + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '') +
+        (g ? '<span class="goal-tag">' + esc(sg.tag) + '</span>' : '') + '</div>';
     });
     return html + '</div>';
+  }
+
+  // The session mark of the question ({sess, tag}), shown on the status
+  // bar's [name] and on the session's row in the list.
+  function sessGoal() {
+    var found = null;
+    goalMarks().forEach(function (g) { if (g.sess) found = g; });
+    return found;
   }
 
   // Each room is furnished: tatami underfoot, a 鴨居 and a 柱 for the walls,
@@ -3251,7 +3432,8 @@
     if (S.prompt) { bar.innerHTML = '<div class="st-prompt">' + esc(S.prompt.label) + ' ' + withCursor(S.prompt.value, S.prompt.cur, true) + '</div>'; return; }
     if (S.message) { bar.innerHTML = '<div class="st-msg">' + esc(S.message) + '</div>'; return; }
     var win = T.activeWindow(S.session);
-    var html = '<span class="st-session">[' + esc(S.session.name) + ']</span><span class="st-wins">';
+    var sg = sessGoal();
+    var html = '<span class="st-session' + (sg ? ' goal-tab' : '') + '">[' + esc(S.session.name) + ']' + (sg ? '<span class="goal-tag">' + esc(sg.tag) + '</span>' : '') + '</span><span class="st-wins">';
     S.session.windows.forEach(function (w) {
       var flag = w.id === S.session.active ? '*' : (w.id === S.session.last ? '-' : '');
       if (w.zoomed) flag += 'Z';
@@ -4086,7 +4268,9 @@
           screen: S.screen, prefix: S.prefix,
           armed: S.armed, detached: S.detached,
           session: S.session ? S.session.name : null,
-          house: S.session ? S.session.createdAt.getTime() : null,
+          sessions: S.sessions.map(function (s) { return s.name; }),
+          picker: S.picker && !S.picker.kind ? S.picker.idx : null,
+          house: S.houseAt || null,
           windows: S.session ? S.session.windows.map(function (w) { return { index: w.index, name: w.name, active: w.id === S.session.active, panes: T.panesOf(w).length, zoomed: w.zoomed }; }) : [],
           activeWindow: win ? win.name : null,
           activeIndex: win ? win.index : null,
