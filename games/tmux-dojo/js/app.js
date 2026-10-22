@@ -336,7 +336,7 @@
       if (!S.detached) return;
       S.outer.lines.push({ html: '<span class="sh-dim">' + esc(tx('ヒント: セッションは裏でそのまま残っている。tmux attach と打てば戻れる（tmux ls で確かめられる）。')) + '</span>' });
       render();
-    }, 12000);
+    }, S.run && S.run.phase === 'play' ? 300 : 12000);
     $('#term').classList.add('powering-down');
     setTimeout(function () { $('#term').classList.remove('powering-down'); }, reduceMotion ? 0 : 700);
   }
@@ -753,6 +753,7 @@
       var idx = T.paneIndex(S.session, win, pane);
       S.lastAction = 'close';
       S.confirm = {
+        pane: pane.id,
         text: 'kill-pane ' + idx + '? (y/n)',
         yes: function () {
           if (!T.killPane(win, pane.id)) {
@@ -765,6 +766,7 @@
     if (key === '&') {
       S.lastAction = 'kill_window';
       S.confirm = {
+        win: win.id,
         text: 'kill-window ' + win.name + '? (y/n)',
         yes: function () { if (!T.killWindow(S.session, win.id)) message('最後のウィンドウは閉じられない'); }
       };
@@ -1249,7 +1251,9 @@
 
   // The move the 手順 shows now, in the player's keys.
   function guideMove(b) {
-    var m = b.q.next();
+    var m = openFirst(b) || b.q.next();
+    // A y/n question this order does not want: say no first.
+    if (S.confirm && (!m || (m.keys[0] !== 'y' && m.keys[0] !== 'n'))) m = mv(['n'], 'n で取り消す', true);
     if (!m || !S.conf) return m;
     var out = ownMove(m);
     if (m.alt) {
@@ -1259,8 +1263,36 @@
     return out;
   }
 
+  // Something left open by a slip comes first: tmux detached, a list, a prompt
+  // this question does not ask for.
+  function openFirst(b) {
+    if (S.detached) { var m = mv(['Enter'], 'tmux attach と打って Enter（tmux に戻る）', true); m.type = 'tmux attach'; return m; }
+    if (S.picker) return mv(['Esc'], 'Esc で一覧を閉じる', true);
+    if (S.prompt && !(b.type === 'rename' && S.prompt.label === '(rename-window)')) return mv(['Esc'], 'Esc で入力欄を閉じる', true);
+    return null;
+  }
+
+  // What a question is about may be gone (a slip closed it), or a shape may
+  // have gone wrong (trident): ask again from where you stand.
+  function lostTarget(b) {
+    var t = b.type;
+    if (t === 'resize') return !paneExists(S.q0.id);
+    if (t === 'trident') return tridentState() === 'other';
+    if (t === 'select_window') return !T.windowById(S.session, S.q0);
+    if (t === 'new_and_home') return !T.windowById(S.session, S.q0.home);
+    if (t === 'rename') return !T.windowById(S.session, S.q0.win);
+    return !!S.target && !paneExists(S.target);
+  }
+
+  function askAgain(b) {
+    b.redo = (b.redo || 0) + 1;
+    S.qText = null; S.qGoal = null; S.target = null;
+    b.q.setup(rng(b.seed + ':' + b.i + ':' + b.redo));
+    note(b.type === 'trident' ? '形が変わったので、このペインからやり直す' : 'ねらいがなくなったので、選び直した');
+  }
+
   function closeMove(id) {
-    if (S.confirm) return mv(['y'], 'y を押す（閉じる）', true);
+    if (S.confirm) return S.confirm.pane === id ? mv(['y'], 'y を押す（閉じる）', true) : mv(['n'], 'n で取り消す（閉じるペインが違う）', true);
     return moveTo(id) || mv(['x'], 'x を押す（確認が出る）');
   }
 
@@ -1403,7 +1435,8 @@
         var rr = T.rectOf(w, S.q0.id, S.cols, S.rows);
         return S.lastAction === 'resize' && !!rr && !w.zoomed && (Math.abs(rr.w - S.q0.w) >= 5 || Math.abs(rr.h - S.q0.h) >= 3);
       },
-      next: resizeMove
+      // Back to the pane the question is about first (another pane, another window).
+      next: function () { return moveTo(S.q0.id) || resizeMove(); }
     },
     swap: {
       text: 'ペインを左上まで入れ替えて動かす（swap）', cmd: 'swap-pane -U', allow: ['swap'], show: ['swap'],
@@ -1448,7 +1481,7 @@
       },
       check: function () { return !T.windowById(S.session, S.q0); },
       next: function () {
-        if (S.confirm) return mv(['y'], 'y を押す（閉じる）', true);
+        if (S.confirm) return S.confirm.win === S.q0 ? mv(['y'], 'y を押す（閉じる）', true) : mv(['n'], 'n で取り消す（閉じるウィンドウが違う）', true);
         if (S.session.active !== S.q0) return windowMove(S.q0);
         return mv(['&'], '& を押す（確認が出る）');
       }
@@ -1795,6 +1828,7 @@
         (S.lastAction === 'unbound' || b.q.allow.indexOf(S.lastAction) < 0)) {
       miss();
     }
+    if (!b.q.check() && lostTarget(b)) askAgain(b);
     if (b.q.check()) {
       b.streak = (b.streak || 0) + 1;
       AU.se('hit', b.streak);
