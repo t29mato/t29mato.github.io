@@ -564,6 +564,7 @@
     if (S.run && S.run.phase !== 'play') return !isModifierOnly(k.key);
     if (isModifierOnly(k.key)) return false;
     S.lastAction = null;
+    S.lastKey = k;
     var consumed = handleGameKey(k);
     if (consumed) {
       if (S.run) S.run.keys += 1;
@@ -1596,7 +1597,7 @@
       goal: function () { return [{ pane: activeId(), mark: 'zoom', tag: 'ここを全画面に' }]; },
       setup: function () { needUnzoom(); needPanes(2); },
       check: function () { return T.activeWindow(S.session).zoomed; },
-      next: function () { return mv(['z'], 'z を押す。このペインだけが画面いっぱいになる'); }
+      next: function () { return mv(['z'], 'z を押す（zoom）。このペインだけが画面いっぱいになる'); }
     },
     unzoom: {
       steps: 1, text: '全画面をやめて元の分割に戻す', cmd: 'resize-pane -Z', allow: ['zoom'], show: ['zoom'],
@@ -1711,25 +1712,39 @@
       }
     },
     copy_top: {
-      steps: 2, text: 'スクロールして一番上まで戻る（copy mode）', cmd: 'copy-mode → history-top', allow: ['copy'], show: ['copy'],
-      goal: function () { return [{ pane: S.target, mark: 'top', tag: '一番上まで' }]; },
+      // Leaving copy mode is part of it: in a real tmux a beginner who has
+      // scrolled up is stuck until they know q.
+      steps: 3, text: 'スクロールして一番上まで戻り、q で抜ける（copy mode）', cmd: 'copy-mode → history-top → cancel', allow: ['copy'], show: ['copy'],
+      goal: function () { return S.q1 ? [{ pane: S.target, mark: 'go', tag: 'q で抜ける' }] : [{ pane: S.target, mark: 'top', tag: '一番上まで' }]; },
       setup: function () {
         var pane = T.activePane(T.activeWindow(S.session));
         pane.mode = null;
         pane.lines.push({ html: '<span class="sh-prompt">' + esc(promptText(pane)) + '</span>cat makimono.txt' });
         printScroll(pane);
         S.target = pane.id;
+        S.q1 = false;
       },
+      // The top, once reached, is remembered (S.q1); solved on leaving copy mode after it.
       check: function () {
         var h = T.findPane(S.session, S.target);
-        if (!h || h.pane.mode !== 'copy') return false;
+        if (!h) return false;
+        if (h.pane.mode !== 'copy') return S.q1;
         var info = scrollInfo(h.pane);
-        return info && info.history > 30 && info.pos >= info.history - 2;
+        if (info && info.history > 30 && info.pos >= info.history - 2) S.q1 = true;
+        return false;
+      },
+      step: function () {
+        var h = T.findPane(S.session, S.target);
+        if (!h) return null;
+        return S.q1 ? [3, 3, 'q でコピーモードを抜ける'] : h.pane.mode === 'copy' ? [2, 3, '一番上へ'] : [1, 3, 'コピーモードに入る'];
       },
       next: function () {
+        var back = moveTo(S.target);
+        if (back) return back;
         var p = T.activePane(T.activeWindow(S.session));
-        if (p.mode === 'copy') return mv(['g'], 'g を押す（一番上へ）', true);
-        return mv(['['], '[ を押す（コピーモードに入る）');
+        if (p.mode !== 'copy') return mv(['['], '[ を押す（コピーモードに入る）');
+        if (S.q1) return mv(['q'], 'q を押す（コピーモードを抜ける。シェルに戻る）', true);
+        return mv(['g'], 'g を押す（一番上へ。emacs 式は Alt+<）', true);
       }
     },
     find_zoom: {
@@ -1918,6 +1933,24 @@
     two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチと復帰', yank_paste: 'コピーと貼り付け'
   };
   function typeName(t) { return TYPE_NAMES[t] ? tx(TYPE_NAMES[t]) : t; }
+
+  // What a key does, for the miss chip (actions that are never a miss are left out).
+  var ACTION_NAMES = {
+    split_lr: '左右に分割', split_tb: '上下に分割', zoom: '全画面の切り替え', close: 'ペインを閉じる', new_window: '新しいウィンドウ',
+    resize: '大きさを変える', swap: 'ペインの入れ替え', rename: 'ウィンドウの名前', kill_window: 'ウィンドウを閉じる', copy: 'コピーモード',
+    detach: 'デタッチ', layout: '並べ方を変える', paste: '貼り付け', yank: 'コピー', yank_start: '選び始め', search: '検索',
+    rename_session: 'セッションの名前', new_session: '新しいセッション', rename_pane: 'ペインの名前', choose: 'セッション一覧'
+  };
+
+  // The tips of a question type: those of the action it is really about
+  // (the last one it shows) first, then of the rest.
+  function tipsOf(type) {
+    var q = Q[type];
+    if (!q) return [];
+    var pool = [];
+    q.show.slice().reverse().forEach(function (a) { pool = pool.concat(LV.tipsFor(a)); });
+    return pool;
+  }
 
   // A new order, avoiding the same question twice in a row where it can.
   // `rand` makes it repeatable (today's order); Math.random otherwise.
@@ -2131,7 +2164,11 @@
         (S.lastAction === 'unbound' || b.q.allow.indexOf(S.lastAction) < 0)) {
       miss();
     }
+    var q1 = S.q1;
     if (!b.q.check() && lostTarget(b)) askAgain(b);
+    // A check that moved the question on (S.q1: the top reached, a window
+    // made) comes after the draw, so the card is drawn again.
+    if (S.q1 !== q1 && !b.q.check()) render();
     if (b.q.check()) {
       b.streak = (b.streak || 0) + 1;
       AU.se('hit', b.streak);
@@ -2186,7 +2223,12 @@
     b.penalty += LV.MISS_PENALTY;
     if (b.qlog[b.i]) b.qlog[b.i].m += 1;
     AU.se('miss');
-    chip('miss', tx('操作ミス +{0} 秒', LV.MISS_PENALTY));
+    // A wrong key teaches its own job: " は上下に分割.
+    var what = ACTION_NAMES[S.lastAction], k = S.lastKey;
+    var label = k && k.key !== 'Enter' ? CF.keyLabel({ key: k.key, ctrl: !!k.ctrl, alt: !!k.alt, shift: !!k.shift }) : '';
+    chip('miss', !what ? tx('操作ミス +{0} 秒', LV.MISS_PENALTY)
+      : label ? tx('操作ミス +{0} 秒 ・ {1} は「{2}」', LV.MISS_PENALTY, label, tx(what))
+      : tx('操作ミス +{0} 秒 ・ {1}', LV.MISS_PENALTY, tx(what)));
     termFlash('miss');
     shake();
   }
@@ -2243,8 +2285,13 @@
     var slow = null;
     b.qlog.forEach(function (q) { if (q.o && (!slow || q.s > slow.s)) slow = q; });
     result.slow = slow ? slow.t : null;
-    var pool = [];
-    b.qs.forEach(function (t) { Q[t].show.forEach(function (a) { pool = pool.concat(LV.tipsFor(a)); }); });
+    // The tip is about the question that needs it: the one past its 目安,
+    // else the one that took longest.
+    var longest = null;
+    b.qlog.forEach(function (q) { if (q.s != null && (!longest || q.s > longest.s)) longest = q; });
+    result.tipFor = slow ? slow.t : longest ? longest.t : null;
+    var pool = tipsOf(result.tipFor);
+    if (!pool.length) { result.tipFor = null; b.qs.forEach(function (t) { pool = pool.concat(tipsOf(t)); }); }
     result.tip = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
     result.at = new Date();
     if (b.ghost) {
@@ -2327,7 +2374,7 @@
   function topHTML(id) {
     var t = S.tops && S.tops[id];
     if (!t) return '';
-    return esc(tx('今日の一番 {0}', tx('{0}秒', t.time.toFixed(1))));
+    return esc(tx('最速 {0}', tx('{0}秒', t.time.toFixed(1))));
   }
 
   // Reading the boards sends nothing of the player's; only from the site.
@@ -2336,7 +2383,7 @@
     S.topsAt = Date.now();
     S.tops = S.tops || {};
     LV.COURSES.forEach(function (c) {
-      NET.board(c.id, 'today').then(function (rows) {
+      NET.board(c.id, BOARD_SPAN).then(function (rows) {
         if (!rows.length) return;
         S.tops[c.id] = rows[0];
         var el = $('#course-list [data-top="' + c.id + '"]');
@@ -3460,7 +3507,7 @@
       spark(r.spark) +
       '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
       (r.spark && r.spark.length > 1 ? '<span class="spark-key"><i class="rec"></i>' + tx('自己ベスト') + ' <i class="now"></i>' + tx('今回') + '</span>' : '') + '</div>' +
-      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
+      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + (r.tipFor ? tx(' ・ {0}', esc(typeName(r.tipFor))) : '') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? tx('もう一度 稽古') : tx('もう一度')) + '<kbd class="hk">Enter</kbd></button>' +
       (up ? '<button type="button" class="btn primary" data-course="' + up.id + '">' + esc(tx('{0}へ進む', up.title)) + '<kbd class="hk">N</kbd></button>' : '') +
       (!c.practice ? '<button type="button" class="btn" data-course="' + r.course + '" data-shuffle="1">' + tx('順番を変えて') + '</button>' : '') +
@@ -3628,7 +3675,7 @@
 
   // ランキング: each player's best for the course, today / this week / ever.
   function renderBoard(body, id) {
-    var span = S.boardSpan || 'today';
+    var span = S.boardSpan || BOARD_SPAN;
     var seg = '<div class="seg rec-span" role="group" aria-label="' + tx('期間') + '">' +
       [['today', '今日'], ['week', '今週'], ['all', '全期間']].map(function (x) {
         return '<button type="button" data-span="' + x[0] + '" aria-pressed="' + (x[0] === span ? 'true' : 'false') + '">' + tx(x[1]) + '</button>';
@@ -3656,7 +3703,7 @@
     NET.board(id, span).then(function (rows) {
       S.boardCache = S.boardCache || {};
       S.boardCache[key] = { rows: rows, at: Date.now() };
-      if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || 'today') === span) renderRecords();
+      if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || BOARD_SPAN) === span) renderRecords();
     }).catch(function () {
       var bb = $('#records-body .board-body');
       if (bb && !cached) bb.innerHTML = '<p class="rec-empty">' + tx('ランキングにつながらなかった。通信できるときにもう一度。') + '</p>';
@@ -3704,8 +3751,11 @@
 
   // Straight to the rankings, from the title: today's board of the course
   // you played last (入門 for a first visit).
+  // While few people play, the all-time board is the one with names on it.
+  var BOARD_SPAN = 'all';
+
   function openBoard() {
-    S.recTab = 'board'; S.boardSpan = 'today';
+    S.recTab = 'board'; S.boardSpan = BOARD_SPAN;
     openRecords(null, 'title');
   }
 
@@ -3820,8 +3870,10 @@
       var keys = [];
       q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
       return '<li><span class="w-text">' + esc(tx(q.text)) + '</span>' +
-        '<span class="w-num">' + tx('平均 {0}秒 ・ 違い {1}%', e.avg.toFixed(1), Math.round(e.missRate * 100)) + (e.overs ? tx(' ・ 目安超え {0}', e.overs) : '') + '</span>' +
-        '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span></li>';
+        '<span class="w-num">' + tx('平均 {0}秒 ・ 押し違い {1}%', e.avg.toFixed(1), Math.round(e.missRate * 100)) + (e.overs ? tx(' ・ 目安超え {0}', e.overs) : '') + '</span>' +
+        '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span>' +
+        // The tip where it is wanted: on the question that keeps running over.
+        (tipsOf(e.type).length ? '<span class="w-tip">' + esc(tipsOf(e.type)[0]) + '</span>' : '') + '</li>';
     };
     return '<div class="rec-panel rec-weak"><div class="rec-head">' + tx('目安を超えがちな問題（直近 {0} 回）', w.runs) + '</div>' +
       (w.weak.length ? '<ol class="weak-list">' + w.weak.map(row).join('') + '</ol>' : '<p class="rec-empty">' + tx('目安を超えがちな問題はない。') + '</p>') +
@@ -3936,7 +3988,7 @@
       var r = e.target.closest('[data-records]');
       if (r) { S.recTab = 'growth'; openRecords(r.dataset.records || null, 'result'); return; }
       var bd = e.target.closest('[data-board]');
-      if (bd) { e.preventDefault(); S.recTab = 'board'; S.boardSpan = 'today'; openRecords(bd.dataset.board, 'result'); return; }
+      if (bd) { e.preventDefault(); S.recTab = 'board'; S.boardSpan = BOARD_SPAN; openRecords(bd.dataset.board, 'result'); return; }
       var b = e.target.closest('[data-course]');
       if (b) { startRun(b.dataset.course, { shuffle: !!b.dataset.shuffle }); return; }
       if (e.target.closest('[data-title]')) showScreen('title');
