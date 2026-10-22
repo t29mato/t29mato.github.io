@@ -401,7 +401,10 @@
   function paneLabel(pane) {
     if (pane.name) return pane.name;
     var h = T.findPane(S.session, pane.id);
-    return tx('ペイン {0}', h ? T.paneIndex(S.session, h.win, pane) : '?');
+    if (!h) return tx('ペイン {0}', '?');
+    // Pane numbers start again in every window: one in another window says which.
+    if (S.session && h.win !== T.activeWindow(S.session)) return tx('ウィンドウ {0} のペイン {1}', winLabel(h.win), T.paneIndex(S.session, h.win, pane));
+    return tx('ペイン {0}', T.paneIndex(S.session, h.win, pane));
   }
 
   // How the order names a window: as the status bar shows it, "1:蔵".
@@ -808,7 +811,8 @@
     if (key === ']') { paste(pane); return true; }
     if (key === ':') { S.lastAction = 'cmd'; S.prompt = { label: ':', value: '', done: runTmuxCommand }; return true; }
     if (key === 'l') {
-      if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last);
+      // vim hands reach for l to go right: say where it went.
+      if (S.session.last && T.windowById(S.session, S.session.last)) { T.selectWindow(S.session, S.session.last); message('l は直前のウィンドウへ移るキー。隣のペインへは矢印か o'); }
       else message('no last window ― l は直前のウィンドウへ戻るキー。隣のペインへは矢印か o');
       S.lastAction = 'select_window';
       return true;
@@ -1152,6 +1156,9 @@
   function moveTo(id) {
     var win = T.activeWindow(S.session);
     if (win.active === id) return null;
+    // The pane is in another window (prefix → l, n, p took you away): that window first.
+    var h = T.findPane(S.session, id);
+    if (h && h.win !== win) return windowMove(h.win.id);
     var z = win.zoomed;
     win.zoomed = false;
     var goal = T.rectOf(win, id, S.cols, S.rows);
@@ -1782,7 +1789,8 @@
   function runTick() {
     var b = S.run;
     if (!b || b.phase !== 'play') return;
-    var free = ['brief', 'focus', 'yank_start', 'search', 'cmd'];
+    // Moving about (panes, windows) is never a miss: the guide may lead back.
+    var free = ['brief', 'focus', 'select_window', 'yank_start', 'search', 'cmd'];
     if (S.lastAction && free.indexOf(S.lastAction) < 0 &&
         (S.lastAction === 'unbound' || b.q.allow.indexOf(S.lastAction) < 0)) {
       miss();
@@ -2086,7 +2094,8 @@
     if (S.qNote.length) html += '<div class="sz-note">' + esc(S.qNote.join(tx('。'))) + '</div>';
     html += '<div class="sz-keys"><kbd class="' + pfxCls + '">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys, lit) + '</div>';
     if (rootKeys.length) html += '<div class="sz-keys"><span class="arr">' + tx('prefix なし') + '</span>' + keycaps(rootKeys, lit) + '</div>';
-    html += '<div class="sz-cmd">tmux: <code>' + esc(tx(b.q.cmd)) + '</code></div>';
+    // The command behind the keys, for the curious (the detail panel only).
+    html += '<div class="sz-cmd">' + tx('中で動く tmux のコマンド') + ': <code>' + esc(tx(b.q.cmd).replace('-L/-R/-U/-D', tx('-L（左）-R（右）-U（上）-D（下）'))) + '</code></div>';
     if (move) {
       html += '<div class="shinan"><div class="shinan-t">' + tx('手順') + '</div><ol>' +
         steps(move).map(function (s, i, all) {
@@ -2134,7 +2143,7 @@
     var html = st ? '<div class="ob-whole">' + c + esc(qText(b)) + '</div>' : '';
     html += '<div class="motd-h">' + c + '<span class="ob-n">' + Math.min(b.i + 1, n) + '/' + n + '</span> ' +
       (st ? '<span class="ob-step">' + (st[0] ? tx('手順 {0}/{1}', st[0], st[1]) : tx('やり直し')) + '</span> ' : '') +
-      '<b class="ob-q">' + esc(st ? tx(st[2]) : qText(b)) + '</b> <span class="ob-cmd">tmux: ' + esc(tx(b.q.cmd)) + '</span></div>';
+      '<b class="ob-q">' + esc(st ? tx(st[2]) : qText(b)) + '</b></div>';
     if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join(tx('。'))) + '</div>';
     if (move) {
       var keys = '';
@@ -2570,7 +2579,17 @@
   function goalMarks() {
     var b = S.run;
     if (!b || b.phase !== 'play' || !b.q || !b.q.goal || S.detached) return [];
-    try { return (b.q.goal() || []).map(function (g) { var o = {}; for (var k in g) o[k] = g[k]; if (o.tag) o.tag = tx(o.tag); return o; }); } catch (e) { return []; }
+    var win = T.activeWindow(S.session);
+    try {
+      return (b.q.goal() || []).map(function (g) {
+        var o = {}; for (var k in g) o[k] = g[k];
+        if (o.tag) o.tag = tx(o.tag);
+        // A pane in another window: mark that window's tab instead.
+        var h = o.pane && T.findPane(S.session, o.pane);
+        if (h && h.win !== win) return { tab: h.win.id, tag: tx('このウィンドウへ') };
+        return o;
+      });
+    } catch (e) { return []; }
   }
 
   function markCursor(el, p) {
