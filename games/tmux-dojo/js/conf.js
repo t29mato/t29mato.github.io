@@ -138,63 +138,63 @@
     var cmd = argv[0], p = flags(argv), f = p.f, rest = p.rest;
     var dir = f.L ? 'L' : f.R ? 'R' : f.U ? 'U' : f.D ? 'D' : null;
     var ARROW = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown' };
-    if (/^(split-window|splitw)$/.test(cmd)) return f.h ? { key: '%', say: '襖を縦に立てる' } : { key: '"', say: '襖を横に立てる' };
+    if (/^(split-window|splitw)$/.test(cmd)) return f.h ? { key: '%', say: '左右に分割する' } : { key: '"', say: '上下に分割する' };
     if (/^(select-pane|selectp)$/.test(cmd)) {
       if (f.T) return { why: 'ペインの名前はゲームでは : から付ける' };
-      if (dir) return { key: ARROW[dir], say: { L: '左', R: '右', U: '上', D: '下' }[dir] + 'の間へ' };
-      if (f.l) return { key: ';', say: '直前の間へ' };
-      if (f.t === ':.+' || f.t === '+' || f.t === '.+') return { key: 'o', say: '次の間へ' };
+      if (dir) return { key: ARROW[dir], say: { L: '左', R: '右', U: '上', D: '下' }[dir] + 'のペインへ' };
+      if (f.l) return { key: ';', say: '直前のペインへ' };
+      if (f.t === ':.+' || f.t === '+' || f.t === '.+') return { key: 'o', say: '次のペインへ' };
       return { why: 'その select-pane はゲームにない' };
     }
-    if (/^(last-pane|lastp)$/.test(cmd)) return { key: ';', say: '直前の間へ' };
+    if (/^(last-pane|lastp)$/.test(cmd)) return { key: ';', say: '直前のペインへ' };
     if (RESIZE_CMD.test(cmd)) {
-      if (f.Z) return { key: 'z', say: '大広間（全画面）にする・戻す' };
+      if (f.Z) return { key: 'z', say: '全画面にする・戻す' };
       if (dir) {
         var n = parseInt(rest[0], 10);
-        return { resize: dir, n: n > 0 ? Math.min(n, 50) : 1, say: '襖を' + { L: '左', R: '右', U: '上', D: '下' }[dir] + 'へ' + (n > 0 ? n : 1) + 'マスずらす' };
+        return { resize: dir, n: n > 0 ? Math.min(n, 50) : 1, say: '境目を' + { L: '左', R: '右', U: '上', D: '下' }[dir] + 'へ' + (n > 0 ? n : 1) + 'マスずらす' };
       }
       return { why: 'その resize-pane はゲームにない' };
     }
-    if (/^(kill-pane|killp)$/.test(cmd)) return { key: 'x', now: true, say: '間を閉じる（確認なし）' };
-    if (/^(kill-window|killw)$/.test(cmd)) return { key: '&', now: true, say: '棟を閉じる（確認なし）' };
+    if (/^(kill-pane|killp)$/.test(cmd)) return { key: 'x', now: true, say: 'ペインを閉じる（確認なし）' };
+    if (/^(kill-window|killw)$/.test(cmd)) return { key: '&', now: true, say: 'ウィンドウを閉じる（確認なし）' };
     if (cmd === 'confirm-before' || cmd === 'confirm') {
       var inner = rest.length === 1 ? words(rest[0])[0] || [] : rest;
       var a = inner.length ? action(inner) : { why: 'confirm-before の中身がない' };
       if (a.now) { delete a.now; a.say = a.say.replace('（確認なし）', '（y で確かめる）'); }
       return a;
     }
-    if (/^(new-window|neww)$/.test(cmd)) return { key: 'c', say: '棟を建てる' };
-    if (/^(next-window|next)$/.test(cmd)) return { key: 'n', say: '次の棟へ' };
-    if (/^(previous-window|prev)$/.test(cmd)) return { key: 'p', say: '前の棟へ' };
-    if (/^(last-window|last)$/.test(cmd)) return { key: 'l', say: '直前の棟へ' };
+    if (/^(new-window|neww)$/.test(cmd)) return { key: 'c', say: '新しいウィンドウ' };
+    if (/^(next-window|next)$/.test(cmd)) return { key: 'n', say: '次のウィンドウへ' };
+    if (/^(previous-window|prev)$/.test(cmd)) return { key: 'p', say: '前のウィンドウへ' };
+    if (/^(last-window|last)$/.test(cmd)) return { key: 'l', say: '直前のウィンドウへ' };
     if (/^(select-window|selectw)$/.test(cmd)) {
       var t = /^:?(\d)$/.exec(f.t || '');
-      if (t) return { key: t[1], say: t[1] + ' 番の棟へ' };
-      if (f.l) return { key: 'l', say: '直前の棟へ' };
-      if (f.n) return { key: 'n', say: '次の棟へ' };
-      if (f.p) return { key: 'p', say: '前の棟へ' };
+      if (t) return { key: t[1], say: t[1] + ' 番のウィンドウへ' };
+      if (f.l) return { key: 'l', say: '直前のウィンドウへ' };
+      if (f.n) return { key: 'n', say: '次のウィンドウへ' };
+      if (f.p) return { key: 'p', say: '前のウィンドウへ' };
       return { why: 'その select-window はゲームにない' };
     }
-    if (/^(rename-window|renamew)$/.test(cmd)) return { key: ',', say: '棟に名札を掛ける' };
+    if (/^(rename-window|renamew)$/.test(cmd)) return { key: ',', say: 'ウィンドウの名前を変える' };
     if (/^(rename-session|rename)$/.test(cmd)) return { key: '$', say: 'セッションの名前を変える' };
     if (cmd === 'command-prompt') {
       var tpl = rest.join(' ');
-      if (/rename-window/.test(tpl)) return { key: ',', say: '棟に名札を掛ける' };
+      if (/rename-window/.test(tpl)) return { key: ',', say: 'ウィンドウの名前を変える' };
       if (/rename-session/.test(tpl)) return { key: '$', say: 'セッションの名前を変える' };
       if (!tpl) return { key: ':', say: 'コマンドを打つ' };
       return { why: 'その command-prompt はゲームにない' };
     }
-    if (/^(copy-mode)$/.test(cmd)) return { key: '[', say: '巻物を読む（コピーモード）' };
+    if (/^(copy-mode)$/.test(cmd)) return { key: '[', say: 'スクロールする（コピーモード）' };
     if (/^(paste-buffer|pasteb)$/.test(cmd)) return { key: ']', say: '貼り付ける' };
     if (/^(swap-pane|swapp)$/.test(cmd)) {
-      if (f.U) return { key: '{', say: '間を前と入れ替える' };
-      if (f.D) return { key: '}', say: '間を次と入れ替える' };
+      if (f.U) return { key: '{', say: '前のペインと入れ替える' };
+      if (f.D) return { key: '}', say: '次のペインと入れ替える' };
       return { why: 'その swap-pane はゲームにない' };
     }
     if (/^(next-layout|nextl)$/.test(cmd)) return { key: ' ', say: '並べ方を変える' };
     if (/^(detach-client|detach)$/.test(cmd)) return { key: 'd', say: 'デタッチする' };
     if (/^(choose-tree|choose-session|choose-window)$/.test(cmd)) return { key: 's', say: 'セッションを選ぶ' };
-    if (cmd === 'send-prefix') return { run: 'send-prefix', say: '合図をシェルに送る' };
+    if (cmd === 'send-prefix') return { run: 'send-prefix', say: 'prefix をシェルに送る' };
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
     if (/^(display-panes|displayp)$/.test(cmd)) return { why: 'ペイン番号の表示はゲームにない' };
@@ -211,6 +211,7 @@
     { table: 'prefix', key: 'C-l', argv: ['send-keys', 'C-l'] }
   ];
 
+  var SAMPLE_NOCONFIRM = "# 確認なしで閉じる（y を押さない）\nbind x kill-pane\nbind & kill-window\n";
   var SAMPLE_NAVIGATOR = "# vim-tmux-navigator（TPM で入れる）\nset -g @plugin 'christoomey/vim-tmux-navigator'\nrun '~/.tmux/plugins/tpm/tpm'\n";
 
   // The whole file → {prefix, prefix2, binds, unbinds, unbindAll, used, skipped, navigator, custom}.
@@ -232,15 +233,15 @@
         if (name === 'prefix' || name === 'prefix2') {
           var k = val === 'None' ? null : parseKey(val);
           if (val !== 'None' && !k) return skip(l, 'そのキーは読めない: ' + val);
-          if (name === 'prefix') { if (!k) return skip(l, '合図なしでは遊べない'); c.prefix = k; use(l, '合図を ' + k.label + ' にする'); }
-          else { c.prefix2 = k; use(l, k ? '2 つ目の合図を ' + k.label + ' にする' : '2 つ目の合図をなくす'); }
+          if (name === 'prefix') { if (!k) return skip(l, 'prefix なしでは遊べない'); c.prefix = k; use(l, 'prefix を ' + k.label + ' にする'); }
+          else { c.prefix2 = k; use(l, k ? '2 つ目の prefix を ' + k.label + ' にする' : '2 つ目の prefix をなくす'); }
           return;
         }
         if (name === '@plugin') {
           if (/(^|\/)vim-tmux-navigator$/.test(val || '')) {
             c.navigator = true;
             NAVIGATOR.forEach(function (n) { addBind(n.table, parseKey(n.key), action(n.argv), false, l); });
-            return use(l, 'vim-tmux-navigator: Ctrl+h/j/k/l で間を渡る、Ctrl+\\ で直前の間、合図 → Ctrl+l で画面を消す');
+            return use(l, 'vim-tmux-navigator: Ctrl+h/j/k/l でペインを移動、Ctrl+\\ で直前のペイン、prefix → Ctrl+l で画面を消す');
           }
           if (/(^|\/)tpm$/.test(val || '')) return use(l, 'TPM（プラグインの管理）');
           return skip(l, 'このプラグインはゲームにない');
@@ -262,7 +263,7 @@
         var act = action(inner);
         if (act.why) return skip(l, act.why);
         addBind(table, key, act, b.f.r, l);
-        return use(l, (table === 'root' ? '合図なしで ' : '合図 → ') + key.label + ' で ' + act.say + (b.f.r ? '（続けて押せる）' : ''));
+        return use(l, (table === 'root' ? 'prefix なしで ' : 'prefix → ') + key.label + ' で ' + act.say + (b.f.r ? '（続けて押せる）' : ''));
       }
       if (/^(unbind|unbind-key)$/.test(cmd)) {
         var u = flags(argv);
@@ -271,14 +272,14 @@
           if (ut !== 'prefix') return skip(l, ut + ' の表はゲームでは変えられない');
           c.unbindAll = true;
           c.binds = c.binds.filter(function (x) { return x.table !== 'prefix'; });
-          return use(l, '合図のあとのキーを全部外す');
+          return use(l, 'prefix のあとのキーを全部外す');
         }
         if (ut !== 'root' && ut !== 'prefix') return skip(l, ut + ' の表はゲームでは変えられない');
         var uk = parseKey(u.rest[0]);
         if (!uk) return skip(l, 'そのキーは読めない: ' + u.rest[0]);
         c.binds = c.binds.filter(function (x) { return !(x.table === ut && same(x.key, uk)); });
         c.unbinds.push({ table: ut, key: uk });
-        return use(l, (ut === 'root' ? '' : '合図 → ') + uk.label + ' を外す');
+        return use(l, (ut === 'root' ? '' : 'prefix → ') + uk.label + ' を外す');
       }
       if (/^(source-file|source|if-shell|if)$/.test(cmd)) return skip(l, '別のファイルやシェルはゲームでは読めない');
       return skip(l, cmd + ' はゲームにない');
@@ -310,6 +311,6 @@
   window.ADV = window.ADV || {};
   window.ADV.conf = {
     parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words,
-    lookup: lookup, overridden: overridden, isPrefix: isPrefix, SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR
+    lookup: lookup, overridden: overridden, isPrefix: isPrefix, SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM
   };
 })();

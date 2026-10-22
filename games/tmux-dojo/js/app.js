@@ -3148,7 +3148,7 @@
     var st = REC.stats(id);
     if (!st) {
       body.innerHTML = '<div class="rec-log"><p>' + esc(c.title) + '（' + esc(c.mode) + '）の記録は、まだ白紙。</p><p>一度はじめると、ここに上達が描かれていく。</p></div>' +
-        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に入る</button></div>';
+        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + esc(c.title) + 'に入る</button></div>' + rankPanel(c, '');
       return;
     }
     var gain = st.first.time - st.best;
@@ -3170,7 +3170,19 @@
       return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + r.time.toFixed(1) + '秒</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">直近の記録</div><table class="rec-table"><thead><tr><th>日付</th><th>タイム</th><th class="r-note">内訳</th><th>称号</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + chart + weakPanel(id) + learntPanel() + table;
+    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + rankPanel(c, st.bestRank) + chart + weakPanel(id) + learntPanel() + table;
+  }
+
+  // Every title and the time it needs on this course (misses included),
+  // the one you hold marked.
+  function rankPanel(c, mine) {
+    var n = c.qs.length, mul = c.rankMul || 1;
+    var rows = LV.RANKS.map(function (r, i) {
+      var t = isFinite(r.max) ? Math.round(r.max * mul * n) + ' 秒以内' : Math.round(LV.RANKS[i - 1].max * mul * n) + ' 秒より遅い';
+      var per = isFinite(r.max) ? '1 問 ' + (r.max * mul).toFixed(1) + ' 秒' : '';
+      return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(r.title) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? 'いまここ' : '') + '</td></tr>';
+    }).join('');
+    return '<div class="rec-panel rec-ranks"><div class="rec-head">称号の一覧（' + esc(c.title) + '・' + n + ' 問）</div><table class="rec-table"><thead><tr><th>称号</th><th>タイム</th><th class="r-note">目安</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   function weakPanel(id) {
@@ -3257,6 +3269,11 @@
     $('#conf-sample').addEventListener('click', function () {
       var t = $('#conf-text');
       if (!/vim-tmux-navigator/.test(t.value)) t.value = (t.value && !/\n$/.test(t.value) ? t.value + '\n' : t.value) + CF.SAMPLE_NAVIGATOR;
+      applyConf(t.value, true);
+    });
+    $('#conf-noconfirm').addEventListener('click', function () {
+      var t = $('#conf-text');
+      if (!/kill-pane\s*$/m.test(t.value)) t.value = (t.value && !/\n$/.test(t.value) ? t.value + '\n' : t.value) + CF.SAMPLE_NOCONFIRM;
       applyConf(t.value, true);
     });
     $('#conf-reset').addEventListener('click', function () { $('#conf-text').value = ''; applyConf('', true); });
