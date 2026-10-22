@@ -263,6 +263,28 @@
     return Object.keys(by).sort().map(function (d) { return { day: d, time: by[d] }; });
   }
 
+  // Days in a row with a course played (Japan time), up to today. A streak
+  // is still alive today until midnight even if today is not played yet.
+  function streak(all, now) {
+    var days = {};
+    ((all || load()).runs || []).forEach(function (r) {
+      var c = courseOf(r.course);
+      if (c && !c.practice) days[LV.dayKey(new Date(r.at))] = 1;
+    });
+    var t = (now || new Date()).getTime(), n = 0;
+    var today = !!days[LV.dayKey(new Date(t))];
+    if (!today) t -= 86400 * 1000;
+    while (days[LV.dayKey(new Date(t))]) { n += 1; t -= 86400 * 1000; }
+    return { days: n, today: today };
+  }
+
+  // Today's best of a course here (Japan time), or null.
+  function todayBest(course, all) {
+    var d = LV.dayKey(), best = null;
+    runsOf(course, all).forEach(function (r) { if (LV.dayKey(new Date(r.at)) === d && (best == null || r.time < best)) best = r.time; });
+    return best;
+  }
+
   // Runs from another device (through the 合言葉) join the history. The
   // record marks and bests are worked out again in the order runs were made.
   // Returns how many runs were new here.
@@ -315,7 +337,7 @@
     SCHEMA: SCHEMA, CAP: CAP, HARD_CAP: HARD_CAP,
     load: load, add: add, runsOf: runsOf, best: best,
     stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
-    learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest,
+    learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest, streak: streak, todayBest: todayBest,
     recordKey: recordKey, courseOf: courseOf
   };
 })();

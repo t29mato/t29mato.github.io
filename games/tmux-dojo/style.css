@@ -845,3 +845,11 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .share-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .share-btns .btn { text-decoration: none; }
 .share-msg { color: var(--ink-dim); }
+/* 今日の問題: the day everyone shares, above the courses */
+.today { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 6px 0 10px; padding: 0 2px 8px; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.today b { font-family: var(--mincho); letter-spacing: 0.05em; }
+.today-day { font-family: var(--mono); }
+.today-streak { color: var(--shu); font-weight: 700; }
+.today small { flex-basis: 100%; color: var(--ink-dim); font-size: 12px; }
+.wing-top:empty { display: none; }
+.wing-top { color: var(--shu); }

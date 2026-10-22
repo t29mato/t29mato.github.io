@@ -1942,6 +1942,42 @@
     return last ? last.course : 'easy';
   }
 
+  // 今日の問題: every course asks in today's order, the same for everyone
+  // (Japan time), so today's times compare. The day, your streak, and per
+  // course today's top time on the boards.
+  function dayLabel(day) { var p = day.split('-'); return tx('{0}月{1}日', +p[1], +p[2]); }
+
+  function renderToday(all) {
+    var el = $('#today');
+    if (!el) return;
+    var sk = REC.streak(all);
+    var line = sk.days ? (sk.today ? tx('{0} 日連続', sk.days) : tx('{0} 日連続（今日まだ）', sk.days)) : '';
+    el.innerHTML = '<b>' + esc(tx('今日の問題')) + '</b> <span class="today-day">' + esc(dayLabel(LV.dayKey())) + '</span>' +
+      (line ? '<span class="today-streak">' + esc(line) + '</span>' : '') +
+      '<small>' + esc(tx('今日はみんな同じ順番で出る。日本時間の 0 時に変わる。')) + '</small>';
+  }
+
+  function topHTML(id) {
+    var t = S.tops && S.tops[id];
+    if (!t) return '';
+    return esc(tx('今日の一番 {0}', tx('{0}秒', t.time.toFixed(1))));
+  }
+
+  // Reading the boards sends nothing of the player's; only from the site.
+  function loadTops() {
+    if (!NET || !/^https?:$/.test(location.protocol) || S.topsAt && Date.now() - S.topsAt < 60000) return;
+    S.topsAt = Date.now();
+    S.tops = S.tops || {};
+    LV.COURSES.forEach(function (c) {
+      NET.board(c.id, 'today').then(function (rows) {
+        if (!rows.length) return;
+        S.tops[c.id] = rows[0];
+        var el = $('#course-list [data-top="' + c.id + '"]');
+        if (el) el.innerHTML = topHTML(c.id);
+      }).catch(function () { /* offline: nothing to show */ });
+    });
+  }
+
   // 腕前: the level from the latest five runs, its title, and how much
   // faster per question the next level is. A still bar, no motion.
   function skillHTML(sk, from) {
@@ -1982,10 +2018,13 @@
         '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span></span>' +
         '<span class="wing-desc">' + tx('目安 {0} 秒／問。', c.limit) + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
-        '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small></span>' +
+        '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
+        '<small class="wing-top" data-top="' + c.id + '">' + topHTML(c.id) + '</small></span>' +
         '</button></li>';
     });
     $('#course-list').innerHTML = html;
+    renderToday(all);
+    loadTops();
     $('#enter-sub').textContent = tx('{0} から', REC.courseOf(pick).title);
     $('#btn-enter').dataset.course = pick;
     var n = (all.runs || []).length;
@@ -2974,7 +3013,8 @@
     });
     var rows = [];
     for (var i = 0; i < sq.length; i += 10) rows.push(sq.slice(i, i + 10).join(''));
-    return tx('tmux 道場 {0} {1}秒（お手本 {2}秒）{3}', c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
+    var d = LV.dayKey(r.at).split('-');
+    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
       rows.join('\n') + '\n' + SITE + (EN ? '?lang=en' : '');
   }
 
