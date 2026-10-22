@@ -1814,6 +1814,7 @@
     b.phase = 'play';
     seal(false);
     b.i += 1;
+    if (b.i === 1) count('q1');
     if (b.i >= b.qs.length) { finishRun(); return; }
     loadQuestion();
     render();
@@ -1860,6 +1861,7 @@
     var b = S.run;
     clearInterval(S.clock);
     b.phase = 'done';
+    count('finish');
     b.end = performance.now();
     var raw = (b.end - b.start) / 1000;
     var time = raw + b.penalty;
@@ -2844,12 +2846,17 @@
     $('#chips').innerHTML = '';
     $('#playbar').dataset.key = '';
     showScreen('game');
+    count('start');
     render();
     beginRun();
     focusSink();
   }
 
+  // The counts (net.js): nothing but the step, the course and the question.
+  function count(e, n) { if (NET && NET.ev) NET.ev(e, S.run ? S.run.course.id : '', n); }
+
   function leaveRun() {
+    if (S.run && S.run.phase !== 'done') count('quit', S.run.i);
     if (S.run) { clearTimeout(S.run.timer); clearInterval(S.clock); }
     S.run = null;
     seal(false);
@@ -3358,6 +3365,8 @@
     sink.addEventListener('input', onSinkInput);
     $('#term').addEventListener('pointerdown', function () { focusSink(); });
     document.addEventListener('visibilitychange', function () { if (document.hidden) pauseRun(); });
+    window.addEventListener('pagehide', function () { if (S.run && S.run.phase !== 'done') count('quit', S.run.i); });
+    count('visit');
     window.addEventListener('blur', pauseRun);
     $('#pause').addEventListener('pointerdown', function (e) { e.preventDefault(); resumeRun(); });
     // Vimium's Esc, a click on a key button: take the focus straight back.

@@ -93,11 +93,32 @@
     return call('GET', '/v1/ghost?course=' + encodeURIComponent(course) + '&span=' + encodeURIComponent(span)).then(function (j) { return j.ghost; });
   }
 
+  // The counts: one step of a visit, with a random id that is not the
+  // 合言葉. Not from file:// pages or with Do Not Track on. Never waits.
+  function visitor() {
+    var s = read();
+    if (s.vid) return s.vid;
+    var a = new Uint8Array(8);
+    (window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(a) : a.forEach(function (_, i) { a[i] = Math.random() * 256; });
+    var v = 'v_' + Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+    save({ vid: v });
+    return v;
+  }
+  function ev(e, c, n) {
+    try {
+      if (!/^https?:$/.test(window.location.protocol) || navigator.doNotTrack === '1') return;
+      // text/plain keeps it a simple request (no preflight); keepalive lets
+      // it leave with the page.
+      fetch(API + '/v1/ev', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ v: visitor(), e: e, c: c || '', n: n || 0 }) }).catch(function () {});
+    } catch (err) { /* the counts never break the game */ }
+  }
+
   function forget() { save({ key: null, name: null, syncedAt: null }); }
 
   window.ADV = window.ADV || {};
   window.ADV.net = {
     API: API, state: state, save: save, sync: sync, useKey: useKey, setName: setName,
-    submit: submit, board: board, ghost: ghost, forget: forget
+    submit: submit, board: board, ghost: ghost, forget: forget, ev: ev
   };
 })();
