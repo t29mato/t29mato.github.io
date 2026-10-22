@@ -857,7 +857,19 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .key.k-level { border-color: #9b8a6a; }
 .key.k-next { border-color: var(--andon); background: #fff3d2; box-shadow: 0 0 0 2px var(--andon); }
 .key.k-prefix.k-next { background: var(--andon); color: #2b1a05; }
-@media (max-width: 700px) { .keybar { min-height: calc(3 * 43px + 2 * 6px); align-content: flex-start; } }
+@media (max-width: 700px) { .keybar { min-height: calc(2 * 43px + 6px); align-content: flex-start; } }
 .pb-conf { font-size: 12px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-dim); }
 /* the resize mark sat on the right edge whatever border moves: the card and the green borders say it */
 .yashiki .goal.resize::after { display: none; }
+/* いまここ sits left of the pane number, off the first line of text */
+.yashiki .here-tag { transform: translateX(-100%); }
+/* the bars say their time; the legend shows its colours */
+.spark i { position: relative; }
+.spark i b { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); font: 400 10px var(--mono); color: var(--sumi-dim); white-space: nowrap; }
+.spark { margin-top: 26px; }
+.spark-key i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 8px; vertical-align: -1px; border-radius: 2px; }
+.spark-key i.rec { background: var(--shu); }
+.spark-key i.now { background: var(--ai); }
+.here-tag { white-space: nowrap; }
+/* a phone: the window list needs the whole bar; the host and clock step aside */
+@media (max-width: 700px) { .yashiki .st-host, .yashiki .st-clock { display: none; } }

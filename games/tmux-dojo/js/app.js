@@ -1261,7 +1261,7 @@
   function windowMove(id, verb) {
     var w = T.windowById(S.session, id);
     if (!w) return null;
-    return mv(['0-9'], tx(verb ? '{0} を押す（{1} に戻る）' : '{0} を押す（{1} へ）', w.index, winLabel(w)));
+    return mv([String(w.index)], tx(verb ? '{0} を押す（{1} に戻る）' : '{0} を押す（{1} へ）', w.index, winLabel(w)));
   }
 
   // The resize key that can move something: sideways if the pane has a
@@ -2423,7 +2423,7 @@
     // arrow to the tab (renderTabArrow). Otherwise in the middle of your pane.
     if (playing && !anchor && active && !marks.some(function (g) { return g.tab; })) anchor = { x: (active.x + active.w / 2) * cw, y: (active.y + active.h / 2) * ch };
     // Where you stand, said in words on the pane itself: the card never covers it.
-    if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + (active.x * cw + 6) + 'px;top:' + (active.y * ch + 6) + 'px">' + tx('いまここ') + '</span>');
+    if (playing && active) term.insertAdjacentHTML('beforeend', '<span class="here-tag" style="left:' + ((active.x + active.w) * cw - (active.w < 16 ? 30 : 46) - (win.zoomed ? 22 : 0)) + 'px;top:' + (active.y * ch + 6) + 'px">' + tx('いまここ') + '</span>');
     // A step chip already says what to do here; the tag would repeat it.
     if (playing && anchor) placeCard(term, anchor.x, anchor.y, motdHTML(run, move, fold), run.q.step && run.q.step() ? '' : anchor.tag, '');
     var pk = $(':scope > .picker', term);
@@ -2818,7 +2818,11 @@
     add('Esc', { key: 'Escape' });
     add('←', { key: 'ArrowLeft' }); add('↑', { key: 'ArrowUp' }); add('↓', { key: 'ArrowDown' }); add('→', { key: 'ArrowRight' });
     var labels = [];
-    if (S.run && S.run.q) S.run.q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (l) { var o = ownKey(l); if (!o.none) labels.push(o.label); }); });
+    var gm = S.run && S.run.phase === 'play' && S.run.q && !folded(S.run) ? guideMove(S.run) : null;
+    if (gm) {
+      gm.keys.forEach(function (l) { labels.push(l); });
+      (gm.alt || []).forEach(function (a) { a.keys.forEach(function (l) { labels.push(l); }); });
+    } else if (S.run && S.run.q) S.run.q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (l) { var o = ownKey(l); if (!o.none) labels.push(o.label); }); });
     labels.forEach(function (label) { add(label, keyFromLabel(label), 'k-level'); });
     if (S.confirm) add('y', { key: 'y' });
     if (S.detached || S.prompt) add('Enter', { key: 'Enter' });
@@ -2935,7 +2939,7 @@
     if (!list || list.length < 2) return '';
     var max = Math.max.apply(null, list.map(function (r) { return r.time; }));
     return '<div class="spark" aria-label="' + tx('直近 {0} 回のタイム', list.length) + '">' + list.map(function (r, i) {
-      return '<i class="' + (r.rec ? 'rec' : '') + (i === list.length - 1 ? ' now' : '') + '" style="height:' + Math.max(8, Math.round(r.time / max * 100)) + '%"></i>';
+      return '<i class="' + (r.rec ? 'rec' : '') + (i === list.length - 1 ? ' now' : '') + '" style="height:' + Math.max(8, Math.round(r.time / max * 100)) + '%"><b>' + r.time.toFixed(1) + '</b></i>';
     }).join('') + '</div>';
   }
 
@@ -2990,7 +2994,7 @@
       shareHTML(r) +
       spark(r.spark) +
       '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
-      (r.spark && r.spark.length > 1 ? '<span>' + tx('■ 自己ベスト ■ 今回') + '</span>' : '') + '</div>' +
+      (r.spark && r.spark.length > 1 ? '<span class="spark-key"><i class="rec"></i>' + tx('自己ベスト') + ' <i class="now"></i>' + tx('今回') + '</span>' : '') + '</div>' +
       (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? tx('もう一度 稽古') : tx('もう一度')) + '<kbd class="hk">Enter</kbd></button>' +
       (!c.practice && REC.weakTypes(3).length ? '<button type="button" class="btn" data-course="keiko">' + tx('苦手を稽古') + '<kbd class="hk">K</kbd></button>' : '') +
