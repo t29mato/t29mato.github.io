@@ -2921,6 +2921,17 @@
     // The first-time line has done its job once a run is in.
     $('#fine-first').hidden = n > 0;
     renderMeta(all);
+    renderVersion();
+  }
+
+  // v1.0.0 · デプロイ 30 · 4c08daf (2026-10-23); the commit links to GitHub.
+  function renderVersion() {
+    var V = ADV.VERSION || {}, el = $('#ver');
+    if (!el || !V.v) return;
+    var html = 'v' + esc(V.v) + ' · ' + (V.deploy ? esc(tx('デプロイ {0}', V.deploy)) : 'dev');
+    if (/^[0-9a-f]{7,40}$/.test(V.commit || '')) html += ' · <a href="https://github.com/t29mato/tmux-dojo/commit/' + V.commit + '" target="_blank" rel="noopener">' + V.commit.slice(0, 7) + '</a>';
+    if (V.at) html += ' (' + esc(V.at) + ')';
+    el.innerHTML = html;
   }
 
   // Whether this question's 手順 is folded: its type is learnt (覚えた), or

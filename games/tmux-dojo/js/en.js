@@ -694,5 +694,7 @@ window.ADV.EN = {
   "tmux のキー操作を、本物と同じ画面で身につけるタイムアタック。分割・移動・全画面・ウィンドウ・コピーモード。押すキーは画面に出ている。": "A time attack that teaches tmux keys on a screen just like the real thing: split, move, zoom, windows, copy mode. The keys to press are on screen.",
   "tmux 道場: 本物の tmux と同じ画面で、キー操作をタイムアタック": "tmux Dojo: a time attack on tmux keys, on a screen just like the real thing",
   // --- loop15: ranking fairness ---
-  "自分の設定": "own config"
+  "自分の設定": "own config",
+  // --- version ---
+  "デプロイ {0}": "deploy {0}"
 };
