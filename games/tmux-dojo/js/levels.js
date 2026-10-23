@@ -205,22 +205,45 @@
     return new Date((d || new Date()).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   }
 
-  // Ranks by average seconds per question, after penalties (and rankMul).
-  // Reading the order and pressing one move takes a practised hand about
-  // 2 秒; 8 秒 is reading the 手順 step by step.
+  // Titles (帯) by average seconds per question, after penalties (and
+  // rankMul), fastest first. Reading the order and pressing one move takes
+  // a practised hand about 2 秒; 8 秒 is reading the 手順 step by step. Past
+  // 黒帯 the belt stays black and gains gold stripes; 名人 wears the red one.
+  // `en` is what English shows beside the kanji: romaji · meaning.
   var RANKS = [
-    { max: 2, title: '師範' },
-    { max: 3, title: '師範代' },
-    { max: 5, title: '三段' },
-    { max: 8, title: '初段' },
-    { max: Infinity, title: '見習い' }
+    { max: 1.3, title: '名人', romaji: 'Meijin', en: 'Grand Master', belt: 'red' },
+    { max: 1.8, title: '達人', romaji: 'Tatsujin', en: 'Expert', belt: 'black', stripes: 3 },
+    { max: 2.5, title: '師範', romaji: 'Shihan', en: 'Master', belt: 'black', stripes: 2 },
+    { max: 3.5, title: '師範代', romaji: 'Shihan-dai', en: 'Assistant Master', belt: 'black', stripes: 1 },
+    { max: 4.5, title: '黒帯', romaji: 'Kuro-obi', en: 'Black Belt', belt: 'black' },
+    { max: 6, title: '茶帯', romaji: 'Cha-obi', en: 'Brown Belt', belt: 'brown' },
+    { max: 8, title: '緑帯', romaji: 'Midori-obi', en: 'Green Belt', belt: 'green' },
+    { max: Infinity, title: '白帯', romaji: 'Shiro-obi', en: 'White Belt', belt: 'white' }
   ];
 
-  // Saves from older versions used these titles (the RPG, then the house).
+  // お手本 is this title's pace; from this one up, the next house is suggested.
+  var PAR_RANK = '師範代', STEP_UP_RANK = '黒帯';
+
+  // Saves from older versions used these titles (the RPG, the house, then
+  // the dan grades). Each maps to a belt at least as high.
   var OLD_RANKS = {
-    '伝説の勇者': '師範', '勇者': '師範代', '戦士': '三段', '見習い剣士': '初段', '村人': '見習い',
-    '名匠': '師範', 'からくり師': '師範代', '屋敷守': '三段', '仕掛け番': '初段'
+    '伝説の勇者': '師範', '勇者': '師範代', '戦士': '黒帯', '見習い剣士': '緑帯', '村人': '白帯',
+    '名匠': '師範', 'からくり師': '師範代', '屋敷守': '黒帯', '仕掛け番': '緑帯',
+    '三段': '黒帯', '初段': '緑帯', '見習い': '白帯'
   };
+
+  // The ladder entry of a title (an old name included), or null.
+  function rankInfo(title) {
+    var t = OLD_RANKS[title] || title;
+    for (var i = 0; i < RANKS.length; i++) if (RANKS[i].title === t) return RANKS[i];
+    return null;
+  }
+
+  // Where a title stands on the ladder: 0 at the top; past the end when unknown.
+  function rankIndex(title) {
+    var r = rankInfo(title);
+    return r ? RANKS.indexOf(r) : RANKS.length;
+  }
 
   // `mul` is the course's rankMul: a hard question may take twice as long.
   function rankFor(avg, mul) {
@@ -230,22 +253,25 @@
   }
 
   // The title a course time holds, the next one up, the seconds it needs on
-  // this course (misses included) and how far the time is from it. At the
-  // top there is no next.
-  function nextRank(course, time, n) {
+  // this course (misses included), how far the time is from it in all and
+  // per question. At the top there is no next. `held`, a title the house
+  // has reached, counts when it is higher than the time's (a title carried
+  // over from the dan days): the next one is then the one above it.
+  function nextRank(course, time, n, held) {
     n = n || course.qs.length;
     var mul = course.rankMul || 1;
     var rank = rankFor(time / n, mul);
-    var i = RANKS.map(function (r) { return r.title; }).indexOf(rank);
-    if (i <= 0) return { rank: rank, next: null, need: null, gap: null };
+    if (held && rankIndex(held) < rankIndex(rank)) rank = rankInfo(held).title;
+    var i = rankIndex(rank);
+    if (i <= 0) return { rank: rank, next: null, need: null, gap: null, gapQ: null };
     var need = RANKS[i - 1].max * mul * n;
-    return { rank: rank, next: RANKS[i - 1].title, need: need, gap: time - need };
+    return { rank: rank, next: RANKS[i - 1].title, need: need, gap: time - need, gapQ: (time - need) / n };
   }
 
   // お手本, the target time for a course: 師範代 pace on every question.
   // `n` overrides the number of questions (the 苦手の稽古 picks its own).
   function par(course, n) {
-    return Math.round((n || course.qs.length) * RANKS[1].max * (course.rankMul || 1));
+    return Math.round((n || course.qs.length) * rankInfo(PAR_RANK).max * (course.rankMul || 1));
   }
 
   // Names shown on screen, in the page's language (i18n.js).
@@ -262,6 +288,10 @@
     COURSES: COURSES,
     RANKS: RANKS,
     OLD_RANKS: OLD_RANKS,
+    PAR_RANK: PAR_RANK,
+    STEP_UP_RANK: STEP_UP_RANK,
+    rankInfo: rankInfo,
+    rankIndex: rankIndex,
     rankFor: rankFor,
     nextRank: nextRank,
     par: par,

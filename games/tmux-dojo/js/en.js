@@ -249,7 +249,6 @@ window.ADV.EN = {
   "一時停止中": "Paused",
   "一番上まで": "To the top",
   "三分割": "Three-way split",
-  "三段": "Sandan",
   "上": "up",
   "上のペインへ": "to the pane above",
   "上下に分割": "Split top/bottom",
@@ -299,7 +298,6 @@ window.ADV.EN = {
   "内訳": "Details",
   "写す": "Copy",
   "分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1〜5 手（閉じるは移動も入る）。": "Split, move, zoom, close, make and switch windows. 1–5 moves per question (closing a pane includes walking to it).",
-  "初段": "Shodan",
   "別のファイルやシェルはゲームでは読めない": "The game cannot read other files or run shells",
   "別の端末でこの合言葉を入れると、同じ記録が見られる。他の人には教えない。": "Enter this sync key on another device to see the same records. Keep it to yourself.",
   "別の端末の合言葉を入れる": "Use another device's sync key",
@@ -339,8 +337,6 @@ window.ADV.EN = {
   "左右に分割し、右側をさらに上下に分割する": "Split left/right, then split the right side top/bottom",
   "左右に分割する": "Split left and right",
   "左右に分割する（split）": "Split left and right (split)",
-  "師範": "Shihan",
-  "師範代": "Shihan-dai",
   "平均 {0}秒": "avg {0}s",
   "平均 {0}秒 ・ ミス {1}%": "avg {0}s · wrong keys {1}%",
   "引き継ぎ": "Sync",
@@ -411,7 +407,6 @@ window.ADV.EN = {
   "確認なしで閉じる を足す": "Add no-confirm close",
   "秒": "s",
   "称号": "Title",
-  "称号が「{0}」から <b>{1}</b> に上がった": "Title up: {0} → <b>{1}</b>",
   "称号の一覧（{0}・{1} 問）": "Titles ({0}, {1} questions)",
   "移動して全画面": "Move and zoom",
   "結果をコピー": "Copy result",
@@ -429,7 +424,6 @@ window.ADV.EN = {
   "見た目や動きの設定（ゲームには関係ない）": "Appearance or options (not used by the game)",
   "見つからない: {0}": "Not found: {0}",
   "見るもの": "View",
-  "見習い": "Apprentice",
   "覚えた": "learned",
   "覚えた ✓": "Learned ✓",
   "覚えた: ": "Learned: ",
@@ -680,13 +674,11 @@ window.ADV.EN = {
   "最高の称号 {0}": "Best title: {0}",
   "次はここ（{0}で {1}）": "Next up ({1} in {0})",
   "昨日も解いた。今日も解くと 2 日連続": "You played yesterday. Play today for a 2-day streak",
-  "{0}まで あと {1} 秒（{2} 秒以内）": "{1}s to {0} (finish within {2}s)",
   "最高の称号。": "The top title.",
   // --- loop11: robustness ---
   "q で抜ける（[ で入り直すと、一番下に戻る）": "Press q to leave (coming back with [ starts at the bottom again)",
   // --- loop12: English copy ---
   " ・ {0}": " · {0}",
-  "称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。お手本は師範代のタイム。": "The titles follow the martial-arts grades: Apprentice → Shodan (1st dan) → Sandan (3rd dan) → Shihan-dai (assistant master) → Shihan (master). Par is the Shihan-dai time.",
   // --- loop13: Japanese copy ---
   "{0} 回続けて速く解けた問題は「覚えた」になり、手順が隠れる。": "A question solved quickly {0} times in a row counts as learned, and its steps hide.",
   // --- loop14: link previews ---
@@ -696,5 +688,25 @@ window.ADV.EN = {
   // --- loop15: ranking fairness ---
   "自分の設定": "own config",
   // --- version ---
-  "デプロイ {0}": "deploy {0}"
+  "デプロイ {0}": "deploy {0}",
+  // --- belts ---
+  "名人": "Meijin · Grand Master",
+  "達人": "Tatsujin · Expert",
+  "師範": "Shihan · Master",
+  "師範代": "Shihan-dai · Assistant Master",
+  "黒帯": "Kuro-obi · Black Belt",
+  "茶帯": "Cha-obi · Brown Belt",
+  "緑帯": "Midori-obi · Green Belt",
+  "白帯": "Shiro-obi · White Belt",
+  "いまの調子": "Current form",
+  "いまの調子 Lv.{0}": "Form Lv.{0}",
+  "{0} に昇格": "Promoted to {0}",
+  "（{0}の最高は {1}）": " (best on {0}: {1})",
+  "{0}まで あと {1} 秒（1 問 {2} 秒）": "{1}s to {0} ({2}s a question)",
+  "称号は帯の色: 白帯 → 緑帯 → 茶帯 → 黒帯 → 師範代 → 師範 → 達人 → 名人。一度届いた称号は下がらない。お手本は師範代のタイム。": "The titles are belts: White → Green → Brown → Black → Shihan-dai (assistant master) → Shihan (master) → Tatsujin (expert) → Meijin (grand master). A title once reached never goes down. Par is the Shihan-dai time.",
+  "免状": "Certificates",
+  "届いた日": "Reached on",
+  "まだ免状はない。一度解き終わると、届いた称号の免状がここに並ぶ。": "No certificates yet. Finish a course once and every title you reach is listed here.",
+  "{0}年{1}月{2}日": "{0}-{1}-{2}",
+  "称号の一覧を見る（白帯から名人まで）": "See the title ladder (White Belt to Meijin)"
 };

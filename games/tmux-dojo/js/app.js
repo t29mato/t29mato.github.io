@@ -2857,15 +2857,40 @@
     });
   }
 
-  // 腕前: the level from the latest five runs, its title, and how much
-  // faster per question the next level is. A still bar, no motion.
+  // The belt of a title as a small still mark: its colour and, past 黒帯,
+  // the gold stripes. The name is always written beside it.
+  function beltHTML(title) {
+    var r = LV.rankInfo(title);
+    return r ? '<i class="belt b-' + r.belt + (r.stripes ? ' s' + r.stripes : '') + '" aria-hidden="true"></i>' : '';
+  }
+
+  // A title with its belt: 黒帯, or Kuro-obi · Black Belt in English.
+  function rankHTML(title) {
+    return '<span class="rank">' + beltHTML(title) + esc(tx(title)) + '</span>';
+  }
+
+  // The title in a line that has no room for the meaning: 黒帯, or Kuro-obi.
+  function rankShort(title) {
+    var r = LV.rankInfo(title);
+    return EN && r ? r.romaji : title;
+  }
+
+  // The 免状's day: 2026年10月23日, or Oct 23, 2026.
+  function menjoDate(day) {
+    var p = day.split('-');
+    return EN ? MONTHS[+p[1] - 1] + ' ' + +p[2] + ', ' + p[0] : tx('{0}年{1}月{2}日', p[0], +p[1], +p[2]);
+  }
+
+  // 腕前: the level from the latest five runs, いまの調子 (the title is what
+  // you reached; the Lv is how it goes now), and how much faster per
+  // question the next level is. A still bar, no motion.
   function skillHTML(sk, from) {
     if (!sk) return '<div class="sk-none">' + esc(tx('腕前 ―　一度はじめると、ここに Lv が出る')) + '</div>';
     var cur = LV.paceFor(sk.lv), nxt = sk.next;
     var frac = nxt != null ? Math.max(0, Math.min(1, (cur - sk.pace) / (cur - nxt))) : 1;
     var up = from && from.lv < sk.lv;
     return '<div class="sk-row"><span class="sk-lab">' + tx('腕前') + '</span><span class="sk-lv' + (up ? ' up' : '') + '">' +
-      (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span></div>' +
+      '<span class="sk-form">' + tx('いまの調子') + '</span> ' + (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span></div>' +
       '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
       '<div class="sk-note">' + (nxt != null ? tx('次の Lv.{0} まで、1 問あたり {1} 秒速く', sk.lv + 1, sk.toNext.toFixed(2)) : tx('最高の Lv。')) +
       tx('（直近 {0} 回の平均 {1} 秒／問）', sk.runs, sk.pace.toFixed(2)) + '</div>';
@@ -2874,7 +2899,7 @@
   // The top bar: the 腕前, always in view.
   function renderMeta(all) {
     var sk = REC.skill(all);
-    $('#title-meta').textContent = sk ? tx('腕前 Lv.{0}', sk.lv) : 'prefix ' + prefixLabel();
+    $('#title-meta').textContent = sk ? tx('いまの調子 Lv.{0}', sk.lv) : 'prefix ' + prefixLabel();
   }
 
   function renderTitle() {
@@ -2890,24 +2915,26 @@
       var runs = REC.runsOf(c.id, all);
       var best = REC.best(c.id, all);
       var a5 = ao5(runs);
-      // The title the best holds and the next one; on a house not yet
-      // entered, whether the one before is at 三段 or better: the step up.
-      var nr = best ? LV.nextRank(c, best.time) : null;
-      var prev = !runs.length && i > 0 ? REC.best(LV.COURSES[i - 1].id, all) : null;
-      var prevRank = prev ? LV.nextRank(LV.COURSES[i - 1], prev.time) : null;
-      var stepUp = prevRank && LV.RANKS.map(function (x) { return x.title; }).indexOf(prevRank.rank) <= 2;
+      // The title reached on this house (the name tag), what the best time
+      // holds and the next one; on a house not yet entered, whether the one
+      // before has reached 黒帯: the step up.
+      var held = REC.bestTitle(c.id, all);
+      var nr = best ? LV.nextRank(c, best.time, null, held) : null;
+      var prevTitle = !runs.length && i > 0 ? REC.bestTitle(LV.COURSES[i - 1].id, all) : null;
+      var stepUp = prevTitle && LV.rankIndex(prevTitle) <= LV.rankIndex(LV.STEP_UP_RANK);
       html += '<li><button type="button" class="wing' + (c.id === pick ? ' hot' : '') + '" data-course="' + c.id + '">' +
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
         '<span class="wing-n">' + nQ(c.qs.length) + '</span>' +
         '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span>' +
+        (held ? '<span class="wing-title">' + rankHTML(held) + '</span>' : '') +
         // The key that starts this course (navKey): someone who knows tmux goes straight to 上級 with 3.
         '<kbd class="hk">' + (i + 1) + '</kbd></span>' +
         '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
         '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
-        (nr ? '<small class="wing-rank">' + esc(nr.next ? tx('{0}まで あと {1} 秒', tx(nr.next), nr.gap.toFixed(1)) : tx('最高の称号 {0}', tx(nr.rank))) + '</small>' : '') +
-        (stepUp ? '<small class="wing-next">' + esc(tx('次はここ（{0}で {1}）', LV.COURSES[i - 1].title, tx(prevRank.rank))) + '</small>' : '') +
+        (nr ? '<small class="wing-rank">' + esc(nr.next ? tx('{0}まで あと {1} 秒', rankShort(nr.next), nr.gap.toFixed(1)) : tx('最高の称号 {0}', rankShort(nr.rank))) + '</small>' : '') +
+        (stepUp ? '<small class="wing-next">' + esc(tx('次はここ（{0}で {1}）', LV.COURSES[i - 1].title, rankShort(prevTitle))) + '</small>' : '') +
         '<small class="wing-top" data-top="' + c.id + '">' + topHTML(c.id) + '</small></span>' +
         '</button></li>';
     });
@@ -4019,12 +4046,17 @@
     else if (r.delta < 0) sub = tx('前回より {0} 秒 速い。自己ベストまで あと {1} 秒', Math.abs(r.delta).toFixed(1), r.bestDelta.toFixed(1));
     else sub = tx('前回より {0} 秒 遅い。自己ベストまで あと {1} 秒', r.delta.toFixed(1), r.bestDelta.toFixed(1));
     if (r.ao5 != null) sub += tx(' ・ 五回平均 {0}', (r.ao5Prev != null ? r.ao5Prev.toFixed(1) + ' → ' : '') + r.ao5.toFixed(1));
+    // 昇格 only when this run raised the house's highest title; otherwise
+    // this run's title, and the one reached when it is higher.
+    var held = REC.bestTitle(r.course);
     var rankLine = r.rankUp
-      ? tx('称号が「{0}」から <b>{1}</b> に上がった', esc(tx(r.rankFrom)), esc(tx(r.rank)))
-      : tx('今回の称号 <b>{0}</b>', esc(tx(r.rank)));
-    // What the next title needs on this course: the number to beat next time.
+      ? '<b class="em-promo">' + tx('{0} に昇格', rankHTML(r.rank)) + '</b>'
+      : tx('今回の称号 <b>{0}</b>', rankHTML(r.rank)) +
+        (held && LV.rankIndex(held) < LV.rankIndex(r.rank) ? '<span class="em-held">' + tx('（{0}の最高は {1}）', esc(c.title), rankHTML(held)) + '</span>' : '');
+    // What the next title needs on this course, in all and per question:
+    // the number to beat next time.
     var nr = LV.nextRank(c, r.time, r.n);
-    rankLine += '<small>' + esc(nr.next ? tx('{0}まで あと {1} 秒（{2} 秒以内）', tx(nr.next), nr.gap.toFixed(1), Math.round(nr.need)) : tx('最高の称号。')) + '</small>';
+    rankLine += '<small>' + esc(nr.next ? tx('{0}まで あと {1} 秒（1 問 {2} 秒）', tx(nr.next), nr.gap.toFixed(1), nr.gapQ.toFixed(2)) : tx('最高の称号。')) + '</small>';
     var slow = r.slow ? Q[r.slow] : null;
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });
@@ -4037,7 +4069,8 @@
       '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
       '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
-      '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + (EN ? esc(tx(r.rank)) : esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2')) + '</span><span>' + rankLine + '</span></div>' +
+      // The seal keeps the kanji in English too; the words beside it translate.
+      '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" lang="ja" aria-hidden="true">' + esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2') + '</span><span>' + rankLine + '</span></div>' +
       '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
       learntHTML(r) +
       '<dl class="em-facts">' +
@@ -4111,14 +4144,13 @@
     if (isBest && r.bestBefore && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
 
-  // The next house up (入門 → 中級 → 上級) after a run of 三段 or better, while
+  // The next house up (入門 → 中級 → 上級) after a run of 黒帯 or better, while
   // that house has never been entered: the moment to step up.
   function nextCourse(r) {
     var i = LV.COURSES.map(function (c) { return c.id; }).indexOf(r.course);
     var up = i >= 0 ? LV.COURSES[i + 1] : null;
     if (!up || REC.runsOf(up.id, REC.load()).length) return null;
-    var at = LV.RANKS.map(function (x) { return x.title; }).indexOf(r.rank);
-    return at >= 0 && at <= 2 ? up : null;
+    return LV.rankIndex(r.rank) <= LV.rankIndex(LV.STEP_UP_RANK) ? up : null;
   }
 
   // The three questions that took longest, with their seconds: what to practise.
@@ -4168,14 +4200,18 @@
     var rows = [];
     for (var i = 0; i < sq.length; i += 10) rows.push(sq.slice(i, i + 10).join(''));
     var day = LV.dayKey(r.at), d = day.split('-');
-    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
+    // The title in English carries its kanji: Kuro-obi 黒帯.
+    var title = EN && LV.rankInfo(r.rank) ? LV.rankInfo(r.rank).romaji + ' ' + r.rank : r.rank;
+    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, title) + '\n' +
       rows.join('\n') + '\n' + SITE + (EN ? '?lang=en' : '');
   }
 
   function shareHTML(r) {
     if (REC.courseOf(r.course).practice) return '';
     var text = shareText(r);
-    return '<div class="share"><pre class="share-text">' + esc(text) + '</pre>' +
+    // On screen the kanji of the title is marked as Japanese.
+    var shown = esc(text).replace(esc(r.rank), '<span lang="ja">' + esc(r.rank) + '</span>');
+    return '<div class="share"><pre class="share-text">' + shown + '</pre>' +
       '<div class="share-btns"><button type="button" class="btn" data-share>' + tx('結果をコピー') + '</button>' +
       '<a class="btn ghost" target="_blank" rel="noopener" href="https://x.com/intent/post?text=' + encodeURIComponent(text) + '">' + tx('X に投稿') + '</a>' +
       '<small class="share-msg" aria-live="polite"></small></div></div>';
@@ -4420,7 +4456,7 @@
     var st = REC.stats(id);
     if (!st) {
       body.innerHTML = '<div class="rec-log"><p>' + tx('{0}（{1}）の記録は、まだ白紙。', esc(c.title), esc(c.mode)) + '</p><p>' + tx('一度はじめると、ここに上達が描かれていく。') + '</p></div>' +
-        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + tx('{0}をはじめる', esc(c.title)) + '</button></div>' + rankPanel(c, '') + drillPanel();
+        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + tx('{0}をはじめる', esc(c.title)) + '</button></div>' + rankPanel(c, '', null) + menjoPanel() + drillPanel();
       return;
     }
     var gain = st.first.time - st.best;
@@ -4431,7 +4467,7 @@
     var tiles =
       '<div class="rec-tiles">' +
       '<div class="rec-tile"><small>' + tx('自己ベスト') + '</small><b>' + fmt(st.best) + '</b></div>' +
-      '<div class="rec-tile"><small>' + tx('最高の称号') + '</small><b>' + esc(st.bestRank ? tx(st.bestRank) : '—') + '</b></div>' +
+      '<div class="rec-tile"><small>' + tx('最高の称号') + '</small><b>' + (st.bestRank ? rankHTML(st.bestRank) : '—') + '</b></div>' +
       '<div class="rec-tile"><small>' + tx('挑戦回数') + '</small><b>' + tx('{0} 回', st.count) + '</b></div>' +
       '<div class="rec-tile"><small>' + tx('五回平均') + '</small><b>' + fmt(a5) + '</b></div>' +
       '</div>';
@@ -4439,24 +4475,38 @@
       dailyChart(REC.dailyBest(id), c);
     var rows = st.runs.slice(0, 20).map(function (r) {
       var note = r.legacy ? tx('旧記録') : tx('ミス {0}', r.misses) + (r.overs ? tx(' ・ 目安超え {0}', r.overs) : '') + (r.timeouts ? tx(' ・ 時間切れ {0}', r.timeouts) : '');
-      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note">' + note + '</td><td class="r-rank">' + esc(tx(r.rank)) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
+      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note">' + note + '</td><td class="r-rank">' + rankHTML(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">' + tx('直近の記録') + '</div><table class="rec-table"><thead><tr><th>' + tx('日付') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('内訳') + '</th><th>' + tx('称号') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + rankPanel(c, st.bestRank) + chart + weakPanel(id) + drillPanel() + learntPanel() + table;
+    body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + rankPanel(c, st.bestRank, st.best) + menjoPanel() + chart + weakPanel(id) + drillPanel() + learntPanel() + table;
   }
 
-  // Every title and the time it needs on this course (misses included),
-  // the one you hold marked.
-  function rankPanel(c, mine) {
+  // The whole ladder, top to bottom: every title and the time it needs on
+  // this course (misses included), the one reached marked, and what the
+  // best time still needs for the next.
+  function rankPanel(c, mine, best) {
     var n = c.qs.length, mul = c.rankMul || 1;
     var rows = LV.RANKS.map(function (r, i) {
       var t = isFinite(r.max) ? tx('{0} 秒以内', Math.round(r.max * mul * n)) : tx('{0} 秒より遅い', Math.round(LV.RANKS[i - 1].max * mul * n));
       var per = isFinite(r.max) ? tx('{0} 秒', (r.max * mul).toFixed(1)) : '';
-      return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(tx(r.title)) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? tx('いまここ') : '') + '</td></tr>';
+      return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + rankHTML(r.title) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? tx('いまここ') : '') + '</td></tr>';
     }).join('');
+    var nr = best != null ? LV.nextRank(c, best, null, mine) : null;
+    var next = nr ? '<p class="rec-next">' + esc(nr.next ? tx('{0}まで あと {1} 秒（1 問 {2} 秒）', tx(nr.next), nr.gap.toFixed(1), nr.gapQ.toFixed(2)) : tx('最高の称号。')) + '</p>' : '';
     // Not "目安": that word is the per-question time limit elsewhere.
-    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<p class="rec-empty">' + esc(tx('称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。お手本は師範代のタイム。')) + '</p></div>';
+    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' + next +
+      '<p class="rec-empty">' + esc(tx('称号は帯の色: 白帯 → 緑帯 → 茶帯 → 黒帯 → 師範代 → 師範 → 達人 → 名人。一度届いた称号は下がらない。お手本は師範代のタイム。')) + '</p></div>';
+  }
+
+  // 免状: every title reached, on which house and from which day.
+  function menjoPanel() {
+    var list = REC.menjo();
+    var rows = list.map(function (m) {
+      return '<tr><td class="r-rank">' + rankHTML(m.title) + '</td><td>' + esc(REC.courseOf(m.course).title) + '</td><td class="c-n">' + esc(menjoDate(m.day)) + '</td></tr>';
+    }).join('');
+    return '<div class="rec-panel rec-menjo"><div class="rec-head">' + tx('免状') + '</div>' +
+      (rows ? '<table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('コース') + '</th><th>' + tx('届いた日') + '</th></tr></thead><tbody>' + rows + '</tbody></table>'
+        : '<p class="rec-empty">' + tx('まだ免状はない。一度解き終わると、届いた称号の免状がここに並ぶ。') + '</p>') + '</div>';
   }
 
   function weakPanel(id) {
@@ -4581,6 +4631,13 @@
     $('#course-list').addEventListener('click', function (e) {
       var b = e.target.closest('[data-course]');
       if (b) startRun(b.dataset.course);
+    });
+    // The ladder, from the course select: the records of the course picked, at its title list.
+    $('#btn-ladder').addEventListener('click', function () {
+      S.recTab = 'growth';
+      openRecords($('#btn-enter').dataset.course || null, 'title');
+      var el = $('#records-body .rec-ranks');
+      if (el) el.scrollIntoView();
     });
     $$('.to-title').forEach(function (b) {
       b.addEventListener('click', function (e) {

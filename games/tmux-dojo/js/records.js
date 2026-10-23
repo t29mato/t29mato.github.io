@@ -6,7 +6,7 @@
 
   var LV = ADV.levels;
   var STORE_KEY = 'tmux-da';
-  var SCHEMA = 4, CAP = 100, HARD_CAP = 200;
+  var SCHEMA = 5, CAP = 100, HARD_CAP = 200;
 
   function recordKey(id) { return 'tmux:' + id; }
   function courseOf(id) {
@@ -42,6 +42,7 @@
       all.runs = runs;
     }
     if (all.arena != null && typeof all.arena !== 'object') { delete all.arena; changed = true; }
+    if (all.titles != null && (typeof all.titles !== 'object' || Array.isArray(all.titles))) { delete all.titles; changed = true; }
     Object.keys(all.arena || {}).forEach(function (k) {
       var b = all.arena[k];
       if (!b || typeof b.time !== 'number' || !isFinite(b.time)) { delete all.arena[k]; changed = true; }
@@ -60,16 +61,27 @@
     } catch (e2) { /* storage is a convenience, not a requirement */ }
   }
 
+  // A run's title on the ladder of today: an old name is carried over, and
+  // where the pace is known the run gets what it earns now if that is
+  // higher. Never lower than the player had.
+  function retitle(r) {
+    var c = courseOf(r.course);
+    var old = LV.OLD_RANKS[r.rank] || r.rank;
+    var now = typeof r.time === 'number' && r.n ? LV.rankFor(r.time / r.n, c && c.rankMul) : null;
+    r.rank = now && LV.rankIndex(now) < LV.rankIndex(old) ? now : old;
+  }
+
   // Old saves kept only a best time per course. Each becomes one run, marked
   // legacy, so the history starts from it instead of from nothing. Schema 2
-  // runs carry the old game's rank titles; schema 3 and 4 rename them.
+  // runs carry the old game's rank titles; schema 3 and 4 rename them;
+  // schema 5 puts them on the belts and writes the 免状 (titles below).
   function migrate(all) {
     if (all.schema === SCHEMA && Array.isArray(all.runs)) return false;
     all.arena = all.arena || {};
     var hadRuns = Array.isArray(all.runs);
     all.runs = hadRuns ? all.runs : [];
-    all.runs.forEach(function (r) { if (LV.OLD_RANKS[r.rank]) r.rank = LV.OLD_RANKS[r.rank]; });
-    if (hadRuns) { all.schema = SCHEMA; return true; }
+    all.runs.forEach(retitle);
+    if (hadRuns) { all.schema = SCHEMA; fillTitles(all); return true; }
     Object.keys(all.arena).forEach(function (key) {
       var id = key.replace(/^tmux:/, ''), c = courseOf(id), b = all.arena[key];
       if (!c || !b || typeof b.time !== 'number') return;
@@ -85,14 +97,58 @@
       b.ver = 1;
     });
     all.schema = SCHEMA;
+    fillTitles(all);
     return true;
   }
 
   function load() {
     var all = read();
     var fixed = sane(all);
-    if (migrate(all) || fixed) write(all);
+    var moved = migrate(all);
+    if (!all.titles) { fillTitles(all); fixed = true; }
+    if (moved || fixed) write(all);
     return all;
+  }
+
+  // ---- 免状: the titles reached, per house ----------------------------------
+
+  // all.titles[course][title] is the first day (Japan time) a run on that
+  // house reached the title, or any above it: the 免状. Kept apart from the
+  // runs, which are pruned; a title once reached stays.
+  function noteTitle(all, r) {
+    var c = courseOf(r.course);
+    if (!c || c.practice || r.drill || !r.rank || LV.rankIndex(r.rank) >= LV.RANKS.length) return;
+    var day = LV.dayKey(new Date(r.at));
+    var mine = (all.titles = all.titles || {})[c.id] || (all.titles[c.id] = {});
+    for (var i = LV.rankIndex(r.rank); i < LV.RANKS.length; i++) {
+      var t = LV.RANKS[i].title;
+      if (!mine[t] || day < mine[t]) mine[t] = day;
+    }
+  }
+
+  // The 免状 from every run kept: a player from before gets theirs too.
+  function fillTitles(all) {
+    all.titles = all.titles || {};
+    (all.runs || []).forEach(function (r) { noteTitle(all, r); });
+  }
+
+  // 到達: the highest title a house has reached, or null.
+  function bestTitle(course, all) {
+    var mine = ((all || load()).titles || {})[course] || {};
+    var best = null;
+    Object.keys(mine).forEach(function (t) { if (best == null || LV.rankIndex(t) < LV.rankIndex(best)) best = t; });
+    return best;
+  }
+
+  // Every 免状, newest first: { course, title, day }.
+  function menjo(all) {
+    var out = [];
+    var ts = (all || load()).titles || {};
+    LV.COURSES.forEach(function (c) {
+      Object.keys(ts[c.id] || {}).forEach(function (t) { if (LV.rankInfo(t)) out.push({ course: c.id, title: t, day: ts[c.id][t] }); });
+    });
+    out.sort(function (a, b) { return a.day < b.day ? 1 : a.day > b.day ? -1 : LV.rankIndex(a.title) - LV.rankIndex(b.title); });
+    return out;
   }
 
   function newId() {
@@ -133,6 +189,7 @@
     var c = courseOf(run.course);
     var prevRuns = runsOf(run.course, all);
     var prevBest = best(run.course, all);
+    var titleFrom = bestTitle(run.course, all);
     var skillFrom = skill(all), learntFrom = learnt();
     run.id = run.id || newId();
     run.ver = c ? c.ver : 1;
@@ -143,9 +200,10 @@
     if (run.rec) {
       all.arena[recordKey(run.course)] = { time: run.time, misses: run.misses, date: run.at.slice(0, 10), runId: run.id, ver: run.ver };
     }
+    noteTitle(all, run);
     all.runs = prune(all.runs, run.course);
     write(all);
-    var sum = summarize(run, prevRuns, prevBest);
+    var sum = summarize(run, prevRuns, prevBest, titleFrom);
     // What this run changed in the long run: the 腕前 and what is learnt.
     var learntNow = learnt();
     sum.skillFrom = skillFrom;
@@ -155,16 +213,11 @@
     return sum;
   }
 
-  function rankIndex(title) {
-    for (var i = 0; i < LV.RANKS.length; i++) if (LV.RANKS[i].title === title) return i;
-    return LV.RANKS.length;
-  }
-
-  function summarize(run, prevRuns, prevBest) {
+  // `bestRank` is the house's highest title before this run (the 免状);
+  // `rankUp` says this run raised it: the 昇格.
+  function summarize(run, prevRuns, prevBest, bestRank) {
     var c = courseOf(run.course);
     var prev = prevRuns[0] || null;
-    var bestRank = null;
-    prevRuns.forEach(function (r) { if (bestRank == null || rankIndex(r.rank) < rankIndex(bestRank)) bestRank = r.rank; });
     var par = c ? LV.par(c, run.n) : null;
     var parBefore = prevRuns.some(function (r) { return par != null && r.time <= par; });
     var spark = prevRuns.slice(0, 9).reverse().concat([run]).map(function (r) { return { time: r.time, rec: !!r.rec }; });
@@ -179,7 +232,7 @@
       record: run.rec,
       rank: run.rank,
       rankFrom: bestRank,
-      rankUp: bestRank != null && rankIndex(run.rank) < rankIndex(bestRank),
+      rankUp: bestRank != null && LV.rankIndex(run.rank) < LV.rankIndex(bestRank),
       par: par,
       parMet: par != null && run.time <= par,
       parFirst: par != null && run.time <= par && !parBefore,
@@ -199,7 +252,7 @@
     return {
       count: runs.length,
       best: b ? b.time : null,
-      bestRank: b ? LV.rankFor(b.time / first.n, courseOf(course) && courseOf(course).rankMul) : null,
+      bestRank: bestTitle(course, all),
       first: first, last: last,
       recentAvg: recent.reduce(function (s, r) { return s + r.time; }, 0) / recent.length,
       runs: runs
@@ -414,8 +467,9 @@
     (runs || []).forEach(function (r) {
       if (!r || typeof r.id !== 'string' || have[r.id] || !courseOf(r.course) || typeof r.time !== 'number') return;
       have[r.id] = 1;
-      if (LV.OLD_RANKS[r.rank]) r.rank = LV.OLD_RANKS[r.rank];
+      retitle(r);
       all.runs.push(r);
+      noteTitle(all, r);
       added++;
     });
     if (!added) return 0;
@@ -447,6 +501,7 @@
     var all = load();
     all.arena = {};
     all.runs = [];
+    all.titles = {};
     write(all);
   }
 
@@ -454,7 +509,7 @@
   window.ADV.records = {
     SCHEMA: SCHEMA, CAP: CAP, HARD_CAP: HARD_CAP,
     load: load, add: add, runsOf: runsOf, best: best,
-    stats: stats, weakness: weakness, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
+    stats: stats, weakness: weakness, bestTitle: bestTitle, menjo: menjo, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
     learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest, streak: streak, todayBest: todayBest,
     drillRecent: drillRecent, drillWeight: drillWeight, drillPick: drillPick, drillStreak: drillStreak, drillBest: drillBest,
     recordKey: recordKey, courseOf: courseOf, limitOf: limitOf, WEAK_RATIO: WEAK_RATIO

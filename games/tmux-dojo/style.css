@@ -921,3 +921,33 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 /* display-panes (prefix → q): the pane numbers, big, for a second */
 #term > .dp-num { position: absolute; z-index: 9; display: flex; align-items: center; justify-content: center; pointer-events: none; font-family: var(--mono); font-size: 56px; font-weight: 700; color: #fff; text-shadow: 0 0 8px #000, 0 0 2px #000; }
 #term > .dp-num.active { color: var(--andon-2); }
+/* belts: a title's colour as a small still mark (the name is always written
+   beside it); past 黒帯 the belt stays black and gains gold stripes, 名人
+   wears the red one. A sumi edge keeps the white and the black belt visible
+   on the paper by day and on the night page alike. */
+.belt { display: inline-block; box-sizing: border-box; width: 24px; height: 10px; border-radius: 2px; vertical-align: 0; margin-right: 6px; border: 1px solid #6f6558; background: #f6f2e8; }
+.belt.b-green { background-color: #2f8a4b; }
+.belt.b-brown { background-color: #7a4a1e; }
+.belt.b-black { background-color: #1c1a18; }
+.belt.b-red { background-color: #c4302b; }
+.belt.s1 { background-image: linear-gradient(90deg, transparent 0 16px, #f0c04a 16px 18px, transparent 18px); }
+.belt.s2 { background-image: linear-gradient(90deg, transparent 0 12px, #f0c04a 12px 14px, transparent 14px 16px, #f0c04a 16px 18px, transparent 18px); }
+.belt.s3 { background-image: linear-gradient(90deg, transparent 0 8px, #f0c04a 8px 10px, transparent 10px 12px, #f0c04a 12px 14px, transparent 14px 16px, #f0c04a 16px 18px, transparent 18px); }
+/* the name tag on a course card: the title reached there */
+.wing-title { font-size: 12px; font-family: var(--sans); font-weight: 600; color: var(--sumi); white-space: nowrap; }
+.wing-title .belt { margin-right: 4px; }
+/* the ladder, from the course select */
+.plan-ladder { margin: 6px 0 0; font-size: 12.5px; }
+.linkish { background: none; border: 0; padding: 0; cursor: pointer; color: var(--sumi-dim); text-decoration: underline; text-underline-offset: 3px; }
+.linkish:hover { color: var(--sumi); }
+/* the result: 昇格 in words; the Lv is いまの調子, small, under the title */
+.em-promo { color: var(--shu); font-size: 22px; }
+.em-held { display: block; font-size: 13px; color: var(--sumi-dim); }
+.em-rank .belt { margin-right: 6px; }
+.em-rank .rank { display: inline-block; }
+.sk-form { font-size: 12px; font-family: var(--sans); font-weight: 400; color: var(--ink-dim); letter-spacing: 0.05em; }
+.em-skill .sk-form { color: var(--sumi-dim); }
+.em-skill .sk-lv { font-size: 18px; }
+.em-skill .sk-lv small { font-size: 12px; }
+.rec-next { margin: 8px 0 0; font-size: 13.5px; color: var(--shu); font-weight: 600; }
+.rec-menjo td { white-space: nowrap; }
