@@ -26,7 +26,12 @@
   })();
 
   function read() {
-    try { return JSON.parse(window.localStorage.getItem(STORE_KEY) || '{}') || {}; } catch (e) { return {}; }
+    var s;
+    try { s = JSON.parse(window.localStorage.getItem(STORE_KEY) || '{}'); } catch (e) { s = null; }
+    if (!s || typeof s !== 'object' || Array.isArray(s)) s = {};
+    // Only a string is a 合言葉, a name or a time; anything else is as if unset.
+    ['key', 'name', 'syncedAt', 'vid'].forEach(function (k) { if (s[k] != null && typeof s[k] !== 'string') s[k] = null; });
+    return s;
   }
   function save(patch) {
     var s = read();
@@ -35,15 +40,22 @@
     return s;
   }
 
+  // A server that never answers would leave 読み込み中 on screen for ever:
+  // after TIMEOUT the call fails like any other, and the screen says so.
+  var TIMEOUT = 10000;
   function call(method, path, body) {
     var opts = { method: method, headers: {} };
     if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    var ac = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = ac ? setTimeout(function () { ac.abort(); }, TIMEOUT) : 0;
+    if (ac) opts.signal = ac.signal;
+    var done = function () { if (timer) clearTimeout(timer); };
     return fetch(API + path, opts).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
         if (!r.ok) { var e = new Error(j.error || 'http ' + r.status); e.status = r.status; throw e; }
         return j;
       });
-    });
+    }).then(function (j) { done(); return j; }, function (e) { done(); throw e; });
   }
 
   function state() { return read(); }

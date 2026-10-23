@@ -697,5 +697,7 @@ window.ADV.EN = {
   "次はここ（{0} で {1}）": "Next: here ({1} in {0})",
   "昨日も解いた。今日も解くと 2 日連続": "You played yesterday. Play today for a 2-day streak",
   "{0}まで あと {1} 秒（{2} 秒以内）": "{1} s to {0} (within {2} s)",
-  "最高の称号。": "The top title."
+  "最高の称号。": "The top title.",
+  // --- loop11: robustness ---
+  "q で抜ける（[ で入り直すと、一番下に戻る）": "Press q to leave (coming back with [ starts at the bottom again)"
 };

@@ -252,10 +252,12 @@
   // recently (window_pane_choose_best), ties to the first in layout order.
   // As tmux's window_pane_find_left/right/up/down, it wraps round at the
   // window edge (the far side's rooms), unless noWrap.
-  function neighbour(win, cols, rows, dir, noWrap) {
+  // `from` and `recent` (arrowPath) ask the same from another pane, with
+  // `recent` as the one that would then be the most recently active.
+  function neighbour(win, cols, rows, dir, noWrap, from, recent) {
     var l = layout(win, cols, rows);
     var me = null;
-    for (var i = 0; i < l.panes.length; i++) if (l.panes[i].pane.id === win.active) me = l.panes[i];
+    for (var i = 0; i < l.panes.length; i++) if (l.panes[i].pane.id === (from || win.active)) me = l.panes[i];
     if (!me) return null;
     var edge;
     if (dir === 'L') edge = me.x === 0 ? (noWrap ? null : cols + 1) : me.x;
@@ -272,9 +274,34 @@
       if (dir === 'R') ok = edge + 1 === r.x && overlap(r.y, r.h, me.y, me.h);
       if (dir === 'U') ok = r.y + r.h + 1 === edge && overlap(r.x, r.w, me.x, me.w);
       if (dir === 'D') ok = edge + 1 === r.y && overlap(r.x, r.w, me.x, me.w);
-      if (ok && (!best || r.pane.activePoint > best.pane.activePoint)) best = r;
+      if (!ok) continue;
+      if (!best || r.pane.id === recent || (best.pane.id !== recent && r.pane.activePoint > best.pane.activePoint)) best = r;
     }
     return best ? best.pane : null;
+  }
+
+  // The first arrow of the shortest way from the active pane to `paneId`,
+  // walking as tmux would (of several panes in a direction, the one active
+  // last: on the way, the pane just left). A greedy nearest step can swing
+  // between two panes for ever (↓ to a wide pane, ↑ back to where you were);
+  // this never does. Null when plain arrows do not get there.
+  function arrowPath(win, cols, rows, paneId) {
+    var seen = {}, queue = [{ at: win.active, prev: null, first: null }];
+    while (queue.length) {
+      var s = queue.shift();
+      for (var i = 0; i < 4; i++) {
+        var d = 'LRUD'[i];
+        var nb = neighbour(win, cols, rows, d, true, s.at, s.prev);
+        if (!nb) continue;
+        var first = s.first || d;
+        if (nb.id === paneId) return first;
+        var key = nb.id + '|' + s.at;
+        if (seen[key]) continue;
+        seen[key] = 1;
+        queue.push({ at: nb.id, prev: s.at, first: first });
+      }
+    }
+    return null;
   }
 
   function overlap(a, al, b, bl) { return a < b + bl && b < a + al; }
@@ -462,6 +489,7 @@
     killWindow: killWindow,
     selectPane: selectPane,
     neighbour: neighbour,
+    arrowPath: arrowPath,
     resizePane: resizePane,
     selectWindow: selectWindow,
     nextWindow: nextWindow

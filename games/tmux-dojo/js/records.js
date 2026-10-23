@@ -17,8 +17,36 @@
   function read() {
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
-      return raw ? JSON.parse(raw) : {};
+      var v = raw ? JSON.parse(raw) : {};
+      return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
     } catch (e) { return {}; }
+  }
+
+  // A store another version or a hand wrote: entries that are not runs
+  // (or bests that are not times) would break the drawing, so they go.
+  // Returns whether anything had to.
+  function sane(all) {
+    var changed = false;
+    if (all.runs != null && !Array.isArray(all.runs)) { delete all.runs; changed = true; }
+    if (Array.isArray(all.runs)) {
+      var runs = all.runs.filter(function (r) {
+        return r && typeof r === 'object' && typeof r.course === 'string' && typeof r.time === 'number' && isFinite(r.time) &&
+          (typeof r.at === 'string' || typeof r.at === 'number') && isFinite(new Date(r.at).getTime());
+      });
+      runs.forEach(function (r) {
+        if (typeof r.at === 'number') { r.at = new Date(r.at).toISOString(); changed = true; }
+        if (r.qs != null && !Array.isArray(r.qs)) { r.qs = []; changed = true; }
+        if (r.qs && r.qs.some(function (q) { return !q || typeof q !== 'object'; })) { r.qs = r.qs.filter(function (q) { return q && typeof q === 'object'; }); changed = true; }
+      });
+      if (runs.length !== all.runs.length) changed = true;
+      all.runs = runs;
+    }
+    if (all.arena != null && typeof all.arena !== 'object') { delete all.arena; changed = true; }
+    Object.keys(all.arena || {}).forEach(function (k) {
+      var b = all.arena[k];
+      if (!b || typeof b.time !== 'number' || !isFinite(b.time)) { delete all.arena[k]; changed = true; }
+    });
+    return changed;
   }
 
   function write(all) {
@@ -62,7 +90,8 @@
 
   function load() {
     var all = read();
-    if (migrate(all)) write(all);
+    var fixed = sane(all);
+    if (migrate(all) || fixed) write(all);
     return all;
   }
 
@@ -90,7 +119,12 @@
 
   function best(course, all) {
     all = all || load();
-    return (all.arena || {})[recordKey(course)] || null;
+    var b = (all.arena || {})[recordKey(course)];
+    if (b) return b;
+    // A history without its best (a store out of step): the fastest run kept.
+    var fast = null;
+    (all.runs || []).forEach(function (r) { if (r.course === course && (!fast || r.time < fast.time)) fast = r; });
+    return fast ? { time: fast.time, misses: fast.misses || 0, date: String(fast.at).slice(0, 10), runId: fast.id, ver: fast.ver } : null;
   }
 
   // Add one finished run. Returns what the result screen needs to say.

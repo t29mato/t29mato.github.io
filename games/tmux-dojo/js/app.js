@@ -22,7 +22,9 @@
     load: function () {
       try {
         var raw = window.localStorage.getItem(STORE_KEY);
-        return raw ? JSON.parse(raw) : {};
+        var v = raw ? JSON.parse(raw) : {};
+        // A store that is not an object (broken, hand-edited) counts as empty.
+        return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
       } catch (e) { return {}; }
     },
     save: function (patch) {
@@ -470,10 +472,23 @@
     var el = paneBodyEl(pane.id);
     var line = el && $('[data-ln="' + ln + '"]', el);
     if (!line) return null;
-    var top = line.offsetTop, h = line.offsetHeight;
+    var top = line.offsetTop, h = line.offsetHeight, bottom = el.scrollTop + el.clientHeight;
+    // The line's first row in view is enough: a narrow pane wraps a line
+    // over more rows than fit, and a pane of one row shows just that.
+    var row = Math.min(h, S.cellH);
+    // A view under two rows tall shows what it can: any part of the line.
+    if (el.clientHeight < 2 * row) return top >= bottom ? 'below' : top + h <= el.scrollTop ? 'above' : 'visible';
     if (top < el.scrollTop) return 'above';
-    if (top + h > el.scrollTop + el.clientHeight) return 'below';
+    if (top + row > bottom) return 'below';
     return 'visible';
+  }
+
+  // How many page moves (as PageDown makes them) a line is below the view.
+  function linePages(pane, ln) {
+    var el = paneBodyEl(pane.id);
+    var line = el && $('[data-ln="' + ln + '"]', el);
+    if (!line) return 0;
+    return (line.offsetTop - (el.scrollTop + el.clientHeight)) / Math.max(S.cellH, el.clientHeight - S.cellH);
   }
 
   // The house at the start of a run, the same for everyone: window main with one
@@ -1477,6 +1492,10 @@
       var dist = nb.id === id ? -1 : Math.abs((r.x + r.w / 2) - (goal.x + goal.w / 2)) + Math.abs((r.y + r.h / 2) - (goal.y + goal.h / 2));
       if (!best || dist < best.dist) best = { d: d, dist: dist };
     });
+    // The shortest way by tmux's own moves, so the arrows never swing back
+    // and forth (the nearest step can: ↓ to a wide pane, ↑ back again).
+    var way = T.arrowPath(win, S.cols, S.rows, id);
+    if (way) { var nb1 = T.neighbour(win, S.cols, S.rows, way, true); best = { d: way, dist: nb1 && nb1.id === id ? -1 : 0 }; }
     win.zoomed = z;
     if (!best) return null;
     var p = T.findPane(S.session, id);
@@ -1646,6 +1665,7 @@
     if (t === 'trident') return tridentState() === 'other';
     // z does nothing on a window of one pane: the question needs a second.
     if (t === 'zoom') return T.panesOf(T.activeWindow(S.session)).length < 2;
+    if (t === 'find_zoom' || t === 'swap_zoom') { var fz = T.findPane(S.session, S.target); return !fz || T.panesOf(fz.win).length < 2; }
     if (t === 'select_window') return !T.windowById(S.session, S.q0);
     if (t === 'new_and_home') return !T.windowById(S.session, S.q0.home);
     if (t === 'rename') return !T.windowById(S.session, S.q0.win);
@@ -1876,12 +1896,15 @@
       },
       check: function () { var w = T.windowById(S.session, S.q0.win); return !!w && w.name === S.q0.name; },
       next: function () {
-        if (S.prompt && S.prompt.label === '(rename-window)') {
+        // Taken to another window (n, p, a number): , would rename that one.
+        var away = S.session.active !== S.q0.win;
+        if (S.prompt && S.prompt.label === '(rename-window)' && !away) {
           var pm = mv([], tx('Ctrl+u（か Backspace）で今の名前「{0}」を消し、{1} と打って Enter', S.prompt.value, S.q0.name), true);
           pm.prompt = true;
           return pm;
         }
         var w = T.windowById(S.session, S.q0.win);
+        if (w && away) return windowMove(w.id);
         if (w && w.name !== S.q0.from && w.name !== S.q0.name) return mv([','], tx('名前が「{0}」になった。もう一度 , を押して、{1} に直す', w.name, S.q0.name));
         return mv([','], ', を押す（カンマ）。名前の入力欄が出る');
       }
@@ -1971,7 +1994,12 @@
         if (back) return back;
         var p = T.activePane(T.activeWindow(S.session));
         if (p.mode !== 'copy') return mv(['['], '[ を押す（コピーモードに入る）');
-        if (lineWhere(p, S.q0.ln) === 'below') return mv(['PageDown'], 'PageDown を押す（行き過ぎた。1 ページ下へ）', true);
+        if (lineWhere(p, S.q0.ln) === 'below') {
+          // Many pages below (a pane of one row pages a line at a time):
+          // leaving and coming back is quicker than paging down.
+          if (linePages(p, S.q0.ln) > 6) return mv(['q'], 'q で抜ける（[ で入り直すと、一番下に戻る）', true);
+          return mv(['PageDown'], 'PageDown を押す（行き過ぎた。1 ページ下へ）', true);
+        }
         return mv(['PageUp'], 'PageUp を押す（1 ページ上へ。印の行が見えるまで）', true);
       }
     },
@@ -2091,7 +2119,8 @@
       },
       next: function () {
         var s = tridentState();
-        if (s === 'start') return mv(['%'], '% を押す（まず左右に）');
+        // % splits the pane you are in: back to the order's pane first.
+        if (s === 'start') return moveTo(S.q0.pane) || mv(['%'], '% を押す（まず左右に）');
         if (s === 'right') return moveTo(S.q0.right) || mv(['"'], '" を押す（右側を上下に）');
         return mv(['x'], '形が違う。x → y でペインを閉じて、% → " の順にやり直す');
       }
@@ -2200,6 +2229,8 @@
           // A selection begun somewhere else: let go of it first.
           if (p.sel != null && (p.sel !== ln || p.selx !== 0)) return mv(['Esc'], 'Esc を押す（選び直す）', true);
           if (p.cy > ln) return mv(['↑'], '↑ を押す（コピーする行まで上がる）', true);
+          // Far above the line (g, PageUp): leaving and coming back is quicker than ↓ a hundred times.
+          if (ln - p.cy > 5) return mv(['q'], 'q で抜ける（[ で入り直すと、一番下に戻る）', true);
           if (p.cy < ln) return mv(['↓'], '↓ を押す（コピーする行まで下がる）', true);
           if (p.sel == null) {
             if (p.cx > 0) return mv(['Home'], 'Home を押す（行の頭へ。vi 式は 0、emacs 式は Ctrl+a）', true);
