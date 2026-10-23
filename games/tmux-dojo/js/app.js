@@ -3882,6 +3882,10 @@
     if (name !== 'game') clearInterval(S.clock);
     syncBody();
     render();
+    // A sheet (the result, the records) hands the focus to its title: a
+    // screen reader says where the player is, and Tab goes on into the sheet.
+    var h = $('#' + name + '-screen .em-title');
+    if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
     if (name !== 'result') music();
   }
 
@@ -4158,7 +4162,7 @@
     if (b.state === 'shuffled') html += '<p class="em-board dim">' + tx('順番を変えた回は、今日のランキングには載せない（記録には残る）。') + '</p>';
     if (b.state === 'noname') {
       html += '<form class="em-board name-form" data-name-form="result"><label>' + tx('名前を付けると、今日のランキングに載る') + '</label>' +
-        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx('ランキングに載せる') + '</button></span>' +
+        '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" aria-label="' + tx('ランキングの名前') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx('ランキングに載せる') + '</button></span>' +
         '<small class="nf-msg"></small></form>';
     }
     return html;
@@ -4245,10 +4249,10 @@
       '<div class="rec-panel"><div class="rec-head">' + tx('この端末の合言葉') + '</div>' + keyHTML +
       '<div class="cta"><button type="button" class="btn" data-sync-now>' + tx('今すぐ合わせる') + '</button></div><p class="sync-msg rec-empty" data-sync-msg></p></div>' +
       '<div class="rec-panel"><div class="rec-head">' + tx('別の端末の合言葉を入れる') + '</div>' +
-      '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="' + tx('例: matsu-kaze-tsuru-482') + '"><button type="submit" class="btn">' + tx('この合言葉にする') + '</button></span>' +
+      '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="' + tx('別の端末の合言葉') + '" placeholder="' + tx('例: matsu-kaze-tsuru-482') + '"><button type="submit" class="btn">' + tx('この合言葉にする') + '</button></span>' +
       '<small class="nf-msg">' + tx('この端末の記録も、その合言葉の側に合わさる。') + '</small></form></div>' +
       '<div class="rec-panel"><div class="rec-head">' + tx('ランキングの名前') + '</div>' +
-      '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" value="' + esc(st.name || '') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx(st.name ? '変える' : '付ける') + '</button></span>' +
+      '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" aria-label="' + tx('ランキングの名前') + '" value="' + esc(st.name || '') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx(st.name ? '変える' : '付ける') + '</button></span>' +
       '<small class="nf-msg">' + tx(st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
   }
 
