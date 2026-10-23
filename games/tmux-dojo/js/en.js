@@ -688,5 +688,9 @@ window.ADV.EN = {
   " ・ {0}": " · {0}",
   "称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。お手本は師範代のタイム。": "The titles follow the martial-arts grades: Apprentice → Shodan (1st dan) → Sandan (3rd dan) → Shihan-dai (assistant master) → Shihan (master). Par is the Shihan-dai time.",
   // --- loop13: Japanese copy ---
-  "{0} 回続けて速く解けた問題は「覚えた」になり、手順が隠れる。": "A question solved quickly {0} times in a row counts as learned, and its steps hide."
+  "{0} 回続けて速く解けた問題は「覚えた」になり、手順が隠れる。": "A question solved quickly {0} times in a row counts as learned, and its steps hide.",
+  // --- loop14: link previews ---
+  "tmux 道場": "tmux Dojo",
+  "tmux のキー操作を、本物と同じ画面で身につけるタイムアタック。分割・移動・全画面・ウィンドウ・コピーモード。押すキーは画面に出ている。": "A time attack that teaches tmux keys on a screen just like the real thing: split, move, zoom, windows, copy mode. The keys to press are on screen.",
+  "tmux 道場: 本物の tmux と同じ画面で、キー操作をタイムアタック": "tmux Dojo: a time attack on tmux keys, on a screen just like the real thing"
 };

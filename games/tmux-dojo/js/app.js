@@ -3212,32 +3212,26 @@
       var wpx = r.w * cw, hpx = r.h * ch;
       var room = p.name || '';
       var size = hpx < 110 || wpx < 150 ? 'cramped' : '';
-      el.className = 'pane' + (isActive ? ' active' : '') + (wanted[p.id] ? ' wanted' + (wanted[p.id] === 'close' ? ' wanted-close' : '') : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
+      // Every key draws every pane; what has not changed is left alone, so
+      // the browser lays out only the rooms that moved (input latency).
+      var cls = 'pane' + (isActive ? ' active' : '') + (wanted[p.id] ? ' wanted' + (wanted[p.id] === 'close' ? ' wanted-close' : '') : '') + (size ? ' ' + size : '') + (el.dataset.anim ? ' ' + el.dataset.anim : '');
+      if (el.className !== cls) el.className = cls;
       // --numw: the room the number (and the Z flag) takes at the top right.
-      el.style.cssText = 'left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + wpx + 'px;height:' + hpx + 'px;--numw:' + numWidth(wpx, win.zoomed) + 'px';
+      var css = 'left:' + (r.x * cw) + 'px;top:' + (r.y * ch) + 'px;width:' + wpx + 'px;height:' + hpx + 'px;--numw:' + numWidth(wpx, win.zoomed) + 'px';
+      if (el._css !== css) { el._css = css; el.style.cssText = css; }
       var decorKey = room + '|' + size;
       if (el.dataset.decor !== decorKey) {
         el.dataset.decor = decorKey;
         el.firstChild.innerHTML = '';
       }
       // The pane's number, always on and dim, as prefix q shows it.
-      el.children[1].innerHTML = '<span class="pnum">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">Z</span>' : '');
+      var title = '<span class="pnum">' + idx + '</span>' + (p.name ? '<span class="pt-name">' + esc(p.name) + '</span>' : '') + (win.zoomed ? '<span class="zoom-flag">Z</span>' : '');
+      if (el.children[1]._html !== title) { el.children[1]._html = title; el.children[1].innerHTML = title; }
       var body = el.children[2];
       body.className = 'pane-body' + (p.mode === 'copy' ? ' copy' : '');
       body.dataset.paneBody = p.id;
-      // The order is printed just above the prompt of the pane you stand in.
-      // In copy mode the text scrolls, so it is pinned to the pane's foot.
-      var order = '';
-      body.innerHTML = (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
-        linesHTML(p.lines, p.mode === 'copy' ? p : null) +
-        (p.mode === 'copy' ? copyLineHTML(p, p.lines.length, lineAt(p, p.lines.length), '', null)
-          : order + '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive) + '</div>');
-      var pin = $(':scope > .motd', el);
-      if (order && p.mode === 'copy') {
-        if (!pin) { pin = document.createElement('div'); el.appendChild(pin); }
-        pin.className = 'motd pinned';
-        pin.innerHTML = motdHTML(run, move, fold);
-      } else if (pin) pin.remove();
+      var bodyHTML = paneBodyHTML(p, isActive);
+      if (body._html !== bodyHTML) { body._html = bodyHTML; body.innerHTML = bodyHTML; }
       // A room that appears in a window already on screen slides open from
       // the side it was split off.
       if (born && !fresh && !reduceMotion) {
@@ -3346,11 +3340,15 @@
         if (p.scrollTop > max) p.scrollTop = max;
         el.scrollTop = p.scrollTop;
         if (p.syncCursor) {
-          // After a page move the cursor lands on the top visible line.
+          // After a page move the cursor lands on the top visible line: the
+          // text is drawn again with the cursor cell there (the scroll stays).
           var lines = $$('[data-ln]', el);
           for (var i = 0; i < lines.length; i++) if (lines[i].offsetTop >= el.scrollTop) { goLine(p, Number(lines[i].dataset.ln)); break; }
           p.syncCursor = false;
-          markCursor(el, p);
+          var keep = el.scrollTop;
+          el._html = paneBodyHTML(p, true);
+          el.innerHTML = el._html;
+          el.scrollTop = keep;
         }
         if (p.reveal) {
           var line = $('[data-ln="' + p.cy + '"]', el);
@@ -3536,12 +3534,13 @@
     } catch (e) { return []; }
   }
 
-  function markCursor(el, p) {
-    $$('.cl', el).forEach(function (x) { x.classList.remove('cl'); });
-    // The cursor cell of the line left behind goes; the next render draws it anew.
-    $$('span.cursor', el).forEach(function (x) { x.className = ''; });
-    var line = $('[data-ln="' + p.cy + '"]', el);
-    if (line) line.classList.add('cl');
+  // The text of a pane: its lines and the prompt, or in copy mode the
+  // scrollback with the cursor cell and the selection.
+  function paneBodyHTML(p, isActive) {
+    return (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
+      linesHTML(p.lines, p.mode === 'copy' ? p : null) +
+      (p.mode === 'copy' ? copyLineHTML(p, p.lines.length, lineAt(p, p.lines.length), '', null)
+        : '<div class="sh-line"><span class="sh-prompt">' + esc(promptText(p)) + '</span>' + withCursor(p.input, p.cur, isActive) + '</div>');
   }
 
   function pickerHTML() {
@@ -3752,6 +3751,7 @@
   function renderStatus() {
     var bar = $('#status');
     if (S.screen !== 'game') return;
+    bar._html = null;
     if (S.detached) { bar.innerHTML = ''; bar.classList.add('gone'); return; }
     bar.classList.remove('gone');
     if (S.confirm) { bar.innerHTML = '<div class="st-prompt">' + esc(S.confirm.text) + '</div>'; return; }
@@ -3777,6 +3777,9 @@
     if (ap.mode === 'copy') html += '<span class="st-mode">COPY' + (ap.sel != null ? ' SEL' : '') + '</span>';
     if (S.clipboard) html += '<span class="st-clip" title="' + tx('コピーした内容') + '">📋</span>';
     html += '<span class="st-host">"dojo"</span><span class="st-clock">' + clock() + '</span></span>';
+    // The bar changes only with the windows, the flags or the clock.
+    if (bar._html === html) return;
+    bar._html = html;
     bar.innerHTML = html;
     // A narrow bar: the tab the question wants is scrolled into view.
     var wins = $('.st-wins', bar), tab = $('.goal-tab', bar);
@@ -3859,7 +3862,8 @@
     html += '<button type="button" class="key k-type" data-type="1">' + tx('文字を打つ') + '</button>';
     // The buttons under the house are hidden on a phone: やめる lives here.
     html += '<button type="button" class="key k-quit" data-quit="1">' + tx('やめる') + '</button>';
-    bar.innerHTML = html;
+    // Drawn on every key; the same keys are left as they are.
+    if (bar._html !== html) { bar._html = html; bar.innerHTML = html; }
   }
 
   // ---- effects -------------------------------------------------------------
@@ -4653,8 +4657,8 @@
       if (!b) return;
       if (b.dataset.type) { $('#sink').focus(); return; }
       if (b.dataset.quit) { if (!endDrill()) { leaveRun(); showScreen('title'); } return; }
-      handleKey(JSON.parse(b.dataset.k));
-      render();
+      // A key the game did not take changed nothing; a taken one drew already.
+      if (!handleKey(JSON.parse(b.dataset.k))) render();
     });
     $('#keybar').addEventListener('pointerdown', function (e) {
       // Buttons must not take focus away from the sink on phones.

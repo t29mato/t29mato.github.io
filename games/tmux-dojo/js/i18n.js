@@ -48,13 +48,18 @@
       if (!el.dataset.tKey) el.dataset.tKey = el.getAttribute('data-t') || el.innerHTML.trim();
       el.innerHTML = t(el.dataset.tKey);
     });
-    [['data-t-aria', 'aria-label'], ['data-t-ph', 'placeholder'], ['data-t-title', 'title']].forEach(function (p) {
+    [['data-t-aria', 'aria-label'], ['data-t-ph', 'placeholder'], ['data-t-title', 'title'], ['data-t-content', 'content']].forEach(function (p) {
       Array.prototype.forEach.call(root.querySelectorAll('[' + p[0] + ']'), function (el) {
         el.setAttribute(p[1], t(el.getAttribute(p[0]) || el.getAttribute(p[1])));
       });
     });
     document.documentElement.lang = 'en';
     document.title = 'tmux Dojo';
+    // The link preview (og:) follows the page's language too.
+    var loc = document.querySelector('meta[property="og:locale"]');
+    if (loc) loc.setAttribute('content', 'en_US');
+    var alt = document.querySelector('meta[property="og:locale:alternate"]');
+    if (alt) alt.setAttribute('content', 'ja_JP');
   }
 
   function set(l) {
