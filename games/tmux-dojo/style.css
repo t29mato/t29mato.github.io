@@ -354,6 +354,9 @@ kbd.hk { display: inline-block; margin-left: 8px; font-family: var(--mono); font
   background: linear-gradient(180deg, #6b4f2a, #553c1f); border: 8px solid var(--wood-d); border-radius: 4px; padding: 10px;
   box-shadow: var(--shadow);
 }
+/* status-position top: the bar above the panes, from the start of the run (no jump). */
+body[data-status="top"] .yashiki { grid-template-rows: auto minmax(0, 1fr) auto; }
+body[data-status="top"] .yashiki .status { order: -1; }
 .term-wrap { position: relative; min-height: 0; }
 .term {
   position: absolute; inset: 0;

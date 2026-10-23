@@ -1,8 +1,11 @@
 // tmux 道場: reads a pasted .tmux.conf. Only what the game can do is
-// taken: the prefix, bind / unbind of the commands the game has, and the
+// taken: the prefix, bind / unbind of the commands the game has (the copy
+// mode tables included), mode-keys, status-position, and the
 // vim-tmux-navigator plugin (as it binds its keys by default). Every other
-// line is listed back with the reason it was passed over, never dropped
-// silently.
+// line is listed back, never dropped silently: as 未対応 when it is
+// something tmux does and the game cannot (its key then does nothing in
+// the game, rather than falling back to the default), or as a setting that
+// does not matter to the game.
 //
 // A binding's action is written as the default prefix key that does the
 // same thing in the game ({key: '%'} for split-window -h), so app.js runs it
@@ -112,11 +115,12 @@
 
   // The flags of each command that take a value (tmux's getopt strings).
   var ARGS = {
-    bind: 'TN', 'bind-key': 'TN', unbind: 'T', 'unbind-key': 'T', set: 't', 'set-option': 't', setw: 't', 'set-window-option': 't',
+    bind: 'TNt', 'bind-key': 'TNt', unbind: 'Tt', 'unbind-key': 'Tt', set: 't', 'set-option': 't', setw: 't', 'set-window-option': 't',
     'split-window': 'cltFe', splitw: 'cltFe', 'select-pane': 'tT', selectp: 'tT', 'select-window': 't', selectw: 't',
     'resize-pane': 'txy', resizep: 'txy', 'confirm-before': 'pct', confirm: 'pct', 'command-prompt': 'IpFtT',
     'new-window': 'cntFe', neww: 'cntFe', 'swap-pane': 'st', swapp: 'st', 'kill-pane': 't', killp: 't', 'kill-window': 't', killw: 't',
-    'break-pane': 'nst', breakp: 'nst'
+    'break-pane': 'nst', breakp: 'nst', 'send-keys': 'tN', send: 'tN', 'display-message': 'cdtF', display: 'cdtF',
+    'choose-tree': 'FfKOt', 'choose-window': 'FfKOt', 'choose-session': 'FfKOt', 'copy-mode': 'st', 'paste-buffer': 'bst', pasteb: 'bst'
   };
 
   function flags(argv) {
@@ -202,7 +206,8 @@
     }
     if (/^(next-layout|nextl)$/.test(cmd)) return { key: ' ', say: '並べ方を変える' };
     if (/^(detach-client|detach)$/.test(cmd)) return { key: 'd', say: 'デタッチする' };
-    if (/^(choose-tree|choose-session|choose-window)$/.test(cmd)) return { key: 's', say: 'セッションを選ぶ' };
+    // choose-tree -w (and choose-window) opens the tree with the windows shown.
+    if (/^(choose-tree|choose-session|choose-window)$/.test(cmd)) return f.w || cmd === 'choose-window' ? { key: 'w', say: 'ウィンドウまで含めた一覧から選ぶ' } : { key: 's', say: 'セッションを選ぶ' };
     if (/^(switch-client|switchc)$/.test(cmd)) {
       if (f.p) return { key: '(', say: '前のセッションへ' };
       if (f.n) return { key: ')', say: '次のセッションへ' };
@@ -212,11 +217,45 @@
     if (cmd === 'send-prefix') return { run: 'send-prefix', say: 'prefix をシェルに送る' };
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
+    if (/^(display-message|display)$/.test(cmd)) return { run: 'say', text: rest.join(' '), say: 'メッセージを出す' };
     if (/^(display-panes|displayp)$/.test(cmd)) return { key: 'q', say: 'ペインに番号を出す（番号を押すとそこへ）' };
     if (/^(rotate-window|rotatew)$/.test(cmd)) return { key: 'o', ctrl: true, say: 'ペインを順に回す' };
     if (/^(choose-buffer)$/.test(cmd)) return { key: '=', say: 'コピーしたものの一覧から貼る' };
     if (/^(list-buffers|lsb)$/.test(cmd)) return { key: '#', say: 'コピーしたものの一覧を見る' };
+    if (/^(list-keys|lsk)$/.test(cmd)) return { key: '?', say: 'キーの一覧を見る' };
+    if (/^(clock-mode)$/.test(cmd)) return { key: 't', say: '時計を出す' };
     return { why: tx('{0} はゲームにない', cmd) };
+  }
+
+  // ---- copy mode -------------------------------------------------------------
+
+  // The copy-mode commands (send-keys -X …) the game can do, with what to
+  // say for them. app.js runs them through its own copy-mode keys.
+  var COPY_CMDS = {
+    'begin-selection': '選び始める', 'select-line': '行ごと選ぶ', 'rectangle-toggle': '矩形選択（ゲームでは何も起きない）',
+    'copy-selection': 'コピーする（コピーモードに残る）', 'copy-selection-no-clear': 'コピーする（コピーモードに残る）', 'copy-selection-and-cancel': 'コピーして抜ける',
+    'copy-pipe': 'コピーする（コピーモードに残る）', 'copy-pipe-no-clear': 'コピーする（コピーモードに残る）', 'copy-pipe-and-cancel': 'コピーして抜ける',
+    'copy-end-of-line': '行の終わりまでコピーする', 'copy-end-of-line-and-cancel': '行の終わりまでコピーして抜ける', 'copy-line': '行をコピーする', 'copy-line-and-cancel': '行をコピーして抜ける',
+    cancel: 'コピーモードを抜ける', 'clear-selection': '選ぶのをやめる',
+    'cursor-up': '上へ', 'cursor-down': '下へ', 'cursor-left': '左へ', 'cursor-right': '右へ',
+    'start-of-line': '行の頭へ', 'end-of-line': '行の終わりへ', 'history-top': '一番上へ', 'history-bottom': '一番下へ',
+    'page-up': '1 ページ上へ', 'page-down': '1 ページ下へ', 'halfpage-up': '半ページ上へ', 'halfpage-down': '半ページ下へ',
+    'search-backward': '上向きに検索', 'search-forward': '下向きに検索', 'search-again': '次を探す', 'search-reverse': '逆向きに次を探す'
+  };
+
+  // The old (tmux < 2.4) table names, `bind -t vi-copy v begin-selection`.
+  var OLD_TABLES = { 'vi-copy': 'copy-mode-vi', 'emacs-copy': 'copy-mode' };
+
+  // A copy-mode binding's command list → {copy: cmd, say} or {why}.
+  function copyAction(inner) {
+    var cmd;
+    if (/^(send-keys|send)$/.test(inner[0])) {
+      var p = flags(inner);
+      if (!p.f.X || !p.rest.length) return { why: 'コピーモードのキーは send-keys -X の形だけ読める' };
+      cmd = p.rest[0];
+    } else cmd = inner[0];
+    if (!COPY_CMDS[cmd]) return { why: tx('コピーモードの {0} はゲームにない', cmd) };
+    return { copy: cmd, say: COPY_CMDS[cmd] };
   }
 
   // vim-tmux-navigator, as it binds its keys with no options set.
@@ -232,10 +271,17 @@
   var SAMPLE_NOCONFIRM = "# 確認なしで閉じる（y を押さない）\nbind x kill-pane\nbind & kill-window\n";
   var SAMPLE_NAVIGATOR = "# vim-tmux-navigator（TPM で入れる）\nset -g @plugin 'christoomey/vim-tmux-navigator'\nrun '~/.tmux/plugins/tpm/tpm'\n";
 
-  // The whole file → {prefix, prefix2, binds, unbinds, unbindAll, used, skipped, navigator, custom}.
+  // Options tmux has that the game does not follow: 未対応, not 関係ない.
+  var UNSUPPORTED_OPTS = { 'renumber-windows': 'ゲームのウィンドウ番号は詰め直さない', 'status-keys': '入力欄のキーは決まっている（emacs 式）' };
+
+  // The whole file → {prefix, prefix2, modeKeys, statusTop, binds, unbinds,
+  // unbindAll, used, unsupported, skipped, navigator, custom}.
   function parse(text) {
-    var c = { prefix: parseKey('C-b'), prefix2: null, baseIndex: 0, paneBaseIndex: 0, binds: [], unbinds: [], unbindAll: false, used: [], skipped: [], navigator: false };
+    var c = { prefix: parseKey('C-b'), prefix2: null, baseIndex: 0, paneBaseIndex: 0, modeKeys: null, statusTop: false, binds: [], unbinds: [], unbindAll: false, used: [], unsupported: [], skipped: [], navigator: false };
     function use(l, say) { c.used.push({ no: l.no, line: l.text.trim(), say: tx(say) }); }
+    // 未対応: tmux does it, the game cannot.
+    function cannot(l, why) { c.unsupported.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
+    // 関係ない: a setting the game has no use for.
     function skip(l, why) { c.skipped.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
     function addBind(table, key, act, repeat, l) {
       // A later bind of the same key wins, as in tmux.
@@ -252,15 +298,25 @@
         // number keys follow.
         if (name === 'base-index' || name === 'pane-base-index') {
           var bi = parseInt(val, 10);
-          if (!(bi >= 0 && bi <= 9)) return skip(l, tx('その番号は読めない: {0}', val));
+          if (!(bi >= 0 && bi <= 9)) return cannot(l, tx('その番号は読めない: {0}', val));
           c[name === 'base-index' ? 'baseIndex' : 'paneBaseIndex'] = bi;
           return use(l, tx(name === 'base-index' ? 'ウィンドウの番号を {0} から始める' : 'ペインの番号を {0} から始める', bi));
         }
-        if (/^(setw|set-window-option)$/.test(cmd)) return skip(l, '見た目や動きの設定（ゲームには関係ない）');
+        // mode-keys picks the copy-mode keys (vi or emacs) the 手順 shows.
+        if (name === 'mode-keys') {
+          if (val !== 'vi' && val !== 'emacs') return cannot(l, tx('mode-keys は vi か emacs: {0}', val));
+          c.modeKeys = val;
+          return use(l, tx(val === 'vi' ? 'コピーモードのキーを vi 式にする' : 'コピーモードのキーを emacs 式にする'));
+        }
+        if (name === 'status-position') {
+          if (val !== 'top' && val !== 'bottom') return cannot(l, tx('status-position は top か bottom: {0}', val));
+          c.statusTop = val === 'top';
+          return use(l, tx(val === 'top' ? 'ステータスバーを上に置く' : 'ステータスバーを下に置く'));
+        }
         if (name === 'prefix' || name === 'prefix2') {
           var k = val === 'None' ? null : parseKey(val);
-          if (val !== 'None' && !k) return skip(l, tx('そのキーは読めない: {0}', val));
-          if (name === 'prefix') { if (!k) return skip(l, 'prefix なしでは遊べない'); c.prefix = k; use(l, tx('prefix を {0} にする', k.label)); }
+          if (val !== 'None' && !k) return cannot(l, tx('そのキーは読めない: {0}', val));
+          if (name === 'prefix') { if (!k) return cannot(l, 'prefix なしでは遊べない'); c.prefix = k; use(l, tx('prefix を {0} にする', k.label)); }
           else { c.prefix2 = k; use(l, k ? tx('2 つ目の prefix を {0} にする', k.label) : '2 つ目の prefix をなくす'); }
           return;
         }
@@ -271,44 +327,54 @@
             return use(l, 'vim-tmux-navigator: Ctrl+h/j/k/l でペインを移動、Ctrl+\\ で直前のペイン、prefix → Ctrl+l で画面を消す');
           }
           if (/(^|\/)tpm$/.test(val || '')) return use(l, 'TPM（プラグインの管理）');
-          return skip(l, 'このプラグインはゲームにない');
+          return cannot(l, 'このプラグインはゲームにない');
         }
-        if (/^(mode-keys|status-keys)$/.test(name)) return skip(l, 'ゲームのコピーモードと入力欄のキーは決まっている');
+        if (/^@/.test(name || '')) return skip(l, 'プラグインの設定（ゲームには関係ない）');
+        if (UNSUPPORTED_OPTS[name]) return cannot(l, UNSUPPORTED_OPTS[name]);
         return skip(l, '見た目や動きの設定（ゲームには関係ない）');
       }
-      if (/^(run|run-shell)$/.test(cmd) && /tpm/.test(l.text)) return use(l, 'TPM を動かす（プラグインはゲームが再現する）');
+      if (/^(run|run-shell)$/.test(cmd)) return /tpm/.test(l.text) ? use(l, 'TPM を動かす（プラグインはゲームが再現する）') : cannot(l, 'シェルのコマンドはゲームでは動かない');
       if (/^(bind|bind-key)$/.test(cmd)) {
         var b = flags(argv);
-        var table = b.f.n ? 'root' : b.f.T ? b.f.T : 'prefix';
-        if (table !== 'root' && table !== 'prefix') return skip(l, tx('{0} の表のキー（コピーモードなど）はゲームでは変えられない', table));
+        var table = b.f.n ? 'root' : b.f.T ? b.f.T : b.f.t ? (OLD_TABLES[b.f.t] || b.f.t) : 'prefix';
         var key = parseKey(b.rest[0]);
-        if (!key) return skip(l, tx('そのキーは読めない: {0}', b.rest[0]));
+        if (!key) return cannot(l, tx('そのキーは読めない: {0}', b.rest[0]));
         var inner = b.rest.slice(1);
-        if (!inner.length) return skip(l, 'コマンドがない');
+        if (!inner.length) return cannot(l, 'コマンドがない');
+        if (table === 'copy-mode-vi' || table === 'copy-mode') {
+          var ca = copyAction(inner);
+          // The key is taken either way: a copy command the game lacks
+          // must not fall back to the game's own key.
+          addBind(table, key, ca.why ? { none: true } : ca, false, l);
+          if (ca.why) return cannot(l, ca.why);
+          return use(l, tx(table === 'copy-mode-vi' ? 'コピーモード（vi 式）で {0}: {1}' : 'コピーモード（emacs 式）で {0}: {1}', key.label, tx(ca.say)));
+        }
+        if (table !== 'root' && table !== 'prefix') return cannot(l, tx('{0} の表のキーはゲームにない', table));
         // `bind x a \; b`: the first command is the one that counts.
         var act = action(inner);
-        if (act.why) return skip(l, act.why);
+        if (act.why) { addBind(table, key, { none: true }, false, l); return cannot(l, act.why); }
         addBind(table, key, act, b.f.r, l);
         return use(l, tx(table === 'root' ? 'prefix なしで {0} で {1}{2}' : 'prefix → {0} で {1}{2}', key.label, tx(act.say), b.f.r ? tx('（続けて押せる）') : ''));
       }
       if (/^(unbind|unbind-key)$/.test(cmd)) {
         var u = flags(argv);
-        var ut = u.f.n ? 'root' : u.f.T ? u.f.T : 'prefix';
+        var ut = u.f.n ? 'root' : u.f.T ? u.f.T : u.f.t ? (OLD_TABLES[u.f.t] || u.f.t) : 'prefix';
+        var copyT = ut === 'copy-mode-vi' || ut === 'copy-mode';
         if (u.f.a) {
-          if (ut !== 'prefix') return skip(l, tx('{0} の表はゲームでは変えられない', ut));
+          if (ut !== 'prefix') return cannot(l, tx('{0} の表をまとめて外すのはゲームにない', ut));
           c.unbindAll = true;
           c.binds = c.binds.filter(function (x) { return x.table !== 'prefix'; });
           return use(l, 'prefix のあとのキーを全部外す');
         }
-        if (ut !== 'root' && ut !== 'prefix') return skip(l, tx('{0} の表はゲームでは変えられない', ut));
+        if (ut !== 'root' && ut !== 'prefix' && !copyT) return cannot(l, tx('{0} の表のキーはゲームにない', ut));
         var uk = parseKey(u.rest[0]);
-        if (!uk) return skip(l, tx('そのキーは読めない: {0}', u.rest[0]));
+        if (!uk) return cannot(l, tx('そのキーは読めない: {0}', u.rest[0]));
         c.binds = c.binds.filter(function (x) { return !(x.table === ut && same(x.key, uk)); });
         c.unbinds.push({ table: ut, key: uk });
-        return use(l, tx(ut === 'root' ? '{0} を外す' : 'prefix → {0} を外す', uk.label));
+        return use(l, tx(ut === 'root' ? '{0} を外す' : copyT ? 'コピーモードの {0} を外す' : 'prefix → {0} を外す', uk.label));
       }
-      if (/^(source-file|source|if-shell|if)$/.test(cmd)) return skip(l, '別のファイルやシェルはゲームでは読めない');
-      return skip(l, tx('{0} はゲームにない', cmd));
+      if (/^(source-file|source|if-shell|if)$/.test(cmd)) return cannot(l, '別のファイルやシェルはゲームでは読めない');
+      return cannot(l, tx('{0} はゲームにない', cmd));
     });
     c.custom = !!(c.used.length || c.binds.length || c.unbinds.length || c.unbindAll || c.prefix.key !== 'b' || !c.prefix.ctrl);
     return c;
@@ -318,6 +384,31 @@
   function lookup(c, table, e) {
     if (!c) return null;
     for (var i = c.binds.length - 1; i >= 0; i--) if (c.binds[i].table === table && matches(c.binds[i].key, e)) return c.binds[i];
+    return null;
+  }
+
+  // The copy-mode tables that count: the one mode-keys names, else both
+  // (the game takes the vi and the emacs keys alike).
+  function copyTables(c) {
+    return c.modeKeys === 'vi' ? ['copy-mode-vi'] : c.modeKeys === 'emacs' ? ['copy-mode'] : ['copy-mode-vi', 'copy-mode'];
+  }
+
+  // The player's copy-mode binding a key event fires, or null.
+  function copyLookup(c, e) {
+    if (!c) return null;
+    var ts = copyTables(c);
+    for (var i = 0; i < ts.length; i++) { var b = lookup(c, ts[i], e); if (b) return b; }
+    return null;
+  }
+
+  // The label of the player's key for one of these copy commands, or null.
+  function copyKey(c, cmds) {
+    if (!c) return null;
+    var ts = copyTables(c);
+    for (var i = c.binds.length - 1; i >= 0; i--) {
+      var b = c.binds[i];
+      if (ts.indexOf(b.table) >= 0 && b.act.copy && cmds.indexOf(b.act.copy) >= 0) return b.key.label;
+    }
     return null;
   }
 
@@ -337,6 +428,7 @@
   window.ADV = window.ADV || {};
   window.ADV.conf = {
     parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words,
-    lookup: lookup, overridden: overridden, isPrefix: isPrefix, SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM
+    lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
+    SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM
   };
 })();

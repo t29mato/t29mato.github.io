@@ -72,6 +72,7 @@
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var CF = ADV.conf;
+  var MAC = /^Option/.test(LV.KEYS.resize[0]);
   function prefixSpec() { return S.conf ? S.conf.prefix : CF.parseKey('C-b'); }
   function prefixEvent() { var p = prefixSpec(); return { key: p.key, ctrl: p.ctrl, alt: p.alt, shift: p.shift }; }
   function prefixLabel() { return prefixSpec().label; }
@@ -83,6 +84,8 @@
     b.dataset.detached = S.detached ? '1' : '0';
     b.dataset.stage = S.run && S.run.phase === 'play' ? String(S.run.stage) : '0';
     b.dataset.detail = S.detail ? '1' : '0';
+    // status-position top: the bar above the panes, as the player has it.
+    b.dataset.status = S.conf && S.conf.statusTop ? 'top' : 'bottom';
     var dt = $('.detail-toggle');
     if (dt) { dt.setAttribute('aria-pressed', S.detail ? 'true' : 'false'); dt.textContent = S.detail ? tx('手順の詳細をしまう') : tx('手順の詳細を出す'); }
     var cs = $('#conf-state');
@@ -397,6 +400,19 @@
     return true;
   }
 
+  // kill-session: the last one cannot go (tmux would exit; the game stays).
+  // Killing the one you are in moves you to the next, as tmux does.
+  function killSession(s) {
+    if (S.sessions.length < 2) { message('最後のセッションは閉じられない'); S.lastAction = 'brief'; return; }
+    if (s === S.session) {
+      var others = S.sessions.filter(function (x) { return x !== s; });
+      switchSession(S.lastSession && others.indexOf(S.lastSession) >= 0 ? S.lastSession : others[0]);
+    }
+    S.sessions = S.sessions.filter(function (x) { return x !== s; });
+    if (S.lastSession === s) S.lastSession = null;
+    S.lastAction = 'kill_session';
+  }
+
   function freshName() {
     var n = S.sessions.length;
     while (sessionByName(String(n))) n++;
@@ -687,7 +703,7 @@
 
     // Cmd+V pastes the system clipboard, not tmux's buffer.
     if ((k.meta && !k.ctrl && k.key.toLowerCase() === 'v') || (k.ctrl && k.shift && k.key.toLowerCase() === 'v')) {
-      message(tx('tmux のコピーは tmux の中にある。{0} → ] で貼る', prefixLabel()));
+      message(tx('tmux のコピーは tmux の中にある。{0} → {1} で貼る', prefixLabel(), ownKey(']').label || ']'));
       return true;
     }
     // Cmd+b on a Mac: the prefix letter with the wrong modifier.
@@ -727,10 +743,15 @@
 
     if (isPrefix(k)) {
       S.repeatUntil = 0;
-        if (S.armed) {
-        // Prefix twice: send-prefix. The shell gets the key itself, so C-b
-        // (or C-a) still moves the cursor, as in a real tmux.
+      if (S.armed) {
         S.armed = false;
+        S.graceUntil = 0;
+        // Prefix twice: the prefix key's own binding in the prefix table
+        // first (bind C-a last-window), as tmux looks it up.
+        var pp = CF.lookup(S.conf, 'prefix', k);
+        if (pp && pp.act.run !== 'send-prefix') return runBinding(pp, win, pane);
+        // Else send-prefix (tmux's default for C-b C-b). The shell gets the
+        // key itself, so C-b (or C-a) still moves the cursor, as in a real tmux.
         if (pane.mode !== 'copy') lineEdit(pane, 'input', prefixEvent());
         // Nothing shows on an empty line, so a beginner who pressed it twice
         // "to make sure" is told where the second one went.
@@ -807,9 +828,13 @@
   // does the same in the game, so it goes through the default table.
   function runBinding(b, win, pane) {
     var a = b.act;
+    // A key bound to something the game lacks (未対応): nothing, said. Not
+    // a miss: the game, not the player, is short here.
+    if (a.none) { message(tx('{0} の割り当てはゲームでは使えない（未対応）', b.key.label)); S.lastAction = 'brief'; return true; }
     if (a.run === 'send-prefix') { if (pane.mode !== 'copy') lineEdit(pane, 'input', prefixEvent()); S.lastAction = 'brief'; return true; }
     if (a.run === 'clear') { if (pane.mode !== 'copy') pane.lines.push({ clear: true }); S.lastAction = 'brief'; return true; }
     if (a.run === 'noop') { message('source-file: ゲームでは何も起きない'); S.lastAction = 'brief'; return true; }
+    if (a.run === 'say') { message(a.text || '', true); S.lastAction = 'brief'; return true; }
     if (a.resize) {
       resize(win, pane, { dir: a.resize, n: a.n });
       S.lastAction = 'resize';
@@ -884,7 +909,11 @@
       var nb = T.neighbour(win, S.cols, S.rows, moves[key]);
       win.zoomed = z;
       if (nb) T.selectPane(win, nb.id);
-      else message(tx('そちらにペインはない（{0} → % か " で分割）', prefixLabel()));
+      else {
+        // The split keys in the player's own words.
+        var sk = [ownKey('%'), ownKey('"')].filter(function (o) { return !o.none; }).map(function (o) { return o.label; });
+        message(sk.length ? tx('そちらにペインはない（{0} → {1} で分割）', prefixLabel(), sk.join(tx(' か '))) : 'そちらにペインはない');
+      }
       S.lastAction = 'focus';
       return true;
     }
@@ -899,6 +928,8 @@
       return true;
     }
     if (key === 'q') { showPaneNumbers(); S.lastAction = 'brief'; return true; }
+    // clock-mode: a look at the time, nothing changed, not a miss.
+    if (key === 't') { message(tx('{0}（clock-mode: 時計を出すキー。どのキーでも戻る）', hhmm(new Date()))); S.lastAction = 'brief'; return true; }
     if (key === "'") {
       // command-prompt -p index "select-window -t ':%%'"
       S.lastAction = 'select_window';
@@ -976,7 +1007,8 @@
       S.prompt = { label: '(rename-session)', value: sess.name, done: function (v) { renameSession(sess, v.trim()); } };
       return true;
     }
-    if (key === 's' || key === 'w') { openPicker(key === 'w'); S.lastAction = 'choose'; return true; }
+    // Opening the list changes nothing yet (Esc closes it): not a miss.
+    if (key === 's' || key === 'w') { openPicker(key === 'w'); S.lastAction = 'brief'; return true; }
     if (key === '(' || key === ')') {
       var at = S.sessions.indexOf(S.session);
       var n = S.sessions.length;
@@ -997,8 +1029,8 @@
     if (key === ':') { S.lastAction = 'cmd'; S.prompt = { label: ':', value: '', done: runTmuxCommand }; return true; }
     if (key === 'l') {
       // vim hands reach for l to go right: say where it went (not when the
-      // 手順 asked for l).
-      var wantL = guideWants('l') || !!(S.run && S.run.phase === 'play' && S.run.type === 'last_window');
+      // 手順 asked for l, nor when the player's own key, Tab say, ran it).
+      var wantL = guideWants('l') || !!(S.run && S.run.phase === 'play' && S.run.type === 'last_window') || !(S.lastKey && S.lastKey.key === 'l' && !S.lastKey.ctrl && !S.lastKey.alt);
       if (S.session.last && T.windowById(S.session, S.session.last)) { T.selectWindow(S.session, S.session.last); if (!wantL) message('l は直前のウィンドウへ移るキー。隣のペインへは矢印か o'); }
       else message(wantL ? 'no last window' : 'no last window ― l は直前のウィンドウへ戻るキー。隣のペインへは矢印か o');
       S.lastAction = 'select_window';
@@ -1030,7 +1062,7 @@
 
   // The default prefix keys the game has: a Ctrl+key of one of them is a
   // slip of the finger, not a miss.
-  var DEFAULT_KEYS = '%"zxc&np,[]d$sw(){} :l;oi?q\'=#!0123456789'.split('').concat(['PageUp']);
+  var DEFAULT_KEYS = '%"zxc&np,[]d$sw(){} :l;oi?qt\'=#!0123456789'.split('').concat(['PageUp']);
 
   // The key under each shifted prefix key, on a US and on a JIS keyboard.
   var UNSHIFTED = { '5': '%', '2': '"', "'": '"', '7': '&', '6': '&', '4': '$', '[': '{', ']': '}', '9': '()', '8': '(', '0': ')', '1': '!' };
@@ -1069,14 +1101,65 @@
     return win;
   }
 
-  // The tmux command prompt (prefix → :). Only the commands the game teaches.
+  // The tmux command prompt (prefix → :). The commands the game has, with
+  // their tmux aliases; the rest is "unknown command", as tmux says it.
   function runTmuxCommand(line) {
-    var argv = line.trim().split(/\s+/);
+    var argv = (CF.words(line)[0] || []).slice();
     var cmd = argv[0] || '';
     var win = T.activeWindow(S.session);
     var pane = T.activePane(win);
     function flag(f) { var i = argv.indexOf(f); return i > 0 ? (argv[i + 1] || '') : null; }
+    function has(f) { return argv.indexOf(f) > 0; }
+    var dir = has('-L') ? 'L' : has('-R') ? 'R' : has('-U') ? 'U' : has('-D') ? 'D' : null;
+    var ARROW = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown' };
+    // A default key's work, as if pressed after the prefix.
+    function asKey(key, ctrl) { prefixedKey({ key: key, ctrl: !!ctrl, alt: false, shift: false, meta: false, code: /^[0-9]$/.test(key) ? 'Digit' + key : undefined }, win, pane); }
     if (!cmd) return;
+    if (/^(select-pane|selectp)$/.test(cmd) && flag('-T') === null) {
+      if (dir) { asKey(ARROW[dir]); return; }
+      if (has('-l')) { asKey(';'); return; }
+      var pt = flag('-t');
+      if (pt === ':.+' || pt === '+' || pt === '.+') { asKey('o'); return; }
+      if (/^\d+$/.test(pt || '')) {
+        var sp = T.panesOf(win)[Number(pt) - S.session.paneBaseIndex];
+        if (sp) { T.selectPane(win, sp.id); S.lastAction = 'focus'; } else { message("can't find pane: " + pt); S.lastAction = 'brief'; }
+        return;
+      }
+      message(tx('その select-pane はゲームにない')); S.lastAction = 'brief';
+      return;
+    }
+    if (/^(resize-pane|resizep)$/.test(cmd)) {
+      if (has('-Z')) { asKey('z'); return; }
+      if (dir) { var rn = parseInt(argv[argv.length - 1], 10); resize(win, pane, { dir: dir, n: rn > 0 ? Math.min(rn, 50) : 1 }); S.lastAction = 'resize'; return; }
+      message(tx('その resize-pane はゲームにない')); S.lastAction = 'brief';
+      return;
+    }
+    if (/^(last-pane|lastp)$/.test(cmd)) { asKey(';'); return; }
+    if (/^(rotate-window|rotatew)$/.test(cmd)) { asKey('o', true); return; }
+    if (/^(next-window|next)$/.test(cmd)) { asKey('n'); return; }
+    if (/^(previous-window|prev)$/.test(cmd)) { asKey('p'); return; }
+    if (/^(select-window|selectw)$/.test(cmd)) {
+      var wt = /^:?(\d+)$/.exec(flag('-t') || '');
+      if (wt) { var tw = T.windowByIndex(S.session, Number(wt[1])); if (tw) T.selectWindow(S.session, tw.id); else message("can't find window: " + wt[1]); S.lastAction = 'select_window'; return; }
+      asKey(has('-l') ? 'l' : has('-p') ? 'p' : 'n');
+      return;
+    }
+    if (/^(copy-mode)$/.test(cmd)) { asKey(has('-u') ? 'PageUp' : '['); return; }
+    if (/^(paste-buffer|pasteb)$/.test(cmd)) { asKey(']'); return; }
+    if (/^(display-panes|displayp)$/.test(cmd)) { asKey('q'); return; }
+    if (/^(clock-mode)$/.test(cmd)) { asKey('t'); return; }
+    if (/^(choose-window)$/.test(cmd)) { asKey('w'); return; }
+    if (/^(kill-session)$/.test(cmd)) {
+      var ks = flag('-t') !== null ? sessionByName(flag('-t')) : S.session;
+      if (!ks) { message("can't find session: " + flag('-t')); S.lastAction = 'brief'; return; }
+      killSession(ks);
+      return;
+    }
+    // tmux has these; the game's windows cannot be moved about.
+    if (/^(swap-window|swapw|move-window|movew|join-pane|joinp)$/.test(cmd)) {
+      message(tx('{0} はゲームにない', cmd)); S.lastAction = 'brief';
+      return;
+    }
     if (/^(new|new-session|news)$/.test(cmd)) {
       var name = flag('-s') || freshName();
       if (sessionByName(name)) { message('duplicate session: ' + name); return; }
@@ -1193,13 +1276,42 @@
     return { a: a, b: b };
   }
 
-  function copyModeKey(k, pane) {
+  // The copy-mode commands of the player's own bindings, as the default key
+  // that does the same here (run through copyModeKey again).
+  var COPY_AS_KEY = {
+    'cursor-up': { key: 'ArrowUp' }, 'cursor-down': { key: 'ArrowDown' }, 'cursor-left': { key: 'ArrowLeft' }, 'cursor-right': { key: 'ArrowRight' },
+    'start-of-line': { key: 'Home' }, 'end-of-line': { key: 'End' }, 'history-top': { key: 'g' }, 'history-bottom': { key: 'G' },
+    'page-up': { key: 'PageUp' }, 'page-down': { key: 'PageDown' }, 'halfpage-up': { key: 'u', ctrl: true }, 'halfpage-down': { key: 'd', ctrl: true },
+    'search-backward': { key: '?' }, 'search-forward': { key: '/' }, 'search-again': { key: 'n' }, 'search-reverse': { key: 'N' }
+  };
+
+  // `own`: the key event came from one of the player's copy-mode bindings
+  // already (no second lookup).
+  function copyModeKey(k, pane, own) {
     var el = paneBodyEl(pane.id);
     if (!el) { pane.mode = null; return true; }
     var max = el.scrollHeight - el.clientHeight;
     var page = Math.max(S.cellH, el.clientHeight - S.cellH);
     var key = k.key;
     var mk = metaKey(k);
+    var cb = own ? null : CF.copyLookup(S.conf, k);
+    if (cb) {
+      var cc = cb.act.copy;
+      if (cb.act.none) { message(tx('{0} の割り当てはゲームでは使えない（未対応）', cb.key.label)); return true; }
+      if (COPY_AS_KEY[cc]) return copyModeKey({ key: COPY_AS_KEY[cc].key, ctrl: !!COPY_AS_KEY[cc].ctrl, alt: false, shift: false, meta: false }, pane, true);
+      if (cc === 'cancel') { pane.mode = null; return true; }
+      if (cc === 'clear-selection') { pane.sel = null; return true; }
+      if (cc === 'rectangle-toggle') { message('矩形選択（四角く選ぶ）はゲームにない'); return true; }
+      if (cc === 'begin-selection') { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
+      if (cc === 'select-line') { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; S.lastAction = 'yank_start'; return true; }
+      // copy-line / copy-end-of-line need no selection; the others do.
+      if (/^copy-line/.test(cc)) { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; }
+      else if (/^copy-end-of-line/.test(cc)) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); pane.cx = lineAt(pane, pane.cy).length; }
+      if (pane.sel == null) { message(tx('まだ選んでいない。先に {0} で選び始める', copyKeyLabel('begin'))); return true; }
+      // The vi keys copy the character under the cursor too; the emacs keys stop before it.
+      yank(pane, cb.table === 'copy-mode', !/-and-cancel$/.test(cc));
+      return true;
+    }
     // Copy keys: Space/Enter (vi) or C-Space/M-w (emacs).
     var begins = key === ' ' || (k.ctrl && key === ' ') || key === 'V';
     var copies = (key === 'Enter' && !k.ctrl) || mk === 'w' || (k.ctrl && key === 'w');
@@ -1269,8 +1381,9 @@
 
   // From where Space was pressed to the cursor, the character under it
   // included, as tmux's vi keys copy; the emacs keys (`excl`) stop before
-  // the end, as a real M-w does.
-  function yank(pane, excl) {
+  // the end, as a real M-w does. `stay`: copy-pipe without -and-cancel
+  // keeps you in copy mode.
+  function yank(pane, excl, stay) {
     var r = selRange(pane);
     var out = [];
     for (var i = r.a[0]; i <= r.b[0]; i++) {
@@ -1282,7 +1395,7 @@
     S.clipboard = out.join('\n');
     S.clipAt = new Date();
     pane.sel = null;
-    pane.mode = null;
+    if (!stay) pane.mode = null;
     S.lastAction = 'yank';
     message(tx('コピーした: {0}', S.clipboard.split('\n')[0].trim().slice(0, 40)));
   }
@@ -1351,9 +1464,10 @@
     S.repeatTimer = setTimeout(function () { if (S.screen === 'game') render(); }, 520);
   }
 
-  // message, note, chip and banner take Japanese and show it in the page's language.
-  function message(text) {
-    S.message = tx(text);
+  // message, note, chip and banner take Japanese and show it in the page's
+  // language (`raw`: the player's own text, as it is).
+  function message(text, raw) {
+    S.message = raw ? text : tx(text);
     clearTimeout(S.messageTimer);
     // The tabs are back: the arrow to a wanted tab too.
     S.messageTimer = setTimeout(function () { S.message = null; renderStatus(); renderTabArrow(); }, 1800);
@@ -1538,6 +1652,57 @@
   var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': tx('rename-window 名前'), 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach', 'k:!': 'break-pane', 'k:l': 'last-window' };
 
   function sigOf(act) { return act.key != null ? 'k:' + act.key : act.resize ? 'r:' + act.resize : null; }
+
+  // ---- the copy-mode keys in the player's own words --------------------------
+
+  // The game's copy-mode moves by name: the tmux commands behind them and
+  // the default key of each mode. The player's own binding comes first,
+  // then the key of the mode-keys they set, else the vi key (what the
+  // game shows by default).
+  var COPY_MOVES = {
+    begin: { cmds: ['begin-selection'], vi: 'Space', emacs: 'Ctrl+Space' },
+    copy: { cmds: ['copy-selection-and-cancel', 'copy-pipe-and-cancel', 'copy-selection', 'copy-pipe', 'copy-selection-no-clear', 'copy-pipe-no-clear'], vi: 'Enter', emacs: MAC ? 'Option+w' : 'Alt+w' },
+    // q leaves in both modes and the questions name it: the player's own
+    // cancel key (Escape, say) is accepted but not shown.
+    cancel: { cmds: [], vi: 'q', emacs: 'q' },
+    top: { cmds: ['history-top'], vi: 'g', emacs: MAC ? 'Option+<' : 'Alt+<' },
+    searchUp: { cmds: ['search-backward'], vi: '?', emacs: 'Ctrl+r' },
+    searchDown: { cmds: ['search-forward'], vi: '/', emacs: 'Ctrl+s' },
+    again: { cmds: ['search-again'], vi: 'n', emacs: 'n' },
+    home: { cmds: ['start-of-line'], vi: 'Home', emacs: 'Home' },
+    end: { cmds: ['end-of-line'], vi: 'End', emacs: 'End' },
+    pageUp: { cmds: ['page-up'], vi: 'PageUp', emacs: 'PageUp' },
+    pageDown: { cmds: ['page-down'], vi: 'PageDown', emacs: 'PageDown' }
+  };
+  var COPY_LABEL = { Space: 'begin', Enter: 'copy', q: 'cancel', g: 'top', '?': 'searchUp', '/': 'searchDown', n: 'again', Home: 'home', End: 'end', PageUp: 'pageUp', PageDown: 'pageDown' };
+
+  function copyKeyLabel(name) {
+    var m = COPY_MOVES[name];
+    var own = S.conf && CF.copyKey(S.conf, m.cmds);
+    if (own) return own;
+    return S.conf && S.conf.modeKeys === 'emacs' ? m.emacs : m.vi;
+  }
+
+  // Whether the player's copy key for `name` leaves copy mode (copy-pipe
+  // without -and-cancel stays, as does copy-selection).
+  function copyKeyStays(name) {
+    var own = S.conf && CF.copyKey(S.conf, COPY_MOVES[name].cmds);
+    if (!own) return false;
+    return S.conf.binds.some(function (b) { return b.key.label === own && b.act.copy && !/-and-cancel$/.test(b.act.copy); });
+  }
+
+  // A copy-mode guide move: the key in the player's words, and the note on
+  // the other mode's key only while no mode-keys is set.
+  function copyMove(name, text, note) {
+    var label = copyKeyLabel(name);
+    var tail = !S.conf || !S.conf.modeKeys ? note || '' : '';
+    return mv([label], tx('{0} を押す（{1}{2}）', label, tx(text), tail ? tx('。') + tx(tail) : ''), true);
+  }
+
+  // A default copy-mode key label (LV.KEYS) in the player's own key.
+  function copyOwn(label) {
+    return COPY_LABEL[label] ? copyKeyLabel(COPY_LABEL[label]) : label;
+  }
 
   // The default key event behind a label, to see whether the file took it away.
   function labelEvent(label) {
@@ -1958,8 +2123,8 @@
         if (back) return back;
         var p = T.activePane(T.activeWindow(S.session));
         if (p.mode !== 'copy') return mv(['['], '[ を押す（コピーモードに入る）');
-        if (S.q1) return mv(['q'], 'q を押す（コピーモードを抜ける。シェルに戻る）', true);
-        return mv(['g'], 'g を押す（一番上へ。emacs 式は Alt+<）', true);
+        if (S.q1) return copyMove('cancel', 'コピーモードを抜ける。シェルに戻る');
+        return copyMove('top', '一番上へ', 'emacs 式は Alt+<');
       }
     },
     copy_page: {
@@ -1997,7 +2162,7 @@
         if (lineWhere(p, S.q0.ln) === 'below') {
           // Many pages below (a pane of one row pages a line at a time):
           // leaving and coming back is quicker than paging down.
-          if (linePages(p, S.q0.ln) > 6) return mv(['q'], 'q で抜ける（[ で入り直すと、一番下に戻る）', true);
+          if (linePages(p, S.q0.ln) > 6) return mv(['q'], tx('q で抜ける（{0} で入り直すと、一番下に戻る）', ownKey('[').label || '['), true);
           return mv(['PageDown'], 'PageDown を押す（行き過ぎた。1 ページ下へ）', true);
         }
         return mv(['PageUp'], 'PageUp を押す（1 ページ上へ。印の行が見えるまで）', true);
@@ -2039,7 +2204,7 @@
           pm.type = S.q0.word;
           return pm;
         }
-        return mv(['?'], '? を押す（上向きに検索。emacs 式は Ctrl+r）', true);
+        return copyMove('searchUp', '上向きに検索', 'emacs 式は Ctrl+r');
       }
     },
     last_window: {
@@ -2226,18 +2391,20 @@
         if (back) return back;
         if (p.mode === 'copy') {
           var ln = S.q0.ln;
+          // Copied with a key that stays in copy mode (copy-pipe): out first.
+          if (S.clipboard === S.q0.text) return copyMove('cancel', 'コピーモードを抜ける');
           // A selection begun somewhere else: let go of it first.
           if (p.sel != null && (p.sel !== ln || p.selx !== 0)) return mv(['Esc'], 'Esc を押す（選び直す）', true);
           if (p.cy > ln) return mv(['↑'], '↑ を押す（コピーする行まで上がる）', true);
           // Far above the line (g, PageUp): leaving and coming back is quicker than ↓ a hundred times.
-          if (ln - p.cy > 5) return mv(['q'], 'q で抜ける（[ で入り直すと、一番下に戻る）', true);
+          if (ln - p.cy > 5) return mv(['q'], tx('q で抜ける（{0} で入り直すと、一番下に戻る）', ownKey('[').label || '['), true);
           if (p.cy < ln) return mv(['↓'], '↓ を押す（コピーする行まで下がる）', true);
           if (p.sel == null) {
-            if (p.cx > 0) return mv(['Home'], 'Home を押す（行の頭へ。vi 式は 0、emacs 式は Ctrl+a）', true);
-            return mv(['Space'], 'Space を押す（ここから選び始める）', true);
+            if (p.cx > 0) return copyMove('home', '行の頭へ', 'vi 式は 0、emacs 式は Ctrl+a');
+            return copyMove('begin', 'ここから選び始める');
           }
-          if (p.cx < S.q0.text.length) return mv(['End'], 'End を押す（行の終わりまで選ぶ。vi 式は $、emacs 式は Ctrl+e）', true);
-          return mv(['Enter'], 'Enter を押す（選んだところをコピーする）', true);
+          if (p.cx < S.q0.text.length) return copyMove('end', '行の終わりまで選ぶ', 'vi 式は $、emacs 式は Ctrl+e');
+          return copyMove('copy', copyKeyStays('copy') ? '選んだところをコピーする。コピーモードには残る' : '選んだところをコピーする');
         }
         if (S.clipboard === S.q0.text) return mv([']'], '] を押す（貼り付ける）');
         return mv(['['], '[ を押す（コピーモードに入る）');
@@ -3000,9 +3167,7 @@
     html += '<div class="sz-q">' + esc(qText(b)) + '</div>';
     var keys = [], rootKeys = [];
     b.q.show.forEach(function (a) {
-      (LV.KEYS[a] || []).forEach(function (k) {
-        var o = ownKey(k);
-        if (o.none) return;
+      showKeys(a).forEach(function (o) {
         var list = o.pfx ? keys : rootKeys;
         if (list.indexOf(o.label) < 0) list.push(o.label);
       });
@@ -3029,6 +3194,20 @@
     html += '</div>';
     el.innerHTML = html;
     renderClock();
+  }
+
+  // The key labels of a show list (LV.KEYS) in the player's own keys: the
+  // prefix keys through ownKey, the copy-mode keys ([ and PageUp aside)
+  // through copyOwn.
+  var COPY_SHOWS = { copy: 1, page: 1, search: 1, yank: 1 };
+  function showKeys(a) {
+    var out = [];
+    (LV.KEYS[a] || []).forEach(function (k) {
+      if (COPY_SHOWS[a] && k !== '[') { out.push({ label: copyOwn(k), pfx: true }); return; }
+      var o = ownKey(k);
+      if (!o.none) out.push(o);
+    });
+    return out;
   }
 
   function steps(move) {
@@ -3538,14 +3717,17 @@
     var tr = term.getBoundingClientRect(), r = tab.getBoundingClientRect(), ar = act.getBoundingClientRect();
     var motd = $(':scope > .motd', act);
     var top = ar.top - tr.top + 20 + (motd ? motd.offsetHeight : 0), bottom = ar.bottom - tr.top;
-    var x1 = ar.left - tr.left + ar.width / 2, y1 = Math.min(bottom - 10, (top + bottom) / 2);
-    var x2 = Math.max(12, Math.min(tr.width - 12, r.left - tr.left + Math.min(r.width / 2, 40))), y2 = tr.height - 4;
+    // The bar above the panes (status-position top): the arrow goes up.
+    var above = !!(S.conf && S.conf.statusTop);
+    var x1 = ar.left - tr.left + ar.width / 2, y1 = above ? Math.max(top + 10, (top + bottom) / 2) : Math.min(bottom - 10, (top + bottom) / 2);
+    var x2 = Math.max(12, Math.min(tr.width - 12, r.left - tr.left + Math.min(r.width / 2, 40))), y2 = above ? 4 : tr.height - 4;
     // A window question: the guide card sits where the arrow's middle would
-    // be, and the arrow then leaves from the card's foot, never behind it.
+    // be, and the arrow then leaves from the card's foot (its head when the
+    // bar is above), never behind it.
     if (b && b.phase === 'play' && b.q && !$(':scope > .guide-card:not(.tab)', term)) {
       var card = placeCard(term, (x1 + x2) / 2, (y1 + y2) / 2, motdHTML(b, fold ? null : guideMove(b), fold), '', 'tab');
       x1 = card.offsetLeft + card.offsetWidth / 2;
-      y1 = card.offsetTop + card.offsetHeight + 2;
+      y1 = above ? card.offsetTop - 2 : card.offsetTop + card.offsetHeight + 2;
     }
     term.insertAdjacentHTML('beforeend', arrowSVG(x1, y1, x2, y2, 4, '', 'tab'));
   }
@@ -3885,7 +4067,7 @@
     if (gm) {
       gm.keys.forEach(function (l) { labels.push(l); });
       (gm.alt || []).forEach(function (a) { a.keys.forEach(function (l) { labels.push(l); }); });
-    } else if (S.run && S.run.q) S.run.q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (l) { var o = ownKey(l); if (!o.none) labels.push(o.label); }); });
+    } else if (S.run && S.run.q) S.run.q.show.forEach(function (a) { showKeys(a).forEach(function (o) { labels.push(o.label); }); });
     labels.forEach(function (label) { add(label, keyFromLabel(label), 'k-level'); });
     if (S.confirm) add('y', { key: 'y' });
     if (S.detached || S.prompt) add('Enter', { key: 'Enter' });
@@ -4579,8 +4761,13 @@
     var html = '';
     html += '<h4>' + tx('使う {0} 行', c.used.length) + (c.custom ? tx('（prefix {0}）', esc(c.prefix.label)) : '') + '</h4>';
     html += c.used.length ? '<ul>' + c.used.map(function (x) { return row(x, x.say); }).join('') + '</ul>' : '<p>' + tx('ゲームで使える行がなかった。既定のキーで遊ぶ。') + '</p>';
+    // 未対応: what tmux does and the game cannot (its keys do nothing here);
+    // apart from the settings the game has no use for.
+    if (c.unsupported.length) {
+      html += '<details open><summary class="err">' + tx('未対応 {0} 行（そのキーはゲームでは何も起きない）', c.unsupported.length) + '</summary><ul>' + c.unsupported.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
+    }
     if (c.skipped.length) {
-      html += '<details><summary>' + tx('読み飛ばした {0} 行', c.skipped.length) + '</summary><ul>' + c.skipped.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
+      html += '<details><summary>' + tx('関係ない {0} 行（見た目などの設定）', c.skipped.length) + '</summary><ul>' + c.skipped.map(function (x) { return row(x, x.why); }).join('') + '</ul></details>';
     }
     el.innerHTML = html;
   }
@@ -4780,7 +4967,7 @@
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
-          detail: S.detail, conf: S.conf ? { prefix: S.conf.prefix.label, binds: S.conf.binds.length, navigator: S.conf.navigator } : null,
+          detail: S.detail, conf: S.conf ? { prefix: S.conf.prefix.label, binds: S.conf.binds.length, navigator: S.conf.navigator, modeKeys: S.conf.modeKeys, statusTop: S.conf.statusTop } : null,
           cols: S.cols, rows: S.rows
         };
       }
