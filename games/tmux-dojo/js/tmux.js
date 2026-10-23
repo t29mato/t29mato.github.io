@@ -47,13 +47,9 @@
   function createWindow(session, name, pane) {
     pane = pane || createPane(null);
     pane.activePoint = nextActivePoint++;
-    var used = {};
-    session.windows.forEach(function (w) { used[w.index] = true; });
-    var index = session.baseIndex;
-    while (used[index]) index++;
     var win = {
       id: 'w' + (nextWindowId++),
-      index: index,
+      index: freeIndex(session),
       name: name || 'zsh',
       root: { type: 'pane', pane: pane },
       active: pane.id,
@@ -65,6 +61,15 @@
     session.windows.push(win);
     session.windows.sort(function (a, b) { return a.index - b.index; });
     return win;
+  }
+
+  // The lowest window index not in use (what new-window gives).
+  function freeIndex(session) {
+    var used = {};
+    session.windows.forEach(function (w) { used[w.index] = true; });
+    var index = session.baseIndex;
+    while (used[index]) index++;
+    return index;
   }
 
   function windowById(session, id) {
@@ -205,10 +210,17 @@
 
   // break-pane: the pane leaves its window for a new one of its own, which
   // becomes the current window (as tmux does without -d). The window it
-  // left keeps its other panes; a window of one pane cannot be broken.
+  // left keeps its other panes. A window of one pane is not refused: tmux
+  // 3.x just moves it to the next free index (0,1 → 0,2), so `moved` says.
   function breakPane(session, win, paneId) {
     var hit = parentOf(win.root, paneId);
-    if (!hit || !hit.parent) return null;
+    if (!hit) return null;
+    if (!hit.parent) {
+      win.index = freeIndex(session);
+      session.windows.sort(function (a, b) { return a.index - b.index; });
+      selectWindow(session, win.id);
+      return win;
+    }
     var pane = hit.node.pane;
     killPane(win, paneId);
     var fresh = createWindow(session, null, pane);
@@ -433,6 +445,7 @@
     createSession: createSession,
     createWindow: createWindow,
     createPane: createPane,
+    freeIndex: freeIndex,
     windowById: windowById,
     windowByIndex: windowByIndex,
     activeWindow: activeWindow,

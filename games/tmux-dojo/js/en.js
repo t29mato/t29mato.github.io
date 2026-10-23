@@ -568,7 +568,6 @@ window.ADV.EN = {
   "ペインの名前": "rename pane",
   "セッション一覧": "session list",
   // --- loop5 (new skills and the 稽古 drill) ---
-  "ペインが 1 つだけなので別のウィンドウにはできない": "Only one pane: nothing to break out into a window",
   "INFO  起動して待っている": "INFO  started, waiting",
   "INFO  問い合わせに答えた": "INFO  request served",
   "INFO  ……ログが続く……": "INFO  ...the log goes on...",
@@ -686,5 +685,7 @@ window.ADV.EN = {
   "prefix なし。": "no prefix; ",
   // --- loop7: the first minute ---
   "{0} を 2 回押した。2 回目はシェルに入る。もう一度 {0} から": "{0} pressed twice: the second one went to the shell. Start again from {0}",
-  "Cmd ではなく Ctrl を押しながら {0}": "Hold Ctrl, not Cmd, and press {0}"
+  "Cmd ではなく Ctrl を押しながら {0}": "Hold Ctrl, not Cmd, and press {0}",
+  // --- loop8: tmux fidelity ---
+  "ペインが 1 つだけなので、ウィンドウの番号が {0} に変わっただけ": "With only one pane the window just became number {0}"
 };

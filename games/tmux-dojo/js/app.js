@@ -900,7 +900,7 @@
       // choose-buffer / list-buffers: the game has one buffer.
       S.lastAction = 'brief';
       if (!S.clipboard) { if (key === '#') message('no buffers'); return true; }
-      if (key === '#') message('buffer0000: ' + S.clipboard.length + ' bytes: "' + S.clipboard.split('\n')[0].slice(0, 30) + '"');
+      if (key === '#') message('buffer0: ' + S.clipboard.length + ' bytes: "' + S.clipboard.split('\n')[0].slice(0, 30) + '"');
       else S.picker = { kind: 'buffer', idx: 0 };
       return true;
     }
@@ -930,7 +930,7 @@
     if (key === 'c') { var w = T.createWindow(S.session, 'zsh'); T.selectWindow(S.session, w.id); nameRoom(T.activePane(w)); S.lastAction = 'new_window'; return true; }
     if (key === '!') {
       // break-pane: the pane becomes a window of its own, and you go with it.
-      if (!T.breakPane(S.session, win, pane.id)) message('ペインが 1 つだけなので別のウィンドウにはできない');
+      breakPane(win, pane);
       S.lastAction = 'break_pane';
       return true;
     }
@@ -961,7 +961,7 @@
       S.prompt = { label: '(rename-session)', value: sess.name, done: function (v) { renameSession(sess, v.trim()); } };
       return true;
     }
-    if (key === 's' || key === 'w') { openPicker(); S.lastAction = 'choose'; return true; }
+    if (key === 's' || key === 'w') { openPicker(key === 'w'); S.lastAction = 'choose'; return true; }
     if (key === '(' || key === ')') {
       var at = S.sessions.indexOf(S.session);
       var n = S.sessions.length;
@@ -1005,6 +1005,12 @@
     if (key === 'Escape') return true;
     unbound(k);
     return true;
+  }
+
+  // A window of one pane is not refused: as in tmux 3.x it just moves to
+  // the next free number, which is said, since nothing else shows.
+  function breakPane(win, pane) {
+    if (T.breakPane(S.session, win, pane.id) === win) message(tx('ペインが 1 つだけなので、ウィンドウの番号が {0} に変わっただけ', win.index));
   }
 
   // The default prefix keys the game has: a Ctrl+key of one of them is a
@@ -1091,7 +1097,7 @@
       if (!T.killWindow(S.session, win.id)) message('最後のウィンドウは閉じられない');
       S.lastAction = 'kill_window';
     } else if (/^(break-pane|breakp)$/.test(cmd)) {
-      if (!T.breakPane(S.session, win, pane.id)) message('ペインが 1 つだけなので別のウィンドウにはできない');
+      breakPane(win, pane);
       S.lastAction = 'break_pane';
     } else if (/^(last-window|last)$/.test(cmd)) {
       if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last);
@@ -1115,7 +1121,7 @@
       detach();
       S.lastAction = 'detach';
     } else if (/^(choose-tree|choose-session)$/.test(cmd)) {
-      openPicker();
+      openPicker(argv.indexOf('-w') > 0);
       S.lastAction = 'choose';
     } else if (/^(list-sessions|ls)$/.test(cmd)) {
       message(sessionLines().join(' / '));
@@ -1183,7 +1189,7 @@
     var begins = key === ' ' || (k.ctrl && key === ' ') || key === 'V';
     var copies = (key === 'Enter' && !k.ctrl) || mk === 'w' || (k.ctrl && key === 'w');
     if ((key === 'Escape' || (k.ctrl && key === 'g')) && pane.sel != null) { pane.sel = null; return true; }
-    if (copies && pane.sel != null) { yank(pane); return true; }
+    if (copies && pane.sel != null) { yank(pane, key !== 'Enter'); return true; }
     if (key === 'v' || key === 'y') { message(key === 'v' ? 'tmux の v は矩形選択の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
     if (key === 'q' || key === 'Escape' || key === 'Enter' || (k.ctrl && (key === 'c' || key === 'g'))) { pane.mode = null; return true; }
     if (begins) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
@@ -1247,17 +1253,19 @@
   }
 
   // From where Space was pressed to the cursor, the character under it
-  // included, as tmux copies.
-  function yank(pane) {
+  // included, as tmux's vi keys copy; the emacs keys (`excl`) stop before
+  // the end, as a real M-w does.
+  function yank(pane, excl) {
     var r = selRange(pane);
     var out = [];
     for (var i = r.a[0]; i <= r.b[0]; i++) {
       if (pane.lines[i] && pane.lines[i].clear) continue;
       var t = lineAt(pane, i);
-      var to = i === r.b[0] ? r.b[1] + 1 : t.length;
+      var to = i === r.b[0] ? r.b[1] + (excl ? 0 : 1) : t.length;
       out.push(t.slice(i === r.a[0] ? r.a[1] : 0, to).replace(to >= t.length ? /\s+$/ : /$/, ''));
     }
     S.clipboard = out.join('\n');
+    S.clipAt = new Date();
     pane.sel = null;
     pane.mode = null;
     S.lastAction = 'yank';
@@ -1279,8 +1287,29 @@
 
   // ---- the session picker (choose-tree) ---------
 
-  function openPicker() {
-    S.picker = { idx: Math.max(0, S.sessions.indexOf(S.session)) };
+  // `wins`: choose-tree -w, the windows shown under each session; the
+  // list opens on the current window there, else on the current session.
+  function openPicker(wins) {
+    S.picker = { idx: 0, wins: !!wins };
+    var rows = pickerRows(), cur = T.activeWindow(S.session);
+    for (var i = 0; i < rows.length; i++) if (rows[i].sess === S.session && (wins ? rows[i].win === cur : !rows[i].win)) S.picker.idx = i;
+  }
+
+  // The rows of the tree: {sess} for a session, {sess, win} for a window.
+  function pickerRows() {
+    var rows = [];
+    S.sessions.forEach(function (s) {
+      rows.push({ sess: s });
+      if (S.picker.wins) s.windows.forEach(function (w, i) { rows.push({ sess: s, win: w, tail: i === s.windows.length - 1 }); });
+    });
+    return rows;
+  }
+
+  function pickRow(row) {
+    switchSession(row.sess);
+    if (row.win) T.selectWindow(row.sess, row.win.id);
+    S.picker = null;
+    S.lastAction = 'choose';
   }
 
   function pickerKey(k) {
@@ -1291,11 +1320,11 @@
       else if (key === 'Escape' || key === 'q' || (k.ctrl && key === 'c')) S.picker = null;
       return true;
     }
-    var n = S.sessions.length;
+    var rows = pickerRows(), n = rows.length;
     if (key === 'ArrowUp' || key === 'k') S.picker.idx = (S.picker.idx - 1 + n) % n;
     else if (key === 'ArrowDown' || key === 'j') S.picker.idx = (S.picker.idx + 1) % n;
-    else if (key === 'Enter') { switchSession(S.sessions[S.picker.idx]); S.picker = null; S.lastAction = 'choose'; }
-    else if (/^[0-9]$/.test(key) && Number(key) < n) { switchSession(S.sessions[Number(key)]); S.picker = null; S.lastAction = 'choose'; }
+    else if (key === 'Enter') pickRow(rows[S.picker.idx]);
+    else if (/^[0-9]$/.test(key) && Number(key) < n) pickRow(rows[Number(key)]);
     else if (key === 'Escape' || key === 'q' || (k.ctrl && key === 'c')) S.picker = null;
     return true;
   }
@@ -1586,7 +1615,10 @@
     var ti = S.sessions.indexOf(target), at = S.sessions.indexOf(S.session), n = S.sessions.length;
     if (ti < 0) return null;
     if (S.picker && !S.picker.kind) {
-      var m;
+      var m, rows = pickerRows();
+      // The session's own row in the tree (not one of its windows).
+      n = rows.length;
+      for (var ri = 0; ri < n; ri++) if (rows[ri].sess === target && !rows[ri].win) ti = ri;
       if (S.picker.idx === ti) m = mv(['Enter'], tx('Enter を押す（{0} に移る）', target.name), true);
       else {
         var down = (ti - S.picker.idx + n) % n, up = (S.picker.idx - ti + n) % n;
@@ -3468,14 +3500,21 @@
   function pickerHTML() {
     if (S.picker.kind === 'buffer') {
       return '<div class="picker" role="listbox" aria-label="' + tx('バッファ') + '"><div class="picker-head">' + tx('(choose-buffer)  Enter で貼る') + '</div>' +
-        '<div class="picker-row on">(0) buffer0000: ' + S.clipboard.length + ' bytes: "' + esc(S.clipboard.split('\n')[0].slice(0, 40)) + '"</div></div>';
+        '<div class="picker-row on">(0) buffer0: ' + hhmm(S.clipAt || new Date()) + ': ' + esc(S.clipboard.split('\n')[0].slice(0, 40)) + '</div></div>';
     }
     var html = '<div class="picker" role="listbox" aria-label="' + tx('セッション') + '">';
     html += '<div class="picker-head">' + tx('(choose-tree)  ↑↓ で選んで Enter') + '</div>';
     var sg = sessGoal();
-    S.sessions.forEach(function (s, i) {
-      var g = sg && sg.sess === s;
-      html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + (g ? ' goal-row' : '') + '">(' + i + ') ' + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '') +
+    // As tmux draws the tree: + a folded session, - an opened one with its
+    // windows (├─→ … └─→) and their status flags under it.
+    pickerRows().forEach(function (r, i) {
+      var g = !r.win && sg && sg.sess === r.sess, s = r.sess, w = r.win, text;
+      if (w) {
+        var flag = w.id === s.active ? '*' : (w.id === s.last ? '-' : '');
+        if (w.zoomed) flag += 'Z';
+        text = (r.tail ? '└─→' : '├─→') + ' + ' + w.index + ': ' + esc(w.name) + flag + ': "dojo"';
+      } else text = (S.picker.wins ? '- ' : '+ ') + esc(s.name) + ': ' + s.windows.length + ' windows' + (s === S.session ? ' (attached)' : '');
+      html += '<div class="picker-row' + (i === S.picker.idx ? ' on' : '') + (g ? ' goal-row' : '') + '">(' + i + ') ' + text +
         (g ? '<span class="goal-tag">' + esc(sg.tag) + '</span>' : '') + '</div>';
     });
     return html + '</div>';
@@ -3677,6 +3716,8 @@
     S.session.windows.forEach(function (w) {
       var flag = w.id === S.session.active ? '*' : (w.id === S.session.last ? '-' : '');
       if (w.zoomed) flag += 'Z';
+      // #{?window_flags,#{window_flags}, }: no flag is still one cell.
+      if (!flag) flag = '\u00a0';
       var g = tabGoal(w.id);
       html += '<span class="st-win' + (w.id === S.session.active ? ' cur' : '') + (g ? ' goal-tab' + (g.mark === 'close' ? ' close' : '') : '') + '">' + w.index + ':' + esc(w.name) + flag + (g ? '<span class="goal-tag">' + esc(g.tag) + '</span>' : '') + '</span>';
     });
@@ -3698,18 +3739,19 @@
     }
   }
 
-  // The number new-window would give, as createWindow does.
-  function nextWindowIndex() {
-    var used = {};
-    S.session.windows.forEach(function (w) { used[w.index] = true; });
-    var i = S.session.baseIndex;
-    while (used[i]) i++;
-    return i;
+  // The number new-window would give.
+  function nextWindowIndex() { return T.freeIndex(S.session); }
+
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function hhmm(d) {
+    return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
   }
 
+  // As the default status-right: %H:%M %d-%b-%y.
   function clock() {
     var d = new Date();
-    return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+    return hhmm(d) + ' ' + (d.getDate() < 10 ? '0' : '') + d.getDate() + '-' + MONTHS[d.getMonth()] + '-' + String(d.getFullYear()).slice(2);
   }
 
   // Turn a key label from levels.js into a key object for the phone key bar.
