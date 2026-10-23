@@ -690,6 +690,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .rec-span { margin: 0 0 10px; border-color: var(--paper-line); }
 .rec-span button { font-size: 13px; padding: 4px 14px; }
 .rec-table.board tr.is-me td { background: #fff1d0; font-weight: 700; }
+.rec-table.board .r-own { font-size: 11px; font-weight: 400; color: var(--sumi-dim); white-space: nowrap; }
 .sync-key { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 .sync-key code { font-family: var(--mono); font-size: 18px; background: var(--washi-3); border: 1px solid var(--paper-line); padding: 4px 10px; color: var(--sumi); word-break: break-all; }
 .name-form { display: grid; gap: 4px; }
