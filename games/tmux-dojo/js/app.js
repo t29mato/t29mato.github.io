@@ -675,6 +675,13 @@
       message(tx('tmux のコピーは tmux の中にある。{0} → ] で貼る', prefixLabel()));
       return true;
     }
+    // Cmd+b on a Mac: the prefix letter with the wrong modifier.
+    var ps = prefixSpec();
+    if (k.meta && !k.ctrl && ps.ctrl && k.key.toLowerCase() === ps.key) {
+      message(tx('Cmd ではなく Ctrl を押しながら {0}', ps.key));
+      S.lastAction = 'brief';
+      return true;
+    }
     if (k.meta) return false;
 
     // confirm-before: y runs it; any other key cancels, as in tmux.
@@ -710,6 +717,10 @@
         // (or C-a) still moves the cursor, as in a real tmux.
         S.armed = false;
         if (pane.mode !== 'copy') lineEdit(pane, 'input', prefixEvent());
+        // Nothing shows on an empty line, so a beginner who pressed it twice
+        // "to make sure" is told where the second one went.
+        message(tx('{0} を 2 回押した。2 回目はシェルに入る。もう一度 {0} から', prefixLabel()));
+        S.lastAction = 'brief';
         return true;
       }
       AU.se('prefix');
@@ -762,7 +773,9 @@
       return true;
     }
     var nx = S.run && S.run.phase === 'play' && S.run.q ? guideMove(S.run) : null;
-    if (nx && nx.pfx && nx.keys.indexOf(k.key) >= 0 && !k.ctrl && !k.alt) message(tx('{0} がシェルに入った。先に {1}（prefix）を押す', k.key, prefixLabel()));
+    // The guide's key pressed without the prefix (an arrow is shown as ↓).
+    var kl = ARROWS[{ ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[k.key]] || k.key;
+    if (nx && nx.pfx && nx.keys.indexOf(kl) >= 0 && !k.ctrl && !k.alt) message(tx('{0} がシェルに入った。先に {1}（prefix）を押す', kl, prefixLabel()));
     return editLine(pane, k, function (line) { runPaneCommand(pane, line); });
   }
 
@@ -2477,6 +2490,8 @@
     // A message from the last question would hide this one's wings.
     S.message = null;
     clearTimeout(S.messageTimer);
+    // Its miss chip would read as a miss on this question (a streak chip stays).
+    $$('#chips .chip.miss').forEach(function (c) { c.parentNode.removeChild(c); });
     var type = b.qs[b.i];
     var q = Q[type];
     // The house stays as it is; only a half-typed prompt or confirm is dropped.
@@ -2802,7 +2817,7 @@
     $('#keiko-sub').textContent = dbest ? tx('手順なしで思い出す ・ 最長 {0} 問連続', dbest) : tx('手順なしで思い出す');
     var pick = lastCourse(all);
     var html = '';
-    LV.COURSES.forEach(function (c) {
+    LV.COURSES.forEach(function (c, i) {
       var runs = REC.runsOf(c.id, all);
       var best = REC.best(c.id, all);
       var a5 = ao5(runs);
@@ -2810,7 +2825,9 @@
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
         '<span class="wing-n">' + nQ(c.qs.length) + '</span>' +
-        '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span></span>' +
+        '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span>' +
+        // The key that starts this course (navKey): someone who knows tmux goes straight to 上級 with 3.
+        '<kbd class="hk">' + (i + 1) + '</kbd></span>' +
         '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
         '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
@@ -3334,6 +3351,12 @@
       var r = k.getBoundingClientRect();
       return { l: r.left - tr.left - 4, t: r.top - tr.top - 4, r: r.right - tr.left + 4, b: r.bottom - tr.top + 4 };
     });
+    // Nor under 始め while it shows: on a phone it sits where the card goes.
+    var bn = $('#banner');
+    if (bn && bn.classList.contains('show')) {
+      var br = bn.getBoundingClientRect();
+      keep.push({ l: br.left - tr.left - 12, t: br.top - tr.top - 12, r: br.right - tr.left + 12, b: br.bottom - tr.top + 12 });
+    }
     var left = Math.max(6, Math.min(W - w - 6, x - w / 2));
     var clampY = function (t) { return Math.max(6, Math.min(H - h - 6, t)); };
     var cover = function (t) {

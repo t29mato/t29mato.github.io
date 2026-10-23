@@ -336,6 +336,7 @@ kbd.pfx.next { background: var(--ai); }
 .em-learnt.lost { color: var(--sumi-dim); }
 kbd.hk { display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 10.5px; padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; opacity: 0.6; vertical-align: middle; background: none; box-shadow: none; color: inherit; }
 .btn small + kbd.hk { margin-left: 0; margin-top: 2px; }
+.wing-name kbd.hk { margin-left: 0; }
 @media (pointer: coarse) { kbd.hk { display: none; } }
 .learnt-note { margin: 12px 0 0; font-size: 13px; color: var(--moss); }
 .chip { font-size: 12.5px; padding: 6px 12px; border-radius: 3px; background: var(--washi); color: var(--sumi); border: 1px solid var(--paper-line); animation: rise 200ms ease-out; }

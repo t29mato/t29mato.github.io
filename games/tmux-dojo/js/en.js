@@ -683,5 +683,8 @@ window.ADV.EN = {
   // --- loop6: wording and phone ---
   "{0} 問": "{0} questions",
   "1 問": "1 question",
-  "prefix なし。": "no prefix; "
+  "prefix なし。": "no prefix; ",
+  // --- loop7: the first minute ---
+  "{0} を 2 回押した。2 回目はシェルに入る。もう一度 {0} から": "{0} pressed twice: the second one went to the shell. Start again from {0}",
+  "Cmd ではなく Ctrl を押しながら {0}": "Hold Ctrl, not Cmd, and press {0}"
 };
