@@ -1520,7 +1520,8 @@
     if (o.n) text = text.replace(/（1 回[^）]*）| \(\d+ cells? per press[^)]*\)/, tx('（1 回 {0} マス{1}）', o.n, o.n < 5 ? tx('。続けて押す') : ''));
     // kill-pane with no confirm-before: it closes at once.
     if (o.now) text = text.replace(/（確認が出る）| \(it asks to confirm\)/, tx('（すぐ閉じる）'));
-    if (o.root) text += tx('（prefix なし）');
+    // Said inside the move's own brackets: "Ctrl+j を押す（prefix なし。下へ）".
+    if (o.root) text = /（/.test(text) ? text.replace('（', '（' + tx('prefix なし。')) : / \(/.test(text) ? text.replace(' (', ' (' + tx('prefix なし。')) : text + tx('（prefix なし）');
     var own = { pfx: o.pfx, keys: [o.label], text: text };
     // What the move works inside (a prompt, a list) stays on it.
     ['prompt', 'picker', 'type'].forEach(function (f) { if (m[f] != null) own[f] = m[f]; });
@@ -2808,7 +2809,7 @@
       html += '<li><button type="button" class="wing' + (c.id === pick ? ' hot' : '') + '" data-course="' + c.id + '">' +
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
-        '<span class="wing-n">' + tx('{0} 問題', c.qs.length) + '</span>' +
+        '<span class="wing-n">' + nQ(c.qs.length) + '</span>' +
         '<span class="wing-mode' + (c.recommended ? ' rec' : '') + '">' + esc(c.mode) + '</span></span>' +
         '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
@@ -2942,7 +2943,8 @@
       html += '<div class="ob-guide' + (prompt ? ' ob-prompt' : '') + '">' + c + '<span class="motd-go" aria-hidden="true">▶</span><span class="ob-keys">' + keys + '</span><span class="ob-txt">' + esc(move.text) + '</span></div>';
       if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
-      html += '<div class="ob-guide learnt">' + c + tx(b.course.drill ? '稽古' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
+      // The words are the whole guide here: kept on a phone too (ob-prompt).
+      html += '<div class="ob-guide learnt ob-prompt">' + c + tx(b.course.drill ? '稽古' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
     }
     return html;
   }
@@ -3743,6 +3745,8 @@
       html += '<button type="button" class="key ' + x.cls + '" data-k="' + esc(JSON.stringify(x.k)) + '"' + (x.cls === 'k-prefix' && S.armed ? ' aria-pressed="true"' : '') + '>' + esc(x.label) + '</button>';
     });
     html += '<button type="button" class="key k-type" data-type="1">' + tx('文字を打つ') + '</button>';
+    // The buttons under the house are hidden on a phone: やめる lives here.
+    html += '<button type="button" class="key k-quit" data-quit="1">' + tx('やめる') + '</button>';
     bar.innerHTML = html;
   }
 
@@ -3856,6 +3860,16 @@
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
   }
 
+  // Under the result's title (which already names the course and the
+  // count): the day, and the key config when the run was on the player's own.
+  function resultSub(r) {
+    var day = wareki(r.at);
+    return S.conf ? tx('{0} ・ {1}', day, tx('自分のキー設定（prefix {0}）', prefixLabel())) : day;
+  }
+
+  // 15 問 / 1 問: the counter of questions (English needs the singular).
+  function nQ(n) { return n === 1 ? tx('1 問') : tx('{0} 問', n); }
+
   // The result as a hand scroll (記録): the time, against お手本, the rank
   // as a seal, the details and the last ten runs.
   function renderResult() {
@@ -3886,7 +3900,7 @@
     el.innerHTML =
       '<div class="em-hd">' + tx('{0} 回目', r.count) + '</div>' +
       '<h2 class="em-title">' + esc(tx('{0} {1} 問、解き終わった', c.title, r.n)) + '</h2>' +
-      '<div class="em-sub">' + esc(tx('{0} ・ 問題 {1} ・ {2}', c.title, r.n, wareki(r.at))) + '</div>' +
+      '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
       '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" aria-hidden="true">' + (EN ? esc(tx(r.rank)) : esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2')) + '</span><span>' + rankLine + '</span></div>' +
@@ -3896,7 +3910,7 @@
       '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
       '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
       '<div><dt>' + tx('操作ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
-      '<div><dt>' + tx('目安超え') + '</dt><dd>' + tx('{0} 問題', r.overs) + '</dd></div>' +
+      '<div><dt>' + tx('目安超え') + '</dt><dd>' + nQ(r.overs) + '</dd></div>' +
       '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
       '<div><dt>' + tx('押したキー') + '</dt><dd>' + r.keys + '</dd></div>' +
       '</dl>' +
@@ -3941,13 +3955,13 @@
     el.innerHTML =
       '<div class="em-hd">' + tx('稽古 {0} 回目', r.count) + '</div>' +
       '<h2 class="em-title">' + esc(tx('稽古 {0} 問', r.n)) + '</h2>' +
-      '<div class="em-sub">' + esc(tx('{0} ・ {1}', c.title, wareki(r.at))) + '</div>' +
+      '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.bestStreak + '<small>' + tx('問連続') + '</small></div>' +
       '<div class="em-verdict">' + esc(tx('手順を見ずに、押し違いなく続けて解けた数')) + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       learntHTML(r) +
       '<dl class="em-facts">' +
       '<div><dt>' + tx('解いた問題') + '</dt><dd>' + r.n + '</dd></div>' +
-      '<div><dt>' + tx('手順を見た') + '</dt><dd>' + tx('{0} 問題', r.guides) + '</dd></div>' +
+      '<div><dt>' + tx('手順を見た') + '</dt><dd>' + nQ(r.guides) + '</dd></div>' +
       '<div><dt>' + tx('操作ミス') + '</dt><dd>' + r.misses + '</dd></div>' +
       '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
       '</dl>' +
@@ -4301,10 +4315,11 @@
     var n = c.qs.length, mul = c.rankMul || 1;
     var rows = LV.RANKS.map(function (r, i) {
       var t = isFinite(r.max) ? tx('{0} 秒以内', Math.round(r.max * mul * n)) : tx('{0} 秒より遅い', Math.round(LV.RANKS[i - 1].max * mul * n));
-      var per = isFinite(r.max) ? tx('1 問 {0} 秒', (r.max * mul).toFixed(1)) : '';
+      var per = isFinite(r.max) ? tx('{0} 秒', (r.max * mul).toFixed(1)) : '';
       return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(tx(r.title)) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? tx('いまここ') : '') + '</td></tr>';
     }).join('');
-    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('目安') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    // Not "目安": that word is the per-question time limit elsewhere.
+    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   function weakPanel(id) {
@@ -4516,6 +4531,7 @@
       var b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.type) { $('#sink').focus(); return; }
+      if (b.dataset.quit) { if (!endDrill()) { leaveRun(); showScreen('title'); } return; }
       handleKey(JSON.parse(b.dataset.k));
       render();
     });

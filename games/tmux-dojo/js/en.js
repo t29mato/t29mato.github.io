@@ -16,7 +16,6 @@ window.ADV.EN = {
   "(choose-tree)  ↑↓ で選んで Enter": "(choose-tree)  ↑↓ to pick, Enter",
   ", を押す（カンマ）。名前の入力欄が出る": "Press , (comma). A name prompt opens",
   "-L（左）-R（右）-U（上）-D（下）": "-L (left) -R (right) -U (up) -D (down)",
-  "1 問 {0} 秒": "{0}s per question",
   "1 問あたり": "Per question",
   "1 問で 2〜8 手。考える前に手が動くか。": "Two to eight moves per question. Can your hands go before you think?",
   "2 つ目の prefix を {0} にする": "second prefix becomes {0}",
@@ -101,8 +100,6 @@ window.ADV.EN = {
   "{0} を押す（{1} へ）": "Press {0} (to {1})",
   "{0} を押す（{1}）": "Press {0} ({1})",
   "{0} を閉じる": "Close {0}",
-  "{0} ・ 問題 {1} ・ {2}": "{0} · {1} questions · {2}",
-  "{0} 問題": "{0} questions",
   "{0} 回": "{0} runs",
   "{0} 回分の記録が加わった。": "{0} runs added.",
   "{0} 日連続": "{0}-day streak",
@@ -336,7 +333,7 @@ window.ADV.EN = {
   "名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。": "Add a name and your best is listed each time you play. Add it under Sync.",
   "名前を変える": "Rename",
   "名前（12 文字まで）": "Name (up to 12 characters)",
-  "問題は毎回ちがう順で出る。違う操作は +2 秒。指示には答えの手順がいつも出ている。目安を過ぎても問題は飛ばない。タブを離れると時計が止まる。": "Questions come in a new order each run. A wrong key costs +2s. The steps to the answer are always shown. Questions never skip, even past the target. The clock stops when you leave the tab.",
+  "問題は毎回ちがう順で出る。違う操作は +2 秒。指示には答えの手順がいつも出ている。目安を過ぎても問題は飛ばない。タブを離れると時計が止まる（長く止めた回はランキングには載らない）。": "Questions come in a new order each run. A wrong key costs +2s. The steps to the answer are always shown. Questions never skip, even past the target. The clock stops when you leave the tab (a run paused for long stays off the ranking).",
   "境目を{0}へ{1}マスずらす": "move the border {0} by {1}",
   "変える": "Change",
   "外からは tmux new -s 名前。中からなら prefix → : で new -s 名前。": "Outside: tmux new -s NAME. Inside: prefix → : then new -s NAME.",
@@ -682,5 +679,9 @@ window.ADV.EN = {
   "セッション移動": "Switch session",
   "attach -t で入る": "attach -t",
   "セッション": "Sessions",
-  "ヒント: セッションは裏でそのまま残っている。tmux ls で一覧、tmux attach -t 名前 で入る（-t なしなら最後にいたセッションへ）。": "Hint: the sessions are still running in the background. tmux ls lists them, tmux attach -t NAME enters one (without -t you get the one you were in last)."
+  "ヒント: セッションは裏でそのまま残っている。tmux ls で一覧、tmux attach -t 名前 で入る（-t なしなら最後にいたセッションへ）。": "Hint: the sessions are still running in the background. tmux ls lists them, tmux attach -t NAME enters one (without -t you get the one you were in last).",
+  // --- loop6: wording and phone ---
+  "{0} 問": "{0} questions",
+  "1 問": "1 question",
+  "prefix なし。": "no prefix; "
 };

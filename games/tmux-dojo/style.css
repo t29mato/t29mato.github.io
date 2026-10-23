@@ -573,6 +573,8 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .key.k-prefix[aria-pressed="true"] { background: var(--andon); color: #2b1a05; border-color: #b8741a; }
 .key.k-level { border-color: var(--andon); }
 .key.k-type { margin-left: auto; color: var(--sumi-dim); }
+/* やめる is in the key bar only where the buttons under the house are hidden */
+.key.k-quit { display: none; color: var(--sumi-dim); }
 .sink { position: fixed; bottom: 0; left: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; font-size: 16px; pointer-events: none; }
 
 /* ---- the result and the records: one sheet ---------------------------------- */
@@ -743,6 +745,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
   .yashiki { border-width: 4px; padding: 5px; gap: 5px; }
   .term { font-size: 13px; }
   .game-foot { display: none; }
+  .key.k-quit { display: inline-block; }
   .result, .records { padding: 24px 8px 40px; }
   .emaki-body { padding: 20px 16px 18px; }
   /* the title's buttons fill the row, two to a row */
