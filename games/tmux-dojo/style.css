@@ -954,3 +954,55 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .em-skill .sk-lv small { font-size: 12px; }
 .rec-next { margin: 8px 0 0; font-size: 13.5px; color: var(--shu); font-weight: 600; }
 .rec-menjo td { white-space: nowrap; }
+
+/* ---- ghost race, replay, shared configs ---------------------------------------- */
+
+/* the strip under the bar: words only, one line on a phone; never over the house */
+.ghostbar { display: flex; align-items: center; gap: 14px; flex: none; margin-top: -6px; padding: 4px 0 6px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-dim); min-height: 30px; white-space: nowrap; overflow: hidden; }
+.ghostbar[hidden] { display: none; }
+.gb-who b { color: var(--ink); font-weight: 600; }
+.gb-q { font-family: var(--mono); color: var(--ink); }
+.gb-keys { display: inline-flex; gap: 4px; align-items: center; min-width: 0; overflow: hidden; }
+.gb-keys kbd { font-size: 12px; padding: 0 5px; flex: none; }
+.gb-keys small, .gb-state { color: var(--ink-dim); }
+.gb-ctl { display: inline-flex; gap: 6px; }
+.gb-ctl .btn { padding: 2px 10px; font-size: 13px; }
+.gb-ctl .btn[aria-pressed="true"] { background: var(--washi); color: var(--sumi); }
+.pb-replay { color: var(--shu); font-weight: 700; letter-spacing: 0.1em; }
+
+/* the ghost to race, on the course select and under the board */
+.ghost-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 10px; padding: 0 2px 8px; border-bottom: 1px dashed var(--paper-line); font-size: 13px; color: var(--sumi-dim); }
+.records-body .ghost-pick { border-bottom: 0; margin: 12px 0 0; padding: 0; }
+.ghost-pick .seg button { padding: 3px 10px; font-size: 13px; }
+
+/* the result: the questions that took more keys than the fewest */
+.em-overkeys { margin-top: 12px; font-size: 13px; }
+.em-overkeys .ok-head { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--sumi-dim); }
+.em-overkeys ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.em-overkeys li span { font-family: var(--mono); color: var(--sumi-dim); margin-left: 6px; }
+.em-watch { margin: 12px 0 0; }
+.watch-link { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 4px 0 0; font-size: 12.5px; }
+.watch-link a { color: var(--ai); overflow-wrap: anywhere; }
+.watch-link .btn { padding: 2px 10px; font-size: 12.5px; }
+.watch-link .watch-msg { color: var(--sumi-dim); }
+
+/* a published .tmux.conf, read-only */
+.conf-view { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: var(--washi-3); color: var(--sumi); border: 1px solid var(--paper-line); padding: 10px 12px; max-height: 50vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 10px; }
+.conf-dialog { border: 1px solid var(--line); border-radius: 3px; background: var(--washi); color: var(--sumi); padding: 18px 20px; width: min(720px, calc(100vw - 32px)); box-shadow: var(--shadow); }
+.conf-dialog::backdrop { background: rgba(20, 16, 10, 0.6); }
+.conf-dialog h3 { margin: 0 0 8px; font-family: var(--mincho); font-weight: 600; }
+.conf-dialog .warn { margin: 0 0 10px; font-size: 13.5px; color: #8a2d1c; border-left: 3px solid var(--shu); padding-left: 10px; }
+.conf-dialog .fine { margin: 0 0 10px; color: var(--sumi-dim); }
+.conf-dialog .cta .nf-msg { color: var(--sumi-dim); }
+.rec-table .r-watch, .rec-table.board .r-own a { color: var(--ai); font-size: 12px; white-space: nowrap; }
+.rec-table.keylist .k-keys { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.rec-table.keylist .k-keys kbd { font-size: 11.5px; padding: 0 4px; }
+.rec-table.keylist .k-keys small { color: var(--sumi-dim); font-family: var(--mono); margin-left: 4px; }
+.rec-table.keylist tr.over .k-keys small { color: var(--shu); }
+@media (max-width: 760px) {
+  .ghostbar { gap: 8px; font-size: 12px; margin-top: -2px; padding: 2px 0 4px; }
+  .gb-ctl .btn { padding: 1px 7px; }
+  .gb-keys kbd { font-size: 11px; }
+  .gb-state, .pb-who { display: none; }
+  .records-body .ghost-pick .gp-l { flex-basis: 100%; }
+}

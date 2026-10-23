@@ -74,6 +74,7 @@
   <aside class="plan" aria-label="コース選択" data-t-aria="コース選択">
     <div class="plan-label" data-t>コースを選ぶ</div>
     <div id="today" class="today"></div>
+    <div id="ghost-pick"></div>
     <ul id="course-list" class="wings"></ul>
     <p class="plan-ladder"><button type="button" id="btn-ladder" class="linkish" data-t>称号の一覧を見る（白帯から名人まで）</button></p>
     <p class="plan-note" data-t>問題の順番は日ごとに変わり、その日はみんな同じ。違うキーは +2 秒。手順は画面に出る。覚えた問題は手順が隠れ、少し待つと出る。目安を過ぎても次の問題には飛ばない。タブを離れると時計が止まる（長く止めた回はランキングには載らない）。</p>
@@ -84,6 +85,7 @@
 <!-- ===== game ===== -->
 <main id="game-screen" class="screen game" hidden>
   <div id="playbar" class="playbar"></div>
+  <div id="ghostbar" class="ghostbar" hidden></div>
   <div class="play-body">
     <div class="side">
       <section id="sashizu" class="sashizu"></section>
@@ -107,6 +109,14 @@
   </div>
   <input id="sink" class="sink" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="キー入力" data-t-aria="キー入力" enterkeyhint="go">
 </main>
+
+<dialog id="conf-dialog" class="conf-dialog" aria-labelledby="conf-dialog-title">
+  <h3 id="conf-dialog-title" data-t>この .tmux.conf を公開する</h3>
+  <p class="warn" data-t>下の文がそのまま公開される。パスやホスト名、ユーザー名が入っていれば、それも誰でも読める。何も削らずに送るので、先に確かめて。</p>
+  <pre id="conf-preview" class="conf-view"></pre>
+  <p class="fine" id="conf-size"></p>
+  <div class="cta"><button type="button" id="conf-publish" class="btn primary" data-t>公開する</button><button type="button" id="conf-cancel" class="btn ghost" data-t>やめる</button><span class="nf-msg" id="conf-dialog-msg"></span></div>
+</dialog>
 
 <!-- ===== result ===== -->
 <main id="result-screen" class="screen result" hidden>

@@ -37,6 +37,7 @@
         if (typeof r.at === 'number') { r.at = new Date(r.at).toISOString(); changed = true; }
         if (r.qs != null && !Array.isArray(r.qs)) { r.qs = []; changed = true; }
         if (r.qs && r.qs.some(function (q) { return !q || typeof q !== 'object'; })) { r.qs = r.qs.filter(function (q) { return q && typeof q === 'object'; }); changed = true; }
+        if (r.klog != null && !(typeof r.klog === 'object' && Array.isArray(r.klog.keys) && Array.isArray(r.klog.q))) { delete r.klog; changed = true; }
       });
       if (runs.length !== all.runs.length) changed = true;
       all.runs = runs;
@@ -168,6 +169,20 @@
     return runs.filter(function (r) { return !drop[r.id]; });
   }
 
+  // The key log (what was pressed, for the replay) is the biggest part of a
+  // run: only the best of the course and the latest LOG_KEEP keep theirs.
+  var LOG_KEEP = 3;
+  function pruneLogs(all, course) {
+    var mine = all.runs.filter(function (r) { return r.course === course && r.klog; });
+    var b = (all.arena || {})[recordKey(course)];
+    var keep = mine.slice(-LOG_KEEP);
+    mine.forEach(function (r) { if (keep.indexOf(r) < 0 && !(b && b.runId === r.id)) delete r.klog; });
+  }
+
+  function runById(id, all) {
+    return ((all || load()).runs || []).filter(function (r) { return r.id === id; })[0] || null;
+  }
+
   function runsOf(course, all) {
     all = all || load();
     return (all.runs || []).filter(function (r) { return r.course === course; }).reverse();
@@ -202,6 +217,7 @@
     }
     noteTitle(all, run);
     all.runs = prune(all.runs, run.course);
+    pruneLogs(all, run.course);
     write(all);
     var sum = summarize(run, prevRuns, prevBest, titleFrom);
     // What this run changed in the long run: the 腕前 and what is learnt.
@@ -494,7 +510,7 @@
     if (!runs.length) return null;
     runs.sort(function (a, b) { return a.time - b.time; });
     var r = runs[0];
-    return { name: '自分', time: r.time, at: r.at, splits: r.qs.map(function (q) { return +(q.s + 2 * (q.m || 0)).toFixed(2); }) };
+    return { name: '自分', time: r.time, at: r.at, runId: r.id, keys: r.klog || null, splits: r.qs.map(function (q) { return +(q.s + 2 * (q.m || 0)).toFixed(2); }) };
   }
 
   function clearArena() {
@@ -508,7 +524,7 @@
   window.ADV = window.ADV || {};
   window.ADV.records = {
     SCHEMA: SCHEMA, CAP: CAP, HARD_CAP: HARD_CAP,
-    load: load, add: add, runsOf: runsOf, best: best,
+    load: load, add: add, runsOf: runsOf, runById: runById, best: best, LOG_KEEP: LOG_KEEP,
     stats: stats, weakness: weakness, bestTitle: bestTitle, menjo: menjo, clearArena: clearArena, merge: merge, ghostOf: ghostOf,
     learnt: learnt, weakTypes: weakTypes, skill: skill, dailyBest: dailyBest, streak: streak, todayBest: todayBest,
     drillRecent: drillRecent, drillWeight: drillWeight, drillPick: drillPick, drillStreak: drillStreak, drillBest: drillBest,

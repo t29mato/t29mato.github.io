@@ -69,7 +69,13 @@
   // Send every run here, take back every run of the 合言葉, merge.
   function sync() {
     return ensureKey().then(function (key) {
-      var runs = (REC.load().runs || []).filter(function (r) { return !r.legacy; });
+      // The key logs stay here: the history is small, the logs go with ranked runs.
+      var runs = (REC.load().runs || []).filter(function (r) { return !r.legacy; }).map(function (r) {
+        if (!r.klog) return r;
+        var c = {};
+        for (var k in r) if (k !== 'klog') c[k] = r[k];
+        return c;
+      });
       return call('POST', '/v1/sync', { key: key, runs: runs });
     }).then(function (j) {
       var added = REC.merge(j.runs);
@@ -84,8 +90,8 @@
     var k = String(key || '').trim().toLowerCase().replace(/[\s_]+/g, '-').replace(/-+/g, '-');
     if (!/^[a-z]+-[a-z]+-[a-z]+-\d{3}$/.test(k)) return Promise.reject(new Error('bad key'));
     var prev = read();
-    save({ key: k, name: null });
-    return sync().catch(function (e) { save({ key: prev.key || null, name: prev.name || null }); throw e; });
+    save({ key: k, name: null, confShared: null });
+    return sync().catch(function (e) { save({ key: prev.key || null, name: prev.name || null, confShared: prev.confShared || null }); throw e; });
   }
 
   function setName(name) {
@@ -104,8 +110,29 @@
     return call('GET', '/v1/board?course=' + encodeURIComponent(course) + '&span=' + encodeURIComponent(span)).then(function (j) { return j.rows || []; });
   }
 
-  function ghost(course, span) {
-    return call('GET', '/v1/ghost?course=' + encodeURIComponent(course) + '&span=' + encodeURIComponent(span)).then(function (j) { return j.ghost; });
+  // opts.above: the slowest run faster than that time (1 つ上の人);
+  // opts.name: that player's best (この回を見る).
+  function ghost(course, span, opts) {
+    var q = '';
+    if (opts && opts.above > 0) q += '&above=' + encodeURIComponent(opts.above);
+    if (opts && opts.name) q += '&name=' + encodeURIComponent(opts.name);
+    return call('GET', '/v1/ghost?course=' + encodeURIComponent(course) + '&span=' + encodeURIComponent(span) + q).then(function (j) { return j.ghost; });
+  }
+
+  // A ranked run by its id, to watch from a shared link (404: none).
+  function replay(id) {
+    return call('GET', '/v1/replay?id=' + encodeURIComponent(id));
+  }
+
+  // A player's published .tmux.conf (404: none).
+  function conf(name) {
+    return call('GET', '/v1/conf?name=' + encodeURIComponent(name));
+  }
+
+  // Publish the file played with, or take it down with ''. Only with a name.
+  function setConf(text) {
+    return ensureKey().then(function (key) { return call('POST', '/v1/conf', { key: key, text: text }); })
+      .then(function (j) { save({ confShared: !!j.shared }); return !!j.shared; });
   }
 
   // The counts: one step of a visit, with a random id that is not the
@@ -129,11 +156,11 @@
     } catch (err) { /* the counts never break the game */ }
   }
 
-  function forget() { save({ key: null, name: null, syncedAt: null }); }
+  function forget() { save({ key: null, name: null, syncedAt: null, confShared: null }); }
 
   window.ADV = window.ADV || {};
   window.ADV.net = {
     API: API, state: state, save: save, sync: sync, useKey: useKey, setName: setName,
-    submit: submit, board: board, ghost: ghost, forget: forget, ev: ev
+    submit: submit, board: board, ghost: ghost, replay: replay, conf: conf, setConf: setConf, forget: forget, ev: ev
   };
 })();

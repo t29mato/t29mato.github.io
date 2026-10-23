@@ -66,8 +66,16 @@
     hinted: false,
     sound: true,
     confText: '',          // the pasted .tmux.conf
-    conf: null             // what of it the game uses (conf.js); null: the defaults
+    conf: null,            // what of it the game uses (conf.js); null: the defaults
+    ghostPick: 'top',      // the 影 to race: 'top' 今日の 1 位 | 'next' 1 つ上の人 | 'own' 自己ベスト
+    replay: null,          // a run being watched (startReplay)
+    sim: false             // the house is being tried on (parKeys): no screen, no timers
   };
+
+  // The clock the key handling reads (repeat windows, Esc twice): the
+  // replay's own time while it feeds a run's keys, so a -r key repeats
+  // there as it did.
+  function nowMs() { return S.replay ? (S.replay.now != null ? S.replay.now : S.replay.t) : Date.now(); }
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -343,6 +351,7 @@
     S.outer = { lines: [{ html: '<span class="sh-dim">[detached (from session ' + esc(S.session.name) + ')]</span>' }], input: '' };
     S.hinted = false;
     clearTimeout(S.hintTimer);
+    if (S.sim) return;
     S.hintTimer = setTimeout(function () {
       if (!S.detached) return;
       // Several sessions: -t picks one; without it tmux takes the last used.
@@ -359,6 +368,7 @@
     if (s) switchSession(s);
     S.session.attached = true;
     clearTimeout(S.hintTimer);
+    if (S.sim) return;
     $('#term').classList.add('powering-up');
     setTimeout(function () { $('#term').classList.remove('powering-up'); }, reduceMotion ? 0 : 900);
   }
@@ -664,6 +674,7 @@
   // k: {key, code, ctrl, alt, shift, meta}. Returns true when consumed.
   function handleKey(k) {
     if (S.screen !== 'game') return false;
+    if (S.replay) return replayKey(k);
     if (S.run && S.run.phase === 'clear' && !isModifierOnly(k.key)) afterClear();
     if (S.run && S.run.phase !== 'play') return !isModifierOnly(k.key);
     if (isModifierOnly(k.key)) return false;
@@ -671,12 +682,23 @@
     S.lastKey = k;
     var consumed = handleGameKey(k);
     if (consumed) {
-      if (S.run) S.run.keys += 1;
+      if (S.run) { S.run.keys += 1; logKey(S.run, k); }
       if (S.lastAction && S.lastAction !== 'unbound' && S.lastAction !== 'brief') AU.se('cmd');
       render();
       runTick();
     }
     return consumed;
+  }
+
+  // Every key of a run with its ms on the run's clock (the ghost's hands,
+  // the replay), and how many keys each question took. Past the cap the log
+  // stops and says so (cut), so the server does not count it.
+  var LOG_MAX = 1500;
+  function logKey(b, k) {
+    if (b.phase !== 'play' || !b.klog) return;
+    if (b.qlog[b.i]) b.qlog[b.i].k = (b.qlog[b.i].k || 0) + 1;
+    if (b.klog.keys.length >= LOG_MAX) { b.klog.cut = 1; return; }
+    b.klog.keys.push([Math.max(0, Math.round(performance.now() - b.start)), CF.keyLabel({ key: k.key, ctrl: !!k.ctrl, alt: !!k.alt, shift: !!k.shift })]);
   }
 
   function isModifierOnly(key) {
@@ -783,13 +805,13 @@
 
     // Resize keys still coming after the last question was solved belong to
     // that question: swallow them instead of counting a 操作ミス here.
-    if (Date.now() < S.graceUntil && repeatBinding(k)) {
-      S.graceUntil = Date.now() + 500;
+    if (nowMs() < S.graceUntil && repeatBinding(k)) {
+      S.graceUntil = nowMs() + 500;
       return true;
     }
     S.graceUntil = 0;
 
-    if (Date.now() < S.repeatUntil) {
+    if (nowMs() < S.repeatUntil) {
       var rp = repeatBinding(k);
       if (rp && rp.bind) return runBinding(rp.bind, win, pane);
       if (rp) { resize(win, pane, rp); armRepeat(); S.lastAction = 'resize'; return true; }
@@ -801,7 +823,7 @@
     // Esc twice in a row with nothing open: back to the title (the mouse-free
     // way to やめる).
     if (k.key === 'Escape') {
-      var now = Date.now();
+      var now = nowMs();
       if (now - (S.escAt || 0) < 1000) { S.escAt = 0; if (!endDrill()) { leaveRun(); showScreen('title'); } return true; }
       S.escAt = now;
       message('もう一度 Esc でやめる');
@@ -1459,7 +1481,7 @@
 
   // The repeat window ends on its own; the badge and the glow must follow.
   function armRepeat() {
-    S.repeatUntil = Date.now() + 500;
+    S.repeatUntil = nowMs() + 500;
     clearTimeout(S.repeatTimer);
     S.repeatTimer = setTimeout(function () { if (S.screen === 'game') render(); }, 520);
   }
@@ -1467,6 +1489,8 @@
   // message, note, chip and banner take Japanese and show it in the page's
   // language (`raw`: the player's own text, as it is).
   function message(text, raw) {
+    // Tried on (parKeys): nothing to say, and no timer that would clear a real one.
+    if (S.sim) return;
     S.message = raw ? text : tx(text);
     clearTimeout(S.messageTimer);
     // The tabs are back: the arrow to a wanted tab too.
@@ -2550,23 +2574,33 @@
     return a;
   }
 
-  // The ghost (影) to race: today's fastest player if faster than you, else
-  // your own best. Your own is there at once; today's arrives if it can.
+  // The ghost (影) to race, as picked on the course select (S.ghostPick):
+  // today's fastest player, the next one up from your best, or your own
+  // best. Your own is there at once; the board's arrives if it can, with its
+  // keys when it logged them. A shuffled run races only its own.
   function pickGhost(b) {
     if (b.course.practice) { b.ghost = null; return; }
     var own = REC.ghostOf(b.course.id);
     b.ghost = own;
-    // Today's fastest ran today's order; a shuffled run races only its own.
-    if (!NET || !NET.state().key || b.shuffled) return;
-    NET.ghost(b.course.id, 'today').then(function (g) {
-      if (!g || S.run !== b || (own && own.time <= g.time) || (g.splits || []).length !== b.qs.length) return;
+    var mode = S.ghostPick;
+    // Reading a ghost sends nothing of the player's; from a file:// page
+    // only a local test server is asked, as with the boards.
+    if (mode === 'own' || !NET || b.shuffled || !(NET.state().key || /^https?:$/.test(location.protocol) || /^http:\/\/(localhost|127\.0\.0\.1)|-staging\./.test(NET.API))) return;
+    NET.ghost(b.course.id, 'today', mode === 'next' && own ? { above: own.time } : null).then(function (g) {
+      if (!g || S.run !== b || (g.splits || []).length !== b.qs.length) return;
       var me = NET.state().name;
-      if (me && g.name === me && own) return;
-      b.ghost = { name: g.name, time: g.time, splits: g.splits, today: true };
+      if (me && g.name === me) return;
+      b.ghost = { name: g.name, time: g.time, splits: g.splits, keys: g.keys || null, today: true, kind: mode === 'next' && own ? 'next' : 'top' };
       prepGhost(b);
       $('#playbar').dataset.key = '';
       if (S.screen === 'game') renderPlaybar();
     }).catch(function () { /* offline: your own ghost */ });
+  }
+
+  var GHOST_PICKS = [['top', '今日の 1 位'], ['next', '1 つ上の人'], ['own', '自己ベスト']];
+  function ghostPickHTML() {
+    return '<div class="ghost-pick"><span class="gp-l">' + tx('影（いっしょに走る相手）') + '</span><div class="seg" role="group" aria-label="' + tx('影') + '">' +
+      GHOST_PICKS.map(function (x) { return '<button type="button" data-ghost="' + x[0] + '" aria-pressed="' + (x[0] === S.ghostPick ? 'true' : 'false') + '">' + tx(x[1]) + '</button>'; }).join('') + '</div></div>';
   }
 
   function prepGhost(b) {
@@ -2643,7 +2677,9 @@
       stage: 0,
       ghostDiff: null,
       // Today's rooms are the same for everyone too.
-      seed: course.practice || shuffled ? course.id + ':' + Math.random() : day + ':' + course.id
+      seed: course.practice || shuffled ? course.id + ':' + Math.random() : day + ':' + course.id,
+      // What was pressed when (logKey): the ghost's hands and the replay.
+      klog: course.drill ? null : { keys: [], q: [] }
     };
     pickGhost(S.run);
     prepGhost(S.run);
@@ -2657,6 +2693,7 @@
     b.pauses = 0; b.paused = 0;
     b.streak = 0;
     b.qlog = [];
+    if (b.klog) b.klog = { keys: [], q: [] };
     $('#sashizu').dataset.key = '';
     seal(false);
     var n = 3;
@@ -2685,7 +2722,7 @@
   // until the player is back and presses a key or clicks.
   function pauseRun() {
     var b = S.run;
-    if (!b || b.phase !== 'play' || S.screen !== 'game') return;
+    if (S.replay || !b || b.phase !== 'play' || S.screen !== 'game') return;
     b.phase = 'pause';
     b.pausedAt = performance.now();
     b.pauses += 1;
@@ -2715,7 +2752,7 @@
 
   function loadQuestion() {
     var b = S.run;
-    if (Date.now() < S.repeatUntil) S.graceUntil = Date.now() + 500;
+    if (nowMs() < S.repeatUntil) S.graceUntil = nowMs() + 500;
     S.repeatUntil = 0;
     // A message from the last question would hide this one's wings.
     S.message = null;
@@ -2742,11 +2779,102 @@
     b.stage = 0;
     b.peek = false;
     b.limit = qLimit(type);
-    b.qStart = performance.now();
-    // `l` is this question's 目安: the records measure it against that.
-    b.qlog[b.i] = { t: type, s: null, m: 0, l: b.limit };
     S.clipboard = '';
     S.pasted = '';
+    // `l` is this question's 目安: the records measure it against that; `p`
+    // the fewest keys it takes on these bindings.
+    b.qlog[b.i] = { t: type, s: null, m: 0, l: b.limit, p: parKeys(b) };
+    b.qStart = performance.now();
+    if (b.klog) b.klog.q[b.i] = Math.max(0, Math.round(b.qStart - b.start));
+  }
+
+  // ---- the fewest keys (最短) ------------------------------------------------
+  // How many keys the question takes when the 手順 is followed to the letter
+  // on the player's own bindings: a -r key repeats without the prefix, a -n
+  // key needs none, a prompt takes its text and Enter. Tried on the house
+  // itself, then every object is put back as it was (snapshot), so nothing
+  // that points into the house goes stale. Null when the guide did not get
+  // there, and then nothing is claimed.
+  function parKeys(b) {
+    if (!b.q || b.q.check()) return 0;
+    var snap = snapshot(), n = 0, ok = false;
+    S.sim = true;
+    S.graceUntil = 0;
+    try {
+      for (var guard = 0; guard < 60 && !ok; guard++) {
+        var m = guideMove(b);
+        var k = m ? simMove(m) : 0;
+        if (!k) break;
+        n += k;
+        ok = !!b.q.check();
+      }
+    } catch (e) { ok = false; }
+    S.sim = false;
+    restore(snap);
+    return ok ? n : null;
+  }
+
+  function simKey(ev) {
+    if (!ev) return 0;
+    S.lastAction = null;
+    handleGameKey({ key: ev.key, code: ev.code, ctrl: !!ev.ctrl, alt: !!ev.alt, shift: !!ev.shift, meta: false });
+    return 1;
+  }
+
+  function simType(text) {
+    var n = 0;
+    String(text).split('').forEach(function (ch) { n += simKey({ key: ch }); });
+    return n + simKey({ key: 'Enter' });
+  }
+
+  // One guide move as keys; returns how many were pressed (0: no way).
+  function simMove(m) {
+    var n = 0;
+    if (m.type) {
+      if (S.prompt && S.prompt.value) n += simKey({ key: 'u', ctrl: true });
+      return n + simType(m.type);
+    }
+    if (!m.keys.length) {
+      // The rename prompt: the name the order asks for, over the old one.
+      if (!S.prompt || typeof S.qGoal !== 'string') return 0;
+      if (S.prompt.value) n += simKey({ key: 'u', ctrl: true });
+      return n + simType(S.qGoal);
+    }
+    var ev = keyFromLabel(m.keys[0]);
+    if (!ev) return 0;
+    // Inside the repeat window a -r key goes without the prefix (続けて押す).
+    if (m.pfx && !S.armed && !(nowMs() < S.repeatUntil && repeatBinding(ev))) n += simKey(prefixEvent());
+    m.keys.forEach(function (l) { n += simKey(keyFromLabel(l)); });
+    return n;
+  }
+
+  // Every object reachable from S with its own fields, so the house can be
+  // tried on and put back in place (restore). DOM nodes and functions are
+  // left alone.
+  function snapshot() {
+    var seen = typeof Map === 'function' ? new Map() : null;
+    var list = [];
+    var walk = function (o) {
+      if (!o || typeof o !== 'object' || (seen ? seen.has(o) : list.some(function (e) { return e.o === o; }))) return;
+      if (typeof Node !== 'undefined' && o instanceof Node) return;
+      if (seen) seen.set(o, 1);
+      var copy = Array.isArray(o) ? o.slice() : {};
+      if (!Array.isArray(o)) for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) copy[k] = o[k];
+      list.push({ o: o, c: copy });
+      if (Array.isArray(o)) o.forEach(walk);
+      else for (var j in copy) walk(copy[j]);
+    };
+    walk(S);
+    return list;
+  }
+
+  function restore(list) {
+    list.forEach(function (e) {
+      var o = e.o, c = e.c;
+      if (Array.isArray(o)) { o.length = 0; for (var i = 0; i < c.length; i++) o.push(c[i]); return; }
+      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k) && !Object.prototype.hasOwnProperty.call(c, k)) delete o[k];
+      for (var j in c) o[j] = c[j];
+    });
   }
 
   function qText(b) { var t = S.qText; return typeof t === 'function' ? t() : t || tx(b.q.text); }
@@ -2856,6 +2984,7 @@
         renderTabArrow();
       }
       renderClock();
+      renderGhostbar();
     }, 100);
   }
 
@@ -2906,7 +3035,9 @@
       course: b.course.id, prefix: S.conf ? S.conf.prefix.label : 'C-b', conf: S.conf ? 1 : undefined,
       time: +time.toFixed(2), raw: +raw.toFixed(2), misses: misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: n, qs: qlog, drill: drill || undefined,
-      pauses: b.pauses || undefined, paused: paused || undefined, shuffled: b.shuffled || undefined
+      pauses: b.pauses || undefined, paused: paused || undefined, shuffled: b.shuffled || undefined,
+      // The day's order and the keys: what a replay needs.
+      day: drill ? undefined : b.day, klog: !drill && b.klog ? b.klog : undefined
     });
     for (var k in sum) result[k] = sum[k];
     // The question that ran longest past its 目安, to practise next.
@@ -2923,8 +3054,9 @@
     result.tip = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
     result.at = new Date();
     if (b.ghost) {
-      result.ghost = { name: b.ghost.name, time: b.ghost.time, diff: +(time - b.ghost.time).toFixed(2) };
+      result.ghost = { name: b.ghost.name, time: b.ghost.time, diff: +(time - b.ghost.time).toFixed(2), kind: b.ghost.kind };
     }
+    result.conf = S.conf ? 1 : 0;
     S.result = result;
     S.navAfter = performance.now() + 700;
     shareRun(sum.runId);
@@ -2935,12 +3067,175 @@
     AU.play(result.record && result.count > 1 ? 'record' : result.rankUp ? 'rankup' : 'clear', 'title');
   }
 
+  // ---- replay (この回を見る) ----------------------------------------------
+  // A run with a key log is played again on the house: the same day's
+  // questions in the same order, the same keys at the same moments, so what
+  // happens on screen is what happened. The house is read-only; Space
+  // pauses, ×2 hurries, ← → jump between questions, Esc closes. It needs
+  // the bindings the run was played on: the defaults, or the player's own
+  // file (this device's, or one published on the board). A run the house
+  // cannot follow (the keys stop matching) says so and stops.
+
+  // A run that can be played again here: { conf } is the file to play it on
+  // (null: the defaults), or null when the keys are unknown.
+  function replayable(run, confText) {
+    if (!run || !run.klog || !Array.isArray(run.klog.keys) || !Array.isArray(run.klog.q) || !run.day || run.shuffled || run.drill) return null;
+    var c = REC.courseOf(run.course);
+    if (!c || c.practice || !run.qs || run.qs.length !== c.qs.length) return null;
+    if (!run.conf) return { conf: null };
+    if (typeof confText === 'string') return { conf: confText };
+    // This device's own run on its own file, still the same prefix.
+    if (run.mine && S.conf && S.confText && run.prefix === S.conf.prefix.label) return { conf: S.confText };
+    return null;
+  }
+
+  function startReplay(run, who, confText, from) {
+    var can = replayable(run, confText);
+    if (!can) return false;
+    leaveRun();
+    S.replayFrom = from || S.screen;
+    S.replay = {
+      run: run, who: who || tx('自分'), keys: run.klog.keys, q: run.klog.q,
+      i: 0, t: 0, now: null, speed: 1, playing: true, lost: false, done: false,
+      wall: performance.now(),
+      keep: { text: S.confText, conf: S.conf, screenConf: S.conf }
+    };
+    // The bindings of the run, for its length only.
+    if (can.conf != null) { var c = CF.parse(can.conf); S.conf = c.custom ? c : null; S.confText = can.conf; }
+    else { S.conf = null; S.confText = ''; }
+    replayHouse(0);
+    showScreen('game');
+    S.replay.timer = setInterval(replayTick, 50);
+    return true;
+  }
+
+  // The house at the start of question `j`: built fresh, then every key up
+  // to that question fed at once.
+  function replayHouse(j) {
+    var R = S.replay, run = R.run, course = REC.courseOf(run.course);
+    buildHouse();
+    var qs = run.qs.map(function (q) { return q.t; });
+    S.run = {
+      course: course, day: run.day, qs: qs, shuffled: false, target: 0, learnt: {}, limit: qLimit(qs[0]),
+      i: 0, phase: 'play', penalty: 0, misses: 0, overs: 0, guides: 0, keys: 0, pauses: 0, paused: 0,
+      start: performance.now(), qStart: performance.now(), end: 0, stage: 0, ghostDiff: null, streak: 0,
+      seed: run.day + ':' + course.id, qlog: [], klog: null, replay: true
+    };
+    R.i = 0; R.lost = false; R.done = false;
+    $('#chips').innerHTML = '';
+    $('#playbar').dataset.key = '';
+    $('#sashizu').dataset.key = '';
+    loadQuestion();
+    while (S.run.i < j && R.i < R.keys.length && !R.lost) replayPress(R.keys[R.i++]);
+    R.t = R.i < R.keys.length ? Math.max(R.q[S.run.i] || 0, R.keys[R.i][0] - 400) : R.keys.length ? R.keys[R.keys.length - 1][0] : 0;
+    R.wall = performance.now();
+    render();
+  }
+
+  // One logged key on the house, at its own moment on the clock.
+  function replayPress(e) {
+    var R = S.replay, b = S.run;
+    var ev = keyFromLabel(e[1]) || { key: e[1] };
+    R.now = e[0];
+    S.lastAction = null;
+    S.lastKey = ev;
+    handleGameKey({ key: ev.key, code: ev.code, ctrl: !!ev.ctrl, alt: !!ev.alt, shift: !!ev.shift, meta: false });
+    b.keys += 1;
+    if (b.qlog[b.i]) b.qlog[b.i].k = (b.qlog[b.i].k || 0) + 1;
+    var free = ['brief', 'focus', 'select_window', 'yank_start', 'search', 'cmd'];
+    if (S.lastAction && free.indexOf(S.lastAction) < 0 && (S.lastAction === 'unbound' || b.q.allow.indexOf(S.lastAction) < 0)) {
+      b.misses += 1; b.penalty += LV.MISS_PENALTY; b.streak = 0;
+      if (b.qlog[b.i]) b.qlog[b.i].m += 1;
+      if (!R.jumping) chip('miss', tx('ミス +{0} 秒', LV.MISS_PENALTY));
+    }
+    if (!b.q.check() && lostTarget(b)) askAgain(b);
+    if (b.q.check()) {
+      b.streak = (b.streak || 0) + 1;
+      b.qlog[b.i].s = +(((R.q[b.i + 1] != null ? R.q[b.i + 1] : e[0]) - R.q[b.i]) / 1000).toFixed(2);
+      b.i += 1;
+      if (b.i >= b.qs.length) { b.phase = 'done'; R.done = true; }
+      else loadQuestion();
+    }
+    R.now = null;
+  }
+
+  function replayTick() {
+    var R = S.replay, b = S.run;
+    if (!R || !b || S.screen !== 'game') { if (R) clearInterval(R.timer); return; }
+    var now = performance.now();
+    if (R.playing && !R.done && !R.lost) {
+      R.t += (now - R.wall) * R.speed;
+      while (R.i < R.keys.length && R.keys[R.i][0] <= R.t && b.phase === 'play') {
+        var e = R.keys[R.i];
+        // A key from a later question than the house is on: the house went
+        // another way than the run did (the keys of another setting, say).
+        var qi = 0;
+        while (qi + 1 < R.q.length && R.q[qi + 1] <= e[0]) qi++;
+        if (qi > b.i) { R.lost = true; break; }
+        R.i += 1;
+        replayPress(e);
+        render();
+      }
+      if (R.i >= R.keys.length && !R.done) R.done = true;
+    }
+    R.wall = now;
+    // The bar's clock reads the replay's time.
+    b.start = now - R.t;
+    b.qStart = b.start + (R.q[Math.min(b.i, R.q.length - 1)] || 0);
+    renderClock();
+    renderGhostbar();
+  }
+
+  function replayJump(d) {
+    var R = S.replay, b = S.run;
+    var j = Math.max(0, Math.min(b.qs.length - 1, (R.done ? b.qs.length - 1 : b.i) + d));
+    R.jumping = true;
+    replayHouse(j);
+    R.jumping = false;
+  }
+
+  // The keys of the watcher: Space pauses, ← → jump, Esc closes; the house
+  // takes nothing else.
+  function replayKey(k) {
+    if (isModifierOnly(k.key)) return false;
+    if (k.key === 'Escape') { endReplay(); showScreen(S.replayFrom === 'records' ? 'records' : S.result ? 'result' : 'title'); return true; }
+    if (k.key === ' ' || k.key === 'Enter') { replayControl('toggle'); return true; }
+    if (k.key === 'ArrowLeft') { replayControl('prev'); return true; }
+    if (k.key === 'ArrowRight') { replayControl('next'); return true; }
+    return true;
+  }
+
+  function replayControl(what) {
+    var R = S.replay;
+    if (!R) return;
+    if (what === 'toggle') { if (R.done) { replayHouse(0); R.playing = true; } else { R.playing = !R.playing; R.wall = performance.now(); } }
+    if (what === 'speed') R.speed = R.speed === 2 ? 1 : 2;
+    if (what === 'prev') replayJump(-1);
+    if (what === 'next') replayJump(1);
+    if (what === 'close') { endReplay(); showScreen(S.replayFrom === 'records' ? 'records' : S.result ? 'result' : 'title'); return; }
+    $('#ghostbar').dataset.key = '';
+    renderGhostbar();
+    focusSink();
+  }
+
+  function endReplay() {
+    var R = S.replay;
+    if (!R) return;
+    clearInterval(R.timer);
+    S.conf = R.keep.conf;
+    S.confText = R.keep.text;
+    S.replay = null;
+    S.run = null;
+    seal(false);
+    syncBody();
+  }
+
   // ---- rendering ----------------------------------------------------------
 
   function render() {
     syncBody();
     if (S.screen === 'title') renderTitle();
-    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderTerm(); renderStatus(); renderTabArrow(); renderKeybar(); }
+    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderGhostbar(); renderTerm(); renderStatus(); renderTabArrow(); renderKeybar(); }
     if (S.screen === 'result') renderResult();
     if (S.screen === 'records') renderRecords();
   }
@@ -3001,6 +3296,8 @@
       (line ? '<span class="today-streak">' + esc(line) + '</span>' : '') +
       (again ? '<span class="today-again">' + esc(again) + '</span>' : '') +
       '<small>' + esc(tx('今日はみんな同じ順番で出る。日本時間の 0 時に変わる。')) + '</small>';
+    var gp = $('#ghost-pick');
+    if (gp) gp.innerHTML = ghostPickHTML();
   }
 
   function topHTML(id) {
@@ -3264,9 +3561,13 @@
 
   // The ghost in the bar: who it is, and after each question how far ahead
   // or behind you are. It changes only when a question is solved.
+  function ghostWho(g) {
+    return !g.today ? tx('自分のベスト') : g.kind === 'next' ? tx('1 つ上 {0}', g.name) : tx('今日の一番 {0}', g.name);
+  }
+
   function ghostHTML(b) {
-    if (!b.ghost) return '';
-    var who = b.ghost.today ? tx('今日の一番 {0}', b.ghost.name) : tx('自分のベスト');
+    if (!b.ghost || S.replay) return '';
+    var who = ghostWho(b.ghost);
     var d = b.ghostDiff;
     var txt = d == null ? tx('{0}秒', b.ghost.time.toFixed(1)) : tx('{0}秒', (d <= 0 ? '−' : '+') + Math.abs(d).toFixed(1));
     return '<span class="pb-ghost' + (d == null ? '' : d <= 0 ? ' ahead' : ' behind') + '" title="' + esc(tx('影: {0}', who)) + '">' + tx('影') + ' <small>' + esc(who) + '</small> <b>' + txt + '</b></span>';
@@ -3276,10 +3577,10 @@
     var b = S.run;
     var el = $('#playbar');
     if (!b || !el) return;
-    var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0, b.ghost ? b.ghost.name : '', b.ghostDiff].join('|');
+    var key = [b.i, b.phase, b.misses, b.streak >= 3 ? b.streak : 0, b.ghost ? b.ghost.name : '', b.ghostDiff, S.replay ? 'r' : ''].join('|');
     if (el.dataset.key === key) return;
     el.dataset.key = key;
-    el.innerHTML = '<span class="pb-course">' + esc(b.course.title) + tx(' ・ 問題 ') + '<b>' + qCount(b, ' / ') + '</b></span>' +
+    el.innerHTML = '<span class="pb-course">' + (S.replay ? '<span class="pb-replay">' + tx('再生') + '</span> <span class="pb-who">' + esc(S.replay.who) + ' ・ </span>' : '') + esc(b.course.title) + tx(' ・ 問題 ') + '<b>' + qCount(b, ' / ') + '</b></span>' +
       (b.streak >= 3 ? '<span class="pb-streak">' + tx('{0} 連', b.streak) + '</span>' : '') +
       (S.conf ? '<span class="pb-conf">' + tx('自分のキー設定（prefix {0}）', prefixLabel()) + '</span>' : '') +
       '<span class="pb-sp"></span>' +
@@ -3287,6 +3588,60 @@
       ghostHTML(b) +
       '<span class="pb-time"><span>0.0</span><small>' + tx('秒') + '</small></span>';
     renderClock();
+  }
+
+  // The strip under the bar: where the ghost is now (its question) and the
+  // keys it is pressing, from its key log at this many seconds into the run
+  // (the clock without penalties, as the log counts). Words only, changed
+  // in place when they change; a ghost without a log shows its question
+  // from the splits. In a replay, the controls and the keys being fed.
+  function renderGhostbar() {
+    var el = $('#ghostbar'), b = S.run;
+    if (!el) return;
+    if (!b || (!b.ghost && !S.replay) || b.phase === 'count') { if (!el.hidden) { el.hidden = true; el.innerHTML = ''; el.dataset.key = ''; } return; }
+    var html, key;
+    if (S.replay) {
+      var R = S.replay;
+      var last = R.keys.slice(Math.max(0, R.i - 5), R.i).map(function (e) { return '<kbd>' + esc(e[1]) + '</kbd>'; }).join('');
+      var state = R.lost ? tx('再現がずれた（問題 {0}）', b.i + 1) : R.done ? tx('再生おわり') : R.playing ? '' : tx('一時停止');
+      key = [R.i, R.playing, R.speed, R.lost, R.done, b.i].join('|');
+      html = '<span class="gb-ctl">' +
+        '<button type="button" class="btn" data-rp="toggle" aria-label="' + tx(R.playing ? '一時停止' : '再生') + '">' + (R.playing ? '❚❚' : '▶') + '<kbd class="hk">Space</kbd></button>' +
+        '<button type="button" class="btn" data-rp="speed" aria-pressed="' + (R.speed === 2 ? 'true' : 'false') + '">×2</button>' +
+        '<button type="button" class="btn" data-rp="prev" aria-label="' + tx('前の問題') + '">◀<kbd class="hk">←</kbd></button>' +
+        '<button type="button" class="btn" data-rp="next" aria-label="' + tx('次の問題') + '">▶<kbd class="hk">→</kbd></button>' +
+        '<button type="button" class="btn ghost" data-rp="close">' + tx('閉じる') + '<kbd class="hk">Esc</kbd></button></span>' +
+        '<span class="gb-keys">' + (last || '<small>' + tx('まだキーなし') + '</small>') + '</span>' +
+        (state ? '<span class="gb-state">' + state + '</span>' : '');
+    } else {
+      var g = b.ghost;
+      var live = b.phase === 'play' || b.phase === 'pause' || b.phase === 'clear';
+      var now = b.phase === 'pause' ? b.pausedAt : b.phase === 'clear' ? b.clearAt : performance.now();
+      var t = live ? now - b.start : 0;
+      var gi, keys = '';
+      if (g.keys && g.keys.q && g.keys.q.length) {
+        var q = g.keys.q, ks = g.keys.keys;
+        gi = 0;
+        while (gi + 1 < q.length && q[gi + 1] <= t) gi++;
+        var upto = 0;
+        while (upto < ks.length && ks[upto][0] <= t) upto++;
+        keys = ks.slice(Math.max(0, upto - 4), upto).map(function (e) { return '<kbd>' + esc(e[1]) + '</kbd>'; }).join('');
+      } else {
+        var tp = t / 1000 + b.penalty, cum = g.cum || [];
+        gi = 0;
+        while (gi + 1 < cum.length && cum[gi] <= tp) gi++;
+        keys = '<small>' + tx('キーの記録なし') + '</small>';
+      }
+      var finished = t / 1000 + b.penalty >= g.time;
+      key = [gi, finished, keys].join('|');
+      html = '<span class="gb-who">' + tx('影') + ' <b>' + esc(g.today ? g.name : tx('自分のベスト')) + '</b></span>' +
+        '<span class="gb-q">' + (finished ? tx('ゴール {0}秒', g.time.toFixed(1)) : tx('問題 {0}', (gi + 1) + ' / ' + b.qs.length)) + '</span>' +
+        '<span class="gb-keys">' + (finished ? '' : keys) + '</span>';
+    }
+    if (el.dataset.key === key) return;
+    el.dataset.key = key;
+    el.innerHTML = html;
+    el.hidden = false;
   }
 
   // The running clock and the 目安 gauge: green while there is time left,
@@ -4178,6 +4533,7 @@
   function count(e, n) { if (NET && NET.ev) NET.ev(e, S.run ? S.run.course.id : '', n); }
 
   function leaveRun() {
+    if (S.replay) { endReplay(); return; }
     if (S.run && S.run.phase !== 'done') count('quit', S.run.i);
     if (S.run) { clearTimeout(S.run.timer); clearInterval(S.clock); }
     S.run = null;
@@ -4261,9 +4617,12 @@
       '<div><dt>' + tx('ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
       '<div><dt>' + tx('目安超え') + '</dt><dd>' + nQ(r.overs) + '</dd></div>' +
       '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
-      '<div><dt>' + tx('押したキー') + '</dt><dd>' + r.keys + '</dd></div>' +
+      '<div><dt>' + tx('押したキー') + '</dt><dd>' + keysHTML(r) + '</dd></div>' +
       '</dl>' +
+      overKeysHTML(r) +
       resultNetHTML(r) +
+      watchHTML(r) +
+      confShareHTML(r) +
       slowestHTML(r) +
       shareHTML(r) +
       spark(r.spark) +
@@ -4278,6 +4637,44 @@
       '<button type="button" class="btn ghost" data-title="1">' + tx('コース選択へ') + '<kbd class="hk">Esc</kbd></button></div>';
     renderMeta();
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
+  }
+
+  // 押したキー 113 / 最短 84: the keys against the fewest the 手順 takes on
+  // these bindings (parKeys), when every question had its count.
+  function parOf(qs) {
+    var p = 0;
+    for (var i = 0; i < qs.length; i++) { if (typeof qs[i].p !== 'number') return null; p += qs[i].p; }
+    return p;
+  }
+
+  function keysHTML(r) {
+    var par = parOf(r.qlog || []);
+    return par == null ? String(r.keys) : tx('{0} / 最短 {1}', r.keys, par);
+  }
+
+  // The questions that took more keys than the fewest, most extra first.
+  function overKeysHTML(r) {
+    var over = (r.qlog || []).filter(function (q) { return typeof q.p === 'number' && typeof q.k === 'number' && q.k > q.p; });
+    if (!over.length) return '';
+    over.sort(function (a, b) { return (b.k - b.p) - (a.k - a.p); });
+    return '<div class="em-overkeys"><div class="ok-head">' + tx('最短より多く押した問題') + '</div><ul>' +
+      over.slice(0, 5).map(function (q) { return '<li>' + esc(typeName(q.t)) + ' <span>' + tx('押した {0} / 最短 {1}', q.k, q.p) + '</span></li>'; }).join('') + '</ul></div>';
+  }
+
+  // この回を見る: the run played again (startReplay), or its keys listed.
+  function watchHTML(r) {
+    var run = r.runId ? REC.runById(r.runId) : null;
+    if (!run || !run.klog) return '';
+    return '<p class="em-watch"><button type="button" class="btn" data-replay="' + esc(run.id) + '">' + tx('この回を見る') + '</button></p>' +
+      (watchable(r) ? '<p class="em-board dim">' + tx('この回は誰でも見られる（ランキングに載った回）:') + '</p>' + watchLinkHTML(run.id) : '');
+  }
+
+  // A run on the player's own file, with a name: offer to publish the file
+  // (the result is where the run just was).
+  function confShareHTML(r) {
+    if (!r.conf || !S.confText || !NET || !NET.state().name || REC.courseOf(r.course).practice) return '';
+    if (NET.state().confShared) return '<p class="em-board dim">' + tx('この .tmux.conf は公開中（ランキングの「自分の設定」から見られる）。') + '</p>';
+    return '<p class="em-board"><a href="#" data-conf-share="1">' + tx('この回の .tmux.conf を公開する') + '</a> <small>' + tx('ランキングの「自分の設定」から読めるようになる') + '</small></p>';
   }
 
   // The 稽古's result: the longest run from memory, how each type went, and
@@ -4366,7 +4763,8 @@
         r.board = res ? { state: 'ok', rank: res.rank, total: res.total } : { state: 'off' };
       });
     }).catch(function (e) {
-      r.board = { state: e && e.status === 400 && NET.state().name ? 'refused' : 'offline' };
+      // The server's reason (key log: …) is kept for the tests and the console.
+      r.board = { state: e && e.status === 400 && NET.state().name ? 'refused' : 'offline', why: e && e.message };
     }).then(function () { if (S.screen === 'result' && S.result === r) renderResult(); });
   }
 
@@ -4385,7 +4783,23 @@
     // The title in English carries its kanji: Kuro-obi 黒帯.
     var title = EN && LV.rankInfo(r.rank) ? LV.rankInfo(r.rank).romaji + ' ' + r.rank : r.rank;
     return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, title) + '\n' +
-      rows.join('\n') + '\n' + SITE + (EN ? '?lang=en' : '');
+      rows.join('\n') + '\n' + (watchable(r) ? watchURL(r.runId) : SITE + (EN ? '?lang=en' : ''));
+  }
+
+  // A run on the boards with its keys can be watched by anyone from a link.
+  function watchable(r) {
+    if (!r || !r.board || r.board.state !== 'ok' || !r.runId) return false;
+    var run = REC.runById(r.runId);
+    return !!(run && run.klog);
+  }
+
+  function watchURL(id) { return SITE + '?watch=' + encodeURIComponent(id) + (EN ? '&lang=en' : ''); }
+
+  // The link under a watchable run, with a button that copies it.
+  function watchLinkHTML(id) {
+    var url = watchURL(id);
+    return '<p class="watch-link"><a href="' + esc(url) + '" target="_blank" rel="noopener" data-watch-url>' + esc(url) + '</a>' +
+      '<button type="button" class="btn ghost" data-copy-watch="' + esc(url) + '">' + tx('リンクを写す') + '</button><small class="watch-msg" aria-live="polite"></small></p>';
   }
 
   function shareHTML(r) {
@@ -4433,7 +4847,7 @@
     if (r.ghost) {
       var d = r.ghost.diff;
       html += '<p class="em-ghost' + (d <= 0 ? ' win' : '') + '">' + tx(d <= 0 ? '影（{0} {1}秒）に <b>{2} 秒差で勝った</b>' : '影（{0} {1}秒）に {2} 秒差で負けた',
-        esc(r.ghost.name === '自分' ? tx('自分のベスト') : r.ghost.name), r.ghost.time.toFixed(1), Math.abs(d).toFixed(1)) + '</p>';
+        esc(r.ghost.name === '自分' ? tx('自分のベスト') : (r.ghost.kind === 'next' ? tx('1 つ上 ') : '') + r.ghost.name), r.ghost.time.toFixed(1), Math.abs(d).toFixed(1)) + '</p>';
     }
     var b = r.board;
     if (!b) return html;
@@ -4501,15 +4915,17 @@
       if (!rows.length) return '<p class="rec-empty">' + tx(span === 'today' ? 'まだ今日の記録はない。一番乗りの好機。' : 'まだ記録がない。') + '</p>';
       return '<table class="rec-table board"><thead><tr><th>' + tx('位') + '</th><th>' + tx('名前') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('日付') + '</th></tr></thead><tbody>' +
         rows.map(function (r) {
-          // A run on the player's own .tmux.conf (bind -n moves take one key) is said so.
-          var own = r.own ? ' <small class="r-own">' + tx('自分の設定') + '</small>' : '';
-          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + own + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
+          // A run on the player's own .tmux.conf (bind -n moves take one key)
+          // is said so; a published file is a link to it.
+          var own = r.own ? ' <small class="r-own">' + (r.conf ? '<a href="#" data-conf-of="' + esc(r.name) + '">' + tx('自分の設定') + '</a>' : tx('自分の設定')) + '</small>' : '';
+          var watch = r.log ? ' <a href="#" class="r-watch" data-watch="' + esc(r.name) + '" data-watch-id="' + esc(r.id || '') + '">' + tx('見る') + '</a>' : '';
+          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + own + watch + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
         }).join('') + '</tbody></table>';
     };
     var note = me ? '<p class="rec-empty">' + tx('「{0}」として載る。名前は「引き継ぎ」で変えられる。', esc(me)) + '</p>'
       : '<p class="rec-empty">' + tx('名前を付けると、遊ぶたびに自分の一番が載る。名前は「引き継ぎ」で付けられる。') + '</p>';
     body.innerHTML = '<div class="rec-panel"><div class="rec-head">' + tx('ランキング ・ {0}', esc(REC.courseOf(id).title)) + '</div>' + seg +
-      '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">' + tx(offline ? 'オフラインなのでランキングは見られない' : '読み込み中……') + '</p>') + '</div>' + note + '</div>';
+      '<div class="board-body">' + (cached ? table(cached.rows) : '<p class="rec-empty">' + tx(offline ? 'オフラインなのでランキングは見られない' : '読み込み中……') + '</p>') + '</div>' + note + ghostPickHTML() + '</div>';
     if (cached && Date.now() - cached.at < 15000) return;
     if (offline) return;
     // Looking at the boards is the player's choice; reading sends nothing of theirs.
@@ -4538,7 +4954,178 @@
       '<small class="nf-msg">' + tx('この端末の記録も、その合言葉の記録に合わさる。') + '</small></form></div>' +
       '<div class="rec-panel"><div class="rec-head">' + tx('ランキングの名前') + '</div>' +
       '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" aria-label="' + tx('ランキングの名前') + '" value="' + esc(st.name || '') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx(st.name ? '変える' : '付ける') + '</button></span>' +
-      '<small class="nf-msg">' + tx(st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
+      '<small class="nf-msg">' + tx(st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>' +
+      confSharePanel(st);
+  }
+
+  // 公開した .tmux.conf: whether the file is up, and the way to take it down.
+  function confSharePanel(st) {
+    if (!st.name) return '';
+    return '<div class="rec-panel" data-conf-panel><div class="rec-head">' + tx('公開した .tmux.conf') + '</div>' +
+      (st.confShared
+        ? '<p class="rec-empty">' + tx('公開中。ランキングの「自分の設定」から誰でも読める。') + '</p><div class="cta"><button type="button" class="btn" data-conf-unshare>' + tx('公開をやめる') + '</button></div>'
+        : '<p class="rec-empty">' + (S.confText ? tx('いまのキー設定を公開すると、ランキングの「自分の設定」から読めるようになる。') : tx('まだ公開していない。キー設定を貼って遊ぶと公開できる。')) + '</p>' +
+          (S.confText ? '<div class="cta"><button type="button" class="btn" data-conf-share="1">' + tx('いまの設定を公開する') + '</button></div>' : '')) +
+      '<p class="sync-msg rec-empty" data-conf-msg></p></div>';
+  }
+
+  // The published-file sheet: the exact text and the warning, before anything leaves.
+  function openConfDialog() {
+    var d = $('#conf-dialog');
+    if (!d || !S.confText) return;
+    $('#conf-preview').textContent = S.confText;
+    $('#conf-size').textContent = tx('{0} 行 ・ {1} バイト（8 KB まで）', S.confText.split('\n').length, utf8Len(S.confText));
+    $('#conf-dialog-msg').textContent = '';
+    if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
+  }
+
+  function utf8Len(t) {
+    return typeof TextEncoder === 'function' ? new TextEncoder().encode(t).length : unescape(encodeURIComponent(t)).length;
+  }
+
+  function closeConfDialog() {
+    var d = $('#conf-dialog');
+    if (!d) return;
+    if (typeof d.close === 'function' && d.open) d.close(); else d.removeAttribute('open');
+  }
+
+  function publishConf() {
+    var msg = $('#conf-dialog-msg');
+    if (utf8Len(S.confText) > 8 * 1024) { msg.textContent = tx('8 KB を超えている。短くしてから。'); return; }
+    msg.textContent = tx('送っている……');
+    NET.setConf(S.confText).then(function () {
+      closeConfDialog();
+      if (S.screen === 'result') renderResult();
+      if (S.screen === 'records') renderRecords();
+    }).catch(function (e) {
+      msg.textContent = tx(e && e.status === 413 ? '8 KB を超えている。短くしてから。' : e && e.status === 400 ? '先にランキングの名前を付ける。' : 'つながらなかった。あとでもう一度。');
+    });
+  }
+
+  // Another player's published file, read-only, with the way to play on it.
+  function renderConfView(body) {
+    var v = S.confView;
+    if (!v) { S.recTab = 'board'; renderRecords(); return; }
+    body.innerHTML = '<div class="rec-panel"><div class="rec-head">' + tx('{0} の .tmux.conf', esc(v.name)) + '</div>' +
+      (v.text == null ? '<p class="rec-empty">' + tx(v.error || '読み込み中……') + '</p>'
+        : '<pre class="conf-view">' + esc(v.text) + '</pre>' +
+          '<div class="cta"><button type="button" class="btn primary" data-conf-use="1">' + tx('この設定で遊ぶ') + '</button>' +
+          '<button type="button" class="btn ghost" data-rec-tab="board">' + tx('ランキングへ戻る') + '</button></div>') + '</div>';
+  }
+
+  function openConfOf(name) {
+    S.confView = { name: name, text: null };
+    S.recTab = 'conf';
+    renderRecords();
+    NET.conf(name).then(function (j) {
+      if (!S.confView || S.confView.name !== name) return;
+      S.confView.text = String(j.text || '');
+      if (S.screen === 'records' && S.recTab === 'conf') renderRecords();
+    }).catch(function (e) {
+      if (!S.confView || S.confView.name !== name) return;
+      S.confView.error = e && e.status === 404 ? tx('この設定はもう公開されていない。') : tx('つながらなかった。通信できるときにもう一度。');
+      if (S.screen === 'records' && S.recTab === 'conf') renderRecords();
+    });
+  }
+
+  // ---- この回を見る from the board ----------------------------------------
+  // The player's best of the span with its keys: listed per question, and
+  // played again when its bindings are known (the defaults, or a published
+  // file).
+  function openWatch(name, course, span, id) {
+    S.watch = { name: name, course: course, run: null, id: id || null };
+    S.recTab = 'watch';
+    renderRecords();
+    NET.ghost(course, span, { name: name }).then(function (g) {
+      if (!S.watch || S.watch.name !== name) return;
+      takeWatch(g, name, course);
+    }).catch(function () {
+      if (!S.watch || S.watch.name !== name) return;
+      S.watch.error = tx('つながらなかった。通信できるときにもう一度。');
+      if (S.screen === 'records' && S.recTab === 'watch') renderRecords();
+    });
+  }
+
+  // The server's run (a ghost or a replay by id) as the watch view and the
+  // replay take it; the published file comes after, when there is one.
+  function takeWatch(g, name, course) {
+    var redraw = function () { if (S.screen === 'records' && S.recTab === 'watch') renderRecords(); };
+    if (!g || !g.keys) { S.watch.error = tx('この回のキーの記録はない。'); redraw(); return null; }
+    var c = REC.courseOf(course);
+    var types = questionsFor(c, g.day, false);
+    var run = {
+      course: course, day: g.day, time: g.time, conf: g.conf || g.own ? 1 : 0, prefix: null, keys: g.keys.keys.length, n: types.length,
+      qs: types.map(function (t, i) { return { t: t, s: +((g.splits[i] || 0)).toFixed(2), k: g.keys.keys.filter(function (e) { return inQuestion(g.keys.q, e[0]) === i; }).length }; }),
+      klog: g.keys, shared: !!g.conf
+    };
+    S.watch.run = run;
+    redraw();
+    if (g.conf) NET.conf(name).then(function (j) {
+      if (!S.watch || S.watch.name !== name) return;
+      S.watch.confText = String(j.text || '');
+      // From a link: the replay starts as soon as the file is here.
+      if (S.watch.link && !S.replay && S.screen !== 'game' && replayable(run, S.watch.confText)) { startReplay(run, name, S.watch.confText, 'title'); return; }
+      redraw();
+    }).catch(function () {});
+    return run;
+  }
+
+  // ?watch=<run id>: someone's link to a ranked run. Fetched, then played
+  // on the house at once when its keys are known, else listed. Only from the
+  // site or a local test server, as the boards are.
+  function openWatchLink(id) {
+    if (!NET || !/^https?:$/.test(location.protocol) && !/^http:\/\/(localhost|127\.0\.0\.1)|-staging\./.test(NET.API)) return;
+    S.watch = { name: '', course: null, run: null, id: id, link: true };
+    NET.replay(id).then(function (g) {
+      if (!S.watch || S.watch.id !== id || !REC.courseOf(g.course)) return;
+      S.watch.name = g.name; S.watch.course = g.course;
+      var run = takeWatch(g, g.name, g.course);
+      if (!run) { S.recTab = 'watch'; openRecords(g.course, 'title'); return; }
+      if (replayable(run, null) && startReplay(run, g.name, undefined, 'title')) return;
+      // The file is needed first (an own-config run): the list, with 再生する once it is here.
+      S.recTab = 'watch';
+      openRecords(g.course, 'title');
+    }).catch(function (e) {
+      S.watch = null;
+      if (S.screen === 'title') banner(e && e.status === 404 ? 'その回は見つからない' : 'つながらなかった', 'go');
+    });
+  }
+
+  function inQuestion(q, ms) {
+    var i = 0;
+    while (i + 1 < q.length && q[i + 1] <= ms) i++;
+    return i;
+  }
+
+  // The keys of a run per question, with when each came (seconds into the
+  // question), against the fewest when known.
+  function keyListHTML(run) {
+    var q = run.klog.q, ks = run.klog.keys;
+    return '<table class="rec-table keylist"><thead><tr><th>#</th><th>' + tx('問題') + '</th><th>' + tx('秒') + '</th><th>' + tx('キー') + '</th></tr></thead><tbody>' +
+      run.qs.map(function (x, i) {
+        var mine = ks.filter(function (e) { return inQuestion(q, e[0]) === i; });
+        var keys = mine.map(function (e) { return '<kbd title="' + ((e[0] - q[i]) / 1000).toFixed(2) + 's">' + esc(e[1]) + '</kbd>'; }).join('');
+        var n = typeof x.p === 'number' ? tx('{0} / 最短 {1}', mine.length, x.p) : String(mine.length);
+        return '<tr' + (typeof x.p === 'number' && mine.length > x.p ? ' class="over"' : '') + '><td class="c-n">' + (i + 1) + '</td><td>' + esc(typeName(x.t)) + '</td><td class="r-time">' + (typeof x.s === 'number' ? x.s.toFixed(1) : '—') + '</td><td class="k-keys">' + keys + ' <small>' + n + '</small></td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function renderWatch(body) {
+    var w = S.watch;
+    if (!w) { S.recTab = 'board'; renderRecords(); return; }
+    var run = w.run;
+    var can = run ? replayable(run, w.confText) : null;
+    var html = '<div class="rec-panel"><div class="rec-head">' + tx('{0} の回 ・ {1}', esc(w.name), esc(REC.courseOf(w.course).title)) + '</div>';
+    if (!run) html += '<p class="rec-empty">' + esc(w.error || tx('読み込み中……')) + '</p>';
+    else {
+      html += '<p class="rec-empty">' + tx('{0}秒 ・ 押したキー {1}', run.time.toFixed(1), run.keys) + (run.conf ? tx(' ・ 自分の設定') : '') + '</p>' +
+        (w.id ? watchLinkHTML(w.id) : '') +
+        '<div class="cta">' + (can ? '<button type="button" class="btn primary" data-replay-watch="1">' + tx('再生する') + '</button>'
+          : '<span class="rec-empty">' + tx(run.mine ? 'この回のキー設定と今の設定が違うので、再生はできない（キーの一覧だけ）。' : run.conf && !run.shared ? 'この人の設定は公開されていないので、再生はできない（キーの一覧だけ）。' : '再生はできない（キーの一覧だけ）。') + '</span>') +
+        '<button type="button" class="btn ghost" data-rec-tab="board">' + tx('ランキングへ戻る') + '</button></div>' +
+        keyListHTML(run);
+    }
+    body.innerHTML = html + '</div>';
   }
 
   function syncNow(msgEl) {
@@ -4629,12 +5216,14 @@
     var c = REC.courseOf(id);
     $$('#records-screen [data-rec-course]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recCourse === id ? 'true' : 'false'); });
     var tab = S.recTab || 'growth';
-    $$('#records-screen [data-rec-tab]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recTab === tab ? 'true' : 'false'); });
+    $$('#records-screen .rec-tab [data-rec-tab]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recTab === tab || (tab === 'conf' || tab === 'watch') && b.dataset.recTab === 'board' ? 'true' : 'false'); });
     // The course row keeps its space on the 引き継ぎ tab: nothing below jumps.
     $('#records-screen .rec-seg').classList.toggle('off', tab === 'sync');
     var body = $('#records-body');
     if (tab === 'board') { renderBoard(body, id); return; }
     if (tab === 'sync') { renderSync(body); return; }
+    if (tab === 'conf') { renderConfView(body); return; }
+    if (tab === 'watch') { renderWatch(body); return; }
     var st = REC.stats(id);
     if (!st) {
       body.innerHTML = '<div class="rec-log"><p>' + tx('{0}（{1}）の記録は、まだ白紙。', esc(c.title), esc(c.mode)) + '</p><p>' + tx('一度はじめると、ここに上達が描かれていく。') + '</p></div>' +
@@ -4657,7 +5246,8 @@
       dailyChart(REC.dailyBest(id), c);
     var rows = st.runs.slice(0, 20).map(function (r) {
       var note = r.legacy ? tx('旧記録') : tx('ミス {0}', r.misses) + (r.overs ? tx(' ・ 目安超え {0}', r.overs) : '') + (r.timeouts ? tx(' ・ 時間切れ {0}', r.timeouts) : '');
-      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note">' + note + '</td><td class="r-rank">' + rankHTML(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
+      var watch = r.klog ? ' <a href="#" class="r-watch" data-replay="' + esc(r.id) + '">' + tx('見る') + '</a>' : '';
+      return '<tr class="' + (r.rec ? 'is-rec' : '') + '"><td class="c-n">' + recDate(r.at) + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + watch + '</td><td class="r-note">' + note + '</td><td class="r-rank">' + rankHTML(r.rank) + '</td><td class="r-star">' + (r.rec ? '★' : '') + '</td></tr>';
     }).join('');
     var table = '<div class="rec-panel"><div class="rec-head">' + tx('直近の記録') + '</div><table class="rec-table"><thead><tr><th>' + tx('日付') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('内訳') + '</th><th>' + tx('称号') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     body.innerHTML = '<div class="rec-log">' + head + '</div>' + tiles + rankPanel(c, st.bestRank, st.best) + menjoPanel() + chart + weakPanel(id) + drillPanel() + learntPanel() + table;
@@ -4787,6 +5377,7 @@
     applySound(saved.sound !== false);
     // The side panel is the detail; the order is in the house.
     S.detail = saved.detail === true;
+    if (GHOST_PICKS.some(function (x) { return x[0] === saved.ghost; })) S.ghostPick = saved.ghost;
     // The player's .tmux.conf (the vim-tmux-navigator switch of before
     // becomes the plugin line).
     var ct = typeof saved.conf === 'string' ? saved.conf : saved.nav === 'vim' ? CF.SAMPLE_NAVIGATOR : '';
@@ -4834,6 +5425,54 @@
         showScreen('title');
       });
     });
+    // The 影 to race, picked on the course select or under the board.
+    document.addEventListener('click', function (e) {
+      var g = e.target.closest('[data-ghost]');
+      if (!g) return;
+      S.ghostPick = g.dataset.ghost;
+      store.save({ ghost: S.ghostPick });
+      AU.se('cursor');
+      $$('[data-ghost]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.ghost === S.ghostPick ? 'true' : 'false'); });
+    });
+    // この回を見る: a run of this device played again.
+    document.addEventListener('click', function (e) {
+      var w = e.target.closest('[data-replay]');
+      if (!w) return;
+      e.preventDefault();
+      var run = REC.runById(w.dataset.replay);
+      if (!run) return;
+      run.mine = true;
+      if (!startReplay(run, tx('自分'), undefined, S.screen)) {
+        // Its keys cannot be played here (another file than today's): listed instead.
+        S.watch = { name: tx('自分'), course: run.course, run: run, confText: null };
+        S.recTab = 'watch';
+        if (S.screen !== 'records') openRecords(run.course, S.screen); else renderRecords();
+      }
+    });
+    $('#ghostbar').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-rp]');
+      if (b) { e.preventDefault(); replayControl(b.dataset.rp); }
+    });
+    $('#ghostbar').addEventListener('pointerdown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+    // The published .tmux.conf: the sheet, then the send.
+    document.addEventListener('click', function (e) {
+      var cw = e.target.closest('[data-copy-watch]');
+      if (cw) {
+        var wm = cw.parentNode.querySelector('.watch-msg');
+        var saidW = function (t) { if (wm) wm.textContent = tx(t); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cw.dataset.copyWatch).then(function () { saidW('リンクを写した。'); }, function () { saidW('写せなかった。リンクを選んでコピーして。'); });
+        else saidW('写せなかった。リンクを選んでコピーして。');
+        return;
+      }
+      if (e.target.closest('[data-conf-share]')) { e.preventDefault(); openConfDialog(); return; }
+      if (e.target.closest('#conf-publish')) { publishConf(); return; }
+      if (e.target.closest('#conf-cancel')) { closeConfDialog(); return; }
+      if (e.target.closest('[data-conf-unshare]')) {
+        var m = $('[data-conf-msg]');
+        if (m) m.textContent = tx('送っている……');
+        NET.setConf('').then(function () { renderRecords(); }).catch(function () { if (m) m.textContent = tx('つながらなかった。あとでもう一度。'); });
+      }
+    });
     $('#result-screen').addEventListener('click', function (e) {
       if (e.target.closest('[data-share]')) { copyShare(); return; }
       var r = e.target.closest('[data-records]');
@@ -4851,6 +5490,26 @@
       if (tb) { S.recTab = tb.dataset.recTab; AU.se('cursor'); renderRecords(); if (S.recTab === 'sync' && NET && NET.state().key) syncNow(); return; }
       var sp = e.target.closest('[data-span]');
       if (sp) { S.boardSpan = sp.dataset.span; AU.se('cursor'); renderRecords(); return; }
+      var co = e.target.closest('[data-conf-of]');
+      if (co) { e.preventDefault(); openConfOf(co.dataset.confOf); return; }
+      var wt = e.target.closest('[data-watch]');
+      if (wt) { e.preventDefault(); openWatch(wt.dataset.watch, S.recCourse, S.boardSpan || BOARD_SPAN, wt.dataset.watchId); return; }
+      if (e.target.closest('[data-replay-watch]')) {
+        var w = S.watch;
+        if (w && w.run) startReplay(w.run, w.name, w.confText, 'records');
+        return;
+      }
+      if (e.target.closest('[data-conf-use]')) {
+        var v = S.confView;
+        if (!v || v.text == null) return;
+        if (!window.confirm(tx('いまのキー設定を {0} の設定に置き換える？（キー設定の欄で戻せる）', v.name))) return;
+        $('#conf-text').value = v.text;
+        applyConf(v.text, true);
+        showScreen('title');
+        var box = $('#conf-box');
+        if (box) box.open = true;
+        return;
+      }
       if (e.target.closest('[data-sync-now]')) { syncNow($('[data-sync-msg]')); return; }
       if (e.target.closest('[data-copy-key]')) {
         var k = NET && NET.state().key;
@@ -4926,6 +5585,11 @@
     setInterval(function () { if (S.screen === 'game' && !S.confirm && !S.prompt && !S.message) renderStatus(); }, 30000);
 
     showScreen('title');
+    // Someone's link to a run: straight to the replay.
+    try {
+      var watchId = new URLSearchParams(window.location.search).get('watch');
+      if (watchId && /^[\w-]{1,40}$/.test(watchId)) openWatchLink(watchId);
+    } catch (e) { /* no URLSearchParams: no link */ }
 
     // A read-only view for the tests. Playing still goes through the keyboard.
     window.tmuxDa = {
@@ -4967,6 +5631,12 @@
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
+          recTab: S.screen === 'records' ? S.recTab : null,
+          ghostPick: S.ghostPick,
+          ghost: b && b.ghost ? { name: b.ghost.name, time: b.ghost.time, today: !!b.ghost.today, kind: b.ghost.kind || null, keys: b.ghost.keys ? b.ghost.keys.keys.length : 0 } : null,
+          klog: b && b.klog ? { keys: b.klog.keys.length, q: b.klog.q.slice() } : null,
+          replay: S.replay ? { who: S.replay.who, i: S.replay.i, n: S.replay.keys.length, t: Math.round(S.replay.t), speed: S.replay.speed, playing: S.replay.playing, lost: S.replay.lost, done: S.replay.done } : null,
+          watch: S.watch ? { name: S.watch.name, id: S.watch.id || null, run: !!S.watch.run, error: S.watch.error || null } : null,
           detail: S.detail, conf: S.conf ? { prefix: S.conf.prefix.label, binds: S.conf.binds.length, navigator: S.conf.navigator, modeKeys: S.conf.modeKeys, statusTop: S.conf.statusTop } : null,
           cols: S.cols, rows: S.rows
         };
