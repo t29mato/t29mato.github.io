@@ -23,7 +23,8 @@
   var EN = (window.ADV && window.ADV.EN) || {};
   var missing = {};
 
-  // t(template, a, b, …): {0}, {1}… are filled in after the lookup.
+  // t(template, a, b, …): {0}, {1}… are filled in after the lookup. English
+  // plurals: {0:run|runs} is "run" when the argument is 1, "runs" otherwise.
   function t(s) {
     var out = s;
     if (lang === 'en') {
@@ -31,7 +32,11 @@
       else if (/[ぁ-んァ-ヶ一-龠]/.test(s) && !missing[s]) { missing[s] = 1; if (window.console) console.warn('[i18n] no English for: ' + s); }
     }
     var args = arguments;
-    return args.length > 1 ? out.replace(/\{(\d)\}/g, function (m, i) { var v = args[+i + 1]; return v == null ? '' : String(v); }) : out;
+    return args.length > 1 ? out.replace(/\{(\d)(?::([^{}|]*)\|([^{}]*))?\}/g, function (m, i, one, many) {
+      var v = args[+i + 1];
+      if (one != null) return String(v) === '1' ? one : many;
+      return v == null ? '' : String(v);
+    }) : out;
   }
 
   // The page's own text: [data-t] elements take their HTML as the key;

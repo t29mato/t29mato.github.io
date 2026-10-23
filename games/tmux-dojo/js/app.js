@@ -2819,7 +2819,9 @@
   // 今日の問題: every course asks in today's order, the same for everyone
   // (Japan time), so today's times compare. The day, your streak, and per
   // course today's top time on the boards.
-  function dayLabel(day) { var p = day.split('-'); return tx('{0}月{1}日', +p[1], +p[2]); }
+  // 10月23日; in English "Oct 23", since 10/23 reads two ways.
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function dayLabel(day) { var p = day.split('-'); return EN ? MONTHS[+p[1] - 1] + ' ' + +p[2] : tx('{0}月{1}日', +p[1], +p[2]); }
 
   function renderToday(all) {
     var el = $('#today');
@@ -4150,8 +4152,8 @@
     });
     var rows = [];
     for (var i = 0; i < sq.length; i += 10) rows.push(sq.slice(i, i + 10).join(''));
-    var d = LV.dayKey(r.at).split('-');
-    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
+    var day = LV.dayKey(r.at), d = day.split('-');
+    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, tx(r.rank)) + '\n' +
       rows.join('\n') + '\n' + SITE + (EN ? '?lang=en' : '');
   }
 
@@ -4203,7 +4205,7 @@
     var b = r.board;
     if (!b) return html;
     if (b.state === 'sending') html += '<p class="em-board">' + tx('今日のランキングに載せている……') + '</p>';
-    if (b.state === 'ok') html += '<p class="em-board">' + tx('今日のランキング <b>{0} 位</b> ／ {1} 人', b.rank, b.total) + ' ・ <a href="#" data-board="' + r.course + '">' + tx('ランキングを見る') + '</a></p>';
+    if (b.state === 'ok') html += '<p class="em-board">' + tx('今日のランキング <b>{0} 位</b> ／ {1} 人', b.rank, b.total) + ' ' + tx('・') + ' <a href="#" data-board="' + r.course + '">' + tx('ランキングを見る') + '</a></p>';
     if (b.state === 'refused') html += '<p class="em-board dim">' + tx('この記録はランキングに載せられなかった（手で解いた記録だけが載る）。') + '</p>';
     if (b.state === 'offline') html += '<p class="em-board dim">' + tx('ランキングにつながらなかった（記録には残る）。') + '</p>';
     if (b.state === 'paused') html += '<p class="em-board dim">' + tx('途中で {0} 秒 止まっていたので、今日のランキングには載せない（記録には残る）。', r.paused.toFixed(1)) + '</p>';
@@ -4436,7 +4438,8 @@
       return '<tr class="' + (r.title === mine ? 'is-rec' : '') + '"><td class="r-rank">' + esc(tx(r.title)) + '</td><td class="r-time">' + t + '</td><td class="r-note">' + per + '</td><td class="r-star">' + (r.title === mine ? tx('いまここ') : '') + '</td></tr>';
     }).join('');
     // Not "目安": that word is the per-question time limit elsewhere.
-    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<p class="rec-empty">' + esc(tx('称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。')) + '</p></div>';
   }
 
   function weakPanel(id) {
