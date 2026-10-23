@@ -140,7 +140,7 @@
     switch (cmd) {
       case 'help':
         pane.lines.push(tx('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help'));
-        pane.lines.push(tx('tmux の操作は {0} を押して離してからキーを押す。押すキーは画面の上の指示に出ている', prefixLabel()));
+        pane.lines.push(tx('tmux の操作は {0} を押して離してからキーを押す。押すキーは画面の手順に出ている', prefixLabel()));
         break;
       case 'ls':
         pane.lines.push('kakejiku.txt  makimono.txt  tokonoma/');
@@ -523,7 +523,7 @@
     var win = T.activeWindow(S.session);
     if (!win.zoomed) return;
     win.zoomed = false;
-    note(tx('全画面を解除した'));
+    note(tx('全画面を戻した'));
   }
 
   // At least `n` panes in the active window: the biggest pane is split, the
@@ -967,7 +967,7 @@
     if (key === 'd') { detach(); S.lastAction = 'detach'; return true; }
     if (key === 'i' || key === '?') {
       S.lastAction = 'brief';
-      message('押すキーは画面の上の指示に出ている');
+      message('押すキーは画面の手順に出ている');
       return true;
     }
     if (key === '$') {
@@ -1205,7 +1205,7 @@
     var copies = (key === 'Enter' && !k.ctrl) || mk === 'w' || (k.ctrl && key === 'w');
     if ((key === 'Escape' || (k.ctrl && key === 'g')) && pane.sel != null) { pane.sel = null; return true; }
     if (copies && pane.sel != null) { yank(pane, key !== 'Enter'); return true; }
-    if (key === 'v' || key === 'y') { message(key === 'v' ? 'tmux の v は矩形選択の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
+    if (key === 'v' || key === 'y') { message(key === 'v' ? 'tmux の v は矩形選択（四角く選ぶ）の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
     if (key === 'q' || key === 'Escape' || key === 'Enter' || (k.ctrl && (key === 'c' || key === 'g'))) { pane.mode = null; return true; }
     if (begins) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
     if (k.ctrl && key === 'p') { goLine(pane, stepLine(pane, pane.cy, -1)); pane.reveal = 'edge'; return true; }
@@ -2342,7 +2342,7 @@
     split_lr: '左右に分割', split_tb: '上下に分割', focus: 'ペイン移動', zoom: '全画面', unzoom: '全画面を戻す',
     close: 'ペインを閉じる', new_window: 'ウィンドウ作成', select_window: 'ウィンドウ移動', resize: '大きさ変更', swap: '入れ替え',
     rename: '名前を変える', kill_window: 'ウィンドウを閉じる', copy_top: 'スクロール', find_zoom: '移動して全画面', trident: '三分割',
-    two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチと復帰', yank_paste: 'コピーと貼り付け',
+    two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチして戻る', yank_paste: 'コピーと貼り付け',
     session_new: 'セッション作成', session_switch: 'セッション移動', session_attach: 'attach -t で入る',
     copy_page: 'ページ送り', copy_search: '履歴の検索', last_window: '直前のウィンドウ', break_pane: 'ペインを別ウィンドウに'
   };
@@ -2659,9 +2659,9 @@
     // A wrong key teaches its own job: " は上下に分割.
     var what = ACTION_NAMES[S.lastAction], k = S.lastKey;
     var label = k && k.key !== 'Enter' ? CF.keyLabel({ key: k.key, ctrl: !!k.ctrl, alt: !!k.alt, shift: !!k.shift }) : '';
-    chip('miss', !what ? tx('操作ミス +{0} 秒', LV.MISS_PENALTY)
-      : label ? tx('操作ミス +{0} 秒 ・ {1} は「{2}」', LV.MISS_PENALTY, label, tx(what))
-      : tx('操作ミス +{0} 秒 ・ {1}', LV.MISS_PENALTY, tx(what)));
+    chip('miss', !what ? tx('ミス +{0} 秒', LV.MISS_PENALTY)
+      : label ? tx('ミス +{0} 秒 ・ {1} は「{2}」', LV.MISS_PENALTY, label, tx(what))
+      : tx('ミス +{0} 秒 ・ {1}', LV.MISS_PENALTY, tx(what)));
     termFlash('miss');
     shake();
   }
@@ -2907,7 +2907,7 @@
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
         '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
         (nr ? '<small class="wing-rank">' + esc(nr.next ? tx('{0}まで あと {1} 秒', tx(nr.next), nr.gap.toFixed(1)) : tx('最高の称号 {0}', tx(nr.rank))) + '</small>' : '') +
-        (stepUp ? '<small class="wing-next">' + esc(tx('次はここ（{0} で {1}）', LV.COURSES[i - 1].title, tx(prevRank.rank))) + '</small>' : '') +
+        (stepUp ? '<small class="wing-next">' + esc(tx('次はここ（{0}で {1}）', LV.COURSES[i - 1].title, tx(prevRank.rank))) + '</small>' : '') +
         '<small class="wing-top" data-top="' + c.id + '">' + topHTML(c.id) + '</small></span>' +
         '</button></li>';
     });
@@ -2984,7 +2984,7 @@
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">' + tx('別解: ') + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join(tx('、')) + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">' + tx(b.course.drill ? '思い出して押す。手順は {0} 秒後か、押し違いのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
+      html += '<p class="learnt-note">' + tx(b.course.drill ? '思い出して押す。手順は {0} 秒後か、ミスのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>' + tx('目安 {0} 秒', b.limit) + '</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
@@ -3022,7 +3022,7 @@
     var html = st ? '<div class="ob-whole">' + c + esc(qText(b)) + '</div>' : '';
     html += '<div class="motd-h">' + c + '<span class="ob-n">' + qCount(b, '/') + '</span> ' +
       // Past the 目安: said once on the card, still (the gauge is in the hidden panel).
-      (b.stage >= 1 ? '<span class="ob-over">' + tx('目安を過ぎた') + '</span> ' : '') +
+      (b.stage >= 1 ? '<span class="ob-over">' + tx('目安超え') + '</span> ' : '') +
       (st ? '<span class="ob-step">' + (st[0] ? tx('手順 {0}/{1}', st[0], st[1]) : tx('やり直し')) + '</span> ' : '') +
       '<b class="ob-q">' + esc(st ? tx(st[2]) : qText(b)) + '</b></div>';
     if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join(tx('。'))) + '</div>';
@@ -3066,7 +3066,7 @@
       (b.streak >= 3 ? '<span class="pb-streak">' + tx('{0} 連', b.streak) + '</span>' : '') +
       (S.conf ? '<span class="pb-conf">' + tx('自分のキー設定（prefix {0}）', prefixLabel()) + '</span>' : '') +
       '<span class="pb-sp"></span>' +
-      (b.misses ? '<span class="pb-pen">' + tx('操作ミス {0}（+{1}秒）', b.misses, b.penalty) + '</span>' : '') +
+      (b.misses ? '<span class="pb-pen">' + tx('ミス {0}（+{1}秒）', b.misses, b.penalty) + '</span>' : '') +
       ghostHTML(b) +
       '<span class="pb-time"><span>0.0</span><small>' + tx('秒') + '</small></span>';
     renderClock();
@@ -3086,7 +3086,7 @@
     if (left) left.style.width = Math.max(0, (b.limit - used) / b.limit * 100) + '%';
     if (over) over.style.width = Math.min(100, Math.max(0, (used - b.limit) / (b.limit * (LV.GUIDE_AT - 1)) * 100)) + '%';
     // Past the 目安 the panel goes still: no counting seconds to distract.
-    if (o) o.textContent = used > b.limit ? tx('目安を過ぎた') : '';
+    if (o) o.textContent = used > b.limit ? tx('目安超え') : '';
   }
 
   // Short notes under the order: a streak, a wrong key.
@@ -3996,7 +3996,7 @@
     var c = REC.courseOf(r.course);
     var diff = r.time - r.par;
     var verdict = diff <= 0
-      ? tx('お手本 {0} 秒を <b>{1} 秒</b> 上回った', r.par, Math.abs(diff).toFixed(1))
+      ? tx('お手本 {0} 秒より <b>{1} 秒</b> 速い', r.par, Math.abs(diff).toFixed(1))
       : tx('お手本 {0} 秒まで あと <b>{1} 秒</b>', r.par, diff.toFixed(1));
     var sub = '';
     if (r.count === 1) sub = tx('はじめての挑戦。これが出発点。');
@@ -4028,7 +4028,7 @@
       '<dl class="em-facts">' +
       '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
       '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
-      '<div><dt>' + tx('操作ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
+      '<div><dt>' + tx('ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
       '<div><dt>' + tx('目安超え') + '</dt><dd>' + nQ(r.overs) + '</dd></div>' +
       '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
       '<div><dt>' + tx('押したキー') + '</dt><dd>' + r.keys + '</dd></div>' +
@@ -4076,12 +4076,12 @@
       '<h2 class="em-title">' + esc(tx('稽古 {0} 問', r.n)) + '</h2>' +
       '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.bestStreak + '<small>' + tx('問連続') + '</small></div>' +
-      '<div class="em-verdict">' + esc(tx('手順を見ずに、押し違いなく続けて解けた数')) + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
+      '<div class="em-verdict">' + esc(tx('手順を見ずに、ミスなく続けて解けた数')) + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       learntHTML(r) +
       '<dl class="em-facts">' +
       '<div><dt>' + tx('解いた問題') + '</dt><dd>' + r.n + '</dd></div>' +
       '<div><dt>' + tx('手順を見た') + '</dt><dd>' + nQ(r.guides) + '</dd></div>' +
-      '<div><dt>' + tx('操作ミス') + '</dt><dd>' + r.misses + '</dd></div>' +
+      '<div><dt>' + tx('ミス') + '</dt><dd>' + r.misses + '</dd></div>' +
       '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
       '</dl>' +
       '<div class="rec-panel em-types"><div class="rec-head">' + tx('問題ごと') + '</div><table class="rec-table"><thead><tr><th>' + tx('問題') + '</th><th>' + tx('回数') + '</th><th>' + tx('手順なしで') + '</th><th>' + tx('平均') + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
@@ -4300,7 +4300,7 @@
       '<div class="cta"><button type="button" class="btn" data-sync-now>' + tx('今すぐ合わせる') + '</button></div><p class="sync-msg rec-empty" data-sync-msg></p></div>' +
       '<div class="rec-panel"><div class="rec-head">' + tx('別の端末の合言葉を入れる') + '</div>' +
       '<form class="name-form" data-key-form><span class="nf-row"><input name="key" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="' + tx('別の端末の合言葉') + '" placeholder="' + tx('例: matsu-kaze-tsuru-482') + '"><button type="submit" class="btn">' + tx('この合言葉にする') + '</button></span>' +
-      '<small class="nf-msg">' + tx('この端末の記録も、その合言葉の側に合わさる。') + '</small></form></div>' +
+      '<small class="nf-msg">' + tx('この端末の記録も、その合言葉の記録に合わさる。') + '</small></form></div>' +
       '<div class="rec-panel"><div class="rec-head">' + tx('ランキングの名前') + '</div>' +
       '<form class="name-form" data-name-form="records"><span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" aria-label="' + tx('ランキングの名前') + '" value="' + esc(st.name || '') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx(st.name ? '変える' : '付ける') + '</button></span>' +
       '<small class="nf-msg">' + tx(st.name ? '遊ぶたびに、その回の記録がランキングに載る。' : '名前を付けると、遊ぶたびにランキングに載る。') + '</small></form></div>';
@@ -4354,7 +4354,7 @@
     var svg = '<svg class="rec-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" shape-rendering="crispEdges" aria-hidden="true">';
     list.forEach(function (r, i) {
       svg += '<rect class="bar' + (r.rec ? ' rec' : '') + (i === list.length - 1 ? ' now' : '') + '" x="' + (i * 10 + 1.5) + '" y="' + y(r.time) + '" width="7" height="' + (H - y(r.time)) + '"><title>' +
-        esc(tx('{0} {1}秒 操作ミス {2}', recDate(r.at), r.time.toFixed(1), r.misses)) + '</title></rect>';
+        esc(tx('{0} {1}秒 ミス {2}', recDate(r.at), r.time.toFixed(1), r.misses)) + '</title></rect>';
     });
     svg += '<line class="par" x1="0" x2="' + W + '" y1="' + y(par) + '" y2="' + y(par) + '" vector-effect="non-scaling-stroke"/>';
     if (best != null) svg += '<line class="best" x1="0" x2="' + W + '" y1="' + y(best) + '" y2="' + y(best) + '" vector-effect="non-scaling-stroke"/>';
@@ -4403,12 +4403,12 @@
     var st = REC.stats(id);
     if (!st) {
       body.innerHTML = '<div class="rec-log"><p>' + tx('{0}（{1}）の記録は、まだ白紙。', esc(c.title), esc(c.mode)) + '</p><p>' + tx('一度はじめると、ここに上達が描かれていく。') + '</p></div>' +
-        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + tx('{0}に入る', esc(c.title)) + '</button></div>' + rankPanel(c, '') + drillPanel();
+        '<div class="cta"><button type="button" class="btn primary" data-course="' + id + '">' + tx('{0}をはじめる', esc(c.title)) + '</button></div>' + rankPanel(c, '') + drillPanel();
       return;
     }
     var gain = st.first.time - st.best;
     var head = st.count === 1
-      ? '<p>' + tx('挑戦 1 回。もう一度入ると、ここに上達が出る。') + '</p>'
+      ? '<p>' + tx('まだ 1 回。もう一度遊ぶと、ここに上達が出る。') + '</p>'
       : '<p>' + tx('はじめて {0} → 自己ベスト {1}', sec(st.first.time), sec(st.best)) + (gain > 0 ? '（<b>' + tx('−{0} 秒', gain.toFixed(1)) + '</b>）' : '') + '</p>';
     var a5 = ao5(st.runs);
     var tiles =
@@ -4439,18 +4439,18 @@
     }).join('');
     // Not "目安": that word is the per-question time limit elsewhere.
     return '<div class="rec-panel rec-ranks"><div class="rec-head">' + tx('称号の一覧（{0}・{1} 問）', esc(c.title), n) + '</div><table class="rec-table"><thead><tr><th>' + tx('称号') + '</th><th>' + tx('タイム') + '</th><th class="r-note">' + tx('1 問あたり') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<p class="rec-empty">' + esc(tx('称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。')) + '</p></div>';
+      '<p class="rec-empty">' + esc(tx('称号は武道の段位になぞらえている: 見習い → 初段 → 三段 → 師範代 → 師範。お手本は師範代のタイム。')) + '</p></div>';
   }
 
   function weakPanel(id) {
     var w = REC.weakness(id, 10);
-    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">' + tx('目安を超えがちな問題') + '</div><p class="rec-empty">' + tx('2 回入ると、苦手な問題が見えてくる。') + '</p></div>';
+    if (!w) return '<div class="rec-panel rec-weak"><div class="rec-head">' + tx('目安を超えがちな問題') + '</div><p class="rec-empty">' + tx('2 回遊ぶと、苦手な問題が見えてくる。') + '</p></div>';
     var row = function (e) {
       var q = Q[e.type];
       var keys = [];
       q.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
       return '<li><span class="w-text">' + esc(tx(q.text)) + '</span>' +
-        '<span class="w-num">' + tx('平均 {0}秒 ・ 押し違い {1}%', e.avg.toFixed(1), Math.round(e.missRate * 100)) + (e.overs ? tx(' ・ 目安超え {0}', e.overs) : '') + '</span>' +
+        '<span class="w-num">' + tx('平均 {0}秒 ・ ミス {1}%', e.avg.toFixed(1), Math.round(e.missRate * 100)) + (e.overs ? tx(' ・ 目安超え {0}', e.overs) : '') + '</span>' +
         '<span class="w-keys"><kbd class="pfx">' + esc(prefixLabel()) + '</kbd><span class="arr">→</span>' + keycaps(keys) + '</span>' +
         // The tip where it is wanted: on the question that keeps running over.
         (tipsOf(e.type).length ? '<span class="w-tip">' + esc(tipsOf(e.type)[0]) + '</span>' : '') + '</li>';
@@ -4466,7 +4466,7 @@
     var runs = REC.runsOf('keiko').filter(function (r) { return r.drill; });
     var best = REC.drillBest();
     return '<div class="rec-panel rec-drill"><div class="rec-head">' + tx('稽古（手順なしで思い出す）') + '</div>' +
-      '<p class="rec-empty">' + esc(runs.length ? tx('手順なし・押し違いなしで続けて解けた最長 {0} 問 ・ {1} 回', best, runs.length) : tx('まだ稽古していない。苦手な問題が多めに出る。')) + '</p>' +
+      '<p class="rec-empty">' + esc(runs.length ? tx('手順なし・ミスなしで続けて解けた最長 {0} 問 ・ {1} 回', best, runs.length) : tx('まだ稽古していない。苦手な問題が多めに出る。')) + '</p>' +
       '<div class="cta"><button type="button" class="btn" data-course="keiko">' + tx('稽古する') + '</button></div></div>';
   }
 
@@ -4476,7 +4476,8 @@
     var types = Object.keys(TYPE_NAMES).filter(function (t) { return l[t]; });
     if (!types.length) return '';
     var done = types.filter(function (t) { return l[t].learnt; });
-    return '<div class="rec-panel learnt-list"><div class="rec-head">' + tx('覚えた問題 {0} ／ {1}', done.length, types.length) + '</div><ul>' +
+    return '<div class="rec-panel learnt-list"><div class="rec-head">' + tx('覚えた問題 {0} ／ {1}', done.length, types.length) + '</div>' +
+      '<p class="rec-empty">' + esc(tx('{0} 回続けて速く解けた問題は「覚えた」になり、手順が隠れる。', LV.LEARNT_AFTER)) + '</p><ul>' +
       types.map(function (t) {
         var e = l[t];
         return '<li class="' + (e.learnt ? 'ok' : '') + '">' + esc(typeName(t)) + '<small>' + (e.learnt ? tx('覚えた') : tx('あと {0}', LV.LEARNT_AFTER - e.streak)) + '</small></li>';
