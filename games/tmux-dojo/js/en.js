@@ -167,7 +167,8 @@ window.ADV.EN = {
   "つながらなかった。通信できるときにもう一度。": "Could not connect. Try again when online.",
   "ねらいがなくなったので、選び直した": "The target is gone, so a new one was picked",
   "はじめて {0} → 自己ベスト {1}": "First {0} → best {1}",
-  "はじめての人は入門へ。1 問 1〜5 手で、指示を見ながら解ける。記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、ランキングと端末の引き継ぎのために送る。ほかに送るのは、何人が始めて何人が最後まで解いたかの数だけ（名前とは結び付かない）。": "New to tmux? Start with Beginner: one to five keys per question, with the steps on screen. Your records stay in this browser. They are sent only when you add a name or a sync key, for the ranking and for syncing devices. Besides that, only counts are sent: how many started and how many finished (never tied to a name).",
+  "はじめての人は入門へ。1 問 1〜5 手で、指示を見ながら解ける。": "New to tmux? Start with Beginner: one to five keys per question, with the steps on screen. ",
+  "記録はこのブラウザの中に残る。名前か合言葉を付けたときだけ、ランキングと端末の引き継ぎのために送る。ほかに送るのは、何人が始めて何人が最後まで解いたかの数だけ（名前とは結び付かない）。": "Your records stay in this browser. They are sent only when you add a name or a sync key, for the ranking and for syncing devices. Besides that, only counts are sent: how many started and how many finished (never tied to a name).",
   "はじめての挑戦。これが出発点。": "Your first run. This is where you start.",
   "はじめる": "Start",
   "はじめる……": "Starting...",
@@ -689,5 +690,12 @@ window.ADV.EN = {
   // --- loop8: tmux fidelity ---
   "ペインが 1 つだけなので、ウィンドウの番号が {0} に変わっただけ": "With only one pane the window just became number {0}",
   // --- loop9: accessibility ---
-  "別の端末の合言葉": "Another device's sync key"
+  "別の端末の合言葉": "Another device's sync key",
+  // --- loop10: coming back ---
+  "{0}まで あと {1} 秒": "{1} s to {0}",
+  "最高の称号 {0}": "Top title: {0}",
+  "次はここ（{0} で {1}）": "Next: here ({1} in {0})",
+  "昨日も解いた。今日も解くと 2 日連続": "You played yesterday. Play today for a 2-day streak",
+  "{0}まで あと {1} 秒（{2} 秒以内）": "{1} s to {0} (within {2} s)",
+  "最高の称号。": "The top title."
 };

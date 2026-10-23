@@ -2794,10 +2794,12 @@
     var el = $('#today');
     if (!el) return;
     var sk = REC.streak(all);
-    // One day is no streak yet.
+    // One day is no streak yet; yesterday alone is the reason to play today.
     var line = sk.days >= 2 ? (sk.today ? tx('{0} 日連続', sk.days) : tx('{0} 日連続（今日まだ）', sk.days)) : '';
+    var again = sk.days === 1 && !sk.today ? tx('昨日も解いた。今日も解くと 2 日連続') : '';
     el.innerHTML = '<b>' + esc(tx('今日の問題')) + '</b> <span class="today-day">' + esc(dayLabel(LV.dayKey())) + '</span>' +
       (line ? '<span class="today-streak">' + esc(line) + '</span>' : '') +
+      (again ? '<span class="today-again">' + esc(again) + '</span>' : '') +
       '<small>' + esc(tx('今日はみんな同じ順番で出る。日本時間の 0 時に変わる。')) + '</small>';
   }
 
@@ -2846,13 +2848,21 @@
     var all = REC.load();
     $('#skill').innerHTML = skillHTML(REC.skill(all));
     var dbest = REC.drillBest(all);
-    $('#keiko-sub').textContent = dbest ? tx('手順なしで思い出す ・ 最長 {0} 問連続', dbest) : tx('手順なしで思い出す');
+    // Before the first drill, the weak spots are the reason to start one.
+    var weak = dbest ? [] : REC.weakTypes(1).map(typeName);
+    $('#keiko-sub').textContent = dbest ? tx('手順なしで思い出す ・ 最長 {0} 問連続', dbest) : weak.length ? tx('苦手: {0}', weak[0]) : tx('手順なしで思い出す');
     var pick = lastCourse(all);
     var html = '';
     LV.COURSES.forEach(function (c, i) {
       var runs = REC.runsOf(c.id, all);
       var best = REC.best(c.id, all);
       var a5 = ao5(runs);
+      // The title the best holds and the next one; on a house not yet
+      // entered, whether the one before is at 三段 or better: the step up.
+      var nr = best ? LV.nextRank(c, best.time) : null;
+      var prev = !runs.length && i > 0 ? REC.best(LV.COURSES[i - 1].id, all) : null;
+      var prevRank = prev ? LV.nextRank(LV.COURSES[i - 1], prev.time) : null;
+      var stepUp = prevRank && LV.RANKS.map(function (x) { return x.title; }).indexOf(prevRank.rank) <= 2;
       html += '<li><button type="button" class="wing' + (c.id === pick ? ' hot' : '') + '" data-course="' + c.id + '">' +
         planHTML(c) +
         '<span class="wing-main"><span class="wing-name">' + esc(c.title) +
@@ -2863,6 +2873,8 @@
         '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span></span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
         '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
+        (nr ? '<small class="wing-rank">' + esc(nr.next ? tx('{0}まで あと {1} 秒', tx(nr.next), nr.gap.toFixed(1)) : tx('最高の称号 {0}', tx(nr.rank))) + '</small>' : '') +
+        (stepUp ? '<small class="wing-next">' + esc(tx('次はここ（{0} で {1}）', LV.COURSES[i - 1].title, tx(prevRank.rank))) + '</small>' : '') +
         '<small class="wing-top" data-top="' + c.id + '">' + topHTML(c.id) + '</small></span>' +
         '</button></li>';
     });
@@ -2873,6 +2885,8 @@
     $('#btn-enter').dataset.course = pick;
     var n = (all.runs || []).length;
     $('#records-sub').textContent = n ? tx('通算 {0} 回', n) : tx('上達を見る');
+    // The first-time line has done its job once a run is in.
+    $('#fine-first').hidden = n > 0;
     renderMeta(all);
   }
 
@@ -3960,6 +3974,9 @@
     var rankLine = r.rankUp
       ? tx('称号が「{0}」から <b>{1}</b> に上がった', esc(tx(r.rankFrom)), esc(tx(r.rank)))
       : tx('今回の称号 <b>{0}</b>', esc(tx(r.rank)));
+    // What the next title needs on this course: the number to beat next time.
+    var nr = LV.nextRank(c, r.time, r.n);
+    rankLine += '<small>' + esc(nr.next ? tx('{0}まで あと {1} 秒（{2} 秒以内）', tx(nr.next), nr.gap.toFixed(1), Math.round(nr.need)) : tx('最高の称号。')) + '</small>';
     var slow = r.slow ? Q[r.slow] : null;
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });

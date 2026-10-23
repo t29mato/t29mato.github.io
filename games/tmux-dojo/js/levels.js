@@ -229,6 +229,19 @@
     return RANKS[RANKS.length - 1].title;
   }
 
+  // The title a course time holds, the next one up, the seconds it needs on
+  // this course (misses included) and how far the time is from it. At the
+  // top there is no next.
+  function nextRank(course, time, n) {
+    n = n || course.qs.length;
+    var mul = course.rankMul || 1;
+    var rank = rankFor(time / n, mul);
+    var i = RANKS.map(function (r) { return r.title; }).indexOf(rank);
+    if (i <= 0) return { rank: rank, next: null, need: null, gap: null };
+    var need = RANKS[i - 1].max * mul * n;
+    return { rank: rank, next: RANKS[i - 1].title, need: need, gap: time - need };
+  }
+
   // お手本, the target time for a course: 師範代 pace on every question.
   // `n` overrides the number of questions (the 苦手の稽古 picks its own).
   function par(course, n) {
@@ -250,6 +263,7 @@
     RANKS: RANKS,
     OLD_RANKS: OLD_RANKS,
     rankFor: rankFor,
+    nextRank: nextRank,
     par: par,
     KEIKO: KEIKO,
     DRILL_FREQ: DRILL_FREQ,

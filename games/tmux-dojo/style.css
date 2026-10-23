@@ -602,6 +602,7 @@ body[data-armed="repeat"] .term { box-shadow: 0 0 0 2px var(--moss); }
 .emaki-body.is-rec .em-tip { color: var(--shu); font-weight: 600; }
 .em-rank { display: flex; align-items: center; gap: 14px; margin: 16px 0 6px; font-size: 16px; }
 .em-rank b { color: var(--shu); }
+.em-rank small { display: block; font-size: 13px; color: var(--sumi-dim); margin-top: 2px; }
 .hanko {
   width: 64px; height: 64px; flex: none; border: 3px solid var(--shu); border-radius: 4px; color: var(--shu);
   font-family: var(--mincho); font-weight: 700; font-size: 16px; line-height: 1.15; text-align: center;
@@ -880,6 +881,8 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .today small { flex-basis: 100%; color: var(--sumi-dim); font-size: 12px; }
 .wing-top:empty { display: none; }
 .wing-top { color: var(--shu); }
+.wing-next { color: var(--shu); font-weight: 700; }
+.today-again { font-weight: 600; }
 /* the key bar: the next key stands out; a steady height so the panes do not jump */
 .key.k-level { border-color: #9b8a6a; }
 .key.k-next { border-color: var(--andon); background: #fff3d2; box-shadow: 0 0 0 2px var(--andon); }
