@@ -148,12 +148,18 @@
   // every course (rules.js), so 上級's session questions came without a
   // bump: its all-time board mixes runs from before (accepted).
   // The ids stay easy / normal / hard so older records carry over.
+  // `blindLater`: from the second run of the house on, the 手順 start hidden
+  // (PEEK_AFTER seconds or a wrong key brings them out, and that is kept).
   var COURSES = [
     {
       id: 'easy', title: '入門', mode: '手ならし', limit: 12, rankMul: 1, ver: 2, recommended: true,
       plan: { cols: 3, rows: 1, cells: 3, lit: 0 },
       desc: '分割・移動・全画面・閉じる・ウィンドウの作成と切り替え。1 問 1〜5 手（閉じるは移動も入る）。',
-      qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb']
+      qs: ['split_lr', 'focus', 'zoom', 'split_tb', 'close', 'unzoom', 'focus', 'new_window', 'select_window', 'split_lr', 'close', 'focus', 'zoom', 'select_window', 'split_tb'],
+      // The very first run (no record of this house yet) asks in this order
+      // instead of today's: a split first, nothing closed before three panes
+      // stand. Not today's order, so that run stays off the ranking.
+      firstQs: ['split_lr', 'focus', 'split_tb', 'zoom', 'unzoom', 'focus', 'close', 'new_window', 'select_window', 'split_lr', 'zoom', 'focus', 'close', 'select_window', 'split_tb']
     },
     {
       id: 'normal', title: '中級', mode: '腕試し', limit: 14, rankMul: 1.25, ver: 2,
@@ -162,7 +168,7 @@
       qs: ['focus', 'resize', 'swap', 'rename', 'close', 'kill_window', 'copy_top', 'split_tb', 'swap', 'select_window', 'zoom', 'new_window', 'detach_attach', 'last_window', 'break_pane', 'unzoom', 'close', 'split_lr', 'rename', 'copy_page']
     },
     {
-      id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 1.6, ver: 2,
+      id: 'hard', title: '上級', mode: '真剣勝負', limit: 18, rankMul: 1.6, ver: 2, blindLater: true,
       plan: { cols: 5, rows: 4, cells: 20, lit: 6 },
       desc: '1 問で 2〜8 手。セッションを作る・移る・attach -t で入る、履歴の検索も混ざる。考える前に手が動くか。',
       qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'yank_paste', 'copy_top', 'session_new', 'trident', 'kill_window', 'session_switch', 'session_attach', 'focus', 'resize', 'copy_search']
@@ -175,7 +181,7 @@
     // paces took 1.10–1.19 times as long a question here as on 上級
     // (typing the commands), so the same hands get the same belt on both.
     {
-      id: 'pro', title: '達人', en: 'Pro', mode: '使っている人へ', limit: 18, rankMul: 1.8, ver: 2, expert: true,
+      id: 'pro', title: '達人', en: 'Pro', mode: '使っている人へ', limit: 18, rankMul: 1.8, ver: 2, expert: true, blindLater: true,
       plan: { cols: 6, rows: 4, cells: 24, lit: 9 },
       desc: 'tmux をもう使っている人へ。ペインを連れてくる・ウィンドウの入れ替え・並べ方・全部のペインに同時に打つ・番号で飛ぶ・検索してコピー・キーのないコマンド。',
       qs: ['join_pane', 'layout', 'swap_window', 'sync_panes', 'pane_jump', 'rotate', 'search_yank', 'move_window', 'layout_cycle', 'join_pane_h', 'new_window_named', 'kill_session', 'layout', 'pane_jump']

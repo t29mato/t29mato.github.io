@@ -568,6 +568,26 @@
     return r;
   }
 
+  // select-layout -E (prefix E): the pane and the ones beside it along the
+  // same split (tmux's one layout cell: here a run of same-way splits)
+  // share that axis evenly.
+  function spreadOut(win, paneId) {
+    var hit = parentOf(win.root, paneId);
+    if (!hit || !hit.parent) return false;
+    var top = hit.parent, dir = top.dir, up;
+    while ((up = parentOfNode(win.root, top)) && up.dir === dir) top = up;
+    var list = [];
+    (function flat(n) { if (n.type === 'split' && n.dir === dir && !n.mirror) { flat(n.a); flat(n.b); } else list.push(n); })(top);
+    var fresh = chain(list, dir);
+    up = parentOfNode(win.root, top);
+    if (!up) win.root = fresh;
+    else if (up.a === top) up.a = fresh;
+    else up.b = fresh;
+    win.zoomed = false;
+    win.layoutName = null;
+    return true;
+  }
+
   function nextLayout(win, back) {
     var n = LAYOUTS.length, at = win.lastLayout == null ? -1 : win.lastLayout;
     var to = back ? (at <= 0 ? n - 1 : at - 1) : (at + 1) % n;
@@ -636,6 +656,7 @@
     rotateWindow: rotateWindow,
     applyLayout: applyLayout,
     nextLayout: nextLayout,
+    spreadOut: spreadOut,
     LAYOUTS: LAYOUTS,
     LAYOUT_KEYS: LAYOUT_KEYS,
     joinPane: joinPane,

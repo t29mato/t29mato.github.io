@@ -95,6 +95,8 @@
       }
       if (/\s/.test(ch)) { if (has) { out[out.length - 1].push(cur); cur = ''; has = false; } continue; }
       if (ch === ';' && !has) { out.push([]); continue; }
+      // A word ending in ; ends the command too (a; b), as tmux reads it.
+      if (ch === ';' && (i + 1 === line.length || /\s/.test(line[i + 1]))) { out[out.length - 1].push(cur); cur = ''; has = false; out.push([]); continue; }
       cur += ch; has = true;
     }
     if (has) out[out.length - 1].push(cur);
@@ -165,8 +167,20 @@
     'join-pane': 'lst', joinp: 'lst', 'move-pane': 'lst', movep: 'lst', 'swap-window': 'st', swapw: 'st', 'move-window': 'st', movew: 'st',
     'select-layout': 't', selectl: 't', 'rotate-window': 't', rotatew: 't', 'kill-session': 't',
     'list-keys': 'PT', 'show-options': 't', 'show-window-options': 't', 'show-messages': 't', 'source-file': 't',
-    'choose-tree': 'FfKOt', 'choose-window': 'FfKOt', 'choose-session': 'FfKOt', 'copy-mode': 'st', 'paste-buffer': 'bst', pasteb: 'bst'
+    'choose-tree': 'FfKOt', 'choose-window': 'FfKOt', 'choose-session': 'FfKOt', 'copy-mode': 'st', 'paste-buffer': 'bst', pasteb: 'bst',
+    'rename-window': 't', 'rename-session': 't', 'new-session': 'cefnstxyFX', 'attach-session': 'cfrt', 'switch-client': 'ctT',
+    'has-session': 't', 'last-window': 't', 'next-window': 't', 'previous-window': 't', 'last-pane': 't', 'display-panes': 'dt',
+    'detach-client': 'Est', 'list-panes': 'Ft', 'list-windows': 'Ft', 'next-layout': 't', 'previous-layout': 't', 'find-window': 't'
   };
+
+  // The fewest letters that still name the command: its alias, or the
+  // shortest start that only it has (kill-ses for kill-session).
+  function shortest(name) {
+    var best = name;
+    for (var i = 0; i < COMMANDS.length; i++) if (COMMANDS[i].name === name && COMMANDS[i].alias && COMMANDS[i].alias.length < best.length) best = COMMANDS[i].alias;
+    for (var n = 1; n < best.length; n++) if (resolve(name.slice(0, n)).name === name) return name.slice(0, n);
+    return best;
+  }
 
   function flags(argv) {
     // tmux style: -abc, -t target, then the rest.
@@ -176,10 +190,12 @@
     for (; i < argv.length; i++) {
       var a = argv[i];
       if (a === '--') { i++; break; }
-      if (!/^-[A-Za-z]+$/.test(a)) break;
+      if (!/^-[A-Za-z]/.test(a)) break;
       for (var j = 1; j < a.length; j++) {
         var c = a[j];
-        if (withArg[c] && j === a.length - 1 && i + 1 < argv.length) { f[c] = argv[++i]; break; }
+        // getopt: -t2 and -dt 2 alike.
+        if (withArg[c] && j < a.length - 1) { f[c] = a.slice(j + 1); break; }
+        if (withArg[c] && i + 1 < argv.length) { f[c] = argv[++i]; break; }
         f[c] = true;
       }
     }
@@ -207,10 +223,12 @@
       if (dir) return { key: ARROW[dir], say: { L: '左のペインへ', R: '右のペインへ', U: '上のペインへ', D: '下のペインへ' }[dir] };
       if (f.l) return { key: ';', say: '直前のペインへ' };
       if (f.t === ':.+' || f.t === '+' || f.t === '.+') return { key: 'o', say: '次のペインへ' };
+      if (typeof f.t === 'string' && !exactNames) return { run: 'cmd', argv: argv, say: tx('ペイン {0} へ', f.t) };
       return { why: 'その select-pane はゲームにない' };
     }
     if (/^(last-pane|lastp)$/.test(cmd)) return { key: ';', say: '直前のペインへ' };
     if (RESIZE_CMD.test(cmd)) {
+      if (f.Z && typeof f.t === 'string' && !exactNames) return { run: 'cmd', argv: argv, say: tx('ペイン {0} を全画面にする・戻す', f.t) };
       if (f.Z) return { key: 'z', say: '全画面にする・戻す' };
       if (dir) {
         var n = parseInt(rest[0], 10);
@@ -218,6 +236,7 @@
       }
       return { why: 'その resize-pane はゲームにない' };
     }
+    if (/^(kill-pane|killp|kill-window|killw)$/.test(cmd) && (typeof f.t === 'string' || f.a) && !exactNames) return { run: 'cmd', argv: argv, say: /pane|killp/.test(cmd) ? 'ペインを閉じる（確認なし）' : 'ウィンドウを閉じる（確認なし）' };
     if (/^(kill-pane|killp)$/.test(cmd)) return { key: 'x', now: true, say: 'ペインを閉じる（確認なし）' };
     if (/^(kill-window|killw)$/.test(cmd)) return { key: '&', now: true, say: 'ウィンドウを閉じる（確認なし）' };
     // -d: the pane goes to a window of its own, the focus stays here.
@@ -238,6 +257,7 @@
       if (f.l) return { key: 'l', say: '直前のウィンドウへ' };
       if (f.n) return { key: 'n', say: '次のウィンドウへ' };
       if (f.p) return { key: 'p', say: '前のウィンドウへ' };
+      if (typeof f.t === 'string' && !exactNames) return { run: 'cmd', argv: argv, say: tx('ウィンドウ {0} へ', f.t) };
       return { why: 'その select-window はゲームにない' };
     }
     if (/^(rename-window|renamew)$/.test(cmd)) return { key: ',', say: 'ウィンドウの名前を変える' };
@@ -268,6 +288,7 @@
       if (li >= 0) return { key: String(li + 1), alt: true, say: tx('並べ方を {0} にする', rest[0]) };
       if (f.n) return { key: ' ', say: '並べ方を変える' };
       if (f.p) return { run: 'cmd', argv: ['previous-layout'], say: '並べ方を逆の順に変える' };
+      if (f.E && !exactNames) return { key: 'E', say: 'ペインを均等に広げる' };
       return { why: 'その select-layout はゲームにない' };
     }
     if (/^(previous-layout|prevl)$/.test(cmd)) return { run: 'cmd', argv: ['previous-layout'], say: '並べ方を逆の順に変える' };
@@ -276,6 +297,7 @@
     if (/^(swap-pane|swapp)$/.test(cmd)) {
       if (f.U) return { key: '{', say: '前のペインと入れ替える' };
       if (f.D) return { key: '}', say: '次のペインと入れ替える' };
+      if ((typeof f.s === 'string' || typeof f.t === 'string') && !exactNames) return { run: 'cmd', argv: argv, say: 'ペインを入れ替える' };
       return { why: 'その swap-pane はゲームにない' };
     }
     if (/^(next-layout|nextl)$/.test(cmd)) return { key: ' ', say: '並べ方を変える' };
@@ -286,6 +308,7 @@
       if (f.p) return { key: '(', say: '前のセッションへ' };
       if (f.n) return { key: ')', say: '次のセッションへ' };
       if (f.l) return { key: 'L', say: '直前のセッションへ' };
+      if (typeof f.t === 'string' && !exactNames) return { run: 'cmd', argv: argv, say: tx('セッション {0} へ', f.t) };
       return { why: 'その switch-client はゲームにない' };
     }
     if (cmd === 'send-prefix') return { run: 'send-prefix', say: 'prefix をシェルに送る' };
@@ -354,7 +377,15 @@
   var SAMPLE_NAVIGATOR = "# vim-tmux-navigator（TPM で入れる）\nset -g @plugin 'christoomey/vim-tmux-navigator'\nrun '~/.tmux/plugins/tpm/tpm'\n";
 
   // Options tmux has that the game does not follow: 未対応, not 関係ない.
-  var UNSUPPORTED_OPTS = { 'status-keys': '入力欄のキーは決まっている（emacs 式）' };
+  var UNSUPPORTED_OPTS = {
+    'status-keys': '入力欄のキーは決まっている（emacs 式）',
+    'word-separators': 'コピーモードの単語の区切りは tmux の既定のまま', 'main-pane-width': '並べ方の大きさは tmux の既定のまま',
+    'main-pane-height': '並べ方の大きさは tmux の既定のまま', 'wrap-search': '検索はいつも端で折り返す（tmux の既定）',
+    'prefix-timeout': 'prefix は時間では外れない（tmux の既定）', 'synchronize-panes': 'ファイルからの同期はゲームにない（: で setw synchronize-panes on なら使える）',
+    'remain-on-exit': '閉じたペインは残らない（tmux の既定）', 'detach-on-destroy': 'セッションを閉じたら次のセッションへ（tmux の既定）'
+  };
+  // Options that change nothing a player can feel in the game, with the reason.
+  var NO_EFFECT_OPTS = { 'escape-time': 'Esc の待ち時間（ゲームのキーはすぐ届く。関係ない）', mouse: 'マウス（ゲームはキーだけで遊ぶ。関係ない）' };
 
   // Set while a file is read for a replay of a run from before the game
   // took shortened names (and renumber-windows, break-pane -d): it is read
@@ -432,7 +463,16 @@
           return use(l, c.renumber ? 'ウィンドウを閉じたら番号を詰め直す' : 'ウィンドウの番号を詰め直さない');
         }
         if (name === 'renumber-windows') return cannot(l, 'ゲームのウィンドウ番号は詰め直さない');
+        // The times the game keeps: the pane numbers (prefix q), and how long a -r key repeats.
+        if ((name === 'display-panes-time' || name === 'repeat-time') && !exactNames) {
+          var ms = parseInt(val, 10);
+          if (!(ms >= 0 && ms <= 60000)) return cannot(l, tx('その時間は読めない: {0}', val));
+          if (name === 'display-panes-time') { c.displayPanesTime = Math.max(1, ms); return use(l, tx('ペインの番号を {0} 秒出す', ms / 1000)); }
+          c.repeatTime = ms;
+          return use(l, ms ? tx('続けて押せるのは {0} 秒まで', ms / 1000) : '続けて押せないようにする');
+        }
         if (UNSUPPORTED_OPTS[name]) return cannot(l, UNSUPPORTED_OPTS[name]);
+        if (NO_EFFECT_OPTS[name]) return skip(l, NO_EFFECT_OPTS[name]);
         return skip(l, '見た目や動きの設定（ゲームには関係ない）');
       }
       if (/^(run|run-shell)$/.test(cmd)) return /tpm/.test(l.text) ? use(l, 'TPM を動かす（プラグインはゲームが再現する）') : cannot(l, 'シェルのコマンドはゲームでは動かない');
@@ -530,7 +570,7 @@
   window.ADV = window.ADV || {};
   window.ADV.conf = {
     parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words, flags: flags, resolve: resolve, canon: canon,
-    lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
+    shortest: shortest, lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
     SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM, SAMPLE_RESIZE: SAMPLE_RESIZE
   };
 })();

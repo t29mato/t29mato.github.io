@@ -206,7 +206,7 @@
     var prevRuns = runsOf(run.course, all);
     var prevBest = best(run.course, all);
     var titleFrom = bestTitle(run.course, all);
-    var skillFrom = skill(all), learntFrom = learnt();
+    var skillFrom = skill(all, run.course), learntFrom = learnt();
     run.id = run.id || newId();
     run.ver = c ? c.ver : 1;
     run.at = run.at || new Date().toISOString();
@@ -224,7 +224,7 @@
     // What this run changed in the long run: the 腕前 and what is learnt.
     var learntNow = learnt();
     sum.skillFrom = skillFrom;
-    sum.skill = skill();
+    sum.skill = skill(null, run.course);
     sum.learntNew = Object.keys(learntNow).filter(function (t) { return learntNow[t].learnt && !(learntFrom[t] && learntFrom[t].learnt); });
     sum.learntLost = Object.keys(learntFrom).filter(function (t) { return learntFrom[t].learnt && !(learntNow[t] && learntNow[t].learnt); });
     return sum;
@@ -429,16 +429,26 @@
     return best;
   }
 
-  // 腕前: the pace of the latest five runs on the three houses (seconds per
-  // question, after penalties, over rankMul), its level and the next one.
-  function skill(all) {
+  // 腕前: the pace of the latest five runs on a house (seconds per question,
+  // after penalties, over rankMul), its level and the next one. Per house:
+  // a harder house is slower at first even over rankMul (more to read), so
+  // stepping up must not read as getting worse. Without `course`, the house
+  // that stands highest: the Lv the top bar shows.
+  function skill(all, course) {
     all = all || load();
-    var runs = (all.runs || []).filter(function (r) { var c = courseOf(r.course); return c && !c.practice && !c.daily && !r.legacy && r.n; }).slice(-5);
+    if (!course) {
+      var top = null;
+      LV.COURSES.forEach(function (c) { var s = skill(all, c.id); if (s && (!top || s.lv > top.lv || (s.lv === top.lv && s.pace < top.pace))) top = s; });
+      return top;
+    }
+    var c = courseOf(course);
+    if (!c || c.practice || c.daily) return null;
+    var runs = (all.runs || []).filter(function (r) { return r.course === course && !r.legacy && r.n; }).slice(-5);
     if (!runs.length) return null;
-    var pace = runs.reduce(function (s, r) { return s + r.time / r.n / (courseOf(r.course).rankMul || 1); }, 0) / runs.length;
+    var pace = runs.reduce(function (s, r) { return s + r.time / r.n / (c.rankMul || 1); }, 0) / runs.length;
     var lv = LV.levelFor(pace);
     var next = lv < LV.LV_MAX ? LV.paceFor(lv + 1) : null;
-    return { pace: pace, lv: lv, title: LV.rankFor(pace), runs: runs.length, next: next, toNext: next != null ? pace - next : null };
+    return { course: course, pace: pace, lv: lv, title: LV.rankFor(pace), runs: runs.length, next: next, toNext: next != null ? pace - next : null };
   }
 
   // The best time of each day for a course, oldest first.

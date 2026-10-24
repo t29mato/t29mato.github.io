@@ -1027,3 +1027,31 @@ body[data-watching="1"] .game-foot, body[data-watching="1"] .keybar { display: n
 .daily-board { margin-top: 12px; }
 /* the share text keeps its own ink on its own ground (it was dark on dark in the dark theme) */
 .share-text { color: var(--ink); }
+
+/* ---- ux 3 ---- */
+/* 上級・達人: the steps start hidden from the second run (the card and the bar say so) */
+.wing-blind { display: block; font-size: 12px; color: var(--wood); margin-top: 2px; }
+.pb-note { font-size: 12px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-dim); white-space: nowrap; }
+@media (max-width: 760px) { .pb-course { white-space: nowrap; } .pb-note { font-size: 11px; padding: 0 5px; white-space: normal; } }
+/* the first run's result: the next belt, not the お手本 gap in red */
+.em-verdict.em-goal b { color: var(--moss); }
+/* key golf: fewer keys than 標準 */
+.em-parbeat { margin: 8px 0 0; font-size: 14px; font-weight: 700; color: var(--moss); }
+/* はじめての回: the two words, kept on a small pane too */
+.yashiki .ob-words { color: var(--t-yellow); }
+.pane.cramped .motd .ob-note.ob-words { display: block; }
+/* list-keys: one line of plain words above the English list */
+.yashiki .view-hint { color: var(--t-yellow); white-space: normal; }
+/* 練習: the keys learnt so far */
+.cheat { flex: none; font-size: 13px; color: var(--ink); border-top: 1px solid var(--line); padding-top: 4px; }
+.cheat summary { cursor: pointer; font-size: 13px; color: var(--ink-dim); padding: 2px 0; }
+.cheat .ch-how { margin: 2px 0 4px; color: var(--ink-dim); font-size: 12px; }
+.cheat .ch-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 18px; max-height: 24vh; overflow: auto; }
+.cheat .ch-list li { display: flex; gap: 8px; align-items: baseline; line-height: 1.5; }
+.cheat .ch-list li.ch-house { grid-column: 1 / -1; font-weight: 700; color: var(--hero-accent); font-size: 12px; margin-top: 2px; }
+.cheat .ch-keys { flex: none; min-width: 5.5em; font-family: var(--mono); white-space: nowrap; }
+.cheat .ch-keys code { font-size: 12px; }
+.cheat .ch-keys small { font-family: var(--sans); color: var(--ink-dim); }
+.cheat kbd { font-size: 12px; padding: 0 5px; }
+.cheat .ch-what { color: var(--ink); }
+@media (max-width: 760px) { .cheat .ch-list { grid-template-columns: minmax(0, 1fr); max-height: 22vh; } .cheat { font-size: 12.5px; } }

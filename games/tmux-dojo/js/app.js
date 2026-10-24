@@ -198,14 +198,30 @@
         break;
       case 'tmux':
         if (argv[1] === 'ls' || argv[1] === 'list-sessions') sessionLines().forEach(function (l) { pane.lines.push(l); });
-        else if (!argv[1] || /^(a|attach|attach-session|new|new-session)$/.test(argv[1])) {
+        // new -d makes a session in the background, which works from inside too.
+        else if (!argv[1] || /^(a|attach|attach-session|new|new-session)$/.test(argv[1]) && (S.legacy || /^a/.test(argv[1]) || !argv.slice(2).some(function (a) { return /^-[A-Za-z]*d/.test(a); }))) {
           pane.lines.push('sessions should be nested with care, unset $TMUX to force');
           pane.lines.push({ html: '<span class="sh-dim">' + esc(tx('（もう tmux の中にいる。デタッチは {0} → {1}）', prefixLabel(), LV.HINTS.detach)) + '</span>' });
-        } else pane.lines.push('usage: tmux [attach|ls]');
+        } else if (!S.legacy) tmuxFromShell(pane, line.trim().replace(/^tmux\s+/, ''));
+        else pane.lines.push('usage: tmux [attach|ls]');
         break;
       default:
         pane.lines.push('zsh: command not found: ' + cmd);
     }
+  }
+
+  // `tmux <command>` typed in a pane runs on this server, as in a real
+  // tmux; its errors print in the pane. new -s / attach (nesting) are above.
+  function tmuxFromShell(pane, rest) {
+    var argv = CF.words(rest)[0] || [];
+    var named = CF.resolve(argv[0]);
+    if (named.error) { pane.lines.push(named.error); return; }
+    var was = S.message;
+    S.message = null;
+    runTmuxCommand(rest);
+    // What it said goes to the pane, as the client prints it.
+    if (S.message && S.message !== was && !/^(list-|show-)/.test(named.name)) pane.lines.push(S.message);
+    if (S.lastAction === 'unbound') S.lastAction = 'brief';
   }
 
   function promptText() { return '~ $ '; }
@@ -223,6 +239,7 @@
     var argv = line.trim().split(/\s+/);
     var cmd = argv[0] || '';
     if (!cmd) return;
+    if (cmd === 'tmux' && !S.legacy) { outerTmux(o, line.trim().replace(/^tmux\s*/, '')); return; }
     if (cmd === 'tmux') {
       var sub = argv[1] || '';
       if (/^(a|attach|attach-session)$/.test(sub)) {
@@ -261,6 +278,42 @@
       default:
         o.lines.push('zsh: command not found: ' + cmd);
     }
+  }
+
+  // tmux typed outside tmux (after a detach), as tmux 3.x takes it: a
+  // command name may be shortened; attach takes no words but -t (prefix
+  // of a name too); new (or tmux alone) makes a session and goes into it
+  // unless -d; the commands that need no client run on the server.
+  var OUTER_OK = /^(kill-pane|kill-window|kill-session|new-window|split-window|rename-window|rename-session|select-window|select-pane|swap-pane|swap-window|move-window|join-pane|move-pane|break-pane|resize-pane|select-layout|next-layout|previous-layout|set-option|set-window-option|has-session|rotate-window|display-message)$/;
+  function outerTmux(o, rest) {
+    var argv = CF.words(rest)[0] || [];
+    var named = argv.length ? CF.resolve(argv[0]) : { name: 'new-session' };
+    if (named.error) { o.lines.push(named.error); return; }
+    argv = [named.name].concat(argv.slice(1));
+    var f = CF.flags(argv), name = named.name;
+    if (name === 'attach-session') {
+      if (f.rest.length) { o.lines.push('command attach-session: too many arguments (need at most 0)'); return; }
+      if (f.f.t == null) { attach(); return; }
+      var ts = sessionTarget(f.f.t);
+      if (ts) attach(ts);
+      else o.lines.push('can\'t find session: ' + f.f.t);
+      return;
+    }
+    if (name === 'list-sessions') { sessionLines().forEach(function (l) { o.lines.push(l); }); o.ls = true; return; }
+    if (name === 'new-session') {
+      var nm = typeof f.f.s === 'string' ? f.f.s : freshName();
+      if (sessionByName(nm)) { o.lines.push('duplicate session: ' + nm); return; }
+      var ns = makeSession(nm);
+      if (!f.f.d) attach(ns);
+      return;
+    }
+    if (name === 'kill-server') { o.lines.push(tx('{0}: ゲームでは再現していない（ミスにはならない）', name)); return; }
+    if (!OUTER_OK.test(name)) { o.lines.push('no current client'); return; }
+    var was = S.message;
+    S.message = null;
+    runTmuxCommand(argv);
+    if (S.message && S.message !== was) o.lines.push(S.message);
+    if (S.lastAction === 'unbound') S.lastAction = 'brief';
   }
 
   // Emacs-style line editing, as in zsh, bash and tmux's own prompts.
@@ -423,6 +476,19 @@
     return null;
   }
 
+  // A session as a target names it as tmux finds it: the whole name, else
+  // the one session whose name starts so (-t wo for work); "sess:win" is the
+  // session part. Null when none or several.
+  function sessionTarget(t) {
+    if (t == null) return S.session;
+    var n = String(t).replace(/^=/, '').replace(/:.*$/, '');
+    if (n === '') return S.session;
+    var whole = sessionByName(n);
+    if (whole) return whole;
+    var hits = S.sessions.filter(function (s) { return s.name.indexOf(n) === 0; });
+    return hits.length === 1 ? hits[0] : null;
+  }
+
   function switchSession(s) {
     if (!s || s === S.session) return false;
     S.session.attached = false;
@@ -453,6 +519,9 @@
 
   function newSession() {
     S.renumberOpt = null;
+    S.opts = {};
+    S.marked = null;
+    dropBinds();
     S.sessions = [];
     S.lastSession = null;
     S.session = makeSession('dojo');
@@ -481,6 +550,20 @@
     // Pane numbers start again in every window: one in another window says which.
     if (S.session && h.win !== T.activeWindow(S.session)) return tx('ウィンドウ {0} のペイン {1}', winLabel(h.win), T.paneIndex(S.session, h.win, pane));
     return tx('ペイン {0}', T.paneIndex(S.session, h.win, pane));
+  }
+
+  // A pane as the order named it when asked, kept: a swap or a pane closed
+  // renumbers the panes, and the order must not start naming another one.
+  // Once renumbered, its number now follows: "ペイン 2（いまは 1）".
+  function askedLabel(p) {
+    var asked = paneLabel(p);
+    return function () {
+      var h = T.findPane(S.session, p.id);
+      if (!h || p.name) return asked;
+      var now = paneLabel(p);
+      if (now === asked) return asked;
+      return tx('{0}（いまは {1}）', asked, h.win === T.activeWindow(S.session) ? T.paneIndex(S.session, h.win, p) : now);
+    };
   }
 
   // How the order names a window: as the status bar shows it, "1:蔵".
@@ -927,6 +1010,23 @@
     return null;
   }
 
+  // resize-pane -x / -y: the pane made that many cells (or that % of the
+  // window) wide or tall, by whichever way its border can move.
+  function resizeTo(win, pane, axis, want) {
+    var size = function (w) { var r = T.rectOf(w, pane.id, S.cols, S.rows); return r ? (axis === 'lr' ? r.w : r.h) : 0; };
+    var total = axis === 'lr' ? S.cols : S.rows, cur = size(win);
+    var n = /%$/.test(want) ? Math.round(total * parseInt(want, 10) / 100) : parseInt(want, 10);
+    if (!(n > 0) || n === cur) return;
+    var best = 0, bestOff = Math.abs(cur - n);
+    [n - cur, cur - n].forEach(function (d) {
+      var copy = JSON.parse(JSON.stringify(win));
+      T.resizePane(copy, pane.id, axis, d, S.cols, S.rows);
+      var off = Math.abs(size(copy) - n);
+      if (off < bestOff) { bestOff = off; best = d; }
+    });
+    if (best) T.resizePane(win, pane.id, axis, best, S.cols, S.rows);
+  }
+
   function resize(win, pane, r) {
     var axis = (r.dir === 'L' || r.dir === 'R') ? 'lr' : 'tb';
     var n = (r.dir === 'L' || r.dir === 'U') ? -r.n : r.n;
@@ -941,10 +1041,12 @@
   function prefixedKey(k, win, pane) {
     var key = k.key;
     var rz = resizeBinding(k);
-    // Ctrl still held from the prefix on an arrow the guide wants plain:
-    // not a 1-cell resize, and not a miss. Said instead.
+    // Ctrl still held from the prefix on an arrow the guide wants plain: as
+    // in tmux it resizes by a cell and the prefix is used up; not a miss,
+    // and said how to go on.
     if (rz && k.ctrl && !k.alt && guideWants(ARROWS[rz.dir])) {
-      message(tx('Ctrl を離してから {0} を押す（Ctrl+矢印は大きさを変える）', ARROWS[rz.dir]));
+      resize(win, pane, rz);
+      message(tx('Ctrl+矢印は大きさを変えるキー。prefix が外れた。もう一度 {0}、Ctrl を離して {1}', prefixLabel(), ARROWS[rz.dir]));
       S.lastAction = 'brief';
       return true;
     }
@@ -967,15 +1069,22 @@
     // C-o rotate-window, M-o rotate-window -D.
     if (k.ctrl && !k.alt && key.toLowerCase() === 'o') { T.rotateWindow(win); S.lastAction = 'swap'; return true; }
     if (k.alt && !k.ctrl && (k.code === 'KeyO' || key === 'o')) { T.rotateWindow(win, true); S.lastAction = 'swap'; return true; }
-    // Ctrl still held from the prefix: Ctrl+z is not z. Said, not counted.
+    // Ctrl still held from the prefix: Ctrl+z is not z, and the prefix is
+    // used up by it, as in tmux. Said how to go on, not counted.
     if (k.ctrl && !k.alt && DEFAULT_KEYS.indexOf(key.length === 1 ? key.toLowerCase() : key) >= 0) {
-      message(tx('Ctrl を離してから {0} を押す', key.length === 1 ? key.toLowerCase() : key));
+      message(tx('prefix が外れた。もう一度 {0}、Ctrl を離して {1}', prefixLabel(), key.length === 1 ? key.toLowerCase() : key));
       S.lastAction = 'brief';
       return true;
     }
+    // tmux 3.x's other default keys that only show something or that the
+    // game does not act out: never a miss.
+    var other = notActed(k);
+    if (other && !S.legacy) { if (other !== '-') message(tx('{0}: ゲームでは再現していない（ミスにはならない）', other)); S.lastAction = 'brief'; return true; }
+    if (k.alt && !k.ctrl && !S.legacy && (k.code === 'KeyN' || k.code === 'KeyP' || key === 'n' || key === 'p')) { message(k.code === 'KeyP' || key === 'p' ? 'no previous window' : 'no next window'); S.lastAction = 'brief'; return true; }
     if (k.ctrl || k.alt) { unbound(k); return true; }
 
     var moves = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' };
+    if (moves[key] && k.shift && !S.legacy) { message(tx('{0}: ゲームでは再現していない（ミスにはならない）', 'refresh-client')); S.lastAction = 'brief'; return true; }
     if (moves[key]) {
       // As select-pane does: the neighbour is found on the unzoomed layout,
       // and moving there unzooms.
@@ -1101,6 +1210,18 @@
       return true;
     }
     if (key === '{' || key === '}') { T.swapStep(win, key === '{' ? -1 : 1); S.lastAction = 'swap'; return true; }
+    if (!S.legacy && key === 'E') { T.spreadOut(win, pane.id); S.lastAction = 'layout'; return true; }
+    if (!S.legacy && (key === '.' || key === 'T' || key === 'f')) {
+      // command-prompt { move-window -t "%%" }, -I "#T" { select-pane -T "%%" }, { find-window -Z "%%" }.
+      S.lastAction = 'cmd';
+      if (key === '.') S.prompt = { label: '(move-window)', value: '', done: function (v) { if (v.trim()) runTmuxCommand(['move-window', '-t', v.trim()]); } };
+      else if (key === 'T') S.prompt = { label: '(select-pane)', value: pane.name || '', done: function (v) { pane.name = v; S.lastAction = 'rename_pane'; } };
+      else S.prompt = { label: '(find-window)', value: '', done: function (v) { findWindow(v); } };
+      return true;
+    }
+    if (!S.legacy && (key === 'm' || key === 'M')) { markPane(key === 'm' ? pane : null); return true; }
+    if (!S.legacy && key === '-') { S.clipboard = ''; S.lastAction = 'brief'; return true; }
+    if (!S.legacy && key === 'r') { S.lastAction = 'brief'; return true; }
     if (key === ' ') { T.nextLayout(win); S.lastAction = 'layout'; return true; }
     if (key === ']') { paste(pane); return true; }
     if (key === ':') { S.lastAction = 'cmd'; S.prompt = { label: ':', value: '', done: runTmuxCommand }; return true; }
@@ -1140,7 +1261,36 @@
 
   // The default prefix keys the game has: a Ctrl+key of one of them is a
   // slip of the finger, not a miss.
-  var DEFAULT_KEYS = '%"zxc&np,[]d$sw(){} :l;oi?qt\'=#!0123456789'.split('').concat(['PageUp']);
+  var DEFAULT_KEYS = '%"zxc&np,[]d$sw(){} :l;oi?qt\'=#!0123456789E.Tfm-'.split('').concat(['PageUp']);
+
+  // tmux 3.8's default prefix keys the game does not act out (list-keys -T
+  // prefix): the command each runs, or '-' for one that shows nothing.
+  var NOT_ACTED = { D: 'choose-client', C: 'customize-mode', '/': 'list-keys -1N', '<': 'display-menu', '>': 'display-menu', '@': 'break-pane -W', '*': 'new-pane', Tab: 'new-pane', g: 'switch-client -T move', Delete: '-' };
+  function notActed(k) {
+    if (k.ctrl && !k.alt && k.key.toLowerCase() === 'z') return 'suspend-client';
+    if (k.ctrl || k.alt) return null;
+    if (k.key === 'Tab' && k.shift) return 'new-pane';
+    return NOT_ACTED[k.key] || null;
+  }
+
+  // select-pane -m / -M (prefix m, M): the marked pane, which join-pane and
+  // swap-pane take when -s is left out.
+  function markPane(p) {
+    var was = S.marked;
+    S.marked = p && was !== p.id ? p.id : null;
+    message(S.marked ? 'ペインに印を付けた（join-pane と swap-pane が -s なしで使う）' : was ? 'ペインの印を外した' : 'no marked pane');
+    S.lastAction = 'brief';
+  }
+
+  // find-window (prefix f): the window whose name has the text.
+  function findWindow(v) {
+    S.lastAction = 'brief';
+    if (!v) return;
+    var hit = S.session.windows.filter(function (w) { return w.name.indexOf(v) >= 0; })[0];
+    if (!hit) { message('No windows matching: ' + v); return; }
+    T.selectWindow(S.session, hit.id);
+    S.lastAction = 'select_window';
+  }
 
   // The key under each shifted prefix key, on a US and on a JIS keyboard.
   var UNSHIFTED = { '5': '%', '2': '"', "'": '"', '7': '&', '6': '&', '4': '$', '[': '{', ']': '}', '9': '()', '8': '(', '0': ')', '1': '!' };
@@ -1162,12 +1312,13 @@
     message(tx('{0} には割り当てがない', CF.keyLabel({ key: k.key, ctrl: !!k.ctrl, alt: !!k.alt, shift: !!k.shift })));
   }
 
-  // display-panes: the numbers show for display-panes-time (1 s).
+  // display-panes: the numbers show for display-panes-time (1 s by default).
   function showPaneNumbers() {
-    S.panesShown = Date.now() + 1000;
+    var ms = S.legacy ? 1000 : optMs('display-panes-time', 1000);
+    S.panesShown = Date.now() + ms;
     if (S.sim) return;
     clearTimeout(S.dpTimer);
-    S.dpTimer = setTimeout(function () { if (S.panesShown) { S.panesShown = null; if (S.screen === 'game') renderTerm(); } }, 1000);
+    S.dpTimer = setTimeout(function () { if (S.panesShown) { S.panesShown = null; if (S.screen === 'game') renderTerm(); } }, ms);
   }
 
   function hidePaneNumbers() {
@@ -1182,8 +1333,15 @@
 
   // The tmux command prompt (prefix → :). The commands the game has, with
   // their tmux aliases; the rest is "unknown command", as tmux says it.
-  // `line` may be the words already (a binding's command).
+  // `line` may be the words already (a binding's command). Commands joined
+  // with ; run one after the other, as tmux runs them.
   function runTmuxCommand(line) {
+    if (!Array.isArray(line) && !S.legacy) {
+      var all = CF.words(line);
+      // bind x a \; b keeps the rest: the line goes whole, as in a file.
+      if (all.length > 1 && /^(bind-key|unbind-key)$/.test(CF.resolve(all[0][0]).name || '')) { bindNow(line); return; }
+      if (all.length > 1) { all.forEach(function (c) { runTmuxCommand(c); }); return; }
+    }
     var argv = Array.isArray(line) ? line.slice() : (CF.words(line)[0] || []).slice();
     if (!argv.length) return;
     // A name may be shortened as far as only one command starts so (kill-ses).
@@ -1193,18 +1351,42 @@
     var cmd = argv[0];
     var win = T.activeWindow(S.session);
     var pane = T.activePane(win);
-    function flag(f) { var i = argv.indexOf(f); return i > 0 ? (argv[i + 1] || '') : null; }
-    function has(f) { return argv.indexOf(f) > 0; }
+    var o = CF.flags(argv);
+    function flag(f) { var v = o.f[f.slice(1)]; return typeof v === 'string' ? v : v ? '' : null; }
+    function has(f) { return !!o.f[f.slice(1)]; }
     var dir = has('-L') ? 'L' : has('-R') ? 'R' : has('-U') ? 'U' : has('-D') ? 'D' : null;
     var ARROW = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown' };
     // A default key's work, as if pressed after the prefix.
     function asKey(key, ctrl) { prefixedKey({ key: key, ctrl: !!ctrl, alt: false, shift: false, meta: false, code: /^[0-9]$/.test(key) ? 'Digit' + key : undefined }, win, pane); }
+    // -t names a pane (or a window) the way tmux finds it; none: here.
+    function paneOr(f, what) {
+      var t = flag(f);
+      var h = t === null || S.legacy ? { win: win, pane: pane } : paneTarget(t);
+      if (!h) { message("can't find pane: " + t); S.lastAction = 'brief'; }
+      return h;
+    }
+    function winOr(f) {
+      var t = flag(f);
+      var w = t === null || S.legacy ? win : windowTarget(t);
+      if (!w) { message("can't find window: " + t); S.lastAction = 'brief'; }
+      return w;
+    }
     if (!cmd) return;
     if (/^(select-pane|selectp)$/.test(cmd) && flag('-T') === null) {
-      if (dir) { asKey(ARROW[dir]); return; }
-      if (has('-l')) { asKey(';'); return; }
+      if (has('-m') || has('-M')) { markPane(has('-M') ? null : pane); return; }
       var pt = flag('-t');
       if (pt === ':.+' || pt === '+' || pt === '.+') { asKey('o'); return; }
+      if (pt !== null && !S.legacy) {
+        // Another window's pane becomes its window's own, the focus stays here (tmux).
+        var sh = paneOr('-t');
+        if (!sh) return;
+        if (dir || has('-l')) { message(tx('その select-pane はゲームにない')); S.lastAction = 'brief'; return; }
+        if (sh.win === win) { withUnzoom(win); T.selectPane(win, sh.pane.id); } else if (sh.win.active !== sh.pane.id) { sh.win.last = sh.win.active; sh.win.active = sh.pane.id; }
+        S.lastAction = 'focus';
+        return;
+      }
+      if (dir) { asKey(ARROW[dir]); return; }
+      if (has('-l')) { asKey(';'); return; }
       if (/^\d+$/.test(pt || '')) {
         var sp = T.panesOf(win)[Number(pt) - S.session.paneBaseIndex];
         if (sp) { T.selectPane(win, sp.id); S.lastAction = 'focus'; } else { message("can't find pane: " + pt); S.lastAction = 'brief'; }
@@ -1214,18 +1396,48 @@
       return;
     }
     if (/^(resize-pane|resizep)$/.test(cmd)) {
-      if (has('-Z')) { asKey('z'); return; }
-      if (dir) { var rn = parseInt(argv[argv.length - 1], 10); resize(win, pane, { dir: dir, n: rn > 0 ? Math.min(rn, 50) : 1 }); S.lastAction = 'resize'; return; }
+      var rh = paneOr('-t');
+      if (!rh) return;
+      // -Z on another pane: that one is zoomed (and becomes its window's own).
+      if (has('-Z') && rh.pane === pane) { asKey('z'); return; }
+      if (has('-Z')) {
+        if (T.panesOf(rh.win).length < 2) message('ペインが 1 つだけなので全画面にはならない');
+        else { if (rh.win.active !== rh.pane.id) { rh.win.last = rh.win.active; rh.win.active = rh.pane.id; rh.win.zoomed = true; } else rh.win.zoomed = !rh.win.zoomed; }
+        S.lastAction = 'zoom';
+        return;
+      }
+      if (dir) { var rn = parseInt(o.rest[0], 10); resize(rh.win, rh.pane, { dir: dir, n: rn > 0 ? Math.min(rn, 50) : 1 }); S.lastAction = 'resize'; return; }
+      if (!S.legacy && (flag('-x') !== null || flag('-y') !== null)) {
+        if (flag('-x') !== null) resizeTo(rh.win, rh.pane, 'lr', flag('-x'));
+        if (flag('-y') !== null) resizeTo(rh.win, rh.pane, 'tb', flag('-y'));
+        S.lastAction = 'resize';
+        return;
+      }
       message(tx('その resize-pane はゲームにない')); S.lastAction = 'brief';
       return;
     }
     if (/^(last-pane|lastp)$/.test(cmd)) { asKey(';'); return; }
     if (/^(rotate-window|rotatew)$/.test(cmd)) { if (has('-D')) { T.rotateWindow(win, true); S.lastAction = 'swap'; } else asKey('o', true); return; }
-    if (/^(next-window|next)$/.test(cmd)) { asKey('n'); return; }
-    if (/^(previous-window|prev)$/.test(cmd)) { asKey('p'); return; }
+    if (/^(next-window|next)$/.test(cmd)) { if (has('-a') && !S.legacy) { message('no next window'); S.lastAction = 'brief'; return; } asKey('n'); return; }
+    if (/^(previous-window|prev)$/.test(cmd)) { if (has('-a') && !S.legacy) { message('no previous window'); S.lastAction = 'brief'; return; } asKey('p'); return; }
     if (/^(select-window|selectw)$/.test(cmd)) {
-      var wt = /^:?(\d+)$/.exec(flag('-t') || '');
-      if (wt) { var tw = T.windowByIndex(S.session, Number(wt[1])); if (tw) T.selectWindow(S.session, tw.id); else message("can't find window: " + wt[1]); S.lastAction = 'select_window'; return; }
+      var wt = flag('-t');
+      if (wt !== null && !S.legacy) {
+        // A window of another session (sess:2) takes you to that session too.
+        var ws = /:/.test(wt) ? sessionTarget(wt) : S.session;
+        if (!ws) { message("can't find session: " + wt); S.lastAction = 'brief'; return; }
+        var keep = S.session;
+        S.session = ws;
+        var tw2 = windowTarget(wt.replace(/^[^:]*:/, '').replace(/^=/, ''));
+        S.session = keep;
+        if (!tw2) { message("can't find window: " + wt); S.lastAction = 'select_window'; return; }
+        switchSession(ws);
+        T.selectWindow(S.session, tw2.id);
+        S.lastAction = 'select_window';
+        return;
+      }
+      var wn = /^:?(\d+)$/.exec(wt || '');
+      if (wn) { var tw = T.windowByIndex(S.session, Number(wn[1])); if (tw) T.selectWindow(S.session, tw.id); else message("can't find window: " + wn[1]); S.lastAction = 'select_window'; return; }
       asKey(has('-l') ? 'l' : has('-p') ? 'p' : 'n');
       return;
     }
@@ -1235,21 +1447,29 @@
     if (/^(clock-mode)$/.test(cmd)) { asKey('t'); return; }
     if (/^(choose-window)$/.test(cmd)) { asKey('w'); return; }
     if (/^(kill-session)$/.test(cmd)) {
-      var ks = flag('-t') !== null ? sessionByName(flag('-t')) : S.session;
+      var ks = flag('-t') !== null ? (S.legacy ? sessionByName(flag('-t')) : sessionTarget(flag('-t'))) : S.session;
       if (!ks) { message("can't find session: " + flag('-t')); S.lastAction = 'brief'; return; }
       killSession(ks);
       return;
     }
-    var o = CF.flags(argv);
+    if (/^(has-session|has)$/.test(cmd) && !S.legacy) {
+      if (!sessionTarget(flag('-t'))) message("can't find session: " + flag('-t'));
+      S.lastAction = 'brief';
+      return;
+    }
+    // bind / unbind at the prompt: for this session, as a line of the file would.
+    if (/^(bind-key|unbind-key)$/.test(cmd) && !S.legacy) { bindNow(argv); return; }
     // join-pane (move-pane): -s the pane to bring, -t the pane to split
     // (this one), -h side by side, -b before it, -d the focus stays.
     if (/^(join-pane|joinp|move-pane|movep)$/.test(cmd)) {
-      if (o.f.s == null) { message('no marked pane'); S.lastAction = 'brief'; return; }
-      var js = paneTarget(o.f.s), jd = paneTarget(o.f.t);
+      var src0 = o.f.s == null && !S.legacy && S.marked && paneExists(S.marked) ? T.findPane(S.session, S.marked) : null;
+      if (o.f.s == null && !src0) { message('no marked pane'); S.lastAction = 'brief'; return; }
+      var js = src0 || paneTarget(o.f.s), jd = paneTarget(o.f.t);
       if (!js || !jd) { message("can't find pane: " + (!js ? o.f.s : o.f.t)); S.lastAction = 'brief'; return; }
       if (js.pane.id === jd.pane.id) { message('source and target panes must be different'); S.lastAction = 'brief'; return; }
       T.joinPane(S.session, js.win, js.pane.id, jd.win, jd.pane.id, o.f.h ? 'lr' : 'tb', !!o.f.b, !!o.f.d);
       if (!o.f.d && jd.win !== win) T.selectWindow(S.session, jd.win.id);
+      if (src0) S.marked = null;
       S.lastAction = 'join';
       return;
     }
@@ -1273,12 +1493,20 @@
       return;
     }
     // set / setw: synchronize-panes (-g every window, -p this pane, -u
-    // unset; no value turns it over). Any other option changes nothing here.
+    // unset; no value turns it over); renumber-windows; the times the game
+    // keeps. Any other option changes nothing here, and says so.
     if (/^(set|set-option|setw|set-window-option)$/.test(cmd)) {
       var on = o.rest[0], val = o.rest[1];
       if (on === 'renumber-windows' && !S.legacy) {
         S.renumberOpt = !/^(off|no|0)$/i.test(val || 'on');
         S.sessions.forEach(function (x) { x.renumber = S.renumberOpt; });
+        S.lastAction = 'brief';
+        return;
+      }
+      if ((on === 'display-panes-time' || on === 'repeat-time') && !S.legacy) {
+        var ms = parseInt(val, 10);
+        if (!(ms >= 0 && ms <= 60000)) message('bad value: ' + val);
+        else S.opts[on] = on === 'display-panes-time' ? Math.max(1, ms) : ms;
         S.lastAction = 'brief';
         return;
       }
@@ -1295,48 +1523,79 @@
       var name = flag('-s') || freshName();
       if (sessionByName(name)) { message('duplicate session: ' + name); return; }
       var s = makeSession(name);
-      if (argv.indexOf('-d') < 0) switchSession(s);
+      if (!has('-d')) switchSession(s);
       S.lastAction = 'new_session';
+    } else if (/^(attach-session|attach)$/.test(cmd) && !S.legacy) {
+      // From inside, attach -t moves this client there (switch-client).
+      var as = sessionTarget(flag('-t'));
+      if (!as) { message("can't find session: " + flag('-t')); S.lastAction = 'brief'; return; }
+      switchSession(as);
+      S.lastAction = 'choose';
     } else if (/^(rename-session|rename)$/.test(cmd)) {
-      renameSession(S.session, argv.slice(1).join(' ').trim());
+      var rs = S.legacy ? S.session : sessionTarget(flag('-t'));
+      if (!rs) { message("can't find session: " + flag('-t')); S.lastAction = 'brief'; return; }
+      renameSession(rs, (S.legacy ? argv.slice(1) : o.rest).join(' ').trim());
       S.lastAction = 'rename_session';
     } else if (/^(switch-client|switchc)$/.test(cmd)) {
-      var sw = flag('-t') !== null ? sessionByName(flag('-t'))
-        : argv.indexOf('-l') > 0 ? S.lastSession
-        : S.sessions[((S.sessions.indexOf(S.session) + (argv.indexOf('-p') > 0 ? -1 : 1)) % S.sessions.length + S.sessions.length) % S.sessions.length];
-      if (sw && S.sessions.indexOf(sw) >= 0) switchSession(sw);
-      else message(flag('-t') !== null ? 'can\'t find session: ' + flag('-t') : 'no last session');
+      var st = flag('-t');
+      var sw = st !== null ? (S.legacy ? sessionByName(st) : sessionTarget(st))
+        : has('-l') ? S.lastSession
+        : S.sessions[((S.sessions.indexOf(S.session) + (has('-p') ? -1 : 1)) % S.sessions.length + S.sessions.length) % S.sessions.length];
+      if (sw && S.sessions.indexOf(sw) >= 0) {
+        switchSession(sw);
+        // sess:2 picks the window there too.
+        var sww = st && !S.legacy && /:./.test(st) ? windowTarget(st) : null;
+        if (sww) T.selectWindow(S.session, sww.id);
+      } else message(st !== null ? 'can\'t find session: ' + st : 'no last session');
       S.lastAction = 'choose';
     } else if (/^(new-window|neww)$/.test(cmd)) {
+      var nt = S.legacy ? null : /^(?:[^:]*:)?(\d+)$/.exec(flag('-t') || '');
+      if (nt && T.windowByIndex(S.session, Number(nt[1]))) { message('index in use: ' + nt[1]); S.lastAction = 'brief'; return; }
       var w = T.createWindow(S.session, flag('-n') || 'zsh');
-      T.selectWindow(S.session, w.id);
+      if (nt) T.moveWindow(S.session, w.id, Number(nt[1]));
+      if (!has('-d') || S.legacy) T.selectWindow(S.session, w.id);
       nameRoom(T.activePane(w));
       S.lastAction = 'new_window';
     } else if (/^(rename-window|renamew)$/.test(cmd)) {
-      if (argv[1]) win.name = argv.slice(1).join(' ');
+      var rw = winOr('-t');
+      if (!rw) return;
+      var nm = (S.legacy ? argv.slice(1) : o.rest).join(' ');
+      if (nm) rw.name = nm;
       S.lastAction = 'rename';
     } else if (/^(split-window|splitw)$/.test(cmd)) {
-      var lr = argv.indexOf('-h') > 0;
-      nameRoom(T.splitPane(win, pane.id, lr ? 'lr' : 'tb', null, false));
+      var lr = has('-h');
+      var sph = paneOr('-t');
+      if (!sph) return;
+      nameRoom(T.splitPane(sph.win, sph.pane.id, lr ? 'lr' : 'tb', null, has('-d') && !S.legacy));
       S.lastAction = lr ? 'split_lr' : 'split_tb';
     } else if (/^(kill-pane|killp)$/.test(cmd)) {
-      if (!T.killPane(win, pane.id)) message('最後のペインは閉じられない');
+      var kh = paneOr('-t');
+      if (!kh) return;
+      if (has('-a') && !S.legacy) T.panesOf(kh.win).forEach(function (p) { if (p !== kh.pane) T.killPane(kh.win, p.id); });
+      else if (!T.killPane(kh.win, kh.pane.id)) message('最後のペインは閉じられない');
       S.lastAction = 'close';
     } else if (/^(kill-window|killw)$/.test(cmd)) {
-      if (!T.killWindow(S.session, win.id)) message('最後のウィンドウは閉じられない');
+      var kw = winOr('-t');
+      if (!kw) return;
+      if (has('-a') && !S.legacy) S.session.windows.slice().forEach(function (x) { if (x !== kw) T.killWindow(S.session, x.id); });
+      else if (!T.killWindow(S.session, kw.id)) message('最後のウィンドウは閉じられない');
       S.lastAction = 'kill_window';
     } else if (/^(break-pane|breakp)$/.test(cmd)) {
-      breakPane(win, pane, !S.legacy && has('-d'));
+      var bh = paneOr('-s');
+      if (!bh) return;
+      breakPane(bh.win, bh.pane, !S.legacy && has('-d'));
       S.lastAction = 'break_pane';
     } else if (/^(last-window|last)$/.test(cmd)) {
       if (S.session.last && T.windowById(S.session, S.session.last)) T.selectWindow(S.session, S.session.last);
       else message('no last window');
       S.lastAction = 'select_window';
     } else if (/^(select-layout|selectl)$/.test(cmd)) {
-      // A name, or the start of one (even-h); -n / -p next and previous; none: the last one again.
+      // A name, or the start of one (even-h); -n / -p next and previous; -E
+      // spread evenly; none: the last one again.
       var lay = o.rest[0] || '';
       var hits = T.LAYOUTS.filter(function (n) { return lay && n.indexOf(lay) === 0; });
       if (T.LAYOUTS.indexOf(lay) >= 0) hits = [lay];
+      if (o.f.E && !S.legacy) { asKey('E'); return; }
       if (o.f.n || o.f.p) T.nextLayout(win, !!o.f.p);
       else if (!lay && win.lastLayout >= 0) T.applyLayout(win, T.LAYOUTS[win.lastLayout]);
       else if (hits.length === 1) T.applyLayout(win, hits[0]);
@@ -1346,7 +1605,19 @@
       T.nextLayout(win, /^prev/.test(cmd));
       S.lastAction = 'layout';
     } else if (/^(swap-pane|swapp)$/.test(cmd)) {
-      T.swapStep(win, argv.indexOf('-U') > 0 ? -1 : 1);
+      if (!S.legacy && !has('-U') && !has('-D') && (flag('-s') !== null || flag('-t') !== null || S.marked)) {
+        // -s (else the marked pane, else this one) trades places with -t
+        // (else this one); without -d the focus goes to -t's pane, as tmux does.
+        var ss = flag('-s') !== null ? paneOr('-s') : S.marked && paneExists(S.marked) && flag('-t') !== null ? T.findPane(S.session, S.marked) : { win: win, pane: pane };
+        var sd = ss && paneOr('-t');
+        if (!ss || !sd) return;
+        if (ss.win !== sd.win) { message(tx('ほかのウィンドウとのペインの入れ替えはゲームにない')); S.lastAction = 'brief'; return; }
+        T.swapPanes(ss.win, ss.pane.id, sd.pane.id);
+        if (!has('-d') && ss.win.active !== sd.pane.id) { ss.win.last = ss.win.active; ss.win.active = sd.pane.id; }
+        S.lastAction = 'swap';
+        return;
+      }
+      T.swapStep(win, has('-U') ? -1 : 1);
       S.lastAction = 'swap';
     } else if (/^(select-pane|selectp)$/.test(cmd) && flag('-T') !== null) {
       pane.name = argv.slice(argv.indexOf('-T') + 1).join(' ');
@@ -1355,7 +1626,7 @@
       detach();
       S.lastAction = 'detach';
     } else if (/^(choose-tree|choose-session)$/.test(cmd)) {
-      openPicker(argv.indexOf('-w') > 0);
+      openPicker(has('-w'));
       S.lastAction = 'choose';
     } else if (/^(list-sessions|ls)$/.test(cmd)) {
       message(sessionLines().join(' / '));
@@ -1364,6 +1635,35 @@
       message('unknown command: ' + cmd);
       S.lastAction = 'unbound';
     } else freeCommand(cmd, argv, o, win, pane);
+  }
+
+  // bind / unbind typed at the prompt: read as one more line of the file,
+  // for this run (or 練習) only; what it did is said, as the file's report says it.
+  function bindNow(line) {
+    S.lastAction = 'brief';
+    var text = typeof line === 'string' ? line : line.map(function (w) { return /[\s;"']/.test(w) ? "'" + w.replace(/'/g, '') + "'" : w; }).join(' ');
+    S.extraConf = (S.extraConf || []).concat([text]);
+    var base = S.confText || '';
+    var c = CF.parse(base + '\n' + S.extraConf.join('\n'));
+    var no = base.split('\n').length + S.extraConf.length;
+    S.conf = c.custom ? c : null;
+    var used = c.used.filter(function (u) { return u.no === no; })[0], cant = c.unsupported.filter(function (u) { return u.no === no; })[0];
+    message(used ? used.say : cant ? tx('未対応: {0}', cant.why) : text, true);
+  }
+
+  // The keys bound at the prompt go when the run (or 練習) ends: the file's own come back.
+  function dropBinds() {
+    if (!S.extraConf || !S.extraConf.length) return;
+    S.extraConf = [];
+    var c = CF.parse(S.confText || '', { legacy: S.legacy });
+    S.conf = c.custom ? c : null;
+  }
+
+  // display-panes-time and repeat-time: set at the prompt, else the file's, else tmux's.
+  function optMs(name, def) {
+    if (S.opts && S.opts[name] != null) return S.opts[name];
+    var v = S.conf && S.conf[name === 'repeat-time' ? 'repeatTime' : 'displayPanesTime'];
+    return v != null ? v : def;
   }
 
   // The commands that only show something, and the real tmux commands the
@@ -1378,14 +1678,27 @@
       return;
     }
     if (cmd === 'send-keys') {
-      if (o.f.X) { message(tx('{0}: ゲームでは再現していない（ミスにはならない）', 'send-keys -X'), true); return; }
       var to = paneTarget(o.f.t);
       if (!to) { message("can't find pane: " + o.f.t, true); return; }
+      if (o.f.X) {
+        // A copy-mode command, as a key of that mode would run it.
+        var cc = o.rest[0] || '';
+        if (to.pane.mode !== 'copy') { message('not in a mode', true); return; }
+        if (/^search-(backward|forward)/.test(cc) && o.rest[1]) {
+          to.pane.search = { term: o.rest.slice(1).join(' '), dir: /backward/.test(cc) ? -1 : 1 };
+          search(to.pane, to.pane.search.dir);
+          S.lastAction = 'search';
+          return;
+        }
+        if (COPY_AS_KEY[cc] || /^(cancel|clear-selection|begin-selection|select-line|copy-|rectangle-toggle)/.test(cc)) { copyCommand(to.pane, cc, S.conf && S.conf.modeKeys === 'emacs'); return; }
+        message(tx('{0}: ゲームでは再現していない（ミスにはならない）', 'send-keys -X ' + cc), true);
+        return;
+      }
       sendKeys(to.win, to.pane, o.rest, !!o.f.l);
       return;
     }
     if (cmd === 'show-messages') { openView(pane, S.msgLog.length ? S.msgLog.slice() : ['']); return; }
-    if (cmd === 'list-keys') { openView(pane, listKeys(o.f.T)); return; }
+    if (cmd === 'list-keys') { openView(pane, listKeys(o.f.T), S.free ? 'キーと tmux コマンド（英語）。日本語は下の「覚えたキー」。q で閉じる' : 'キーと tmux コマンド（英語）の一覧。q で閉じる'); return; }
     if (cmd === 'list-windows') { openView(pane, S.session.windows.map(function (w) { return w.index + ': ' + w.name + (w.id === S.session.active ? '*' : w.id === S.session.last ? '-' : '') + (w.zoomed ? 'Z' : '') + ' (' + T.panesOf(w).length + ' panes)' + (w.id === S.session.active ? ' (active)' : ''); })); return; }
     if (cmd === 'list-panes') { openView(pane, T.panesOf(win).map(function (p) { return T.paneIndex(S.session, win, p) + ':' + (p.id === win.active ? ' (active)' : ''); })); return; }
     if (cmd === 'list-buffers') { message(S.clipboard ? 'buffer0: ' + S.clipboard.length + ' bytes: "' + S.clipboard.split('\n')[0].slice(0, 30) + '"' : 'no buffers', true); return; }
@@ -1441,14 +1754,15 @@
   // As tmux's view mode: the lines from the top, [position/lines] at the
   // top right, j k and the page keys move, q or Esc leaves.
 
-  function openView(pane, lines) {
+  // `hint`: one line of plain words above the list (not tmux's own).
+  function openView(pane, lines, hint) {
     pane.mode = 'view';
-    pane.view = { lines: lines, top: 0 };
+    pane.view = { lines: lines, top: 0, hint: hint || null };
   }
 
   function viewRows(pane) {
     var el = paneBodyEl(pane.id);
-    return el ? Math.max(1, Math.floor(el.clientHeight / S.cellH)) : 20;
+    return el ? Math.max(1, Math.floor(el.clientHeight / S.cellH) - (pane.view && pane.view.hint ? 1 : 0)) : 20;
   }
 
   function viewKey(k, pane) {
@@ -1685,21 +1999,8 @@
     var mk = metaKey(k);
     var cb = own ? null : CF.copyLookup(S.conf, k);
     if (cb) {
-      var cc = cb.act.copy;
       if (cb.act.none) { message(tx('{0} の割り当てはゲームでは使えない（未対応）', cb.key.label)); return true; }
-      if (COPY_AS_KEY[cc]) return copyModeKey({ key: COPY_AS_KEY[cc].key, ctrl: !!COPY_AS_KEY[cc].ctrl, alt: false, shift: false, meta: false }, pane, true);
-      if (cc === 'cancel') { pane.mode = null; return true; }
-      if (cc === 'clear-selection') { pane.sel = null; return true; }
-      if (cc === 'rectangle-toggle') { message('矩形選択（四角く選ぶ）はゲームにない'); return true; }
-      if (cc === 'begin-selection') { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
-      if (cc === 'select-line') { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; S.lastAction = 'yank_start'; return true; }
-      // copy-line / copy-end-of-line need no selection; the others do.
-      if (/^copy-line/.test(cc)) { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; }
-      else if (/^copy-end-of-line/.test(cc)) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); pane.cx = lineAt(pane, pane.cy).length; }
-      if (pane.sel == null) { message(tx('まだ選んでいない。先に {0} で選び始める', copyKeyLabel('begin'))); return true; }
-      // The vi keys copy the character under the cursor too; the emacs keys stop before it.
-      yank(pane, cb.table === 'copy-mode', !/-and-cancel$/.test(cc));
-      return true;
+      return copyCommand(pane, cb.act.copy, cb.table === 'copy-mode');
     }
     // Copy keys: Space/Enter (vi) or C-Space/M-w (emacs).
     var begins = key === ' ' || (k.ctrl && key === ' ');
@@ -1708,10 +2009,13 @@
     var copies = (key === 'Enter' && !k.ctrl) || mk === 'w' || (k.ctrl && key === 'w');
     if ((key === 'Escape' || (k.ctrl && key === 'g')) && pane.sel != null) { pane.sel = null; return true; }
     if (copies && pane.sel != null) { yank(pane, key !== 'Enter'); return true; }
-    if (key === 'v' || key === 'y') { message(key === 'v' ? 'tmux の v は矩形選択（四角く選ぶ）の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
+    if ((key === 'v' || key === 'y') && !k.ctrl && !k.alt) { message(key === 'v' ? 'tmux の v は矩形選択（四角く選ぶ）の切り替え。選び始めは Space（emacs 式は C-Space）' : 'tmux の y には割り当てがない。コピーは Enter（emacs 式は M-w）'); return true; }
     if (key === 'q' || key === 'Escape' || key === 'Enter' || (k.ctrl && (key === 'c' || key === 'g'))) { pane.mode = null; return true; }
     if (begins) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
     if (!S.legacy && viMove(k, pane)) return true;
+    // An Alt key the copy mode has no use for is not its plain letter
+    // (M-v is page-up, M-< M-> the ends, below).
+    if (!S.legacy && k.alt && !k.ctrl && mk !== 'v' && k.code !== 'Comma' && k.code !== 'Period') return true;
     if (k.ctrl && key === 'p') { goLine(pane, stepLine(pane, pane.cy, -1)); pane.reveal = 'edge'; return true; }
     if (k.ctrl && key === 'n') { goLine(pane, stepLine(pane, pane.cy, 1)); pane.reveal = 'edge'; return true; }
     // Along the line: ←/→ (h/l), the head (Home, 0, C-a) and the end (End, $, C-e).
@@ -1749,7 +2053,7 @@
     var curEl = el && !S.legacy && $('[data-ln="' + pane.cy + '"]', el);
     var row = curEl ? Math.max(0, curEl.offsetTop - (el ? el.scrollTop : 0)) : null;
     var from = pane.scrollTop;
-    if (key === 'PageUp' || (k.alt && key === 'v') || (k.ctrl && key === 'b')) pane.scrollTop -= page;
+    if (key === 'PageUp' || (k.alt && mk === 'v') || (k.ctrl && key === 'b')) pane.scrollTop -= page;
     else if (key === 'PageDown' || (k.ctrl && key === 'v') || (k.ctrl && key === 'f')) pane.scrollTop += page;
     else if (k.ctrl && key === 'u') pane.scrollTop -= page / 2;
     else if (k.ctrl && key === 'd') pane.scrollTop += page / 2;
@@ -1761,6 +2065,24 @@
     if (row == null) { pane.syncCursor = true; return true; }
     if (pane.scrollTop === from) { historyEnd(pane, pane.scrollTop >= max); pane.scrollTop = from; return true; }
     pane.syncCursor = { row: row };
+    return true;
+  }
+
+  // One copy-mode command (a binding's, or send-keys -X typed at :).
+  // `emacs`: the emacs table's, whose copy stops before the cursor.
+  function copyCommand(pane, cc, emacs) {
+    if (COPY_AS_KEY[cc]) return copyModeKey({ key: COPY_AS_KEY[cc].key, ctrl: !!COPY_AS_KEY[cc].ctrl, alt: false, shift: false, meta: false }, pane, true);
+    if (cc === 'cancel') { pane.mode = null; return true; }
+    if (cc === 'clear-selection') { pane.sel = null; return true; }
+    if (cc === 'rectangle-toggle') { message('矩形選択（四角く選ぶ）はゲームにない'); return true; }
+    if (cc === 'begin-selection') { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); S.lastAction = 'yank_start'; return true; }
+    if (cc === 'select-line') { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; S.lastAction = 'yank_start'; return true; }
+    // copy-line / copy-end-of-line need no selection; the others do.
+    if (/^copy-line/.test(cc)) { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; }
+    else if (/^copy-end-of-line/.test(cc)) { pane.sel = pane.cy; pane.selx = Math.min(pane.cx || 0, lineAt(pane, pane.cy).length); pane.cx = lineAt(pane, pane.cy).length; }
+    if (pane.sel == null) { message(tx('まだ選んでいない。先に {0} で選び始める', copyKeyLabel('begin'))); return true; }
+    // The vi keys copy the character under the cursor too; the emacs keys stop before it.
+    yank(pane, emacs, !/-and-cancel$/.test(cc));
     return true;
   }
 
@@ -1882,9 +2204,10 @@
 
   // The repeat window ends on its own; the badge and the glow must follow.
   function armRepeat() {
-    S.repeatUntil = nowMs() + 500;
+    var ms = S.legacy ? 500 : optMs('repeat-time', 500);
+    S.repeatUntil = ms ? nowMs() + ms : 0;
     clearTimeout(S.repeatTimer);
-    S.repeatTimer = setTimeout(function () { if (S.screen === 'game') render(); }, 520);
+    if (ms) S.repeatTimer = setTimeout(function () { if (S.screen === 'game') render(); }, ms + 20);
   }
 
   // message, note, chip and banner take Japanese and show it in the page's
@@ -2195,6 +2518,13 @@
     return { none: true, cmd: CMD_FOR[want] };
   }
 
+  // The default key in a guide text → the player's key, as a whole word
+  // only: "Press s" must not become "PreCtrl+ss s".
+  function swapKey(text, key, label) {
+    var re = new RegExp('(^|[\\s（(「、,])' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[\\s）)」、。,.:])');
+    return text.replace(re, function (all, pre) { return pre + label; });
+  }
+
   function ownMove(m) {
     // `own`: already the player's own key (a prompt of their file, say).
     if (!m || !m.pfx || m.keys.length !== 1 || m.own) return m;
@@ -2211,7 +2541,7 @@
       }
       return mv([':'], tx('この設定ではキーがない。: を押して {0} と打ち Enter', o.cmd));
     }
-    var text = m.text.replace(m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）| \(Shift\+\d\)| \(double quote\)/g, '');
+    var text = swapKey(m.text, m.keys[0], o.label).replace(/（Shift\+\d）|（ダブルクォート）| \(Shift\+\d\)| \(double quote\)/g, '');
     if (o.n) text = text.replace(/（1 回[^）]*）| \(\d+ cells? per press[^)]*\)/, tx('（1 回 {0} マス{1}）', o.n, o.n < 5 ? tx('。続けて押す') : ''));
     // kill-pane with no confirm-before: it closes at once.
     if (o.now) text = text.replace(/（確認が出る）| \(it asks to confirm\)/, tx('（すぐ閉じる）'));
@@ -2264,6 +2594,13 @@
     return m;
   }
 
+  // Outside, to one session by name (tmux attach would take the last one used).
+  function attachTo(sess) {
+    var m = mv(['Enter'], tx('tmux attach -t {0} と打って Enter（{0} に入る）', sess.name), true);
+    m.type = 'tmux attach -t ' + sess.name;
+    return m;
+  }
+
   // To session `target`: inside the open list with ↑ ↓ and Enter; else by
   // ( or ) when it is next door in the name order (L when it is the one you
   // left), or s for the list. `viaList` puts s first: the list is the lesson.
@@ -2309,6 +2646,8 @@
     if (t === 'rename') return !T.windowById(S.session, S.q0.win);
     // (A session renamed under the order keeps it: the order follows the new name.)
     if (t === 'session_switch' || t === 'session_attach') return S.sessions.indexOf(S.q0.target) < 0;
+    // In another session its pane is not found: the session it left is what counts.
+    if (t === 'detach_attach') return false;
     if (t === 'join_pane' || t === 'join_pane_h') return !paneExists(S.q0.src) || !paneExists(S.q0.dst);
     // A wrong window took one of the two numbers: asked again from here.
     if (t === 'swap_window') {
@@ -2451,9 +2790,9 @@
       goal: function () { return [{ pane: S.target, mark: 'go', tag: 'ここへ' }]; },
       setup: function (r) {
         needUnzoom(); needPanes(2);
-        var p = pick(r, otherPanes());
+        var p = pick(r, otherPanes()), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} へ移動する', paneLabel(p)); };
+        S.qText = function () { return tx('{0} へ移動する', lb()); };
       },
       check: function () { return activeId() === S.target; },
       next: function () { return moveTo(S.target); }
@@ -2477,9 +2816,9 @@
       goal: function () { return [{ pane: S.target, mark: 'close', tag: '閉じる' }]; },
       setup: function (r) {
         needUnzoom(); needPanes(2);
-        var p = pick(r, otherPanes());
+        var p = pick(r, otherPanes()), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} を閉じる', paneLabel(p)); };
+        S.qText = function () { return tx('{0} を閉じる', lb()); };
       },
       check: function () { return !paneExists(S.target); },
       next: function () { return closeMove(S.target); }
@@ -2531,9 +2870,9 @@
       goal: function () { return [{ pane: S.target, mark: 'to-left', tag: '左上へ' }]; },
       setup: function (r) {
         needUnzoom(); needPanes(2);
-        var p = swapTarget(r);
+        var p = swapTarget(r), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} を左上まで動かす（swap）', paneLabel(p)); };
+        S.qText = function () { return tx('{0} を左上まで動かす（swap）', lb()); };
       },
       check: function () { return isFirst(S.target); },
       next: swapMove
@@ -2737,15 +3076,16 @@
       goal: function () { return [{ pane: S.target, mark: 'zoom', tag: 'ここを全画面に' }]; },
       setup: function (r) {
         needUnzoom(); needPanes(2);
-        var p = pick(r, otherPanes());
+        var p = pick(r, otherPanes()), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} へ移動して全画面にする', paneLabel(p)); };
+        S.q0 = { label: lb };
+        S.qText = function () { return tx('{0} へ移動して全画面にする', lb()); };
       },
       check: function () { var w = T.activeWindow(S.session); return w.active === S.target && w.zoomed; },
       step: function () {
         var p = T.findPane(S.session, S.target);
         if (!p) return null;
-        return activeId() !== S.target ? [1, 2, tx('{0} へ移動する', paneLabel(p.pane))] : [2, 2, '全画面にする'];
+        return activeId() !== S.target ? [1, 2, tx('{0} へ移動する', S.q0.label())] : [2, 2, '全画面にする'];
       },
       next: function () { return moveTo(S.target) || mv(['z'], 'z を押す（全画面に）'); }
     },
@@ -2787,19 +3127,20 @@
         var a = pick(r, otherPanes());
         var b = pick(r, otherPanes().filter(function (p) { return p !== a; }));
         S.q0 = [a.id, b.id];
-        // Said once: a closed pane has no number any more.
-        var la = paneLabel(a), lb = paneLabel(b);
-        // One closed, the other takes its number: only the one left is named.
+        // Named as asked: one closed, the other keeps its name (its number now beside it).
+        var la = askedLabel(a), lb = askedLabel(b);
+        S.q1 = {};
+        S.q1[a.id] = la; S.q1[b.id] = lb;
         S.qText = function () {
           var ea = paneExists(a.id), eb = paneExists(b.id);
-          if (ea !== eb) return tx('{0} も閉じる（1 つは閉じた）', paneLabel(ea ? a : b));
-          return tx('{0} と {1} を閉じる', ea ? paneLabel(a) : la, eb ? paneLabel(b) : lb);
+          if (ea !== eb) return tx('{0} も閉じる（1 つは閉じた）', (ea ? la : lb)());
+          return tx('{0} と {1} を閉じる', la(), lb());
         };
       },
       check: function () { return !paneExists(S.q0[0]) && !paneExists(S.q0[1]); },
       step: function () {
-        var left = S.q0.filter(paneExists), h = left.length && T.findPane(S.session, left[0]);
-        return h ? [3 - left.length, 2, tx('{0} を閉じる', paneLabel(h.pane))] : null;
+        var left = S.q0.filter(paneExists);
+        return left.length ? [3 - left.length, 2, tx('{0} を閉じる', S.q1[left[0]]())] : null;
       },
       next: function () {
         var left = S.q0.filter(paneExists);
@@ -2828,9 +3169,10 @@
       goal: function () { return isFirst(S.target) ? [{ pane: S.target, mark: 'zoom', tag: 'ここを全画面に' }] : [{ pane: S.target, mark: 'to-left', tag: '左上へ' }]; },
       setup: function (r) {
         needUnzoom(); needPanes(2);
-        var p = swapTarget(r);
+        var p = swapTarget(r), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} を左上まで動かして全画面にする', paneLabel(p)); };
+        S.q0 = { label: lb };
+        S.qText = function () { return tx('{0} を左上まで動かして全画面にする', lb()); };
       },
       check: function () {
         var h = T.findPane(S.session, S.target);
@@ -2839,7 +3181,7 @@
       step: function () {
         var p = T.findPane(S.session, S.target);
         if (!p) return null;
-        return isFirst(S.target) ? [2, 2, '全画面にする'] : [1, 2, tx('{0} を左上まで動かす', paneLabel(p.pane))];
+        return isFirst(S.target) ? [2, 2, '全画面にする'] : [1, 2, tx('{0} を左上まで動かす', S.q0.label())];
       },
       next: function () { return isFirst(S.target) ? (moveTo(S.target) || mv(['z'], 'z を押す（全画面に）')) : swapMove(); }
     },
@@ -2849,14 +3191,20 @@
       setup: function () {
         // Already outside (a slip): the first half is done.
         S.q1 = S.detached;
+        S.q0 = { home: S.session };
         S.target = activeId();
       },
+      // Back in the session it left: a new one made outside (tmux new) is not "back".
       check: function () {
         if (S.detached) S.q1 = true;
-        return S.q1 && !S.detached;
+        return S.q1 && !S.detached && (S.session === S.q0.home || S.sessions.indexOf(S.q0.home) < 0);
       },
       step: function () { return S.detached || S.q1 ? [2, 2, 'tmux attach で戻る'] : [1, 2, 'デタッチする']; },
-      next: function () { return S.detached ? attachMove() : mv(['d'], 'd を押す（デタッチ）。tmux の外のシェルに戻る'); }
+      next: function () {
+        if (S.detached) return S.session === S.q0.home ? attachMove() : attachTo(S.q0.home);
+        if (S.q1) return sessionMove(S.q0.home);
+        return mv(['d'], 'd を押す（デタッチ）。tmux の外のシェルに戻る');
+      }
     },
     yank_paste: {
       // As in tmux: the copy cursor starts on the prompt, so the line above
@@ -2905,7 +3253,7 @@
     // A session made with new -s is switched to, as in tmux, so the second
     // step is the way back.
     session_new: {
-      steps: 4, text: '新しいセッションを作って、元のセッションに戻る', cmd: 'new-session -s 名前 → switch-client', allow: ['new_session', 'choose'], show: ['new_session', 'choose'],
+      steps: 4, text: '新しいセッションを作って、元のセッションに戻る', cmd: 'new-session -s 名前 → switch-client', allow: ['new_session', 'choose', 'detach'], show: ['new_session', 'choose'],
       goal: function () { return S.q1 ? [{ sess: S.q0.home, tag: tx('{0} に戻る', S.q0.home.name) }] : [{ sess: '+', tag: tx('「{0}」を作る', S.q0.name) }]; },
       setup: function (r) {
         var home = S.session;
@@ -3062,9 +3410,9 @@
         var win = T.activeWindow(S.session);
         var near = ['L', 'R', 'U', 'D'].map(function (d) { var nb = T.neighbour(win, S.cols, S.rows, d, true); return nb && nb.id; });
         var far = otherPanes().filter(function (p) { return near.indexOf(p.id) < 0; });
-        var p = pick(r, far.length ? far : otherPanes());
+        var p = pick(r, far.length ? far : otherPanes()), lb = askedLabel(p);
         S.target = p.id;
-        S.qText = function () { return tx('{0} へ、q で番号を出して飛ぶ', paneLabel(p)); };
+        S.qText = function () { return tx('{0} へ、q で番号を出して飛ぶ', lb()); };
       },
       check: function () { return activeId() === S.target; },
       next: function () {
@@ -3075,7 +3423,8 @@
         var qi = T.paneIndex(S.session, win, h.pane);
         // The numbers are up (for display-panes-time, 1 s): the number now.
         if (S.panesShown && Date.now() < S.panesShown) return mv([String(qi)], tx('{0} を押す（その番号のペインへ飛ぶ）', qi), true);
-        var m = mv(['q'], 'q を押す（ペインに番号が出る。1 秒のうちに番号を押す）');
+        var dms = optMs('display-panes-time', 1000);
+        var m = dms === 1000 ? mv(['q'], 'q を押す（ペインに番号が出る。1 秒のうちに番号を押す）') : mv(['q'], tx('q を押す（ペインに番号が出る。{0} 秒のうちに番号を押す）', dms / 1000));
         var a = moveTo(S.target);
         if (a) m.alt = [{ pfx: a.pfx, keys: a.keys, text: a.text }];
         return m;
@@ -3455,7 +3804,7 @@
   // best. Your own is there at once; the board's arrives if it can, with its
   // keys when it logged them. A shuffled run races only its own.
   function pickGhost(b) {
-    if (b.course.practice || b.course.daily) { b.ghost = null; return; }
+    if (b.course.practice || b.course.daily || b.first) { b.ghost = null; return; }
     var own = REC.ghostOf(b.course.id);
     b.ghost = own;
     var mode = S.ghostPick;
@@ -3501,11 +3850,17 @@
   // 稽古: every type the courses ask, weighed by how often its keys are
   // needed and how it has gone (records.js drillPick, counting this run's
   // questions too); never the same type twice in a row.
-  // The 達人 house's types join once that house (or 今日の達人) has been played.
+  // Until 入門 has been played through, only its types: nothing is drilled
+  // that was never shown with its 手順. The 達人 house's types join once
+  // that house (or 今日の達人) has been played.
   function drillTypes() {
     var out = [], all = REC.load();
     var pro = REC.runsOf('pro', all).length || REC.runsOf('daily', all).length;
-    LV.COURSES.forEach(function (c) { if (c.expert && !pro) return; c.qs.forEach(function (t) { if (Q[t] && out.indexOf(t) < 0) out.push(t); }); });
+    var easy = REC.runsOf('easy', all).length;
+    LV.COURSES.forEach(function (c) {
+      if ((c.expert && !pro) || (c.id !== 'easy' && !easy)) return;
+      c.qs.forEach(function (t) { if (Q[t] && out.indexOf(t) < 0) out.push(t); });
+    });
     return out;
   }
 
@@ -3535,12 +3890,18 @@
     var course = REC.courseOf(courseId) || REC.courseOf('easy');
     var day = LV.dayKey();
     var shuffled = !!(opts && opts.shuffle) && !course.practice;
-    var qs = questionsFor(course, day, shuffled);
+    var played = course.practice || course.daily ? 0 : REC.runsOf(course.id).length;
+    // はじめての回: the house's own first order (levels.js firstQs), off the ranking.
+    var first = !!course.firstQs && !shuffled && !played;
+    var qs = first ? course.firstQs.slice() : questionsFor(course, day, shuffled);
     S.run = {
       course: course,
       day: day,
       qs: qs,
       shuffled: shuffled,
+      first: first,
+      // 上級 and 達人 from their second run on: the 手順 start hidden.
+      blind: !!course.blind || !!(course.blindLater && played),
       // The 稽古 goes on until the player stops, or for the count they chose.
       target: course.drill && opts && opts.n > 0 ? opts.n : 0,
       // Question types learnt before this run: their 手順 stays folded.
@@ -3662,35 +4023,69 @@
     S.pasted = '';
     // `l` is this question's 目安: the records measure it against that; `p`
     // the fewest keys it takes on these bindings.
-    b.qlog[b.i] = { t: type, s: null, m: 0, l: b.limit, p: parKeys(b) };
+    var guidePar = parKeys(b), fewest = guidePar == null ? null : parKeys(b, true);
+    b.qlog[b.i] = { t: type, s: null, m: 0, l: b.limit, p: fewest ? Math.min(fewest.n, guidePar) : guidePar };
+    // The guide's own count (標準), and the fewest way, for the word after a long way round.
+    if (guidePar != null) b.qlog[b.i].sd = guidePar;
+    b.route = fewest ? fewest.route : null;
     b.qStart = performance.now();
     if (b.klog) b.klog.q[b.i] = Math.max(0, Math.round(b.qStart - b.start));
   }
 
-  // ---- the fewest keys (最短) ------------------------------------------------
+  // ---- the fewest keys (標準, par) ------------------------------------------------
   // How many keys the question takes when the 手順 is followed to the letter
   // on the player's own bindings: a -r key repeats without the prefix, a -n
   // key needs none, a prompt takes its text and Enter. Tried on the house
   // itself, then every object is put back as it was (snapshot), so nothing
   // that points into the house goes stale. Null when the guide did not get
   // there, and then nothing is claimed.
-  function parKeys(b) {
-    if (!b.q || b.q.check()) return 0;
-    var snap = snapshot(), n = 0, ok = false;
+  // The guide's own way, and (`wide`) the other ways it shows beside each
+  // step (o, ;, q and the number, ( ) L…) and a command typed by its
+  // shortest name: the fewest of them all. {n, route: [labels], last}.
+  function parKeys(b, wide) {
+    if (!b.q || b.q.check()) return wide ? { n: 0, route: [] } : 0;
+    var snap = snapshot(), best = null, budget = 80;
     S.sim = true;
     S.graceUntil = 0;
-    try {
-      for (var guard = 0; guard < 60 && !ok; guard++) {
-        var m = guideMove(b);
-        var k = m ? simMove(m) : 0;
-        if (!k) break;
-        n += k;
-        ok = !!b.q.check();
+    var go = function (n, route, depth) {
+      if (b.q.check()) { if (!best || n < best.n) best = { n: n, route: route.slice() }; return; }
+      if (depth > 60 || (best && n >= best.n) || budget-- <= 0) return;
+      var m = guideMove(b);
+      if (!m) return;
+      var ways = [m];
+      if (wide && !S.legacy) {
+        (m.alt || []).forEach(function (a) { if (a && a.keys && a.keys.length) ways.push(a); });
+        var sh = m.type && shortTyped(m.type);
+        if (sh) ways.push({ pfx: false, keys: [], type: sh, prompt: true, cont: false, clear: m.clear });
       }
-    } catch (e) { ok = false; }
+      for (var i = 0; i < ways.length; i++) {
+        var keep = ways.length > 1 ? snapshot() : null;
+        var k = simMove(ways[i]);
+        if (k) go(n + k, route.concat([ways[i].type != null ? ways[i].type + ' Enter' : moveLabel(ways[i])]), depth + 1);
+        if (keep) restore(keep);
+        if (!k && i === 0 && ways.length === 1) return;
+      }
+    };
+    try { go(0, [], 0); } catch (e) { best = null; }
     S.sim = false;
     restore(snap);
-    return ok ? n : null;
+    if (!wide) return best ? best.n : null;
+    return best;
+  }
+
+  // A typed command with its name as short as tmux takes it (killp, kill-ses);
+  // null when it is already that short.
+  function shortTyped(text) {
+    var w = String(text).split(' '), r = CF.resolve(w[0]);
+    if (!r.name) return null;
+    w[0] = CF.shortest(r.name);
+    // A session by the shortest start of its name (-t wo for work).
+    var ti = w.indexOf('-t');
+    if (ti > 0 && /^(kill-session|switch-client|attach-session)$/.test(r.name) && sessionByName(w[ti + 1] || '')) {
+      for (var n = 1; n < w[ti + 1].length; n++) if (sessionTarget(w[ti + 1].slice(0, n)) === sessionByName(w[ti + 1])) { w[ti + 1] = w[ti + 1].slice(0, n); break; }
+    }
+    var out = w.join(' ');
+    return out.length < String(text).length ? out : null;
   }
 
   function simKey(ev) {
@@ -3774,6 +4169,7 @@
     // made) comes after the draw, so the card is drawn again.
     if (S.q1 !== q1 && !b.q.check()) render();
     if (b.q.check()) {
+      shorterWay(b);
       b.streak = (b.streak || 0) + 1;
       AU.se('hit', b.streak);
       termFlash('hit');
@@ -3791,6 +4187,29 @@
       render();
       b.timer = setTimeout(function () { if (S.run === b) afterClear(); }, reduceMotion ? 250 : CLEAR_HOLD);
     }
+  }
+
+  // Solved the long way round: the shorter way, said once a run for each
+  // type, briefly, and never a miss. last-window by its number: l needs no number.
+  function shorterWay(b) {
+    var q = b.qlog[b.i];
+    if (!q || S.replay || (b.said && b.said[b.type])) return;
+    var say = null, lk = S.lastKey;
+    if (b.type === 'last_window' && lk && !lk.ctrl && !lk.alt) {
+      var own = ownKey('l');
+      if (!own.none && lk.key !== own.label && lk.key !== 'l') say = tx('{0} なら番号を見なくても 1 キーで戻れる', own.label);
+    }
+    // Another way than the fewest (its last key differs; not a slip on the same way).
+    if (!say && b.route && b.route.length && typeof q.p === 'number' && q.k > q.p && lk) {
+      var end = b.route[b.route.length - 1].split(' ').pop();
+      var mine = ARROWS[{ ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[lk.key]] || (lk.key === ' ' ? 'Space' : lk.key);
+      if (end !== mine && end !== CF.keyLabel({ key: lk.key, ctrl: !!lk.ctrl, alt: !!lk.alt, shift: !!lk.shift })) say = tx('{0} キーの道もある（{1}）', q.p, b.route.join(' → '));
+    }
+    if (!say) return;
+    b.said = b.said || {};
+    b.said[b.type] = 1;
+    // The chip stays into the next question: it names the one it is about.
+    chip('', tx('{0}: {1}', typeName(b.type), say));
   }
 
   var CLEAR_HOLD = 650;
@@ -3887,6 +4306,7 @@
 
   function finishRun() {
     var b = S.run;
+    dropBinds();
     clearInterval(S.clock);
     clearTimeout(b.timer);
     b.end = performance.now();
@@ -3907,7 +4327,8 @@
     var result = {
       course: b.course.id, time: time, raw: raw, misses: misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: n, avg: time / n, qlog: qlog,
-      pauses: b.pauses, paused: paused, shuffled: b.shuffled, drill: drill, daily: !!b.course.daily, day: b.day
+      pauses: b.pauses, paused: paused, shuffled: b.shuffled, drill: drill, daily: !!b.course.daily, day: b.day,
+      first: b.first, blind: b.blind && !b.course.daily
     };
     if (drill) { result.bestStreak = REC.drillStreak(qlog); result.bestBefore = REC.drillBest(); }
     var sum = REC.add({
@@ -3915,6 +4336,7 @@
       time: +time.toFixed(2), raw: +raw.toFixed(2), misses: misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: n, qs: qlog, drill: drill || undefined,
       pauses: b.pauses || undefined, paused: paused || undefined, shuffled: b.shuffled || undefined,
+      first: b.first ? 1 : undefined, blind: b.blind && !drill && !b.course.daily ? 1 : undefined,
       // The day's order and the keys: what a replay needs.
       day: drill ? undefined : b.day, klog: !drill && b.klog ? b.klog : undefined
     });
@@ -4103,6 +4525,7 @@
     var R = S.replay;
     if (!R) return;
     clearInterval(R.timer);
+    S.extraConf = [];
     S.conf = R.keep.conf;
     S.confText = R.keep.text;
     S.replay = null;
@@ -4117,7 +4540,7 @@
   function render() {
     syncBody();
     if (S.screen === 'title') renderTitle();
-    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderGhostbar(); renderTerm(); renderStatus(); renderTabArrow(); renderKeybar(); }
+    if (S.screen === 'game') { renderSashizu(); renderPlaybar(); renderGhostbar(); renderTerm(); renderStatus(); renderTabArrow(); renderKeybar(); renderCheat(); }
     if (S.screen === 'result') renderResult();
     if (S.screen === 'records') renderRecords();
   }
@@ -4186,7 +4609,7 @@
   function dailyLineHTML(all) {
     var t = LV.dailyPick(LV.dayKey()), par = dailyPar(), best = REC.todayBest('daily', all);
     return '<p class="today-daily"><span class="td-text"><b>' + esc(tx('今日の達人')) + '</b>: ' + esc(typeName(t)) +
-      (par != null ? esc(tx(' ・ 最短 {0} キー', par)) : '') + (best != null ? esc(tx(' ・ 今日 {0}秒', best.toFixed(1))) : '') + '</span>' +
+      (par != null ? esc(tx(' ・ 標準 {0} キー', par)) : '') + (best != null ? esc(tx(' ・ 今日 {0}秒', best.toFixed(1))) : '') + '</span>' +
       '<button type="button" class="btn td-go" data-daily="1">' + esc(tx(best != null ? 'もう一度' : '挑む')) + '<kbd class="hk">D</kbd></button></p>';
   }
 
@@ -4235,9 +4658,10 @@
     return EN ? MONTHS[+p[1] - 1] + ' ' + +p[2] + ', ' + p[0] : tx('{0}年{1}月{2}日', p[0], +p[1], +p[2]);
   }
 
-  // 腕前: the level from the latest five runs, いまの調子 (the title is what
-  // you reached; the Lv is how it goes now), and how much faster per
-  // question the next level is. A still bar, no motion.
+  // 腕前: the level from the latest five runs on a house, いまの調子 (the
+  // title is what you reached; the Lv is how it goes now), and how much
+  // faster per question the next level is. A still bar, no motion. On the
+  // title it is the house that stands highest (records.js skill).
   function skillHTML(sk, from) {
     if (!sk) return '<div class="sk-none">' + esc(tx('腕前 ―　一度はじめると、ここに Lv が出る')) + '</div>';
     var cur = LV.paceFor(sk.lv), nxt = sk.next;
@@ -4247,7 +4671,7 @@
       '<span class="sk-form">' + tx('いまの調子') + '</span> ' + (up ? '<small>Lv.' + from.lv + ' → </small>' : '') + 'Lv.' + sk.lv + '</span></div>' +
       '<div class="sk-bar" aria-hidden="true"><i style="width:' + Math.round(frac * 100) + '%"></i></div>' +
       '<div class="sk-note">' + (nxt != null ? tx('次の Lv.{0} まで、1 問あたり {1} 秒速く', sk.lv + 1, sk.toNext.toFixed(2)) : tx('最高の Lv。')) +
-      tx('（直近 {0} 回の平均 {1} 秒／問）', sk.runs, sk.pace.toFixed(2)) + '</div>';
+      tx('（{0}の直近 {1} 回の平均 {2} 秒／問）', esc(REC.courseOf(sk.course).title), sk.runs, sk.pace.toFixed(2)) + '</div>';
   }
 
   // The top bar: the 腕前, always in view.
@@ -4284,7 +4708,8 @@
         (held ? '<span class="wing-title">' + rankHTML(held) + '</span>' : '') +
         // The key that starts this course (navKey): someone who knows tmux goes straight to 上級 with 3.
         '<kbd class="hk">' + (i + 1) + '</kbd></span>' +
-        '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span></span>' +
+        '<span class="wing-desc">' + tx('目安は 1 問 {0}〜{1} 秒。', limitRange(c)[0], limitRange(c)[1]) + esc(c.desc) + '</span>' +
+        (c.blindLater ? '<span class="wing-blind">' + esc(runs.length ? tx('手順なし（{0} 秒で出る）', LV.PEEK_AFTER) : tx('2 回目からは手順なし（{0} 秒で出る）', LV.PEEK_AFTER)) + '</span>' : '') + '</span>' +
         '<span class="wing-best"><small>' + tx('自己ベスト') + '</small><b>' + (best ? fmt(best.time) : '—') + '</b>' +
         '<small>' + (runs.length ? (a5 != null ? tx('五回平均 {0} ・ ', a5.toFixed(1)) : '') + tx('{0} 回', runs.length) : tx('お手本 {0} 秒', LV.par(c))) + '</small>' +
         (nr ? '<small class="wing-rank">' + esc(nr.next ? tx('{0}まで あと {1} 秒', rankShort(nr.next), nr.gap.toFixed(1)) : tx('最高の称号 {0}', rankShort(nr.rank))) + '</small>' : '') +
@@ -4319,7 +4744,7 @@
   // this is the 稽古, and the 目安 has not passed yet.
   function folded(b) {
     var e = b.learnt && b.learnt[b.qs[b.i]];
-    return (!!b.course.drill || !!b.course.blind || !!(e && e.learnt)) && b.stage === 0 && !b.peek;
+    return (!!b.course.drill || !!b.blind || !!(e && e.learnt)) && b.stage === 0 && !b.peek;
   }
 
   // 問題 3 / 15. The 稽古 counts up (3 / 10 when a count was chosen).
@@ -4382,7 +4807,7 @@
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">' + tx('別解: ') + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join(tx('、')) + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">' + tx(b.course.drill || b.course.blind ? '思い出して押す。手順は {0} 秒後か、ミスのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
+      html += '<p class="learnt-note">' + tx(b.course.drill || b.blind ? '思い出して押す。手順は {0} 秒後か、ミスのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>' + tx('目安 {0} 秒', b.limit) + '</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
@@ -4438,6 +4863,8 @@
       (st ? '<span class="ob-step">' + (st[0] ? tx('手順 {0}/{1}', st[0], st[1]) : tx('やり直し')) + '</span> ' : '') +
       '<b class="ob-q">' + esc(st ? tx(st[2]) : qText(b)) + '</b></div>';
     if (S.qNote.length) html += '<div class="ob-note">' + c + esc(S.qNote.join(tx('。'))) + '</div>';
+    // はじめての回, question 1: the two words everything after leans on.
+    if (b.first && b.i === 0) html += '<div class="ob-note ob-words">' + c + esc(tx('ペイン = 画面の区画、ウィンドウ = タブ')) + '</div>';
     if (move) {
       var keys = '';
       steps(move).forEach(function (s, i) {
@@ -4452,7 +4879,7 @@
       if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
       // The words are the whole guide here: kept on a phone too (ob-prompt).
-      html += '<div class="ob-guide learnt ob-prompt">' + c + tx(b.course.drill ? '稽古' : b.course.blind ? '手順なし' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
+      html += '<div class="ob-guide learnt ob-prompt">' + c + tx(b.course.drill ? '稽古' : b.blind ? '手順なし' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
     }
     // A layout question: the window as it will be, small.
     if (b.q.figure) html += figureHTML(b.q.figure());
@@ -4497,6 +4924,8 @@
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     el.innerHTML = '<span class="pb-course">' + (S.replay ? '<span class="pb-replay">' + tx('再生') + '</span> <span class="pb-who">' + esc(S.replay.who) + ' ・ </span>' : '') + esc(b.course.title) + tx(' ・ 問題 ') + '<b>' + qCount(b, ' / ') + '</b></span>' +
+      (b.first && !S.replay ? '<span class="pb-note">' + tx('はじめての回（ランキングには載らない）') + '</span>' : '') +
+      (b.blind && !b.course.daily && !S.replay ? '<span class="pb-note">' + tx('手順なし（{0} 秒で出る）', LV.PEEK_AFTER) + '</span>' : '') +
       (b.streak >= 3 ? '<span class="pb-streak">' + tx('{0} 連', b.streak) + '</span>' : '') +
       (S.conf ? '<span class="pb-conf">' + tx('自分のキー設定（prefix {0}）', prefixLabel()) + '</span>' : '') +
       '<span class="pb-sp"></span>' +
@@ -5042,6 +5471,7 @@
     if (p.mode === 'view') {
       var v = p.view;
       return '<div class="copy-ind">[' + v.top + '/' + v.lines.length + ']</div>' +
+        (v.hint ? '<div class="view-hint">' + esc(tx(v.hint)) + '</div>' : '') +
         v.lines.slice(v.top).map(function (l) { return '<div class="sh-line">' + (l ? esc(l) : '&nbsp;') + '</div>'; }).join('');
     }
     return (p.mode === 'copy' ? '<div class="copy-ind" data-copy-ind="' + p.id + '">[0/0]</div>' : '') +
@@ -5464,6 +5894,52 @@
     focusSink();
   }
 
+  // 練習's cheat sheet: the keys of every house played so far (入門 always),
+  // in plain words, each one as the player's own file has it. Folds away;
+  // the choice is kept.
+  var CHEAT = {
+    easy: [[['%'], '左右に分割'], [['"'], '上下に分割'], [['←', '→', '↑', '↓'], 'となりのペインへ'], [['o'], '次のペインへ順に'], [['z'], '全画面にする／戻す'],
+      [['x', 'y'], 'ペインを閉じる（y で確認）'], [['c'], 'ウィンドウを作る'], [['n', 'p'], '次・前のウィンドウへ'], [['0-9'], 'その番号のウィンドウへ']],
+    normal: [[[MAC ? 'Option+←' : 'Ctrl+←', '…'], 'ペインの大きさを変える'], [['{', '}'], 'ペインを入れ替える'], [[','], 'ウィンドウに名前を付ける'], [['&', 'y'], 'ウィンドウを閉じる'],
+      [['l'], '直前のウィンドウへ'], [['!'], 'ペインを別のウィンドウにする'], [['['], 'コピーモード（q で抜ける）'], [['PageUp'], 'コピーモードで 1 ページ上へ'], [['d'], 'デタッチ（tmux a で戻る）']],
+    hard: [[['$'], 'セッションに名前を付ける'], [['s'], 'セッションの一覧'], [['(', ')'], '前・次のセッションへ'], [[':', 'new -s'], 'セッションを作る'],
+      [['[', '?'], '上向きに検索'], [[']'], 'コピーしたものを貼る']],
+    pro: [[['Space'], '並べ方を順に変える'], [[MAC ? 'Option+1' : 'Alt+1', '…'], '並べ方を選ぶ（5 は田の字）'], [['q'], 'ペインの番号を出して飛ぶ'], [['Ctrl+o'], 'ペインを回す'],
+      [[':', 'join-pane -s'], 'ペインを連れてくる'], [[':', 'swap-window -t'], 'ウィンドウを入れ替える'], [[':', 'setw synchronize-panes'], '全部のペインに同時に打つ']]
+  };
+
+  function cheatHTML() {
+    var all = REC.load();
+    var houses = LV.COURSES.filter(function (c) { return c.id === 'easy' || REC.runsOf(c.id, all).length; });
+    var rows = '';
+    houses.forEach(function (c) {
+      rows += '<li class="ch-house">' + esc(c.title) + '</li>';
+      CHEAT[c.id].forEach(function (e) {
+        // The first key is the one after the prefix: the player's own if moved.
+        var o = LABEL_SIG[e[0][0]] ? ownKey(e[0][0]) : { label: e[0][0] };
+        var keys = o.none ? (o.cmd ? '<kbd>:</kbd> <code>' + esc(o.cmd) + '</code>' : '—')
+          : '<kbd>' + esc(o.label) + '</kbd>' + e[0].slice(1).map(function (k) { return k === '…' ? '…' : / /.test(k) ? ' <code>' + esc(k) + '</code>' : ' <kbd>' + esc(k) + '</kbd>'; }).join('');
+        rows += '<li><span class="ch-keys">' + keys + (o.root ? ' <small>' + tx('prefix なし') + '</small>' : '') + '</span><span class="ch-what">' + esc(tx(e[1]).replace(/^[a-z]/, function (c) { return c.toUpperCase(); })) + '</span></li>';
+      });
+    });
+    return '<summary>' + esc(tx('覚えたキー（{0}）', houses.map(function (c) { return c.title; }).join(tx('・')))) + '</summary>' +
+      '<p class="ch-how">' + tx('どれも {0} を押して離してから。', '<kbd>' + esc(prefixLabel()) + '</kbd>') + '</p><ul class="ch-list">' + rows + '</ul>';
+  }
+
+  function renderCheat() {
+    var el = $('#cheat');
+    if (!el) return;
+    el.hidden = !S.free;
+    if (!S.free) return;
+    var key = prefixLabel() + '|' + S.confText + '|' + (REC.load().runs || []).length;
+    if (el.dataset.key === key) return;
+    el.dataset.key = key;
+    el.innerHTML = cheatHTML();
+    // Open unless folded before; on a phone folded at first, the house needs the room.
+    var pref = store.load().cheat;
+    el.open = pref != null ? !!pref : !window.matchMedia('(max-width: 760px)').matches;
+  }
+
   // 練習: the house with no question, no clock and no record. Every key and
   // : command works as in a run; Esc twice or やめる leaves.
   function startFree() {
@@ -5486,6 +5962,7 @@
   function leaveRun() {
     S.free = false;
     if (S.replay) { endReplay(); return; }
+    dropBinds();
     if (S.run && S.run.phase !== 'done') count('quit', S.run.i);
     if (S.run) { clearTimeout(S.run.timer); clearInterval(S.clock); }
     S.run = null;
@@ -5532,7 +6009,10 @@
       ? tx('お手本 {0} 秒より <b>{1} 秒</b> 速い', r.par, Math.abs(diff).toFixed(1))
       : tx('お手本 {0} 秒まで あと <b>{1} 秒</b>', r.par, diff.toFixed(1));
     var sub = '';
-    if (r.count === 1) sub = tx('はじめての挑戦。これが出発点。');
+    // The first run of a house says three things only: the belt, the time
+    // (the best so far) and the next belt. The rest comes from the second.
+    var first = r.count === 1;
+    if (first) sub = tx('はじめての挑戦。これが自己ベスト。');
     else if (r.record) sub = tx('★ 自己ベスト更新（{0} → {1}）', r.best.toFixed(1), r.time.toFixed(1));
     else if (r.delta < 0) sub = tx('前回より {0} 秒 速い。自己ベストまで あと {1} 秒', Math.abs(r.delta).toFixed(1), r.bestDelta.toFixed(1));
     else sub = tx('前回より {0} 秒 遅い。自己ベストまで あと {1} 秒', r.delta.toFixed(1), r.bestDelta.toFixed(1));
@@ -5547,7 +6027,8 @@
     // What the next title needs on this course, in all and per question:
     // the number to beat next time.
     var nr = LV.nextRank(c, r.time, r.n);
-    rankLine += '<small>' + esc(nr.next ? tx('{0}まで あと {1} 秒（1 問 {2} 秒）', tx(nr.next), nr.gap.toFixed(1), nr.gapQ.toFixed(2)) : tx('最高の称号。')) + '</small>';
+    if (first) verdict = nr.next ? tx('{0}まで あと <b>{1} 秒</b>', esc(tx(nr.next)), nr.gap.toFixed(1)) : esc(tx('最高の称号。'));
+    else rankLine += '<small>' + esc(nr.next ? tx('{0}まで あと {1} 秒（1 問 {2} 秒）', tx(nr.next), nr.gap.toFixed(1), nr.gapQ.toFixed(2)) : tx('最高の称号。')) + '</small>';
     var slow = r.slow ? Q[r.slow] : null;
     var slowKeys = [];
     if (slow) slow.show.forEach(function (a) { (LV.KEYS[a] || []).forEach(function (k) { if (slowKeys.indexOf(k) < 0) slowKeys.push(k); }); });
@@ -5559,29 +6040,10 @@
       '<h2 class="em-title">' + esc(tx('{0} {1} 問、解き終わった', c.title, r.n)) + '</h2>' +
       '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
-      '<div class="em-verdict">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
+      '<div class="em-verdict' + (first ? ' em-goal' : '') + '">' + verdict + '<span class="em-tip">' + esc(sub) + '</span></div></div>' +
       // The seal keeps the kanji in English too; the words beside it translate.
       '<div class="em-rank' + (r.rankUp ? ' up' : '') + '"><span class="hanko" lang="ja" aria-hidden="true">' + esc(r.rank).replace(/^(.{3})(.+)$/, '$1<br>$2') + '</span><span>' + rankLine + '</span></div>' +
-      '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
-      learntHTML(r) +
-      '<dl class="em-facts">' +
-      '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
-      '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
-      '<div><dt>' + tx('ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
-      '<div><dt>' + tx('目安超え') + '</dt><dd>' + nQ(r.overs) + '</dd></div>' +
-      '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
-      '<div><dt>' + tx('押したキー') + '</dt><dd>' + keysHTML(r) + '</dd></div>' +
-      '</dl>' +
-      overKeysHTML(r) +
-      resultNetHTML(r) +
-      watchHTML(r) +
-      confShareHTML(r) +
-      slowestHTML(r) +
-      shareHTML(r) +
-      spark(r.spark) +
-      '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
-      (r.spark && r.spark.length > 1 ? '<span class="spark-key"><i class="rec"></i>' + tx('自己ベスト') + ' <i class="now"></i>' + tx('今回') + '</span>' : '') + '</div>' +
-      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + (r.tipFor ? tx(' ・ {0}', esc(typeName(r.tipFor))) : '') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
+      (first ? resultNetHTML(r) : resultMoreHTML(r, slow, slowKeys)) +
       '<div class="cta"><button type="button" class="btn primary" data-course="' + r.course + '">' + (c.practice ? tx('もう一度 稽古') : tx('もう一度')) + '<kbd class="hk">Enter</kbd></button>' +
       (up ? '<button type="button" class="btn primary" data-course="' + up.id + '">' + esc(tx('{0}へ進む', up.title)) + '<kbd class="hk">N</kbd></button>' : '') +
       (!c.practice ? '<button type="button" class="btn" data-course="' + r.course + '" data-shuffle="1">' + tx('順番を変えて') + '</button>' : '') +
@@ -5592,7 +6054,35 @@
     if ((isRec || r.rankUp) && S.celebrated !== r.runId) { S.celebrated = r.runId; celebrate(); }
   }
 
-  // 押したキー 113 / 最短 84: the keys against the fewest the 手順 takes on
+  // Past the first run: the Lv, the facts, the keys against 標準, the
+  // slowest, the share text, the last runs and a tip.
+  function resultMoreHTML(r, slow, slowKeys) {
+    return (
+      '<div class="skill em-skill">' + skillHTML(r.skill, r.skillFrom) + '</div>' +
+      learntHTML(r) +
+      '<dl class="em-facts">' +
+      '<div><dt>' + tx('1 問あたり') + '</dt><dd>' + tx('{0}秒', r.avg.toFixed(2)) + '</dd></div>' +
+      '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
+      '<div><dt>' + tx('ミス') + '</dt><dd>' + tx('{0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY) + '</dd></div>' +
+      '<div><dt>' + tx('目安超え') + '</dt><dd>' + nQ(r.overs) + '</dd></div>' +
+      '<div><dt>' + tx('自己ベスト') + '</dt><dd>' + fmt(r.record ? r.time : r.best) + '</dd></div>' +
+      '<div><dt>' + tx('押したキー') + '</dt><dd>' + keysHTML(r) + '</dd></div>' +
+      (r.blind ? '<div><dt>' + tx('手順を見た') + '</dt><dd>' + nQ(r.guides) + '</dd></div>' : '') +
+      '</dl>' +
+      parBeatHTML(r.keys, parOf(r.qlog || [])) +
+      overKeysHTML(r) +
+      resultNetHTML(r) +
+      watchHTML(r) +
+      confShareHTML(r) +
+      slowestHTML(r) +
+      shareHTML(r) +
+      spark(r.spark) +
+      '<div class="spark-l"><span>' + (slow ? esc(tx('いちばん時間がかかった問題: {0}（{1} → {2}）', tx(slow.text), prefixLabel(), slowKeys.join(' '))) : r.overs ? '' : tx('目安超えなし。どの問題も目安のうちに解いた')) + '</span>' +
+      (r.spark && r.spark.length > 1 ? '<span class="spark-key"><i class="rec"></i>' + tx('自己ベスト') + ' <i class="now"></i>' + tx('今回') + '</span>' : '') + '</div>' +
+      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + (r.tipFor ? tx(' ・ {0}', esc(typeName(r.tipFor))) : '') + '</div><p>' + esc(r.tip) + '</p></div>' : ''));
+  }
+
+  // 押したキー 113 / 標準 84: the keys against the fewest the 手順 takes on
   // these bindings (parKeys), when every question had its count.
   function parOf(qs) {
     var p = 0;
@@ -5602,16 +6092,37 @@
 
   function keysHTML(r) {
     var par = parOf(r.qlog || []);
-    return par == null ? String(r.keys) : tx('{0} / 最短 {1}', r.keys, par);
+    return par == null ? String(r.keys) : tx('{0} / 標準 {1}', r.keys, par);
   }
 
-  // The questions that took more keys than the fewest, most extra first.
+  // Fewer keys than 標準 (the 手順's count): key golf, said out loud.
+  function parBeat(keys, par) {
+    var d = typeof keys === 'number' && typeof par === 'number' ? par - keys : 0;
+    return d > 0 ? tx('標準より {0} キー少ない', d) : '';
+  }
+  function parBeatHTML(keys, par) {
+    var t = parBeat(keys, par);
+    return t ? '<p class="em-parbeat">' + esc(t) + '</p>' : '';
+  }
+
+  // The questions that took more keys than the fewest, most extra first;
+  // one row a type (a course asks some twice: their keys add up, ×2 said).
+  function overKeys(qlog) {
+    var by = {}, out = [];
+    (qlog || []).forEach(function (q) {
+      if (typeof q.p !== 'number' || typeof q.k !== 'number' || q.k <= q.p) return;
+      if (!by[q.t]) { by[q.t] = { t: q.t, k: 0, p: 0, n: 0 }; out.push(by[q.t]); }
+      by[q.t].k += q.k; by[q.t].p += q.p; by[q.t].n += 1;
+    });
+    return out;
+  }
+
   function overKeysHTML(r) {
-    var over = (r.qlog || []).filter(function (q) { return typeof q.p === 'number' && typeof q.k === 'number' && q.k > q.p; });
+    var over = overKeys(r.qlog);
     if (!over.length) return '';
     over.sort(function (a, b) { return (b.k - b.p) - (a.k - a.p); });
-    return '<div class="em-overkeys"><div class="ok-head">' + tx('最短より多く押した問題') + '</div><ul>' +
-      over.slice(0, 5).map(function (q) { return '<li>' + esc(typeName(q.t)) + ' <span>' + tx('押した {0} / 最短 {1}', q.k, q.p) + '</span></li>'; }).join('') + '</ul></div>';
+    return '<div class="em-overkeys"><div class="ok-head">' + tx('標準より多く押した問題') + '</div><ul>' +
+      over.slice(0, 5).map(function (q) { return '<li>' + esc(typeName(q.t) + (q.n > 1 ? ' ×' + q.n : '')) + ' <span>' + tx('押した {0} / 標準 {1}', q.k, q.p) + '</span></li>'; }).join('') + '</ul></div>';
   }
 
   // この回を見る: the run played again (startReplay), or its keys listed.
@@ -5643,8 +6154,9 @@
       '<h2 class="em-title">' + esc(typeName(q.t)) + '</h2>' +
       '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
       '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
-      '<div class="em-verdict">' + (par != null ? tx('押したキー <b>{0}</b> ／ 最短 {1}', r.keys, par) : tx('押したキー <b>{0}</b>', r.keys)) +
+      '<div class="em-verdict">' + (par != null ? tx('押したキー <b>{0}</b> ／ 標準 {1}', r.keys, par) : tx('押したキー <b>{0}</b>', r.keys)) +
       '<span class="em-tip">' + esc(q.g ? tx('手順を見た（{0} 秒で出た）', LV.PEEK_AFTER) : tx('手順を見ずに解いた')) + (r.misses ? esc(tx(' ・ ミス {0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY)) : '') + '</span></div></div>' +
+      parBeatHTML(r.keys, par) +
       (sk.days >= 2 ? '<p class="em-learnt">' + esc(tx('今日の達人 {0} 日連続', sk.days)) + '</p>' : '') +
       '<dl class="em-facts">' +
       '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
@@ -5674,7 +6186,7 @@
     if (!d.rows.length) return '<div class="rec-panel daily-board"><div class="rec-head">' + tx('今日の達人のランキング') + '</div><p class="rec-empty">' + tx('まだ今日の記録はない。一番乗りの好機。') + '</p></div>';
     return '<div class="rec-panel daily-board"><div class="rec-head">' + tx('今日の達人のランキング') + '</div><table class="rec-table board"><thead><tr><th>' + tx('位') + '</th><th>' + tx('名前') + '</th><th>' + tx('タイム') + '</th><th>' + tx('キー') + '</th></tr></thead><tbody>' +
       d.rows.slice(0, 10).map(function (r) {
-        var keys = typeof r.keys === 'number' ? (par != null ? tx('{0} / 最短 {1}', r.keys, par) : String(r.keys)) : '—';
+        var keys = typeof r.keys === 'number' ? (par != null ? tx('{0} / 標準 {1}', r.keys, par) : String(r.keys)) : '—';
         return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + (r.peek ? ' <small class="r-own">' + tx('手順を見た') + '</small>' : '') +
           (r.log ? ' <a href="#" class="r-watch" data-watch-run="' + esc(r.id || '') + '">' + tx('見る') + '</a>' : '') + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="c-n">' + esc(keys) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
@@ -5792,7 +6304,7 @@
     if (!NET || !r) return;
     // 稽古 is kept in step between devices but never goes on the boards;
     // nor does a run in a changed order, or one paused for long.
-    var why = REC.courseOf(r.course).practice ? 'practice' : r.shuffled ? 'shuffled' : r.paused > LV.PAUSE_MAX ? 'paused' : null;
+    var why = REC.courseOf(r.course).practice ? 'practice' : r.first ? 'first' : r.shuffled ? 'shuffled' : r.paused > LV.PAUSE_MAX ? 'paused' : null;
     if (why) { if (why !== 'practice') r.board = { state: why }; if (NET.state().key) NET.sync().catch(function () {}); return; }
     // Nothing leaves the browser until the player gives a name or a 合言葉.
     if (!NET.state().key) { r.board = { state: 'noname' }; return; }
@@ -5817,7 +6329,8 @@
     var c = REC.courseOf(r.course);
     if (r.daily) {
       var dq = r.qlog[0] || {}, dd = LV.dayKey(r.at).split('-');
-      return tx('tmux 道場 今日の達人 {0} {1} {2}秒 ・ 押したキー {3} / 最短 {4}{5}', EN ? dayLabel(LV.dayKey(r.at)) : +dd[1] + '/' + +dd[2], typeName(dq.t), r.time.toFixed(1), r.keys, typeof dq.p === 'number' ? dq.p : '—', dq.g ? tx('（手順を見た）') : tx('（手順なし）')) + '\n' +
+      var db = parBeat(r.keys, dq.p);
+      return tx('tmux 道場 今日の達人 {0} {1} {2}秒 ・ 押したキー {3} / 標準 {4}{5}', EN ? dayLabel(LV.dayKey(r.at)) : +dd[1] + '/' + +dd[2], typeName(dq.t), r.time.toFixed(1), r.keys, typeof dq.p === 'number' ? dq.p : '—', dq.g ? tx('（手順を見た）') : tx('（手順なし）')) + (db ? tx(' ・ {0}', db) : '') + '\n' +
         (watchable(r) ? watchURL(r.runId) : SITE + (EN ? '?lang=en' : ''));
     }
     var sq = (r.qlog || []).map(function (q) {
@@ -5828,7 +6341,8 @@
     var day = LV.dayKey(r.at), d = day.split('-');
     // The title in English carries its kanji: Kuro-obi 黒帯.
     var title = EN && LV.rankInfo(r.rank) ? LV.rankInfo(r.rank).romaji + ' ' + r.rank : r.rank;
-    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, title) + '\n' +
+    var beat = parBeat(r.keys, parOf(r.qlog || []));
+    return tx('tmux 道場 {0} {1} {2}秒（お手本 {3}秒）{4}', EN ? dayLabel(day) : +d[1] + '/' + +d[2], c.title, r.time.toFixed(1), r.par, title) + (beat ? tx(' ・ {0}', beat) : '') + '\n' +
       rows.join('\n') + '\n' + (watchable(r) ? watchURL(r.runId) : SITE + (EN ? '?lang=en' : ''));
   }
 
@@ -5903,6 +6417,7 @@
     if (b.state === 'offline') html += '<p class="em-board dim">' + tx('ランキングにつながらなかった（記録には残る）。') + '</p>';
     if (b.state === 'paused') html += '<p class="em-board dim">' + tx('途中で {0} 秒 止まっていたので、今日のランキングには載せない（記録には残る）。', r.paused.toFixed(1)) + '</p>';
     if (b.state === 'shuffled') html += '<p class="em-board dim">' + tx('順番を変えた回は、今日のランキングには載せない（記録には残る）。') + '</p>';
+    if (b.state === 'first') html += '<p class="em-board dim">' + tx('はじめての回は、やさしい順番なのでランキングには載らない（記録には残る）。次の回から今日の順番で載る。') + '</p>';
     if (b.state === 'noname') {
       html += '<form class="em-board name-form" data-name-form="result"><label>' + tx('名前を付けると、今日のランキングに載る') + '</label>' +
         '<span class="nf-row"><input name="name" maxlength="12" autocomplete="nickname" aria-label="' + tx('ランキングの名前') + '" placeholder="' + tx('名前（12 文字まで）') + '"><button type="submit" class="btn">' + tx('ランキングに載せる') + '</button></span>' +
@@ -5967,7 +6482,9 @@
           // is said so; a published file is a link to it.
           var own = r.own ? ' <small class="r-own">' + (r.conf ? '<a href="#" data-conf-of="' + esc(r.name) + '">' + tx('自分の設定') + '</a>' : tx('自分の設定')) + '</small>' : '';
           var watch = r.log ? ' <a href="#" class="r-watch" data-watch="' + esc(r.name) + '" data-watch-id="' + esc(r.id || '') + '">' + tx('見る') + '</a>' : '';
-          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + own + watch + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
+          // A run where the 手順 came out still ranks, marked: how many questions.
+          var peek = r.peek ? ' <small class="r-own">' + tx('手順を見た {0} 問', r.peek) + '</small>' : '';
+          return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + own + peek + watch + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="r-note c-n">' + esc(r.day.slice(5).replace('-', '/')) + '</td></tr>';
         }).join('') + '</tbody></table>';
     };
     var note = me ? '<p class="rec-empty">' + tx('「{0}」として載る。名前は「引き継ぎ」で変えられる。', esc(me)) + '</p>'
@@ -6153,7 +6670,7 @@
       run.qs.map(function (x, i) {
         var mine = ks.filter(function (e) { return inQuestion(q, e[0]) === i; });
         var keys = mine.map(function (e) { return '<kbd title="' + ((e[0] - q[i]) / 1000).toFixed(2) + 's">' + esc(e[1]) + '</kbd>'; }).join('');
-        var n = typeof x.p === 'number' ? tx('{0} / 最短 {1}', mine.length, x.p) : String(mine.length);
+        var n = typeof x.p === 'number' ? tx('{0} / 標準 {1}', mine.length, x.p) : String(mine.length);
         return '<tr' + (typeof x.p === 'number' && mine.length > x.p ? ' class="over"' : '') + '><td class="c-n">' + (i + 1) + '</td><td>' + esc(typeName(x.t)) + '</td><td class="r-time">' + (typeof x.s === 'number' ? x.s.toFixed(1) : '—') + '</td><td class="k-keys">' + keys + ' <small>' + n + '</small></td></tr>';
       }).join('') + '</tbody></table>';
   }
@@ -6452,6 +6969,7 @@
       applyConf(t.value, true);
     });
     $('#conf-reset').addEventListener('click', function () { $('#conf-text').value = ''; applyConf('', true); });
+    $('#cheat').addEventListener('toggle', function () { if (S.free) { store.save({ cheat: $('#cheat').open }); focusSink(); } });
     $('.detail-toggle').addEventListener('click', function () { S.detail = !S.detail; store.save({ detail: S.detail }); syncBody(); if (S.screen === 'game') render(); focusSink(); });
 
     $$('.theme-toggle').forEach(function (b) { b.addEventListener('click', toggleTheme); });
@@ -6656,6 +7174,7 @@
     // A read-only view for the tests. Playing still goes through the keyboard.
     window.tmuxDa = {
       records: function () { return JSON.parse(JSON.stringify(REC.load())); },
+      drillTypes: function () { return drillTypes(); },
       state: function () {
         var win = S.session ? T.activeWindow(S.session) : null;
         var ap = win ? T.activePane(win) : null;
@@ -6684,7 +7203,7 @@
           run: b ? {
             course: b.course.id, phase: b.phase, i: b.i, n: b.qs.length, type: b.type, misses: b.misses,
             stage: b.stage, overs: b.overs, guides: b.guides, limit: b.limit,
-            shuffled: b.shuffled, pauses: b.pauses, paused: b.paused,
+            shuffled: b.shuffled, pauses: b.pauses, paused: b.paused, first: !!b.first, blind: !!b.blind,
             drill: !!b.course.drill, target: b.target, peek: !!b.peek, streak: b.streak || 0,
             order: b.q ? qText(b) : null,
             qs: b.qs.slice(), day: b.day,
@@ -6693,7 +7212,8 @@
             goal: S.qGoal,
             note: (S.qNote || []).slice(),
             next: b.q && b.phase === 'play' ? guideMove(b) : null,
-            par: b.qlog && b.qlog[b.i] ? b.qlog[b.i].p : null
+            par: b.qlog && b.qlog[b.i] ? b.qlog[b.i].p : null,
+            route: b.route ? b.route.slice() : null
           } : null,
           result: S.result,
           recCourse: S.screen === 'records' ? S.recCourse : null,
