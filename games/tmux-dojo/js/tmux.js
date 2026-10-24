@@ -226,19 +226,20 @@
   // becomes the current window (as tmux does without -d). The window it
   // left keeps its other panes. A window of one pane is not refused: tmux
   // 3.x just moves it to the next free index (0,1 → 0,2), so `moved` says.
-  function breakPane(session, win, paneId) {
+  // `stay` (break-pane -d): the new window is not selected.
+  function breakPane(session, win, paneId, stay) {
     var hit = parentOf(win.root, paneId);
     if (!hit) return null;
     if (!hit.parent) {
       win.index = freeIndex(session);
       session.windows.sort(function (a, b) { return a.index - b.index; });
-      selectWindow(session, win.id);
+      if (!stay) selectWindow(session, win.id);
       return win;
     }
     var pane = hit.node.pane;
     killPane(win, paneId);
     var fresh = createWindow(session, null, pane);
-    selectWindow(session, fresh.id);
+    if (!stay) selectWindow(session, fresh.id);
     return fresh;
   }
 
@@ -400,6 +401,8 @@
       session.active = (last || session.windows[Math.max(0, idx - 1)]).id;
       session.last = null;
     } else if (session.last === winId) session.last = null;
+    // renumber-windows on: a window gone closes the gap (tmux does it only then).
+    if (session.renumber) renumberWindows(session);
     return true;
   }
 
@@ -572,7 +575,62 @@
   }
 
   window.ADV = window.ADV || {};
+  // ---- copy mode: the vi word moves and f/t, on plain text lines ----------
+
+  // tmux's word-separators: each of these is a word of its own.
+  var WORD_SEP = '!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~';
+  // 0 a space (a line's end too), 1 a word character, 2 a separator; `big`
+  // (W B E): anything but a space is one kind.
+  function charKind(ch, big) { return !ch || /\s/.test(ch) ? 0 : big || WORD_SEP.indexOf(ch) < 0 ? 1 : 2; }
+
+  // next-word (w), next-word-end (e), previous-word (b) over `lines` (the
+  // texts in order), from line `j` column `c`; `big`: W E B. Returns {j, c}.
+  function copyWord(lines, j, c, what, big) {
+    var run = [];
+    lines.forEach(function (t, i) {
+      for (var x = 0; x < t.length; x++) run.push({ j: i, c: x, ch: t[x] });
+      if (i < lines.length - 1 || !t.length) run.push({ j: i, c: t.length, ch: '\n' });
+    });
+    var n = run.length, at = -1;
+    if (!n) return { j: j, c: c };
+    for (var i = 0; i < n; i++) if (run[i].j === j && (at < 0 || run[i].c <= c)) at = i;
+    if (at < 0) at = 0;
+    var kind = function (x) { return charKind(run[x].ch, big); };
+    var p = at;
+    if (what === 'w') {
+      var k0 = kind(p);
+      if (k0) while (p < n && kind(p) === k0) p++;
+      while (p < n && !kind(p)) p++;
+      if (p >= n) p = n - 1;
+    } else if (what === 'e') {
+      p++;
+      while (p < n && !kind(p)) p++;
+      if (p >= n) p = n - 1;
+      else { var k1 = kind(p); while (p + 1 < n && kind(p + 1) === k1) p++; }
+    } else {
+      p--;
+      while (p > 0 && !kind(p)) p--;
+      if (p < 0) p = 0;
+      var k2 = kind(p);
+      while (p > 0 && k2 && kind(p - 1) === k2) p--;
+    }
+    return { j: run[p].j, c: run[p].c };
+  }
+
+  // f F t T: the column the jump lands on in `text` from `cx`, or cx.
+  function copyJump(text, cx, type, ch) {
+    var i;
+    cx = Math.min(cx, text.length);
+    if (type === 'f') i = text.indexOf(ch, cx + 1);
+    else if (type === 't') { i = text.indexOf(ch, cx + 2); if (i >= 0) i -= 1; }
+    else if (type === 'F') i = cx > 0 ? text.lastIndexOf(ch, cx - 1) : -1;
+    else { i = cx > 1 ? text.lastIndexOf(ch, cx - 2) : -1; if (i >= 0) i += 1; }
+    return i >= 0 ? i : cx;
+  }
+
   window.ADV.tmux = {
+    copyWord: copyWord,
+    copyJump: copyJump,
     swapPanes: swapPanes,
     swapStep: swapStep,
     rotateWindow: rotateWindow,

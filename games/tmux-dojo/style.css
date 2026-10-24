@@ -239,6 +239,7 @@ kbd.pfx.next { background: var(--ai); }
 .sz-hint { font-size: 12px; color: var(--sumi-dim); margin-top: 12px; line-height: 1.6; }
 .sz-cmd { font-size: 11.5px; color: var(--sumi-dim); margin-top: 6px; }
 .sz-cmd code { font-family: var(--mono); color: var(--ai); }
+.sz-free { font-size: 13px; color: var(--sumi-dim); margin: 0 0 8px; line-height: 1.6; }
 
 /* 行灯: the 目安 and the overrun */
 .andon { margin-top: 14px; border: 1px solid var(--paper-line); border-radius: 3px; padding: 10px 12px; background: var(--washi-3); }
@@ -895,6 +896,7 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
 .key.k-prefix.k-next { background: var(--andon); color: #2b1a05; }
 @media (max-width: 700px) { .keybar { min-height: calc(2 * 43px + 6px); align-content: flex-start; } }
 .pb-conf { font-size: 12px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-dim); }
+.pb-free { font-size: 13px; color: var(--ink-dim); text-align: right; }
 /* the resize mark sat on the right edge whatever border moves: the card and the green borders say it */
 .yashiki .goal.resize::after { display: none; }
 /* the copy-mode [pos/history] keeps left of the pane number */

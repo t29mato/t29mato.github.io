@@ -2,4 +2,4 @@
 // number (how many times the site has been published), the commit and the
 // day when it copies the site; a local copy says "dev".
 window.ADV = window.ADV || {};
-window.ADV.VERSION = { v: '1.0.0', deploy: 36, commit: '6595d8b', at: '2026-10-24' };
+window.ADV.VERSION = { v: '1.0.0', deploy: 37, commit: '29e4d08', at: '2026-10-24' };

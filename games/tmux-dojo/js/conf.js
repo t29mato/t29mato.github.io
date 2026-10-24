@@ -113,6 +113,48 @@
     return out;
   }
 
+  // ---- command names ----------------------------------------------------------
+
+  // tmux 3.8's command table (list-commands), name and alias, the commands
+  // the game does not have included: a name may be shortened to any start
+  // that only one name has (kill-ses), and an alias counts only whole.
+  var COMMANDS = ('attach-session attach,bind-key bind,break-pane breakp,capture-pane capturep,choose-buffer,choose-client,choose-tree,' +
+    'clear-history clearhist,clear-prompt-history clearphist,clock-mode,command-prompt,confirm-before confirm,copy-mode,customize-mode,' +
+    'delete-buffer deleteb,detach-client detach,display-menu menu,display-message display,display-popup popup,display-panes displayp,' +
+    'find-window findw,has-session has,if-shell if,join-pane joinp,kill-pane killp,kill-server,kill-session,kill-window killw,' +
+    'last-pane lastp,last-window last,link-window linkw,list-buffers lsb,list-clients lsc,list-commands lscm,list-keys lsk,list-panes lsp,' +
+    'list-sessions ls,list-windows lsw,load-buffer loadb,lock-client lockc,lock-server lock,lock-session locks,move-pane movep,' +
+    'move-window movew,new-pane newp,new-session new,new-window neww,next-layout nextl,next-window next,paste-buffer pasteb,pipe-pane pipep,' +
+    'previous-layout prevl,previous-window prev,refresh-client refresh,rename-session rename,rename-window renamew,resize-pane resizep,' +
+    'resize-window resizew,respawn-pane respawnp,respawn-window respawnw,rotate-window rotatew,run-shell run,save-buffer saveb,' +
+    'select-layout selectl,select-pane selectp,select-window selectw,send-keys send,send-prefix,server-access,set-buffer setb,' +
+    'set-environment setenv,set-hook,set-option set,set-window-option setw,show-buffer showb,show-environment showenv,show-hooks,' +
+    'show-messages showmsgs,show-options show,show-prompt-history showphist,show-window-options showw,source-file source,' +
+    'split-window splitw,start-server start,suspend-client suspendc,swap-pane swapp,swap-window swapw,switch-client switchc,switch-mode,' +
+    'unbind-key unbind,unlink-window unlinkw,wait-for wait').split(',').map(function (e) { var p = e.split(' '); return { name: p[0], alias: p[1] || null }; });
+
+  // A typed command name → {name} (the full one), or {error} with tmux's
+  // own words. `exact`: only whole names and aliases (the game before it
+  // took shortened names, for replays of its runs).
+  function resolve(word, exact) {
+    var w = String(word || ''), hits = [];
+    for (var i = 0; i < COMMANDS.length; i++) {
+      var c = COMMANDS[i];
+      if (c.alias === w || c.name === w) return { name: c.name };
+      if (!exact && w && c.name.indexOf(w) === 0) hits.push(c.name);
+    }
+    if (hits.length === 1) return { name: hits[0] };
+    if (hits.length > 1) return { error: 'ambiguous command: ' + w + ', could be: ' + hits.join(', ') };
+    return { error: 'unknown command: ' + w };
+  }
+
+  // argv with its command written out in full (the same argv when it cannot be).
+  function canon(argv, exact) {
+    if (!argv || !argv.length) return argv;
+    var r = resolve(argv[0], exact);
+    return r.name ? [r.name].concat(argv.slice(1)) : argv;
+  }
+
   // The flags of each command that take a value (tmux's getopt strings).
   var ARGS = {
     bind: 'TNt', 'bind-key': 'TNt', unbind: 'Tt', 'unbind-key': 'Tt', set: 't', 'set-option': 't', setw: 't', 'set-window-option': 't',
@@ -122,6 +164,7 @@
     'break-pane': 'nst', breakp: 'nst', 'send-keys': 'tN', send: 'tN', 'display-message': 'cdtF', display: 'cdtF',
     'join-pane': 'lst', joinp: 'lst', 'move-pane': 'lst', movep: 'lst', 'swap-window': 'st', swapw: 'st', 'move-window': 'st', movew: 'st',
     'select-layout': 't', selectl: 't', 'rotate-window': 't', rotatew: 't', 'kill-session': 't',
+    'list-keys': 'PT', 'show-options': 't', 'show-window-options': 't', 'show-messages': 't', 'source-file': 't',
     'choose-tree': 'FfKOt', 'choose-window': 'FfKOt', 'choose-session': 'FfKOt', 'copy-mode': 'st', 'paste-buffer': 'bst', pasteb: 'bst'
   };
 
@@ -152,6 +195,9 @@
 
   // One tmux command (argv) → what the game does for it, or {why}.
   function action(argv) {
+    var named = resolve(argv[0], exactNames);
+    if (named.error) return { why: named.error };
+    argv = [named.name].concat(argv.slice(1));
     var cmd = argv[0], p = flags(argv), f = p.f, rest = p.rest;
     var dir = f.L ? 'L' : f.R ? 'R' : f.U ? 'U' : f.D ? 'D' : null;
     var ARROW = { L: 'ArrowLeft', R: 'ArrowRight', U: 'ArrowUp', D: 'ArrowDown' };
@@ -174,7 +220,8 @@
     }
     if (/^(kill-pane|killp)$/.test(cmd)) return { key: 'x', now: true, say: 'ペインを閉じる（確認なし）' };
     if (/^(kill-window|killw)$/.test(cmd)) return { key: '&', now: true, say: 'ウィンドウを閉じる（確認なし）' };
-    if (/^(break-pane|breakp)$/.test(cmd)) return f.d ? { why: 'break-pane -d はゲームにない' } : { key: '!', say: 'ペインを別のウィンドウにする' };
+    // -d: the pane goes to a window of its own, the focus stays here.
+    if (/^(break-pane|breakp)$/.test(cmd)) return !f.d ? { key: '!', say: 'ペインを別のウィンドウにする' } : exactNames ? { why: 'break-pane -d はゲームにない' } : { run: 'cmd', argv: argv, say: 'ペインを別のウィンドウにする（ここに残る）' };
     if (cmd === 'confirm-before' || cmd === 'confirm') {
       var inner = rest.length === 1 ? words(rest[0])[0] || [] : rest;
       var a = inner.length ? action(inner) : { why: 'confirm-before の中身がない' };
@@ -203,6 +250,7 @@
       if (!tpl) return { key: ':', say: 'コマンドを打つ' };
       // A prompt that fills a command the game has: what is typed takes %%.
       var ic = (words(tpl)[0] || [])[0] || '';
+      ic = resolve(ic, exactNames).name || ic;
       if (PROMPT_CMDS.test(ic) || (ic && !action([ic]).why)) return { run: 'prompt', label: typeof f.p === 'string' ? f.p : ':', tpl: tpl, say: tx('{0} を聞いて {1} を打つ', typeof f.p === 'string' ? f.p : ':', ic) };
       return { why: 'その command-prompt はゲームにない' };
     }
@@ -244,6 +292,7 @@
     if (/^(send-keys|send)$/.test(cmd) && rest.length === 1 && /^(C-l|\^l)$/i.test(rest[0])) return { run: 'clear', say: '画面を消す' };
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
     if (/^(display-message|display)$/.test(cmd)) return { run: 'say', text: rest.join(' '), say: 'メッセージを出す' };
+    if (cmd === 'show-messages' && !exactNames) return { run: 'cmd', argv: argv, say: 'メッセージの記録を見る' };
     if (/^(display-panes|displayp)$/.test(cmd)) return { key: 'q', say: 'ペインに番号を出す（番号を押すとそこへ）' };
     if (/^(rotate-window|rotatew)$/.test(cmd)) return f.D ? { key: 'o', alt: true, say: 'ペインを逆向きに回す' } : { key: 'o', ctrl: true, say: 'ペインを順に回す' };
     if (/^(choose-buffer)$/.test(cmd)) return { key: '=', say: 'コピーしたものの一覧から貼る' };
@@ -266,7 +315,11 @@
     'cursor-up': '上へ', 'cursor-down': '下へ', 'cursor-left': '左へ', 'cursor-right': '右へ',
     'start-of-line': '行の頭へ', 'end-of-line': '行の終わりへ', 'history-top': '一番上へ', 'history-bottom': '一番下へ',
     'page-up': '1 ページ上へ', 'page-down': '1 ページ下へ', 'halfpage-up': '半ページ上へ', 'halfpage-down': '半ページ下へ',
-    'search-backward': '上向きに検索', 'search-forward': '下向きに検索', 'search-again': '次を探す', 'search-reverse': '逆向きに次を探す'
+    'search-backward': '上向きに検索', 'search-forward': '下向きに検索', 'search-again': '次を探す', 'search-reverse': '逆向きに次を探す',
+    'next-word': '次の単語へ', 'previous-word': '前の単語へ', 'next-word-end': '単語の終わりへ',
+    'next-space': '次の単語へ（空白で区切る）', 'previous-space': '前の単語へ（空白で区切る）', 'next-space-end': '単語の終わりへ（空白で区切る）',
+    'back-to-indentation': '行の最初の文字へ', 'top-line': '画面の一番上の行へ', 'middle-line': '画面の真ん中の行へ', 'bottom-line': '画面の一番下の行へ',
+    'jump-again': '同じ向きにもう一度飛ぶ', 'jump-reverse': '逆向きにもう一度飛ぶ'
   };
 
   // The old (tmux < 2.4) table names, `bind -t vi-copy v begin-selection`.
@@ -275,6 +328,7 @@
   // A copy-mode binding's command list → {copy: cmd, say} or {why}.
   function copyAction(inner) {
     var cmd;
+    inner = canon(inner, exactNames);
     if (/^(send-keys|send)$/.test(inner[0])) {
       var p = flags(inner);
       if (!p.f.X || !p.rest.length) return { why: 'コピーモードのキーは send-keys -X の形だけ読める' };
@@ -300,26 +354,41 @@
   var SAMPLE_NAVIGATOR = "# vim-tmux-navigator（TPM で入れる）\nset -g @plugin 'christoomey/vim-tmux-navigator'\nrun '~/.tmux/plugins/tpm/tpm'\n";
 
   // Options tmux has that the game does not follow: 未対応, not 関係ない.
-  var UNSUPPORTED_OPTS = { 'renumber-windows': 'ゲームのウィンドウ番号は詰め直さない', 'status-keys': '入力欄のキーは決まっている（emacs 式）' };
+  var UNSUPPORTED_OPTS = { 'status-keys': '入力欄のキーは決まっている（emacs 式）' };
+
+  // Set while a file is read for a replay of a run from before the game
+  // took shortened names (and renumber-windows, break-pane -d): it is read
+  // as it was then.
+  var exactNames = false;
 
   // The whole file → {prefix, prefix2, modeKeys, statusTop, binds, unbinds,
   // unbindAll, used, unsupported, skipped, navigator, custom}.
-  function parse(text) {
-    var c = { prefix: parseKey('C-b'), prefix2: null, baseIndex: 0, paneBaseIndex: 0, modeKeys: null, statusTop: false, binds: [], unbinds: [], unbindAll: false, used: [], unsupported: [], skipped: [], navigator: false };
+  function parse(text, opts) {
+    exactNames = !!(opts && opts.legacy);
+    try { return parseLines(text); } finally { exactNames = false; }
+  }
+
+  function parseLines(text) {
+    var c = { prefix: parseKey('C-b'), prefix2: null, baseIndex: 0, paneBaseIndex: 0, modeKeys: null, statusTop: false, renumber: false, binds: [], unbinds: [], unbindAll: false, used: [], unsupported: [], skipped: [], navigator: false };
     function use(l, say) { c.used.push({ no: l.no, line: l.text.trim(), say: tx(say) }); }
     // 未対応: tmux does it, the game cannot.
     function cannot(l, why) { c.unsupported.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
     // 関係ない: a setting the game has no use for.
     function skip(l, why) { c.skipped.push({ no: l.no, line: l.text.trim(), why: tx(why) }); }
-    function addBind(table, key, act, repeat, l) {
+    function addBind(table, key, act, repeat, l, cmd) {
       // A later bind of the same key wins, as in tmux.
       c.binds = c.binds.filter(function (b) { return !(b.table === table && same(b.key, key)); });
-      c.binds.push({ table: table, key: key, act: act, repeat: !!repeat, no: l ? l.no : 0 });
+      c.binds.push({ table: table, key: key, act: act, repeat: !!repeat, no: l ? l.no : 0, cmd: cmd || '' });
     }
     lines(text).forEach(function (l) {
       var cmds = words(l.text);
       if (!cmds.length) return;
-      var argv = cmds[0], cmd = argv[0];
+      var argv = cmds[0];
+      // A shortened name stands for the whole one, as tmux reads it.
+      var named = resolve(argv[0], exactNames);
+      if (named.error) return cannot(l, named.error);
+      argv = [named.name].concat(argv.slice(1));
+      var cmd = argv[0];
       if (/^(set|set-option|setw|set-window-option)$/.test(cmd)) {
         var p = flags(argv), name = p.rest[0], val = p.rest[1];
         // Window numbers from 1 (and pane numbers): the status bar and the
@@ -351,13 +420,18 @@
         if (name === '@plugin') {
           if (/(^|\/)vim-tmux-navigator$/.test(val || '')) {
             c.navigator = true;
-            NAVIGATOR.forEach(function (n) { addBind(n.table, parseKey(n.key), action(n.argv), false, l); });
+            NAVIGATOR.forEach(function (n) { addBind(n.table, parseKey(n.key), action(n.argv), false, l, n.argv.join(' ')); });
             return use(l, 'vim-tmux-navigator: Ctrl+h/j/k/l でペインを移動、Ctrl+\\ で直前のペイン、prefix → Ctrl+l で画面を消す');
           }
           if (/(^|\/)tpm$/.test(val || '')) return use(l, 'TPM（プラグインの管理）');
           return cannot(l, 'このプラグインはゲームにない');
         }
         if (/^@/.test(name || '')) return skip(l, 'プラグインの設定（ゲームには関係ない）');
+        if (name === 'renumber-windows' && !exactNames) {
+          c.renumber = /^(on|yes|1)$/i.test(val || 'on');
+          return use(l, c.renumber ? 'ウィンドウを閉じたら番号を詰め直す' : 'ウィンドウの番号を詰め直さない');
+        }
+        if (name === 'renumber-windows') return cannot(l, 'ゲームのウィンドウ番号は詰め直さない');
         if (UNSUPPORTED_OPTS[name]) return cannot(l, UNSUPPORTED_OPTS[name]);
         return skip(l, '見た目や動きの設定（ゲームには関係ない）');
       }
@@ -373,15 +447,15 @@
           var ca = copyAction(inner);
           // The key is taken either way: a copy command the game lacks
           // must not fall back to the game's own key.
-          addBind(table, key, ca.why ? { none: true } : ca, false, l);
+          addBind(table, key, ca.why ? { none: true } : ca, false, l, inner.join(' '));
           if (ca.why) return cannot(l, ca.why);
           return use(l, tx(table === 'copy-mode-vi' ? 'コピーモード（vi 式）で {0}: {1}' : 'コピーモード（emacs 式）で {0}: {1}', key.label, tx(ca.say)));
         }
         if (table !== 'root' && table !== 'prefix') return cannot(l, tx('{0} の表のキーはゲームにない', table));
         // `bind x a \; b`: the first command is the one that counts.
         var act = action(inner);
-        if (act.why) { addBind(table, key, { none: true }, false, l); return cannot(l, act.why); }
-        addBind(table, key, act, b.f.r, l);
+        if (act.why) { addBind(table, key, { none: true }, false, l, inner.join(' ')); return cannot(l, act.why); }
+        addBind(table, key, act, b.f.r, l, inner.join(' '));
         return use(l, tx(table === 'root' ? 'prefix なしで {0} で {1}{2}' : 'prefix → {0} で {1}{2}', key.label, tx(act.say), b.f.r ? tx('（続けて押せる）') : ''));
       }
       if (/^(unbind|unbind-key)$/.test(cmd)) {
@@ -455,7 +529,7 @@
 
   window.ADV = window.ADV || {};
   window.ADV.conf = {
-    parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words, flags: flags,
+    parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words, flags: flags, resolve: resolve, canon: canon,
     lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
     SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM, SAMPLE_RESIZE: SAMPLE_RESIZE
   };
