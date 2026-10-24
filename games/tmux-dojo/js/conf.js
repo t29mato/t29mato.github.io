@@ -295,6 +295,8 @@
   ];
 
   var SAMPLE_NOCONFIRM = "# 確認なしで閉じる（y を押さない）\nbind x kill-pane\nbind & kill-window\n";
+  // Borders by H/J/K/L, as vim users bind them (hands stay on the home row).
+  var SAMPLE_RESIZE = "# H/J/K/L で境目を動かす（続けて押せる）\nbind -r H resize-pane -L 5\nbind -r J resize-pane -D 5\nbind -r K resize-pane -U 5\nbind -r L resize-pane -R 5\n";
   var SAMPLE_NAVIGATOR = "# vim-tmux-navigator（TPM で入れる）\nset -g @plugin 'christoomey/vim-tmux-navigator'\nrun '~/.tmux/plugins/tpm/tpm'\n";
 
   // Options tmux has that the game does not follow: 未対応, not 関係ない.
@@ -455,6 +457,6 @@
   window.ADV.conf = {
     parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words, flags: flags,
     lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
-    SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM
+    SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM, SAMPLE_RESIZE: SAMPLE_RESIZE
   };
 })();

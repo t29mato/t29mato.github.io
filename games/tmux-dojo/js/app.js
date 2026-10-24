@@ -6083,6 +6083,11 @@
       if (!/kill-pane\s*$/m.test(t.value)) t.value = (t.value && !/\n$/.test(t.value) ? t.value + '\n' : t.value) + CF.SAMPLE_NOCONFIRM;
       applyConf(t.value, true);
     });
+    $('#conf-resize').addEventListener('click', function () {
+      var t = $('#conf-text');
+      if (!/resize-pane -L 5\s*$/m.test(t.value)) t.value = (t.value && !/\n$/.test(t.value) ? t.value + '\n' : t.value) + CF.SAMPLE_RESIZE;
+      applyConf(t.value, true);
+    });
     $('#conf-reset').addEventListener('click', function () { $('#conf-text').value = ''; applyConf('', true); });
     $('.detail-toggle').addEventListener('click', function () { S.detail = !S.detail; store.save({ detail: S.detail }); syncBody(); if (S.screen === 'game') render(); focusSink(); });
 

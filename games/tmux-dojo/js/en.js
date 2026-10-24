@@ -981,4 +981,6 @@ window.ADV.EN = {
   "続けて {0} と打って Enter（全部のペインに入る）": "Keep typing {0} and press Enter (it goes into every pane)",
   "Enter を押す（全部のペインに入る）": "Press Enter (it goes into every pane)",
   "Enter を押す": "Press Enter",
+  // --- resize by H/J/K/L ---
+  "H/J/K/L で境目を動かす を足す": "Add: move borders with H/J/K/L",
 };
