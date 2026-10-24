@@ -976,4 +976,9 @@ window.ADV.EN = {
   "join-pane -s 番号": "join-pane -s N",
   "join-pane -h -s 番号": "join-pane -h -s N",
   "セッションを閉じる": "Close a session",
+  // --- prompt on track ---
+  "続けて {0} と打って Enter": "Keep typing {0} and press Enter",
+  "続けて {0} と打って Enter（全部のペインに入る）": "Keep typing {0} and press Enter (it goes into every pane)",
+  "Enter を押す（全部のペインに入る）": "Press Enter (it goes into every pane)",
+  "Enter を押す": "Press Enter",
 };

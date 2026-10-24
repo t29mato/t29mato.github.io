@@ -1727,6 +1727,18 @@
   // light (as in LV.KEYS), and what to do in words.
   function mv(keys, text, noPrefix) { return { pfx: !noPrefix, keys: keys, text: tx(text) }; }
 
+  // A move that types into an open prompt: when what is typed so far is the
+  // start of it (swap-windo… of swap-window -t 1), go on typing the rest
+  // rather than clear it with Ctrl+u.
+  function onTrack(m) {
+    var v = S.prompt && S.prompt.value;
+    if (!v || typeof m.type !== 'string' || m.type.indexOf(v) !== 0) return m;
+    var rest = m.type.slice(v.length);
+    m.text = rest ? tx('続けて {0} と打って Enter', rest) : tx('Enter を押す');
+    m.type = rest; m.cont = true;
+    return m;
+  }
+
   var ARROWS = { L: '←', R: '→', U: '↑', D: '↓' };
   var DIR_WORDS = { L: '左', R: '右', U: '上', D: '下' };
 
@@ -1887,7 +1899,7 @@
         var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter', o.cmd), true);
         pm.prompt = true;
         pm.type = o.cmd;
-        return pm;
+        return onTrack(pm);
       }
       return mv([':'], tx('この設定ではキーがない。: を押して {0} と打ち Enter', o.cmd));
     }
@@ -2025,7 +2037,7 @@
       var m = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（{1} へ）', w.index, winLabel(w)), true);
       m.prompt = true;
       m.type = String(w.index);
-      return m;
+      return onTrack(m);
     }
     return mv(["'"], tx("' を押す（番号の入力欄が出る）。{0} と打って Enter で {1} へ", w.index, winLabel(w)));
   }
@@ -2368,7 +2380,7 @@
           var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（見つかった行へ飛ぶ）', S.q0.word), true);
           pm.prompt = true;
           pm.type = S.q0.word;
-          return pm;
+          return onTrack(pm);
         }
         return copyMove('searchUp', '上向きに検索', 'emacs 式は Ctrl+r');
       }
@@ -2601,7 +2613,7 @@
           var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して new -s {0} と打って Enter' : 'new -s {0} と打って Enter（セッションができて、そこに移る）', S.q0.name), true);
           pm.prompt = true;
           pm.type = 'new -s ' + S.q0.name;
-          return pm;
+          return onTrack(pm);
         }
         // A session of another name came out: said; the order stands.
         var extra = S.sessions.filter(function (s) { return S.q0.had.indexOf(s) < 0; })[0];
@@ -2719,9 +2731,13 @@
         if (!syncOn(w, T.activePane(w))) return syncMove(true);
         if (w.zoomed) return mv(['z'], 'z を押す（全画面を戻す。隠れたペインには入らない）');
         if (T.activePane(w).mode === 'copy') return copyMove('cancel', 'コピーモードを抜ける');
-        var dirty = T.panesOf(w).some(function (p) { return syncOn(w, p) && p.input; });
-        var m = mv([], tx(dirty ? 'Ctrl+u で消して {0} と打って Enter（全部のペインに入る）' : '{0} と打って Enter（全部のペインに入る）', S.q0.cmd), true);
-        m.type = S.q0.cmd; m.clear = dirty; m.shell = true;
+        // What the synced panes hold already: the start of the command goes on.
+        var cmd = S.q0.cmd, ins = T.panesOf(w).filter(function (p) { return syncOn(w, p); }).map(function (p) { return p.input || ''; });
+        var typed = ins[0] || '', same = ins.every(function (x) { return x === typed; });
+        var dirty = ins.some(function (x) { return x; }) && !(same && cmd.indexOf(typed) === 0);
+        var rest = dirty ? cmd : cmd.slice(typed.length);
+        var m = mv([], dirty ? tx('Ctrl+u で消して {0} と打って Enter（全部のペインに入る）', cmd) : typed ? (rest ? tx('続けて {0} と打って Enter（全部のペインに入る）', rest) : tx('Enter を押す（全部のペインに入る）')) : tx('{0} と打って Enter（全部のペインに入る）', cmd), true);
+        m.type = rest; m.clear = dirty; m.shell = true;
         return m;
       }
     },
@@ -2784,7 +2800,7 @@
           var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（見つかった行へ飛ぶ）', S.q0.word), true);
           pm.prompt = true;
           pm.type = S.q0.word;
-          return pm;
+          return onTrack(pm);
         }
         // A selection begun somewhere else: let go of it first.
         if (p.sel != null && (p.sel !== ln || p.selx !== 0)) return mv(['Esc'], 'Esc を押す（選び直す）', true);
@@ -2891,7 +2907,7 @@
       var op = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（{1}）', arg, tx(what)), true);
       op.prompt = true;
       op.type = arg;
-      return op;
+      return onTrack(op);
     }
     if (own && !(S.prompt && S.prompt.label === ':')) {
       var om = mv([own.key.label], tx('{0} を押す（「{1}」と聞かれる）', own.key.label, own.act.label), own.table === 'root');
@@ -2902,7 +2918,7 @@
       var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（{1}）', cmd, tx(what)), true);
       pm.prompt = true;
       pm.type = cmd;
-      return pm;
+      return onTrack(pm);
     }
     return mv([':'], ': を押す（コマンドの入力欄が出る）');
   }
@@ -3386,7 +3402,7 @@
   function simMove(m) {
     var n = 0;
     if (m.type) {
-      if ((S.prompt && S.prompt.value) || m.clear) n += simKey({ key: 'u', ctrl: true });
+      if ((S.prompt && S.prompt.value && !m.cont) || m.clear) n += simKey({ key: 'u', ctrl: true });
       return n + simType(m.type);
     }
     if (!m.keys.length) {
