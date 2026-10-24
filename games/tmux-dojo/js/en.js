@@ -1086,4 +1086,6 @@ window.ADV.EN = {
   "並べ方を選ぶ（5 は田の字）": "Pick a layout (5 is tiled)",
   "ペインの番号を出して飛ぶ": "Show pane numbers and jump",
   "全部のペインに同時に打つ": "Type into every pane at once",
+  // --- remapped prefix ---
+  "{0} が Backspace に変わっているかも（Karabiner などのキー変更）。ブラウザをその設定の例外にするか、キー設定で prefix を変えて遊べる": "{0} may be turned into Backspace before the browser sees it (Karabiner or another key remapper). Exclude the browser in that tool, or set another prefix under Key settings",
 };

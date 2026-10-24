@@ -944,6 +944,13 @@
     // The guide's key pressed without the prefix (an arrow is shown as ↓).
     var kl = ARROWS[{ ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[k.key]] || k.key;
     if (nx && nx.pfx && nx.keys.indexOf(kl) >= 0 && !k.ctrl && !k.alt) message(tx('{0} がシェルに入った。先に {1}（prefix）を押す', kl, prefixLabel()));
+    // Backspace on an empty line where the prefix is due: Ctrl+b may be
+    // remapped before the browser sees it (Karabiner, Emacs-style keys).
+    if (nx && nx.pfx && k.key === 'Backspace' && !k.ctrl && !k.alt && !pane.input && ps.ctrl) {
+      message(tx('{0} が Backspace に変わっているかも（Karabiner などのキー変更）。ブラウザをその設定の例外にするか、キー設定で prefix を変えて遊べる', prefixLabel()));
+      S.lastAction = 'brief';
+      return true;
+    }
     var typed = editLine(pane, k, function (line) { runPaneCommand(pane, line); });
     // synchronize-panes: the key goes to every other synchronized pane on
     // screen too (not one in copy mode, nor one hidden by a zoom).
