@@ -120,6 +120,8 @@
     'resize-pane': 'txy', resizep: 'txy', 'confirm-before': 'pct', confirm: 'pct', 'command-prompt': 'IpFtT',
     'new-window': 'cntFe', neww: 'cntFe', 'swap-pane': 'st', swapp: 'st', 'kill-pane': 't', killp: 't', 'kill-window': 't', killw: 't',
     'break-pane': 'nst', breakp: 'nst', 'send-keys': 'tN', send: 'tN', 'display-message': 'cdtF', display: 'cdtF',
+    'join-pane': 'lst', joinp: 'lst', 'move-pane': 'lst', movep: 'lst', 'swap-window': 'st', swapw: 'st', 'move-window': 'st', movew: 'st',
+    'select-layout': 't', selectl: 't', 'rotate-window': 't', rotatew: 't', 'kill-session': 't',
     'choose-tree': 'FfKOt', 'choose-window': 'FfKOt', 'choose-session': 'FfKOt', 'copy-mode': 'st', 'paste-buffer': 'bst', pasteb: 'bst'
   };
 
@@ -143,6 +145,10 @@
   }
 
   var RESIZE_CMD = /^(resize-pane|resizep)$/;
+
+  // The prefix M-1 … M-7 layouts, in the keys' order (tmux.js LAYOUT_KEYS).
+  var LAYOUT_KEYS = ['even-horizontal', 'even-vertical', 'main-horizontal', 'main-vertical', 'tiled', 'main-horizontal-mirrored', 'main-vertical-mirrored'];
+  var PROMPT_CMDS = /^(join-pane|joinp|move-pane|movep|swap-window|swapw|move-window|movew|kill-session|new-session|new|new-window|neww|select-layout|selectl)$/;
 
   // One tmux command (argv) → what the game does for it, or {why}.
   function action(argv) {
@@ -195,8 +201,28 @@
       if (/rename-session/.test(tpl)) return { key: '$', say: 'セッションの名前を変える' };
       if (/select-window/.test(tpl)) return { key: "'", say: '番号を打ってウィンドウへ' };
       if (!tpl) return { key: ':', say: 'コマンドを打つ' };
+      // A prompt that fills a command the game has: what is typed takes %%.
+      var ic = (words(tpl)[0] || [])[0] || '';
+      if (PROMPT_CMDS.test(ic) || (ic && !action([ic]).why)) return { run: 'prompt', label: typeof f.p === 'string' ? f.p : ':', tpl: tpl, say: tx('{0} を聞いて {1} を打つ', typeof f.p === 'string' ? f.p : ':', ic) };
       return { why: 'その command-prompt はゲームにない' };
     }
+    // Commands with no key of their own: the game runs them as typed at :.
+    if (/^(join-pane|joinp|move-pane|movep)$/.test(cmd)) return { run: 'cmd', argv: argv, say: f.h ? 'ペインを連れてきて左右に並べる' : 'ペインを連れてくる' };
+    if (/^(swap-window|swapw)$/.test(cmd)) return { run: 'cmd', argv: argv, say: 'ウィンドウを入れ替える' };
+    if (/^(move-window|movew)$/.test(cmd)) return { run: 'cmd', argv: argv, say: f.r ? 'ウィンドウの番号を詰め直す' : 'ウィンドウを動かす' };
+    if (/^(kill-session)$/.test(cmd)) return { run: 'cmd', argv: argv, say: 'セッションを閉じる' };
+    if (/^(set|set-option|setw|set-window-option)$/.test(cmd)) {
+      if (rest[0] !== 'synchronize-panes') return { why: 'その set はキーにしてもゲームでは何も変わらない' };
+      return { run: 'cmd', argv: argv, say: rest[1] == null ? '全部のペインに同時に打つ（同期）を切り替える' : /^(on|yes|1)$/.test(rest[1]) ? '全部のペインに同時に打つ（同期）' : '同期をやめる' };
+    }
+    if (/^(select-layout|selectl)$/.test(cmd)) {
+      var li = LAYOUT_KEYS.indexOf(rest[0]);
+      if (li >= 0) return { key: String(li + 1), alt: true, say: tx('並べ方を {0} にする', rest[0]) };
+      if (f.n) return { key: ' ', say: '並べ方を変える' };
+      if (f.p) return { run: 'cmd', argv: ['previous-layout'], say: '並べ方を逆の順に変える' };
+      return { why: 'その select-layout はゲームにない' };
+    }
+    if (/^(previous-layout|prevl)$/.test(cmd)) return { run: 'cmd', argv: ['previous-layout'], say: '並べ方を逆の順に変える' };
     if (/^(copy-mode)$/.test(cmd)) return f.u ? { key: 'PageUp', say: 'コピーモードに入って 1 ページ上へ' } : { key: '[', say: 'スクロールする（コピーモード）' };
     if (/^(paste-buffer|pasteb)$/.test(cmd)) return { key: ']', say: '貼り付ける' };
     if (/^(swap-pane|swapp)$/.test(cmd)) {
@@ -219,7 +245,7 @@
     if (/^(source-file|source)$/.test(cmd)) return { run: 'noop', say: '設定を読み直す（ゲームでは何も起きない）' };
     if (/^(display-message|display)$/.test(cmd)) return { run: 'say', text: rest.join(' '), say: 'メッセージを出す' };
     if (/^(display-panes|displayp)$/.test(cmd)) return { key: 'q', say: 'ペインに番号を出す（番号を押すとそこへ）' };
-    if (/^(rotate-window|rotatew)$/.test(cmd)) return { key: 'o', ctrl: true, say: 'ペインを順に回す' };
+    if (/^(rotate-window|rotatew)$/.test(cmd)) return f.D ? { key: 'o', alt: true, say: 'ペインを逆向きに回す' } : { key: 'o', ctrl: true, say: 'ペインを順に回す' };
     if (/^(choose-buffer)$/.test(cmd)) return { key: '=', say: 'コピーしたものの一覧から貼る' };
     if (/^(list-buffers|lsb)$/.test(cmd)) return { key: '#', say: 'コピーしたものの一覧を見る' };
     if (/^(list-keys|lsk)$/.test(cmd)) return { key: '?', say: 'キーの一覧を見る' };
@@ -427,7 +453,7 @@
 
   window.ADV = window.ADV || {};
   window.ADV.conf = {
-    parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words,
+    parse: parse, parseKey: parseKey, keyLabel: keyLabel, matches: matches, words: words, flags: flags,
     lookup: lookup, copyLookup: copyLookup, copyKey: copyKey, overridden: overridden, isPrefix: isPrefix,
     SAMPLE_NAVIGATOR: SAMPLE_NAVIGATOR, SAMPLE_NOCONFIRM: SAMPLE_NOCONFIRM
   };

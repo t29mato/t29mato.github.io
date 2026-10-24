@@ -55,7 +55,10 @@
       active: pane.id,
       last: null,
       zoomed: false,
-      layoutName: null
+      layoutName: null,
+      // next-layout goes on from the last layout set, through splits and
+      // closes too (tmux's lastlayout): its place in LAYOUTS, -1 for none.
+      lastLayout: -1
     };
     // tmux keeps windows sorted by index.
     session.windows.push(win);
@@ -111,11 +114,21 @@
   // ---- layout -------------------------------------------------------------
   // Each split node has `ratio`: the share of the axis given to child a.
   // Cells: a gets round(ratio * (size - 1)), one cell is the border, b the rest.
+  // A node a layout made sizes its cells as tmux does instead (layouts below):
+  // `even` (a chain of that many cells, the spare cells to the first ones),
+  // `tile` ({d, m}: m cells of a d-wide grid row, the spare to the last) or
+  // `main` (the main pane's cells). `mirror` draws child a after child b
+  // (to the right, or below), so the main pane keeps its number 0.
 
   var MIN = 2;
 
-  function splitSizes(size, ratio) {
-    var a = Math.round(ratio * (size - 1));
+  function splitSizes(size, node) {
+    var a;
+    if (typeof node === 'number') a = Math.round(node * (size - 1));
+    else if (node.even) a = Math.ceil((size - (node.even - 1)) / node.even);
+    else if (node.tile) a = (node.tile.m - 1) * Math.floor((size - (node.tile.d - 1)) / node.tile.d) + (node.tile.m - 2);
+    else if (node.main) a = node.main;
+    else a = Math.round(node.ratio * (size - 1));
     if (a < MIN) a = MIN;
     if (size - 1 - a < MIN) a = size - 1 - MIN;
     if (a < 1) a = 1;
@@ -131,16 +144,17 @@
     }
     function walk(node, x, y, w, h) {
       if (node.type === 'pane') { rects.push({ pane: node.pane, x: x, y: y, w: w, h: h }); return; }
+      var m = node.mirror;
       if (node.dir === 'lr') {
-        var s = splitSizes(w, node.ratio);
-        walk(node.a, x, y, s.a, h);
-        borders.push({ dir: 'v', x: x + s.a, y: y, len: h, node: node });
-        walk(node.b, x + s.a + 1, y, s.b, h);
+        var s = splitSizes(w, node), first = m ? s.b : s.a;
+        walk(node.a, m ? x + s.b + 1 : x, y, s.a, h);
+        borders.push({ dir: 'v', x: x + first, y: y, len: h, node: node });
+        walk(node.b, m ? x : x + s.a + 1, y, s.b, h);
       } else {
-        var t = splitSizes(h, node.ratio);
-        walk(node.a, x, y, w, t.a);
-        borders.push({ dir: 'h', x: x, y: y + t.a, len: w, node: node });
-        walk(node.b, x, y + t.a + 1, w, t.b);
+        var t = splitSizes(h, node), top = m ? t.b : t.a;
+        walk(node.a, x, m ? y + t.b + 1 : y, w, t.a);
+        borders.push({ dir: 'h', x: x, y: y + top, len: w, node: node });
+        walk(node.b, x, m ? y : y + t.a + 1, w, t.b);
       }
     }
     walk(win.root, 0, 0, cols, rows);
@@ -323,12 +337,15 @@
     var size = sizeOfNode(win, target, cols, rows, axis);
     var span = size - 1;
     if (span < 2 * MIN + 1) return false;
-    var cur = splitSizes(size, target.ratio).a;
-    var want = cur + n;
+    var cur = splitSizes(size, target).a;
+    // Child a drawn after b (a mirrored layout): its border moves the other way.
+    var want = cur + (target.mirror ? -n : n);
     if (want < MIN) want = MIN;
     if (span - want < MIN) want = span - MIN;
     if (want === cur) return false;
     target.ratio = want / span;
+    // Moved by hand: the layout's own sizing gives way to the ratio.
+    delete target.even; delete target.tile; delete target.main;
     win.layoutName = null;
     return true;
   }
@@ -340,10 +357,10 @@
       if (node === target) { found = axis === 'lr' ? w : h; return; }
       if (node.type === 'pane') return;
       if (node.dir === 'lr') {
-        var s = splitSizes(w, node.ratio);
+        var s = splitSizes(w, node);
         walk(node.a, x, y, s.a, h); walk(node.b, x + s.a + 1, y, s.b, h);
       } else {
-        var t = splitSizes(h, node.ratio);
+        var t = splitSizes(h, node);
         walk(node.a, x, y, w, t.a); walk(node.b, x, y + t.a + 1, w, t.b);
       }
     }
@@ -409,46 +426,132 @@
     return swapPanes(win, win.active, other.id);
   }
 
-  // rotate-window (prefix C-o): every pane's contents move one place up in
-  // the order (the first goes to the end); the focus stays where it is on
-  // screen, so it lands on the pane that moved in.
-  function rotateWindow(win) {
+  // rotate-window (prefix C-o, -U): every pane's contents move one place
+  // up in the order (the first goes to the end); -D (prefix M-o, `down`)
+  // the other way. The focus stays where it is on screen, so it lands on
+  // the pane that moved in.
+  function rotateWindow(win, down) {
     var nodes = [];
     (function walk(node) { if (node.type === 'pane') nodes.push(node); else { walk(node.a); walk(node.b); } })(win.root);
     if (nodes.length < 2) return false;
     var at = 0;
     for (var i = 0; i < nodes.length; i++) if (nodes[i].pane.id === win.active) at = i;
     var panes = nodes.map(function (n) { return n.pane; });
-    for (var j = 0; j < nodes.length; j++) nodes[j].pane = panes[(j + 1) % panes.length];
+    var n = panes.length;
+    for (var j = 0; j < n; j++) nodes[j].pane = panes[(j + (down ? n - 1 : 1)) % n];
     win.zoomed = false;
     win.last = null;
     setActive(win, nodes[at].pane.id);
     return true;
   }
 
-  // ---- layouts (select-layout / next-layout) --------------------------------
+  // join-pane (move-pane): pane `srcId` of window `src` leaves it and splits
+  // pane `dstId` of window `dst`, below it (dir 'tb', -v) or to its right
+  // ('lr', -h); `before` (-b) puts it above or to the left. It becomes the
+  // active pane unless `keepFocus` (-d). A window left with no pane closes.
+  // Returns the pane, or null.
+  function joinPane(session, src, srcId, dst, dstId, dir, before, keepFocus) {
+    if (srcId === dstId) return null;
+    var hit = parentOf(src.root, srcId);
+    if (!hit || !parentOf(dst.root, dstId)) return null;
+    var pane = hit.node.pane;
+    if (!hit.parent) {
+      if (src === dst || !killWindow(session, src.id)) return null;
+    } else killPane(src, srcId);
+    var at = parentOf(dst.root, dstId);
+    var leaf = { type: 'pane', pane: pane };
+    var split = { type: 'split', dir: dir, ratio: 0.5, a: before ? leaf : at.node, b: before ? at.node : leaf };
+    if (!at.parent) dst.root = split;
+    else if (at.parent.a === at.node) at.parent.a = split;
+    else at.parent.b = split;
+    dst.zoomed = false;
+    dst.layoutName = null;
+    if (!keepFocus) { dst.last = dst.active; setActive(dst, pane.id); }
+    return pane;
+  }
 
-  var LAYOUTS = ['even-horizontal', 'even-vertical', 'main-horizontal', 'main-vertical', 'tiled'];
+  // swap-window: the two windows trade numbers. As tmux 3.8 does it, the
+  // current number stays current (so the focus goes to the window swapped
+  // in), unless -d (`follow`): then the current window keeps the focus at
+  // its new number, and the other one becomes the last.
+  function swapWindows(session, idA, idB, follow) {
+    var a = windowById(session, idA), b = windowById(session, idB);
+    if (!a || !b || a === b) return false;
+    var t = a.index; a.index = b.index; b.index = t;
+    session.windows.sort(function (x, y) { return x.index - y.index; });
+    if (session.active === a.id || session.active === b.id) {
+      var cur = session.active === a.id ? a : b, other = cur === a ? b : a;
+      if (follow) session.last = other.id;
+      else session.active = other.id;
+    }
+    return true;
+  }
+
+  // move-window -t: the window to a free number (tmux refuses one in use,
+  // "index in use"). Returns false when it cannot.
+  function moveWindow(session, winId, index) {
+    var w = windowById(session, winId);
+    if (!w || windowByIndex(session, index) && windowByIndex(session, index) !== w) return false;
+    w.index = index;
+    session.windows.sort(function (x, y) { return x.index - y.index; });
+    return true;
+  }
+
+  // move-window -r: the numbers made consecutive again from base-index.
+  function renumberWindows(session) {
+    session.windows.forEach(function (w, i) { w.index = session.baseIndex + i; });
+  }
+
+  // ---- layouts (select-layout / next-layout) --------------------------------
+  // In next-layout's order (prefix Space), as tmux 3.8 cycles them; the
+  // prefix M-1 to M-7 keys pick them in LAYOUT_KEYS' order. Sized as tmux
+  // sizes them: the even ones share the cells out (the spare to the first
+  // panes), tiled makes rows of columns (the spare to the last row and
+  // column), and the main pane is main-pane-height (24) rows high or
+  // main-pane-width (80) columns wide, the others even beside it.
+
+  var LAYOUTS = ['even-horizontal', 'even-vertical', 'main-horizontal', 'main-horizontal-mirrored', 'main-vertical', 'main-vertical-mirrored', 'tiled'];
+  var LAYOUT_KEYS = ['even-horizontal', 'even-vertical', 'main-horizontal', 'main-vertical', 'tiled', 'main-horizontal-mirrored', 'main-vertical-mirrored'];
+  var MAIN_HEIGHT = 24, MAIN_WIDTH = 80;
 
   // A chain of splits along `dir` that shares the axis evenly.
   function chain(list, dir) {
     if (list.length === 1) return list[0];
-    return { type: 'split', dir: dir, ratio: 1 / list.length, a: list[0], b: chain(list.slice(1), dir) };
+    return { type: 'split', dir: dir, ratio: 1 / list.length, even: list.length, a: list[0], b: chain(list.slice(1), dir) };
+  }
+
+  // A row (or the column of rows) of tiled: `m` cells of a grid `d` wide,
+  // nested from the left so each takes the grid's width.
+  function tileRow(list, dir, d) {
+    var m = list.length;
+    if (m === 1) return list[0];
+    return { type: 'split', dir: dir, ratio: (m - 1) / m, tile: { d: d, m: m }, a: tileRow(list.slice(0, -1), dir, m - 1), b: list[m - 1] };
   }
 
   function applyLayout(win, name) {
+    var at = LAYOUTS.indexOf(name);
+    if (at < 0) return false;
+    win.lastLayout = at;
     var nodes = panesOf(win).map(function (p) { return { type: 'pane', pane: p }; });
     if (nodes.length < 2) { win.layoutName = name; return false; }
     var root;
     if (name === 'even-horizontal') root = chain(nodes, 'lr');
     else if (name === 'even-vertical') root = chain(nodes, 'tb');
-    else if (name === 'main-horizontal') root = { type: 'split', dir: 'tb', ratio: 0.6, a: nodes[0], b: chain(nodes.slice(1), 'lr') };
-    else if (name === 'main-vertical') root = { type: 'split', dir: 'lr', ratio: 0.6, a: nodes[0], b: chain(nodes.slice(1), 'tb') };
+    else if (name === 'main-horizontal') root = { type: 'split', dir: 'tb', ratio: 0.6, main: MAIN_HEIGHT, a: nodes[0], b: chain(nodes.slice(1), 'lr') };
+    else if (name === 'main-horizontal-mirrored') root = { type: 'split', dir: 'tb', ratio: 0.6, main: MAIN_HEIGHT, mirror: true, a: nodes[0], b: chain(nodes.slice(1), 'lr') };
+    else if (name === 'main-vertical') root = { type: 'split', dir: 'lr', ratio: 0.6, main: MAIN_WIDTH, a: nodes[0], b: chain(nodes.slice(1), 'tb') };
+    else if (name === 'main-vertical-mirrored') root = { type: 'split', dir: 'lr', ratio: 0.6, main: MAIN_WIDTH, mirror: true, a: nodes[0], b: chain(nodes.slice(1), 'tb') };
     else {
-      var cols = Math.ceil(Math.sqrt(nodes.length));
+      // tmux's layout_set_tiled: rows and columns grow in turn until all fit.
+      var rows = 1, cols = 1, n = nodes.length;
+      while (rows * cols < n) { rows++; if (rows * cols < n) cols++; }
       var rowsList = [];
-      for (var i = 0; i < nodes.length; i += cols) rowsList.push(chain(nodes.slice(i, i + cols), 'lr'));
-      root = chain(rowsList, 'tb');
+      for (var i = 0; i < n; i += cols) {
+        var row = nodes.slice(i, i + cols);
+        // A short last row: its cells are as wide as the others, the last takes the rest.
+        rowsList.push(row.length === 1 ? row[0] : row.length < cols ? shortRow(row, cols) : tileRow(row, 'lr', cols));
+      }
+      root = tileRow(rowsList, 'tb', rowsList.length);
     }
     win.root = root;
     win.zoomed = false;
@@ -456,9 +559,16 @@
     return true;
   }
 
-  function nextLayout(win) {
-    var at = LAYOUTS.indexOf(win.layoutName);
-    return applyLayout(win, LAYOUTS[(at + 1) % LAYOUTS.length]) || true;
+  function shortRow(row, cols) {
+    var r = tileRow(row, 'lr', row.length);
+    r.tile = { d: cols, m: row.length };
+    return r;
+  }
+
+  function nextLayout(win, back) {
+    var n = LAYOUTS.length, at = win.lastLayout == null ? -1 : win.lastLayout;
+    var to = back ? (at <= 0 ? n - 1 : at - 1) : (at + 1) % n;
+    return applyLayout(win, LAYOUTS[to]) || true;
   }
 
   window.ADV = window.ADV || {};
@@ -469,6 +579,11 @@
     applyLayout: applyLayout,
     nextLayout: nextLayout,
     LAYOUTS: LAYOUTS,
+    LAYOUT_KEYS: LAYOUT_KEYS,
+    joinPane: joinPane,
+    swapWindows: swapWindows,
+    moveWindow: moveWindow,
+    renumberWindows: renumberWindows,
     createSession: createSession,
     createWindow: createWindow,
     createPane: createPane,

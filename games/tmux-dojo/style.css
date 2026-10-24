@@ -1006,3 +1006,22 @@ body[data-armed="1"] .yashiki .term { box-shadow: none; }
   .gb-state, .pb-who { display: none; }
   .records-body .ghost-pick .gp-l { flex-basis: 100%; }
 }
+
+/* --- tatsujin --- */
+/* a replay has its own controls: the play buttons under the house go */
+body[data-watching="1"] .game-foot, body[data-watching="1"] .keybar { display: none !important; }
+/* the 完成図 of a layout question, small, in the guide card */
+.ob-fig { position: relative; width: 120px; max-width: 40%; margin-top: 6px; border: 1px solid var(--sumi-dim); background: var(--washi-3); }
+.ob-fig i { position: absolute; box-sizing: border-box; border: 1px solid var(--sumi-dim); display: flex; align-items: center; justify-content: center; font-style: normal; }
+.ob-fig i b { font-family: var(--mono); font-size: 10px; font-weight: 700; }
+.ob-fig i.me { background: rgba(63, 185, 80, 0.25); }
+.yashiki .ob-fig { border-color: #8b949e; background: #0d1117; }
+.yashiki .ob-fig i { border-color: #8b949e; color: #c9d1d9; }
+.yashiki .ob-fig i.me { background: rgba(63, 185, 80, 0.3); border-color: var(--t-green); }
+/* 今日の達人, one line under 今日の問題 */
+.today-daily { flex-basis: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 0; font-size: 13.5px; }
+.today-daily .td-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.today-daily .td-go { flex: none; padding: 3px 12px; font-size: 13px; }
+.daily-board { margin-top: 12px; }
+/* the share text keeps its own ink on its own ground (it was dark on dark in the dark theme) */
+.share-text { color: var(--ink); }

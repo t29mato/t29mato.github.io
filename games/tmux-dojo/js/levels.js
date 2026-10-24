@@ -30,6 +30,14 @@
     detach: ['d'],
     swap: ['{', '}'],
     layout: ['Space'],
+    layout_pick: (MAC ? ['Option+1', 'Option+2', 'Option+3', 'Option+4', 'Option+5'] : ['Alt+1', 'Alt+2', 'Alt+3', 'Alt+4', 'Alt+5']).concat(['Space']),
+    join: [':', 'join-pane -s'],
+    swap_window: [':', 'swap-window -t'],
+    move_window: [':', 'move-window -t'],
+    sync: [':', 'setw synchronize-panes'],
+    display_panes: ['q', '0-9'],
+    rotate: ['Ctrl+o', MAC ? 'Option+o' : 'Alt+o'],
+    command: [':'],
     rename_pane: [':', 'select-pane -T'],
     search: ['[', '?', '/', 'n'],
     yank: ['Home', 'Space', 'End', 'Enter'],
@@ -65,7 +73,15 @@
     kill_window: '&（Shift+7）→ 確認に y',
     new_session: ':（コマンド入力）→ new -s 名前 → Enter',
     rename_session: '$ → 名前を入力して Enter',
-    choose: 's で一覧（↑ ↓ と Enter）か、( ) で前・次のセッションへ（L で直前のセッションへ）'
+    choose: 's で一覧（↑ ↓ と Enter）か、( ) で前・次のセッションへ（L で直前のセッションへ）',
+    layout_pick: MAC ? 'Option+1〜5 で並べ方を選ぶ（Space で順に変わる）' : 'Alt+1〜5 で並べ方を選ぶ（Space で順に変わる）',
+    join: ': → join-pane -s 番号 → Enter（-h で左右に）',
+    swap_window: ': → swap-window -t 番号 → Enter',
+    move_window: ': → move-window -t 番号 → Enter',
+    sync: ': → setw synchronize-panes on → Enter（off で戻す）',
+    display_panes: 'q で番号を出し、1 秒のうちに番号を押す',
+    rotate: MAC ? 'Ctrl+o でペインを 1 つずつ前へ回す（Option+o で後ろへ）' : 'Ctrl+o でペインを 1 つずつ前へ回す（Alt+o で後ろへ）',
+    command: ':（コマンド入力）→ コマンドを打って Enter'
   };
 
   // Tips: why a key is what it is, neighbours worth knowing, and how to
@@ -96,7 +112,16 @@
     kill_window: ['& も確認付き。ウィンドウの中のペインが全部閉じる。'],
     new_session: ['外からは tmux new -s 名前。中からなら prefix → : で new -s 名前。できたセッションにそのまま移る。'],
     rename_session: ['セッションの名前は、外から tmux attach -t 名前 で選ぶときに使う。'],
-    choose: ['s はセッションの一覧、w はウィンドウまで含めた一覧（どちらも choose-tree）。( と ) は前後のセッションへ、L は直前のセッションへ。', 'セッションは名前の順に並ぶ（tmux ls も一覧も）。( と ) はその順で前後へ回る。']
+    choose: ['s はセッションの一覧、w はウィンドウまで含めた一覧（どちらも choose-tree）。( と ) は前後のセッションへ、L は直前のセッションへ。', 'セッションは名前の順に並ぶ（tmux ls も一覧も）。( と ) はその順で前後へ回る。'],
+    layout_pick: ['Alt+1〜5 は even-horizontal（横に均等）、even-vertical（縦に均等）、main-horizontal（上に大きく）、main-vertical（左に大きく）、tiled（田の字）。Alt+6・7 はその鏡写し。',
+      'main-horizontal の大きいペインは main-pane-height（既定 24 行）、main-vertical は main-pane-width（既定 80 列）の大きさになる。'],
+    join: ['join-pane は break-pane の逆。-s 2 はウィンドウ 2 のいまのペイン、-s 2.1 はウィンドウ 2 のペイン 1。-h で左右に並べる。', 'bind J command-prompt -p "join pane from:" "join-pane -s \'%%\'" と書くと、番号だけ打てばよくなる。'],
+    swap_window: ['swap-window -t 番号 で、いまのウィンドウとその番号のウィンドウが入れ替わる。tmux 3.8 では -d を付けたときだけ、動かしたウィンドウについて行く。', 'bind -r < swap-window -d -t -1 と書くと、prefix → < でいまのウィンドウを左へずらしていける。'],
+    move_window: ['move-window -t 番号 は空いている番号へ動かす（使われている番号なら index in use）。番号を詰め直すのは move-window -r。set -g renumber-windows on なら閉じるたびに詰まる。'],
+    sync: ['synchronize-panes は値を書かなければ on と off が入れ替わる。bind S setw synchronize-panes と書いておく人が多い。', '同期は打った文字だけ。prefix のキーは同期しない。'],
+    display_panes: ['番号が出ているのは display-panes-time（既定 1 秒）のあいだ。set -g display-panes-time 3000 で長くできる。'],
+    rotate: ['prefix → Ctrl+o で、ペインの中身が 1 つずつ前へ回る（rotate-window）。prefix → Alt+o は後ろへ。ペインの番号は場所の番号なので、回ると中身の番号が変わる。'],
+    command: ['キーのない操作は prefix → : で打つ。join-pane は joinp、swap-window は swapw、move-window は movew と短く打てる。']
   };
 
   function tipsFor(action) {
@@ -141,8 +166,57 @@
       plan: { cols: 5, rows: 4, cells: 20, lit: 6 },
       desc: '1 問で 2〜8 手。セッションを作る・移る・attach -t で入る、履歴の検索も混ざる。考える前に手が動くか。',
       qs: ['find_zoom', 'trident', 'two_akima', 'new_and_home', 'swap_zoom', 'split_lr', 'yank_paste', 'copy_top', 'session_new', 'trident', 'kill_window', 'session_switch', 'session_attach', 'focus', 'resize', 'copy_search']
+    },
+    // 達人: for people who already use tmux. What the other houses do not
+    // drill: join-pane, swap-window and move-window, the layouts, typing
+    // into every pane at once, display-panes, rotate-window, a search then
+    // a copy, and commands that have no key. `en`: its English name (the
+    // belt 達人 is "Expert"). rankMul 1.8: a bot following the 手順 at three
+    // paces took 1.10–1.19 times as long a question here as on 上級
+    // (typing the commands), so the same hands get the same belt on both.
+    {
+      id: 'pro', title: '達人', en: 'Pro', mode: '使っている人へ', limit: 18, rankMul: 1.8, ver: 2, expert: true,
+      plan: { cols: 6, rows: 4, cells: 24, lit: 9 },
+      desc: 'tmux をもう使っている人へ。ペインを連れてくる・ウィンドウの入れ替え・並べ方・全部のペインに同時に打つ・番号で飛ぶ・検索してコピー・キーのないコマンド。',
+      qs: ['join_pane', 'layout', 'swap_window', 'sync_panes', 'pane_jump', 'rotate', 'search_yank', 'move_window', 'layout_cycle', 'join_pane_h', 'new_window_named', 'kill_session', 'layout', 'pane_jump']
     }
   ];
+
+  // 今日の達人: one question a day from the 達人 house, the same for
+  // everyone (dailyPick), without its 手順 (they come out after PEEK_AFTER
+  // seconds or a wrong key, and that is kept). Timed, with the fewest keys
+  // beside the time, on a board of its own. No title: one question is no
+  // run of a house.
+  var DAILY = {
+    id: 'daily', title: '今日の達人', mode: '1 問', limit: 12, rankMul: 1, ver: 2, daily: true, blind: true,
+    plan: { cols: 1, rows: 1, cells: 1, lit: 0 },
+    desc: '達人の問題が 1 日 1 問。手順なしで、速さと押したキーの少なさを競う。', qs: []
+  };
+
+  // The same random numbers as app.js and the server (rules.js) make from
+  // a seed: the day's order and the day's question.
+  function rng(seed) {
+    var h = 1779033703 ^ seed.length;
+    for (var i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+    return function () {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    };
+  }
+
+  // The question of 今日の達人 on `day` (YYYY-MM-DD, Japan): one of the
+  // 達人 house's question types, by the day.
+  function dailyPool() {
+    var pro = COURSES.filter(function (c) { return c.id === 'pro'; })[0], out = [];
+    pro.qs.forEach(function (t) { if (out.indexOf(t) < 0) out.push(t); });
+    return out;
+  }
+  function dailyPick(day) {
+    var pool = dailyPool();
+    return pool[Math.floor(rng(day + ':daily')() * pool.length)];
+  }
 
   // 稽古: the recall drill. Questions without their 手順 (they come out after
   // PEEK_AFTER seconds or a wrong key), picked one at a time by how often
@@ -274,8 +348,10 @@
     return Math.round((n || course.qs.length) * rankInfo(PAR_RANK).max * (course.rankMul || 1));
   }
 
-  // Names shown on screen, in the page's language (i18n.js).
-  [].concat(COURSES, [KEIKO]).forEach(function (c) { c.title = tx(c.title); c.mode = tx(c.mode); c.desc = tx(c.desc); });
+  // Names shown on screen, in the page's language (i18n.js). A course with
+  // `en` has its own English name (達人 in Japanese is a belt too).
+  var EN = !!(window.ADV && window.ADV.i18n && window.ADV.i18n.lang === 'en');
+  [].concat(COURSES, [KEIKO, DAILY]).forEach(function (c) { c.title = EN && c.en ? c.en : tx(c.title); c.mode = tx(c.mode); c.desc = tx(c.desc); });
 
   window.ADV = window.ADV || {};
   window.ADV.levels = {
@@ -296,6 +372,10 @@
     nextRank: nextRank,
     par: par,
     KEIKO: KEIKO,
+    DAILY: DAILY,
+    rng: rng,
+    dailyPool: dailyPool,
+    dailyPick: dailyPick,
     DRILL_FREQ: DRILL_FREQ,
     LEARNT_AFTER: LEARNT_AFTER,
     STEPS_DEFAULT: STEPS_DEFAULT,

@@ -92,6 +92,8 @@
     b.dataset.detached = S.detached ? '1' : '0';
     b.dataset.stage = S.run && S.run.phase === 'play' ? String(S.run.stage) : '0';
     b.dataset.detail = S.detail ? '1' : '0';
+    // A replay has its own controls: やめる and the 手順 detail are for play.
+    b.dataset.watching = S.replay ? '1' : '0';
     // status-position top: the bar above the panes, as the player has it.
     b.dataset.status = S.conf && S.conf.statusTop ? 'top' : 'bottom';
     var dt = $('.detail-toggle');
@@ -150,7 +152,7 @@
     if (!cmd) return;
     switch (cmd) {
       case 'help':
-        pane.lines.push(tx('使えるコマンド: ls  echo  cat  pwd  clear  exit  tmux  help'));
+        pane.lines.push(tx('使えるコマンド: ls  echo  cat  pwd  date  uptime  hostname  clear  exit  tmux  help'));
         pane.lines.push(tx('tmux の操作は {0} を押して離してからキーを押す。押すキーは画面の手順に出ている', prefixLabel()));
         break;
       case 'ls':
@@ -158,6 +160,15 @@
         break;
       case 'pwd':
         pane.lines.push('/home/dojo/' + (pane.name || 'ma'));
+        break;
+      case 'date':
+        pane.lines.push(new Date().toString().slice(0, 24));
+        break;
+      case 'hostname':
+        pane.lines.push('dojo');
+        break;
+      case 'uptime':
+        pane.lines.push(hhmm(new Date()) + '  up 3 days,  2 users,  load averages: 0.12 0.08 0.05');
         break;
       case 'echo':
         pane.lines.push(argv.slice(1).join(' '));
@@ -439,6 +450,7 @@
     S.confirm = null;
     S.prompt = null;
     S.picker = null;
+    S.syncAll = false;
   }
 
   // ---- the house: the rooms and wings of one run ----------------------------
@@ -834,7 +846,23 @@
     // The guide's key pressed without the prefix (an arrow is shown as ↓).
     var kl = ARROWS[{ ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[k.key]] || k.key;
     if (nx && nx.pfx && nx.keys.indexOf(kl) >= 0 && !k.ctrl && !k.alt) message(tx('{0} がシェルに入った。先に {1}（prefix）を押す', kl, prefixLabel()));
-    return editLine(pane, k, function (line) { runPaneCommand(pane, line); });
+    var typed = editLine(pane, k, function (line) { runPaneCommand(pane, line); });
+    // synchronize-panes: the key goes to every other synchronized pane on
+    // screen too (not one in copy mode, nor one hidden by a zoom).
+    if (syncOn(win, pane) && !win.zoomed) {
+      T.panesOf(win).forEach(function (p) {
+        if (p !== pane && p.mode !== 'copy' && syncOn(win, p)) editLine(p, k, function (line) { runPaneCommand(p, line); });
+      });
+    }
+    return typed;
+  }
+
+  // Whether a pane takes the keys typed in its window (synchronize-panes):
+  // its own pane option, else the window's, else the global one.
+  function syncOn(win, pane) {
+    if (pane && pane.sync != null) return pane.sync;
+    if (win && win.sync != null) return win.sync;
+    return !!S.syncAll;
   }
 
   // A key that repeats without the prefix inside the repeat window: one of
@@ -857,11 +885,19 @@
     if (a.run === 'clear') { if (pane.mode !== 'copy') pane.lines.push({ clear: true }); S.lastAction = 'brief'; return true; }
     if (a.run === 'noop') { message('source-file: ゲームでは何も起きない'); S.lastAction = 'brief'; return true; }
     if (a.run === 'say') { message(a.text || '', true); S.lastAction = 'brief'; return true; }
+    // A command with no key of its own (join-pane, setw synchronize-panes…).
+    if (a.run === 'cmd') { runTmuxCommand(a.argv.slice()); if (b.repeat) armRepeat(); return true; }
+    // command-prompt -p "label" "template": what is typed fills in %%.
+    if (a.run === 'prompt') {
+      S.lastAction = 'cmd';
+      S.prompt = { label: a.label, value: '', done: function (v) { runTmuxCommand(a.tpl.replace(/%%|%1/g, v)); } };
+      return true;
+    }
     if (a.resize) {
       resize(win, pane, { dir: a.resize, n: a.n });
       S.lastAction = 'resize';
     } else {
-      prefixedKey({ key: a.key, code: /^[0-9]$/.test(a.key) ? 'Digit' + a.key : undefined, ctrl: !!a.ctrl, alt: false, shift: false, meta: false }, win, pane);
+      prefixedKey({ key: a.key, code: /^[0-9]$/.test(a.key) ? 'Digit' + a.key : a.alt && /^[a-z]$/.test(a.key) ? 'Key' + a.key.toUpperCase() : undefined, ctrl: !!a.ctrl, alt: !!a.alt, shift: false, meta: false }, win, pane);
       // kill-pane / kill-window with no confirm-before: at once.
       if (a.now && S.confirm) { var yes = S.confirm.yes; S.confirm = null; yes(); }
     }
@@ -907,13 +943,15 @@
       return true;
     }
 
-    // Alt+1..5: select-layout (tmux). e.code survives Option's character remap on a Mac.
-    if (k.alt && !k.ctrl && /^Digit[1-5]$/.test(k.code || '')) {
-      T.applyLayout(win, T.LAYOUTS[Number(k.code.slice(5)) - 1]);
+    // Alt+1..7: select-layout (tmux). e.code survives Option's character remap on a Mac.
+    if (k.alt && !k.ctrl && /^Digit[1-7]$/.test(k.code || '')) {
+      T.applyLayout(win, T.LAYOUT_KEYS[Number(k.code.slice(5)) - 1]);
       S.lastAction = 'layout';
       return true;
     }
+    // C-o rotate-window, M-o rotate-window -D.
     if (k.ctrl && !k.alt && key.toLowerCase() === 'o') { T.rotateWindow(win); S.lastAction = 'swap'; return true; }
+    if (k.alt && !k.ctrl && (k.code === 'KeyO' || key === 'o')) { T.rotateWindow(win, true); S.lastAction = 'swap'; return true; }
     // Ctrl still held from the prefix: Ctrl+z is not z. Said, not counted.
     if (k.ctrl && !k.alt && DEFAULT_KEYS.indexOf(key.length === 1 ? key.toLowerCase() : key) >= 0) {
       message(tx('Ctrl を離してから {0} を押す', key.length === 1 ? key.toLowerCase() : key));
@@ -1109,6 +1147,7 @@
   // display-panes: the numbers show for display-panes-time (1 s).
   function showPaneNumbers() {
     S.panesShown = Date.now() + 1000;
+    if (S.sim) return;
     clearTimeout(S.dpTimer);
     S.dpTimer = setTimeout(function () { if (S.panesShown) { S.panesShown = null; if (S.screen === 'game') renderTerm(); } }, 1000);
   }
@@ -1125,8 +1164,9 @@
 
   // The tmux command prompt (prefix → :). The commands the game has, with
   // their tmux aliases; the rest is "unknown command", as tmux says it.
+  // `line` may be the words already (a binding's command).
   function runTmuxCommand(line) {
-    var argv = (CF.words(line)[0] || []).slice();
+    var argv = Array.isArray(line) ? line.slice() : (CF.words(line)[0] || []).slice();
     var cmd = argv[0] || '';
     var win = T.activeWindow(S.session);
     var pane = T.activePane(win);
@@ -1157,7 +1197,7 @@
       return;
     }
     if (/^(last-pane|lastp)$/.test(cmd)) { asKey(';'); return; }
-    if (/^(rotate-window|rotatew)$/.test(cmd)) { asKey('o', true); return; }
+    if (/^(rotate-window|rotatew)$/.test(cmd)) { if (has('-D')) { T.rotateWindow(win, true); S.lastAction = 'swap'; } else asKey('o', true); return; }
     if (/^(next-window|next)$/.test(cmd)) { asKey('n'); return; }
     if (/^(previous-window|prev)$/.test(cmd)) { asKey('p'); return; }
     if (/^(select-window|selectw)$/.test(cmd)) {
@@ -1177,9 +1217,49 @@
       killSession(ks);
       return;
     }
-    // tmux has these; the game's windows cannot be moved about.
-    if (/^(swap-window|swapw|move-window|movew|join-pane|joinp)$/.test(cmd)) {
-      message(tx('{0} はゲームにない', cmd)); S.lastAction = 'brief';
+    var o = CF.flags(argv);
+    // join-pane (move-pane): -s the pane to bring, -t the pane to split
+    // (this one), -h side by side, -b before it, -d the focus stays.
+    if (/^(join-pane|joinp|move-pane|movep)$/.test(cmd)) {
+      if (o.f.s == null) { message('no marked pane'); S.lastAction = 'brief'; return; }
+      var js = paneTarget(o.f.s), jd = paneTarget(o.f.t);
+      if (!js || !jd) { message("can't find pane: " + (!js ? o.f.s : o.f.t)); S.lastAction = 'brief'; return; }
+      if (js.pane.id === jd.pane.id) { message('source and target panes must be different'); S.lastAction = 'brief'; return; }
+      T.joinPane(S.session, js.win, js.pane.id, jd.win, jd.pane.id, o.f.h ? 'lr' : 'tb', !!o.f.b, !!o.f.d);
+      if (!o.f.d && jd.win !== win) T.selectWindow(S.session, jd.win.id);
+      S.lastAction = 'join';
+      return;
+    }
+    if (/^(swap-window|swapw)$/.test(cmd)) {
+      var sa = o.f.s != null ? windowTarget(o.f.s) : win, sb = windowTarget(o.f.t);
+      if (!sa || !sb) { message("can't find window: " + (!sa ? o.f.s : o.f.t)); S.lastAction = 'brief'; return; }
+      T.swapWindows(S.session, sa.id, sb.id, !!o.f.d);
+      S.lastAction = 'swap_window';
+      return;
+    }
+    if (/^(move-window|movew)$/.test(cmd)) {
+      var mw = o.f.s != null ? windowTarget(o.f.s) : win;
+      if (!mw) { message("can't find window: " + o.f.s); S.lastAction = 'brief'; return; }
+      S.lastAction = 'move_window';
+      if (o.f.r) { T.renumberWindows(S.session); return; }
+      var mt = /^(?:[^:]*:)?(\d+)$/.exec(o.f.t || '');
+      if (!mt) { message(o.f.t ? "can't find window: " + o.f.t : 'index in use: ' + mw.index); S.lastAction = 'brief'; return; }
+      var mi = Number(mt[1]), there = T.windowByIndex(S.session, mi);
+      if (there && there !== mw && o.f.k) T.killWindow(S.session, there.id);
+      if (!T.moveWindow(S.session, mw.id, mi)) { message('index in use: ' + mi); S.lastAction = 'brief'; }
+      return;
+    }
+    // set / setw: synchronize-panes (-g every window, -p this pane, -u
+    // unset; no value turns it over). Any other option changes nothing here.
+    if (/^(set|set-option|setw|set-window-option)$/.test(cmd)) {
+      var on = o.rest[0], val = o.rest[1];
+      if (on !== 'synchronize-panes') { message(tx('{0}: ゲームでは何も変わらない設定', on || cmd)); S.lastAction = 'brief'; return; }
+      var v = val == null ? null : /^(on|yes|1)$/i.test(val) ? true : /^(off|no|0)$/i.test(val) ? false : 'bad';
+      if (v === 'bad') { message('bad value: ' + val); S.lastAction = 'brief'; return; }
+      if (o.f.g) S.syncAll = v == null ? !S.syncAll : v;
+      else if (o.f.p) pane.sync = o.f.u ? null : v == null ? !syncOn(win, pane) : v;
+      else win.sync = o.f.u ? null : v == null ? !syncOn(win, null) : v;
+      S.lastAction = 'sync';
       return;
     }
     if (/^(new|new-session|news)$/.test(cmd)) {
@@ -1224,12 +1304,17 @@
       else message('no last window');
       S.lastAction = 'select_window';
     } else if (/^(select-layout|selectl)$/.test(cmd)) {
-      var lay = argv[1] || '';
-      if (T.LAYOUTS.indexOf(lay) >= 0) T.applyLayout(win, lay);
-      else message('unknown layout: ' + lay);
+      // A name, or the start of one (even-h); -n / -p next and previous; none: the last one again.
+      var lay = o.rest[0] || '';
+      var hits = T.LAYOUTS.filter(function (n) { return lay && n.indexOf(lay) === 0; });
+      if (T.LAYOUTS.indexOf(lay) >= 0) hits = [lay];
+      if (o.f.n || o.f.p) T.nextLayout(win, !!o.f.p);
+      else if (!lay && win.lastLayout >= 0) T.applyLayout(win, T.LAYOUTS[win.lastLayout]);
+      else if (hits.length === 1) T.applyLayout(win, hits[0]);
+      else { message('unknown layout: ' + lay); S.lastAction = 'brief'; return; }
       S.lastAction = 'layout';
-    } else if (/^(next-layout|nextl)$/.test(cmd)) {
-      T.nextLayout(win);
+    } else if (/^(next-layout|nextl|previous-layout|prevl)$/.test(cmd)) {
+      T.nextLayout(win, /^prev/.test(cmd));
       S.lastAction = 'layout';
     } else if (/^(swap-pane|swapp)$/.test(cmd)) {
       T.swapStep(win, argv.indexOf('-U') > 0 ? -1 : 1);
@@ -1249,6 +1334,34 @@
       message('unknown command: ' + cmd);
       S.lastAction = 'unbound';
     }
+  }
+
+  // A window as a target names it: 2, :2, a name, sess:2, + / - (the next
+  // or the previous), +N / -N. Null when there is none.
+  function windowTarget(t) {
+    var cur = T.activeWindow(S.session);
+    if (t == null) return cur;
+    var w = String(t).replace(/^[^:]*:/, '');
+    if (w === '') return cur;
+    var rel = /^([+-])(\d*)$/.exec(w);
+    if (rel) {
+      var list = S.session.windows, at = list.indexOf(cur), n = list.length, step = (rel[2] ? Number(rel[2]) : 1) * (rel[1] === '+' ? 1 : -1);
+      return list[((at + step) % n + n) % n];
+    }
+    if (/^\d+$/.test(w)) return T.windowByIndex(S.session, Number(w));
+    return S.session.windows.filter(function (x) { return x.name === w; })[0] || null;
+  }
+
+  // A pane as a target: 2 (window 2's active pane), 2.1, :2.1, .1 (pane 1
+  // here). {win, pane}, or null.
+  function paneTarget(t) {
+    var cur = T.activeWindow(S.session);
+    if (t == null || t === '') return { win: cur, pane: T.activePane(cur) };
+    var m = /^(.*?)(?:\.(\d+))?$/.exec(String(t));
+    var win = windowTarget(m[1] === '' ? null : m[1]);
+    if (!win) return null;
+    var pane = m[2] == null ? T.activePane(win) : T.panesOf(win)[Number(m[2]) - S.session.paneBaseIndex];
+    return pane ? { win: win, pane: pane } : null;
   }
 
   // ---- copy mode -----------------------------------------------------------
@@ -1311,9 +1424,11 @@
   // already (no second lookup).
   function copyModeKey(k, pane, own) {
     var el = paneBodyEl(pane.id);
-    if (!el) { pane.mode = null; return true; }
-    var max = el.scrollHeight - el.clientHeight;
-    var page = Math.max(S.cellH, el.clientHeight - S.cellH);
+    // Tried on away from the screen (今日の達人's fewest keys on the title):
+    // no scroll to measure, the rest as on screen.
+    if (!el && !S.sim) { pane.mode = null; return true; }
+    var max = el ? el.scrollHeight - el.clientHeight : 0;
+    var page = el ? Math.max(S.cellH, el.clientHeight - S.cellH) : S.cellH * 10;
     var key = k.key;
     var mk = metaKey(k);
     var cb = own ? null : CF.copyLookup(S.conf, k);
@@ -1335,7 +1450,9 @@
       return true;
     }
     // Copy keys: Space/Enter (vi) or C-Space/M-w (emacs).
-    var begins = key === ' ' || (k.ctrl && key === ' ') || key === 'V';
+    var begins = key === ' ' || (k.ctrl && key === ' ');
+    // V (vi): select-line, the whole line, the cursor at its end.
+    if (key === 'V' && !k.ctrl && !k.alt) { pane.sel = pane.cy; pane.selx = 0; pane.cx = lineAt(pane, pane.cy).length; S.lastAction = 'yank_start'; return true; }
     var copies = (key === 'Enter' && !k.ctrl) || mk === 'w' || (k.ctrl && key === 'w');
     if ((key === 'Escape' || (k.ctrl && key === 'g')) && pane.sel != null) { pane.sel = null; return true; }
     if (copies && pane.sel != null) { yank(pane, key !== 'Enter'); return true; }
@@ -1393,6 +1510,8 @@
       var j = ls[((at + dir * step) % ls.length + ls.length) % ls.length];
       if (lineAt(pane, j).toLowerCase().indexOf(term) >= 0) {
         goLine(pane, j);
+        // As tmux: the cursor on the start of the match.
+        pane.cx = lineAt(pane, j).toLowerCase().indexOf(term);
         if (pane.sel == null) pane.reveal = 'center';
         else pane.reveal = 'edge';
         return;
@@ -1535,8 +1654,9 @@
     var go = function (fn) { e.preventDefault(); AU.se('cursor'); fn(); };
     if (S.screen === 'title') {
       if (k === 'Enter') return go(function () { startRun($('#btn-enter').dataset.course || 'easy'); });
-      var i = '123'.indexOf(k);
+      var i = '1234'.indexOf(k);
       if (i >= 0 && LV.COURSES[i]) return go(function () { startRun(LV.COURSES[i].id); });
+      if (k === 'd' || k === 'D') return go(function () { startRun('daily'); });
       if (k === 'k' || k === 'K') return go(function () { startRun('keiko'); });
       if (k === 'r' || k === 'R') return go(function () { S.recTab = 'growth'; openRecords(null, 'title'); });
       if (k === 'b' || k === 'B') return go(openBoard);
@@ -1671,11 +1791,15 @@
     q: 'k:q', PageUp: 'k:PageUp', "'": "k:'", '(': 'k:(', ')': 'k:)', L: 'k:L', '!': 'k:!'
   };
   ['L', 'R', 'U', 'D'].forEach(function (d) { LABEL_SIG['Ctrl+' + ARROWS[d]] = 'r:' + d + ':1'; LABEL_SIG['Option+' + ARROWS[d]] = 'r:' + d + ':5'; });
+  // rotate-window and the M-1 … M-7 layouts.
+  LABEL_SIG['Ctrl+o'] = 'k:C-o';
+  ['Option+', 'Alt+'].forEach(function (m) { LABEL_SIG[m + 'o'] = 'k:M-o'; for (var i = 1; i <= 7; i++) LABEL_SIG[m + i] = 'k:M-' + i; });
   var ARROW_KEY = { '←': 'ArrowLeft', '→': 'ArrowRight', '↑': 'ArrowUp', '↓': 'ArrowDown' };
   // What to type at : when the player's file leaves an action with no key.
-  var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': tx('rename-window 名前'), 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach', 'k:!': 'break-pane', 'k:l': 'last-window' };
+  var CMD_FOR = { 'k:%': 'split-window -h', 'k:"': 'split-window', 'k:x': 'kill-pane', 'k:&': 'kill-window', 'k:c': 'new-window', 'k:,': tx('rename-window 名前'), 'k:{': 'swap-pane -U', 'k:}': 'swap-pane -D', 'k: ': 'next-layout', 'k:d': 'detach', 'k:!': 'break-pane', 'k:l': 'last-window', 'k:q': 'display-panes', 'k:C-o': 'rotate-window', 'k:M-o': 'rotate-window -D' };
+  T.LAYOUT_KEYS.forEach(function (n, i) { CMD_FOR['k:M-' + (i + 1)] = 'select-layout ' + n; });
 
-  function sigOf(act) { return act.key != null ? 'k:' + act.key : act.resize ? 'r:' + act.resize : null; }
+  function sigOf(act) { return act.key != null ? 'k:' + (act.ctrl ? 'C-' : '') + (act.alt ? 'M-' : '') + act.key : act.resize ? 'r:' + act.resize : null; }
 
   // ---- the copy-mode keys in the player's own words --------------------------
 
@@ -1730,8 +1854,8 @@
 
   // The default key event behind a label, to see whether the file took it away.
   function labelEvent(label) {
-    var r = /^(Ctrl|Option)\+(.)$/.exec(label);
-    if (r) return { key: ARROW_KEY[r[2]], ctrl: r[1] === 'Ctrl', alt: r[1] === 'Option', shift: false };
+    var r = /^(Ctrl|Option|Alt)\+(.)$/.exec(label);
+    if (r) return { key: ARROW_KEY[r[2]] || r[2], ctrl: r[1] === 'Ctrl', alt: r[1] !== 'Ctrl', shift: false, code: /^[0-9]$/.test(r[2]) ? 'Digit' + r[2] : /^[a-z]$/.test(r[2]) ? 'Key' + r[2].toUpperCase() : undefined };
     var key = label === 'Space' ? ' ' : ARROW_KEY[label] || label;
     return { key: key, ctrl: false, alt: false, shift: false };
   }
@@ -1752,7 +1876,8 @@
   }
 
   function ownMove(m) {
-    if (!m || !m.pfx || m.keys.length !== 1) return m;
+    // `own`: already the player's own key (a prompt of their file, say).
+    if (!m || !m.pfx || m.keys.length !== 1 || m.own) return m;
     var o = ownKey(m.keys[0]);
     if (o.same) return m;
     if (o.none) {
@@ -1802,7 +1927,8 @@
   // `m` is the question's own move: one marked `prompt` works inside the
   // open prompt (a name, a window number) and is kept.
   function openFirst(b, m) {
-    if (S.detached) return m && m.type ? m : attachMove();
+    // Outside tmux the move typed there stands (tmux attach); one typed into a pane waits.
+    if (S.detached) return m && m.type && !m.shell ? m : attachMove();
     // A move marked `picker` works inside the open session list.
     if (S.picker && !(m && m.picker && !S.picker.kind)) return mv(['Esc'], 'Esc で一覧を閉じる', true);
     if (S.prompt && !(m && m.prompt)) return mv(['Esc'], 'Esc で入力欄を閉じる', true);
@@ -1860,6 +1986,20 @@
     if (t === 'rename') return !T.windowById(S.session, S.q0.win);
     // (A session renamed under the order keeps it: the order follows the new name.)
     if (t === 'session_switch' || t === 'session_attach') return S.sessions.indexOf(S.q0.target) < 0;
+    if (t === 'join_pane' || t === 'join_pane_h') return !paneExists(S.q0.src) || !paneExists(S.q0.dst);
+    // A wrong window took one of the two numbers: asked again from here.
+    if (t === 'swap_window') {
+      var sa = T.windowById(S.session, S.q0.win), so = T.windowById(S.session, S.q0.other);
+      return !sa || !so || [S.q0.from, S.q0.to].indexOf(sa.index) < 0 || [S.q0.from, S.q0.to].indexOf(so.index) < 0;
+    }
+    if (t === 'move_window') { var mw = T.windowById(S.session, S.q0.win), mt = T.windowByIndex(S.session, S.q0.to); return !mw || (!!mt && mt !== mw); }
+    if (t === 'layout' || t === 'layout_cycle') { var lw = T.windowById(S.session, S.q0.win); return !lw || T.panesOf(lw).length < 2; }
+    if (t === 'sync_panes') {
+      var sw = T.windowById(S.session, S.q0.win);
+      return !sw || S.q0.panes.filter(function (id) { var h = T.findPane(S.session, id); return h && h.win === sw; }).length < 2;
+    }
+    // Panes turned some other way than round (a swap, a split): from here.
+    if (t === 'rotate') return !paneExists(S.q0.target) || !sameCycle();
     return !!S.target && !paneExists(S.target);
   }
 
@@ -1929,7 +2069,9 @@
   // browser resized mid-question gives the same baseline in the new cells.
   function cloneTree(node) {
     if (node.type === 'pane') return { type: 'pane', pane: node.pane };
-    return { type: 'split', dir: node.dir, ratio: node.ratio, a: cloneTree(node.a), b: cloneTree(node.b) };
+    var c = { type: 'split', dir: node.dir, ratio: node.ratio, a: cloneTree(node.a), b: cloneTree(node.b) };
+    ['even', 'tile', 'main', 'mirror'].forEach(function (k) { if (node[k] != null) c[k] = node[k]; });
+    return c;
   }
 
   function baseRect() {
@@ -2511,6 +2653,216 @@
         m.type = S.outer.ls ? 'tmux attach -t ' + name : 'tmux ls';
         return m;
       }
+    },
+    // ---- 達人 ----
+    join_pane: joinQ(false),
+    join_pane_h: joinQ(true),
+    swap_window: {
+      steps: 3, text: 'ウィンドウの番号を入れ替える（swap-window）', cmd: 'swap-window -t 番号', allow: ['swap_window', 'select_window'], show: ['swap_window'],
+      goal: function () { return [{ tab: S.q0.win, tag: tx('{0} 番へ', S.q0.to) }, { tab: S.q0.other, tag: tx('{0} 番へ', S.q0.from) }]; },
+      setup: function (r) {
+        needWindows(3);
+        var win = T.activeWindow(S.session), o = pick(r, otherWindows());
+        S.q0 = { win: win.id, other: o.id, from: win.index, to: o.index };
+        S.qGoal = { index: o.index };
+        S.qText = tx('このウィンドウ {0} を {1} と入れ替える（{2} 番へ）', winLabel(win), winLabel(o), o.index);
+      },
+      check: function () {
+        var a = T.windowById(S.session, S.q0.win), o = T.windowById(S.session, S.q0.other);
+        return !!a && !!o && a.index === S.q0.to && o.index === S.q0.from;
+      },
+      next: function () {
+        if (S.session.active !== S.q0.win) return windowMove(S.q0.win);
+        var o = T.windowById(S.session, S.q0.other);
+        return cmdMove('swap-window -t ' + o.index, tx('{0} と入れ替わる', winLabel(o)));
+      }
+    },
+    move_window: {
+      steps: 3, text: 'ウィンドウを空いている番号へ動かす（move-window）', cmd: 'move-window -t 番号', allow: ['move_window', 'select_window'], show: ['move_window'],
+      goal: function () { return [{ tab: S.q0.win, tag: tx('{0} 番へ', S.q0.to) }]; },
+      setup: function (r) {
+        var win = T.activeWindow(S.session), b = S.session.baseIndex;
+        var free = [b + 4, b + 5, b + 6, b + 7, b + 8].filter(function (i) { return !T.windowByIndex(S.session, i); });
+        var to = pick(r, free);
+        S.q0 = { win: win.id, to: to };
+        S.qGoal = { index: to };
+        S.qText = tx('このウィンドウ {0} を {1} 番へ動かす（move-window）', winLabel(win), to);
+      },
+      check: function () { var w = T.windowById(S.session, S.q0.win); return !!w && w.index === S.q0.to; },
+      next: function () {
+        if (S.session.active !== S.q0.win) return windowMove(S.q0.win);
+        return cmdMove('move-window -t ' + S.q0.to, tx('{0} 番へ動く', S.q0.to), ownPrompt(MOVE_PROMPT), String(S.q0.to));
+      }
+    },
+    layout: layoutQ(false),
+    layout_cycle: layoutQ(true),
+    sync_panes: {
+      steps: 7, text: '全部のペインに同じコマンドを一度に打つ（synchronize-panes）', cmd: 'setw synchronize-panes on → off', allow: ['sync', 'zoom'], show: ['sync'],
+      goal: function () { return [{ pane: activeId(), mark: 'go', tag: syncDone() ? '同期をオフに戻す' : syncOn(T.activeWindow(S.session), null) ? 'ここで打つと全部のペインに入る' : '同期をオンにする' }]; },
+      setup: function (r) {
+        needUnzoom(); needPanes(3);
+        var win = T.activeWindow(S.session);
+        var cmd = pick(r, ['date', 'uptime', 'hostname']);
+        var had = {};
+        T.panesOf(win).forEach(function (p) { had[p.id] = p.lines.length; p.mode = null; });
+        S.q0 = { win: win.id, cmd: cmd, panes: Object.keys(had), had: had };
+        S.qGoal = { cmd: cmd };
+        S.qText = tx('全部のペインで {0} を一度に打つ（同期をオン → {0} → オフ）', cmd);
+      },
+      check: function () { return syncDone() && !syncLeft(); },
+      step: function () { return syncDone() ? [3, 3, '同期をオフに戻す'] : syncLeft() ? [2, 3, tx('{0} と打って Enter（全部のペインに入る）', S.q0.cmd)] : [1, 3, '同期をオンにする']; },
+      next: function () {
+        var w = T.windowById(S.session, S.q0.win);
+        if (!w) return null;
+        if (S.session.active !== w.id) return windowMove(w.id);
+        if (syncDone()) return syncMove(false);
+        if (!syncOn(w, T.activePane(w))) return syncMove(true);
+        if (w.zoomed) return mv(['z'], 'z を押す（全画面を戻す。隠れたペインには入らない）');
+        if (T.activePane(w).mode === 'copy') return copyMove('cancel', 'コピーモードを抜ける');
+        var dirty = T.panesOf(w).some(function (p) { return syncOn(w, p) && p.input; });
+        var m = mv([], tx(dirty ? 'Ctrl+u で消して {0} と打って Enter（全部のペインに入る）' : '{0} と打って Enter（全部のペインに入る）', S.q0.cmd), true);
+        m.type = S.q0.cmd; m.clear = dirty; m.shell = true;
+        return m;
+      }
+    },
+    pane_jump: {
+      steps: 2, text: 'ペインに番号を出して、番号で飛ぶ（display-panes）', cmd: 'display-panes', allow: [], show: ['display_panes'],
+      goal: function () { return [{ pane: S.target, mark: 'go', tag: 'ここへ（q と番号で）' }]; },
+      setup: function (r) {
+        needUnzoom(); needPanes(4);
+        var win = T.activeWindow(S.session);
+        var near = ['L', 'R', 'U', 'D'].map(function (d) { var nb = T.neighbour(win, S.cols, S.rows, d, true); return nb && nb.id; });
+        var far = otherPanes().filter(function (p) { return near.indexOf(p.id) < 0; });
+        var p = pick(r, far.length ? far : otherPanes());
+        S.target = p.id;
+        S.qText = function () { return tx('{0} へ、q で番号を出して飛ぶ', paneLabel(p)); };
+      },
+      check: function () { return activeId() === S.target; },
+      next: function () {
+        var h = T.findPane(S.session, S.target);
+        if (!h) return null;
+        var win = T.activeWindow(S.session);
+        if (h.win !== win) return windowMove(h.win.id);
+        var qi = T.paneIndex(S.session, win, h.pane);
+        // The numbers are up (for display-panes-time, 1 s): the number now.
+        if (S.panesShown && Date.now() < S.panesShown) return mv([String(qi)], tx('{0} を押す（その番号のペインへ飛ぶ）', qi), true);
+        var m = mv(['q'], 'q を押す（ペインに番号が出る。1 秒のうちに番号を押す）');
+        var a = moveTo(S.target);
+        if (a) m.alt = [{ pfx: a.pfx, keys: a.keys, text: a.text }];
+        return m;
+      }
+    },
+    search_yank: {
+      steps: 6, text: 'ログを検索して、見つけた行をまるごとコピーする（copy mode）', cmd: 'search-backward → begin-selection → copy-selection', allow: ['copy', 'yank_start', 'yank', 'search'], show: ['search', 'yank'],
+      goal: function () { return [{ pane: S.q0.id, mark: 'top', tag: tx('{0} の行をコピーする', S.q0.word) }]; },
+      setup: function (r) {
+        var pane = T.activePane(T.activeWindow(S.session));
+        pane.mode = null;
+        pane.search = null;
+        var word = pick(r, ['ERROR', 'WARN', 'FATAL', 'panic']), from = 30 + pickInt(r, 60), total = 140;
+        pane.lines.push({ html: '<span class="sh-prompt">' + esc(promptText(pane)) + '</span>cat server.log' });
+        var base = pane.lines.length;
+        printLog(pane, total, [{ from: from, text: word + tx('  ディスクがいっぱい'), cls: 'sh-err' }]);
+        var ln = base + total - 1 - from;
+        S.target = pane.id;
+        S.q0 = { id: pane.id, word: word, ln: ln, text: lineText(pane.lines[ln]).trim() };
+        S.qGoal = word;
+        S.qText = tx('ログの {0} の行を検索で探して、その行をまるごとコピーする', word);
+      },
+      check: function () { return !!T.findPane(S.session, S.q0.id) && S.clipboard.trim() === S.q0.text; },
+      step: function () {
+        var h = T.findPane(S.session, S.q0.id);
+        if (!h) return null;
+        return h.pane.mode !== 'copy' ? [1, 3, 'コピーモードに入る'] : h.pane.cy !== S.q0.ln ? [2, 3, tx('{0} を検索する', S.q0.word)] : [3, 3, 'その行をまるごとコピーする'];
+      },
+      next: function () {
+        var back = moveTo(S.q0.id);
+        if (back) return back;
+        var p = T.activePane(T.activeWindow(S.session)), ln = S.q0.ln;
+        if (p.mode !== 'copy') return mv(['['], '[ を押す（コピーモードに入る）');
+        if (S.prompt && /search/.test(S.prompt.label)) {
+          var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（見つかった行へ飛ぶ）', S.q0.word), true);
+          pm.prompt = true;
+          pm.type = S.q0.word;
+          return pm;
+        }
+        // A selection begun somewhere else: let go of it first.
+        if (p.sel != null && (p.sel !== ln || p.selx !== 0)) return mv(['Esc'], 'Esc を押す（選び直す）', true);
+        if (p.cy !== ln) return copyMove('searchUp', '上向きに検索', 'emacs 式は Ctrl+r');
+        if (p.sel == null) {
+          var lm = p.cx > 0 ? copyMove('home', '行の頭へ', 'vi 式は 0、emacs 式は Ctrl+a') : copyMove('begin', 'ここから選び始める');
+          // vi's V selects the whole line at once.
+          if (!S.conf) lm.alt = [mv(['V'], 'V を押す（行ごと選ぶ）', true)];
+          return lm;
+        }
+        if (p.cx < lineAt(p, ln).length) return copyMove('end', '行の終わりまで選ぶ', 'vi 式は $、emacs 式は Ctrl+e');
+        return copyMove('copy', copyKeyStays('copy') ? '選んだところをコピーする。コピーモードには残る' : '選んだところをコピーする');
+      }
+    },
+    rotate: {
+      steps: 2, text: 'ペインを回して、印のペインを左上へ（rotate-window）', cmd: 'rotate-window', allow: ['swap'], show: ['rotate'],
+      goal: function () { return [{ pane: S.q0.target, mark: 'to-left', tag: '回して左上へ' }]; },
+      setup: function (r) {
+        needUnzoom(); needPanes(3);
+        var win = T.activeWindow(S.session), ps = T.panesOf(win);
+        var p = pick(r, ps.slice(1));
+        var label = paneLabel(p);
+        S.target = p.id;
+        S.q0 = { win: win.id, order: ps.map(function (x) { return x.id; }), target: p.id };
+        S.qText = tx('ペインを回して、いまの {0} を左上へ（rotate-window）', label);
+      },
+      check: function () { return isFirst(S.q0.target) && sameCycle(); },
+      next: function () {
+        var h = T.findPane(S.session, S.q0.target);
+        if (!h) return null;
+        if (h.win !== T.activeWindow(S.session)) return windowMove(h.win.id);
+        var ps = T.panesOf(h.win), k = ps.indexOf(h.pane), n = ps.length;
+        var back = MAC ? 'Option+o' : 'Alt+o';
+        var up = mv(['Ctrl+o'], 'Ctrl+o を押す（全部のペインが 1 つずつ前へ回る）'), down = mv([back], tx('{0} を押す（全部のペインが 1 つずつ後ろへ回る）', back));
+        var first = k <= n - k ? up : down;
+        first.alt = [k <= n - k ? down : up];
+        return first;
+      }
+    },
+    new_window_named: {
+      steps: 3, text: '名前を付けて新しいウィンドウを作る（new-window -n）', cmd: 'new-window -n 名前', allow: ['new_window', 'rename', 'select_window'], show: ['command'],
+      goal: function () { return [{ tab: '+', tag: tx('「{0}」を作る', S.q0.name) }]; },
+      setup: function (r) {
+        var used = {};
+        S.session.windows.forEach(function (w) { used[w.name] = 1; });
+        var name = pick(r, ['tail', 'repl', 'top', 'vim', 'deploy'].filter(function (n) { return !used[n]; })) || 'tail';
+        S.q0 = { name: name, had: S.session.windows.map(function (w) { return w.id; }) };
+        S.qGoal = name;
+        S.qText = tx('「{0}」という名前の新しいウィンドウを作る（new-window -n）', name);
+      },
+      check: function () { return S.session.windows.some(function (w) { return w.name === S.q0.name && S.q0.had.indexOf(w.id) < 0; }); },
+      next: function () {
+        // Made with c, without the name: the name is given there (rename-window).
+        var fresh = S.session.windows.filter(function (w) { return S.q0.had.indexOf(w.id) < 0; })[0];
+        if (fresh && S.session.active === fresh.id && !(S.prompt && S.prompt.label === ':')) {
+          if (S.prompt && S.prompt.label === '(rename-window)') {
+            var pm = mv([], tx('Ctrl+u（か Backspace）で今の名前「{0}」を消し、{1} と打って Enter', S.prompt.value, S.q0.name), true);
+            pm.prompt = true;
+            pm.type = S.q0.name;
+            return pm;
+          }
+          return mv([','], tx(', を押す（このウィンドウに名前「{0}」を付ける）', S.q0.name));
+        }
+        return cmdMove('new-window -n ' + S.q0.name, tx('「{0}」ができる', S.q0.name));
+      }
+    },
+    kill_session: {
+      steps: 3, text: 'ほかのセッションを閉じる（kill-session）', cmd: 'kill-session -t 名前', allow: ['kill_session'], show: ['command'],
+      goal: function () { return [{ pane: activeId(), mark: 'go', tag: tx('セッション {0} を閉じる', S.q0.target.name) }]; },
+      setup: function (r) {
+        needSessions(2);
+        var t = pick(r, otherSessions());
+        S.q0 = { target: t };
+        S.qGoal = { name: t.name };
+        S.qText = function () { return tx('セッション {0} を閉じる（kill-session -t {0}）', t.name); };
+      },
+      check: function () { return S.sessions.indexOf(S.q0.target) < 0; },
+      next: function () { return cmdMove('kill-session -t ' + S.q0.target.name, tx('{0} が閉じる', S.q0.target.name)); }
     }
   };
 
@@ -2528,6 +2880,202 @@
     return p.b.dir === 'tb' && p.b.a.type === 'pane' && p.b.b.type === 'pane' ? 'done' : 'other';
   }
 
+  // ---- the 達人 questions' helpers ------------------------------------------
+
+  // A command typed at the : prompt: first :, then the command (over what
+  // was typed) and Enter. `own`: the player's key that asks for its
+  // argument instead (bind J command-prompt "join-pane -s '%%'"), and
+  // `arg` what to answer there.
+  function cmdMove(cmd, what, own, arg) {
+    if (own && S.prompt && S.prompt.label === own.act.label) {
+      var op = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（{1}）', arg, tx(what)), true);
+      op.prompt = true;
+      op.type = arg;
+      return op;
+    }
+    if (own && !(S.prompt && S.prompt.label === ':')) {
+      var om = mv([own.key.label], tx('{0} を押す（「{1}」と聞かれる）', own.key.label, own.act.label), own.table === 'root');
+      om.own = true;
+      return om;
+    }
+    if (S.prompt && S.prompt.label === ':') {
+      var pm = mv([], tx(S.prompt.value ? 'Ctrl+u で消して {0} と打って Enter' : '{0} と打って Enter（{1}）', cmd, tx(what)), true);
+      pm.prompt = true;
+      pm.type = cmd;
+      return pm;
+    }
+    return mv([':'], ': を押す（コマンドの入力欄が出る）');
+  }
+
+  // The player's key that asks for a command's argument (command-prompt
+  // with a template the test `re` matches), or null.
+  var JOIN_PROMPT = /^(join-pane|joinp|move-pane|movep)\s+-s\s+['"]?%%/;
+  var MOVE_PROMPT = /^(move-window|movew)\s+-t\s+['"]?%%/;
+  function ownPrompt(re) {
+    if (!S.conf) return null;
+    var found = null;
+    S.conf.binds.forEach(function (b) { if (b.act.run === 'prompt' && (b.table === 'prefix' || b.table === 'root') && re.test(b.act.tpl)) found = b; });
+    return found;
+  }
+
+  // join-pane, below (`h`: to the right of) the pane the question began in.
+  function joinQ(h) {
+    return {
+      steps: 3, text: h ? 'ほかのウィンドウのペインを、このペインの右に連れてくる（join-pane -h）' : 'ほかのウィンドウのペインを、このペインの下に連れてくる（join-pane）',
+      cmd: h ? 'join-pane -h -s 番号' : 'join-pane -s 番号', allow: ['join', 'break_pane'], show: ['join'],
+      goal: function () {
+        var src = T.findPane(S.session, S.q0.src);
+        var out = [{ pane: S.q0.dst, mark: h ? 'split-v' : 'split-h', tag: h ? 'この右へ' : 'この下へ' }];
+        if (src && src.win.id !== S.q0.win) out.push({ tab: src.win.id, tag: 'ここのペインを' });
+        return out;
+      },
+      setup: function (r) {
+        needUnzoom(); needWindows(2);
+        var win = T.activeWindow(S.session), w = pick(r, otherWindows());
+        var label = winLabel(w);
+        S.target = T.activePane(w).id;
+        S.q0 = { src: S.target, dst: win.active, win: win.id };
+        S.qGoal = { index: w.index };
+        S.qText = tx(h ? 'ウィンドウ {0} のペインを、このペインの右に連れてくる（join-pane -h）' : 'ウィンドウ {0} のペインを、このペインの下に連れてくる（join-pane）', label);
+      },
+      check: function () {
+        var hs = T.findPane(S.session, S.q0.src);
+        if (!hs || hs.win.id !== S.q0.win) return false;
+        var hit = T.parentOf(hs.win.root, S.q0.src), p = hit.parent;
+        return !!p && p.dir === (h ? 'lr' : 'tb') && p.b === hit.node && p.a.type === 'pane' && p.a.pane.id === S.q0.dst;
+      },
+      next: function () {
+        var hs = T.findPane(S.session, S.q0.src);
+        if (!hs) return null;
+        // Here in another shape: back to a window of its own first (break-pane).
+        if (hs.win.id === S.q0.win) return moveTo(S.q0.src) || mv(['!'], '! を押す（形が違う。いったん別のウィンドウに戻して、やり直す）');
+        var back = moveTo(S.q0.dst);
+        if (back) return back;
+        // The window's own pane is -s N; another of its panes is N.P.
+        var t = hs.win.index + (hs.win.active === hs.pane.id ? '' : '.' + T.paneIndex(S.session, hs.win, hs.pane));
+        return cmdMove((h ? 'join-pane -h -s ' : 'join-pane -s ') + t, h ? '右に来る' : '下に来る', h ? null : ownPrompt(JOIN_PROMPT), t);
+      }
+    };
+  }
+
+  // The layouts in words: their tmux names and what they look like.
+  var LAYOUT_WORDS = {
+    'even-horizontal': '横に均等', 'even-vertical': '縦に均等', 'main-horizontal': '上に大きく', 'main-horizontal-mirrored': '下に大きく',
+    'main-vertical': '左に大きく', 'main-vertical-mirrored': '右に大きく', tiled: '田の字'
+  };
+  function layoutLabel(name) { return tx('{0}（{1}）', name, tx(LAYOUT_WORDS[name])); }
+
+  // The rooms of the window as `name` would lay them out, on a copy.
+  function layoutRects(win, name) {
+    var copy = { root: cloneTree(win.root), zoomed: false, active: win.active, lastLayout: win.lastLayout };
+    T.applyLayout(copy, name);
+    return T.layout(copy, S.cols, S.rows).panes;
+  }
+  function sameShape(win, name) {
+    var key = function (list) { return list.map(function (r) { return r.pane.id + ':' + r.x + ',' + r.y + ',' + r.w + ',' + r.h; }).join(' '); };
+    var z = win.zoomed;
+    win.zoomed = false;
+    var now = key(T.layout(win, S.cols, S.rows).panes);
+    win.zoomed = z;
+    return now === key(layoutRects(win, name));
+  }
+
+  // The 完成図 of a layout question: the window as it will be, small, with
+  // the pane numbers and the one you are in.
+  function layoutFigure(name) {
+    var win = T.windowById(S.session, S.q0.win);
+    if (!win) return null;
+    return { rects: layoutRects(win, name).map(function (r) { return { x: r.x / S.cols, y: r.y / S.rows, w: r.w / S.cols, h: r.h / S.rows, n: T.paneIndex(S.session, win, r.pane), me: r.pane.id === win.active }; }), ratio: (S.cols * S.cellW) / (S.rows * S.cellH) };
+  }
+
+  // select-layout by its key (prefix M-1 …), or `cycle`: next-layout (Space)
+  // to the next one in its order.
+  function layoutQ(cycle) {
+    return {
+      steps: 1, text: cycle ? '並べ方を順に変える（next-layout）' : '並べ方を選んで変える（select-layout）', cmd: cycle ? 'next-layout' : 'select-layout', allow: ['layout'], show: [cycle ? 'layout' : 'layout_pick'],
+      goal: function () { return [{ pane: activeId(), mark: 'go', tag: tx('{0}に', layoutLabel(S.q0.name)) }]; },
+      figure: function () { return layoutFigure(S.q0.name); },
+      setup: function (r) {
+        needUnzoom(); needPanes(3);
+        var win = T.activeWindow(S.session), name;
+        if (cycle) {
+          // The next one in the order that changes something.
+          for (var i = 1; i <= T.LAYOUTS.length && !name; i++) {
+            var n = T.LAYOUTS[(win.lastLayout + i) % T.LAYOUTS.length];
+            if (!sameShape(win, n)) name = n;
+          }
+        } else {
+          name = pick(r, T.LAYOUT_KEYS.slice(0, 5).filter(function (n) { return n !== win.layoutName && !sameShape(win, n); }));
+        }
+        S.q0 = { win: win.id, name: name || 'tiled' };
+        S.qGoal = { layout: S.q0.name };
+        S.qText = tx(cycle ? 'Space で並べ方を順に変えて、{0}にする' : '並べ方を {0}にする', layoutLabel(S.q0.name));
+      },
+      check: function () { var w = T.activeWindow(S.session); return w.id === S.q0.win && w.layoutName === S.q0.name && !w.zoomed; },
+      next: function () {
+        var w = T.windowById(S.session, S.q0.win);
+        if (!w) return null;
+        if (S.session.active !== w.id) return windowMove(w.id);
+        var lb = (MAC ? 'Option+' : 'Alt+') + (T.LAYOUT_KEYS.indexOf(S.q0.name) + 1);
+        var pick1 = mv([lb], tx('{0} を押す（{1}になる）', lb, layoutLabel(S.q0.name)));
+        var space = mv(['Space'], tx(cycle ? 'Space を押す（次の並べ方へ。{0}まで）' : 'Space を押す（次の並べ方 {0}へ）', layoutLabel(cycle ? S.q0.name : T.LAYOUTS[(w.lastLayout + 1) % T.LAYOUTS.length])));
+        var nextIs = T.LAYOUTS[(w.lastLayout + 1) % T.LAYOUTS.length] === S.q0.name;
+        if (cycle) { space.alt = [pick1]; return space; }
+        if (nextIs) pick1.alt = [space];
+        return pick1;
+      }
+    };
+  }
+
+  // synchronize-panes: whether every pane the question began with has run
+  // the command since, and whether any pane of the window still takes the
+  // keys of the others.
+  function syncDone() {
+    var w = T.windowById(S.session, S.q0.win);
+    if (!w) return false;
+    var want = promptText() + S.q0.cmd;
+    return S.q0.panes.every(function (id) {
+      var h = T.findPane(S.session, id);
+      if (!h || h.win !== w) return true;
+      for (var i = S.q0.had[id]; i < h.pane.lines.length; i++) if (lineText(h.pane.lines[i]) === want) return true;
+      return false;
+    });
+  }
+  function syncLeft() {
+    var w = T.windowById(S.session, S.q0.win);
+    return !!w && T.panesOf(w).some(function (p) { return syncOn(w, p); });
+  }
+
+  // Turning it on or off: the player's own key for it (bind S setw
+  // synchronize-panes), else the command.
+  function syncMove(on) {
+    var own = null;
+    if (S.conf) S.conf.binds.forEach(function (b) {
+      var a = b.act.argv;
+      if (b.act.run !== 'cmd' || !a || !/^(set|set-option|setw|set-window-option)$/.test(a[0]) || (b.table !== 'prefix' && b.table !== 'root')) return;
+      var f = CF.flags(a);
+      if (f.rest[0] !== 'synchronize-panes' || f.f.g || f.f.p || f.f.u) return;
+      if (f.rest[1] == null || /^(on|yes|1)$/i.test(f.rest[1]) === on) own = b;
+    });
+    if (own && !(S.prompt && S.prompt.label === ':')) {
+      var m = mv([own.key.label], tx(on ? '{0} を押す（同期をオンにする）' : '{0} を押す（同期をオフに戻す）', own.key.label), own.table === 'root');
+      m.own = true;
+      return m;
+    }
+    return cmdMove('setw synchronize-panes ' + (on ? 'on' : 'off'), on ? '同期がオンになる' : '同期がオフに戻る');
+  }
+
+  // rotate-window keeps the panes' round order: the order now is the one
+  // the question began with, turned.
+  function sameCycle() {
+    var w = T.windowById(S.session, S.q0.win);
+    if (!w) return false;
+    var now = T.panesOf(w).map(function (p) { return p.id; }), was = S.q0.order;
+    if (now.length !== was.length) return false;
+    var at = now.indexOf(was[0]);
+    return at >= 0 && was.every(function (id, i) { return now[(at + i) % now.length] === id; });
+  }
+
   // Short names of the question types, for lists.
   var TYPE_NAMES = {
     split_lr: '左右に分割', split_tb: '上下に分割', focus: 'ペイン移動', zoom: '全画面', unzoom: '全画面を戻す',
@@ -2535,7 +3083,10 @@
     rename: '名前を変える', kill_window: 'ウィンドウを閉じる', copy_top: 'スクロール', find_zoom: '移動して全画面', trident: '三分割',
     two_akima: '二つ閉じる', new_and_home: '作って戻る', swap_zoom: '入れ替えて全画面', detach_attach: 'デタッチして戻る', yank_paste: 'コピーと貼り付け',
     session_new: 'セッション作成', session_switch: 'セッション移動', session_attach: 'attach -t で入る',
-    copy_page: 'ページ送り', copy_search: '履歴の検索', last_window: '直前のウィンドウ', break_pane: 'ペインを別ウィンドウに'
+    copy_page: 'ページ送り', copy_search: '履歴の検索', last_window: '直前のウィンドウ', break_pane: 'ペインを別ウィンドウに',
+    join_pane: 'ペインを連れてくる', join_pane_h: 'ペインを右に連れてくる', swap_window: 'ウィンドウの入れ替え', move_window: 'ウィンドウの番号を変える',
+    layout: '並べ方を選ぶ', layout_cycle: '並べ方を順に変える', sync_panes: '全部のペインに打つ', pane_jump: '番号で飛ぶ',
+    search_yank: '検索してコピー', rotate: 'ペインを回す', new_window_named: '名前付きのウィンドウ', kill_session: 'セッションを閉じる'
   };
   function typeName(t) { return TYPE_NAMES[t] ? tx(TYPE_NAMES[t]) : t; }
 
@@ -2545,7 +3096,8 @@
     resize: '大きさを変える', swap: 'ペインの入れ替え', rename: 'ウィンドウの名前', kill_window: 'ウィンドウを閉じる', copy: 'コピーモード',
     detach: 'デタッチ', layout: '並べ方を変える', paste: '貼り付け', yank: 'コピー', yank_start: '選び始め', search: '検索',
     rename_session: 'セッションの名前', new_session: '新しいセッション', rename_pane: 'ペインの名前', choose: 'セッション一覧',
-    break_pane: 'ペインを別ウィンドウに'
+    break_pane: 'ペインを別ウィンドウに', join: 'ペインを連れてくる', swap_window: 'ウィンドウの入れ替え', move_window: 'ウィンドウを動かす',
+    sync: '同期入力', kill_session: 'セッションを閉じる'
   };
 
   // The tips of a question type: those of the action it is really about
@@ -2579,7 +3131,7 @@
   // best. Your own is there at once; the board's arrives if it can, with its
   // keys when it logged them. A shuffled run races only its own.
   function pickGhost(b) {
-    if (b.course.practice) { b.ghost = null; return; }
+    if (b.course.practice || b.course.daily) { b.ghost = null; return; }
     var own = REC.ghostOf(b.course.id);
     b.ghost = own;
     var mode = S.ghostPick;
@@ -2617,6 +3169,7 @@
   // the ranking.
   function questionsFor(course, day, shuffled) {
     if (course.drill) return [drillNext(null)];
+    if (course.daily) return [LV.dailyPick(day)];
     if (shuffled) return pairZoom(shuffle(course.qs.slice()));
     return pairZoom(shuffle(course.qs.slice(), rng(day + ':' + course.id)));
   }
@@ -2624,9 +3177,11 @@
   // 稽古: every type the courses ask, weighed by how often its keys are
   // needed and how it has gone (records.js drillPick, counting this run's
   // questions too); never the same type twice in a row.
+  // The 達人 house's types join once that house (or 今日の達人) has been played.
   function drillTypes() {
-    var out = [];
-    LV.COURSES.forEach(function (c) { c.qs.forEach(function (t) { if (Q[t] && out.indexOf(t) < 0) out.push(t); }); });
+    var out = [], all = REC.load();
+    var pro = REC.runsOf('pro', all).length || REC.runsOf('daily', all).length;
+    LV.COURSES.forEach(function (c) { if (c.expert && !pro) return; c.qs.forEach(function (t) { if (Q[t] && out.indexOf(t) < 0) out.push(t); }); });
     return out;
   }
 
@@ -2831,7 +3386,7 @@
   function simMove(m) {
     var n = 0;
     if (m.type) {
-      if (S.prompt && S.prompt.value) n += simKey({ key: 'u', ctrl: true });
+      if ((S.prompt && S.prompt.value) || m.clear) n += simKey({ key: 'u', ctrl: true });
       return n + simType(m.type);
     }
     if (!m.keys.length) {
@@ -3028,7 +3583,7 @@
     var result = {
       course: b.course.id, time: time, raw: raw, misses: misses, overs: b.overs, guides: b.guides,
       keys: b.keys, n: n, avg: time / n, qlog: qlog,
-      pauses: b.pauses, paused: paused, shuffled: b.shuffled, drill: drill
+      pauses: b.pauses, paused: paused, shuffled: b.shuffled, drill: drill, daily: !!b.course.daily, day: b.day
     };
     if (drill) { result.bestStreak = REC.drillStreak(qlog); result.bestBefore = REC.drillBest(); }
     var sum = REC.add({
@@ -3081,7 +3636,7 @@
   function replayable(run, confText) {
     if (!run || !run.klog || !Array.isArray(run.klog.keys) || !Array.isArray(run.klog.q) || !run.day || run.shuffled || run.drill) return null;
     var c = REC.courseOf(run.course);
-    if (!c || c.practice || !run.qs || run.qs.length !== c.qs.length) return null;
+    if (!c || c.practice || !run.qs || run.qs.length !== (c.daily ? 1 : c.qs.length)) return null;
     if (!run.conf) return { conf: null };
     if (typeof confText === 'string') return { conf: confText };
     // This device's own run on its own file, still the same prefix.
@@ -3273,7 +3828,7 @@
   }
 
   function lastCourse(all) {
-    var runs = (all.runs || []).filter(function (r) { var c = REC.courseOf(r.course); return c && !c.practice; });
+    var runs = (all.runs || []).filter(function (r) { var c = REC.courseOf(r.course); return c && !c.practice && !c.daily; });
     var last = runs.slice(-1)[0];
     return last ? last.course : 'easy';
   }
@@ -3295,9 +3850,17 @@
     el.innerHTML = '<b>' + esc(tx('今日の問題')) + '</b> <span class="today-day">' + esc(dayLabel(LV.dayKey())) + '</span>' +
       (line ? '<span class="today-streak">' + esc(line) + '</span>' : '') +
       (again ? '<span class="today-again">' + esc(again) + '</span>' : '') +
-      '<small>' + esc(tx('今日はみんな同じ順番で出る。日本時間の 0 時に変わる。')) + '</small>';
+      '<small>' + esc(tx('今日はみんな同じ順番で出る。日本時間の 0 時に変わる。')) + '</small>' + dailyLineHTML(all);
     var gp = $('#ghost-pick');
     if (gp) gp.innerHTML = ghostPickHTML();
+  }
+
+  // 今日の達人 in one line: the day's question, its fewest keys, and the way in.
+  function dailyLineHTML(all) {
+    var t = LV.dailyPick(LV.dayKey()), par = dailyPar(), best = REC.todayBest('daily', all);
+    return '<p class="today-daily"><span class="td-text"><b>' + esc(tx('今日の達人')) + '</b>: ' + esc(typeName(t)) +
+      (par != null ? esc(tx(' ・ 最短 {0} キー', par)) : '') + (best != null ? esc(tx(' ・ 今日 {0}秒', best.toFixed(1))) : '') + '</span>' +
+      '<button type="button" class="btn td-go" data-daily="1">' + esc(tx(best != null ? 'もう一度' : '挑む')) + '<kbd class="hk">D</kbd></button></p>';
   }
 
   function topHTML(id) {
@@ -3429,7 +3992,7 @@
   // this is the 稽古, and the 目安 has not passed yet.
   function folded(b) {
     var e = b.learnt && b.learnt[b.qs[b.i]];
-    return (!!b.course.drill || !!(e && e.learnt)) && b.stage === 0 && !b.peek;
+    return (!!b.course.drill || !!b.course.blind || !!(e && e.learnt)) && b.stage === 0 && !b.peek;
   }
 
   // 問題 3 / 15. The 稽古 counts up (3 / 10 when a count was chosen).
@@ -3484,7 +4047,7 @@
         }).join('') + '</ol></div>';
       if (move.alt && move.alt.length) html += '<span class="sz-alt">' + tx('別解: ') + move.alt.map(function (a) { return altHTML(a) + ' ' + esc(a.text); }).join(tx('、')) + '</span>';
     } else if (fold) {
-      html += '<p class="learnt-note">' + tx(b.course.drill ? '思い出して押す。手順は {0} 秒後か、ミスのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
+      html += '<p class="learnt-note">' + tx(b.course.drill || b.course.blind ? '思い出して押す。手順は {0} 秒後か、ミスのあとに出る。' : '覚えた問題。{0} 秒で手順が出る。', LV.PEEK_AFTER) + '</p>';
     }
     html += '<div class="andon' + (b.stage ? ' lit' : '') + '"><div class="andon-l"><span>' + tx('目安 {0} 秒', b.limit) + '</span><b class="andon-over"></b></div>' +
       '<div class="gauge"><i class="left"></i><i class="over"></i></div>';
@@ -3554,9 +4117,19 @@
       if (move.alt && move.alt.length && !S.armed) html += '<div class="ob-alt">' + c + tx('別解') + ' ' + move.alt.map(altHTML).join(' ／ ') + '</div>';
     } else if (fold) {
       // The words are the whole guide here: kept on a phone too (ob-prompt).
-      html += '<div class="ob-guide learnt ob-prompt">' + c + tx(b.course.drill ? '稽古' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
+      html += '<div class="ob-guide learnt ob-prompt">' + c + tx(b.course.drill ? '稽古' : b.course.blind ? '手順なし' : '覚えた ✓') + '<span class="ob-txt">' + tx('思い出して押す。{0} 秒で手順が出る', LV.PEEK_AFTER) + '</span></div>';
     }
+    // A layout question: the window as it will be, small.
+    if (b.q.figure) html += figureHTML(b.q.figure());
     return html;
+  }
+
+  // The 完成図 of a layout: the panes as they will stand, with their numbers.
+  function figureHTML(f) {
+    if (!f) return '';
+    return '<div class="ob-fig" aria-hidden="true" style="aspect-ratio:' + f.ratio.toFixed(3) + '">' + f.rects.map(function (r) {
+      return '<i' + (r.me ? ' class="me"' : '') + ' style="left:' + (r.x * 100).toFixed(2) + '%;top:' + (r.y * 100).toFixed(2) + '%;width:' + (r.w * 100).toFixed(2) + '%;height:' + (r.h * 100).toFixed(2) + '%"><b>' + r.n + '</b></i>';
+    }).join('') + '</div>';
   }
 
   // The ghost in the bar: who it is, and after each question how far ahead
@@ -4395,6 +4968,7 @@
     }
     if (label === 'PgUp' || label === 'PageUp') return { key: 'PageUp' };
     if (label === 'PageDown') return { key: 'PageDown' };
+    if (label === 'Home' || label === 'End') return { key: label };
     if (label === 'Enter') return { key: 'Enter' };
     if (label === 'Esc') return { key: 'Escape' };
     if (label === 'Space') return { key: ' ' };
@@ -4573,6 +5147,7 @@
     var el = $('#result-body');
     if (!r || !el) return;
     if (r.drill) { renderDrillResult(r, el); return; }
+    if (r.daily) { renderDailyResult(r, el); return; }
     var c = REC.courseOf(r.course);
     var diff = r.time - r.par;
     var verdict = diff <= 0
@@ -4677,6 +5252,93 @@
     return '<p class="em-board"><a href="#" data-conf-share="1">' + tx('この回の .tmux.conf を公開する') + '</a> <small>' + tx('ランキングの「自分の設定」から読めるようになる') + '</small></p>';
   }
 
+  // 今日の達人's result: the time, the keys against the fewest, whether the
+  // 手順 came out, the days in a row, and the day's board.
+  function renderDailyResult(r, el) {
+    var q = r.qlog[0] || {};
+    var par = typeof q.p === 'number' ? q.p : null;
+    var sk = REC.streak(null, null, 'daily');
+    var tb = REC.todayBest('daily');
+    el.classList.toggle('is-rec', false);
+    el.innerHTML =
+      '<div class="em-hd">' + esc(tx('今日の達人 ・ {0}', dayLabel(r.day || LV.dayKey()))) + '</div>' +
+      '<h2 class="em-title">' + esc(typeName(q.t)) + '</h2>' +
+      '<div class="em-sub">' + esc(resultSub(r)) + '</div>' +
+      '<div class="em-row"><div class="em-time">' + r.time.toFixed(1) + '<small>' + tx('秒') + '</small></div>' +
+      '<div class="em-verdict">' + (par != null ? tx('押したキー <b>{0}</b> ／ 最短 {1}', r.keys, par) : tx('押したキー <b>{0}</b>', r.keys)) +
+      '<span class="em-tip">' + esc(q.g ? tx('手順を見た（{0} 秒で出た）', LV.PEEK_AFTER) : tx('手順を見ずに解いた')) + (r.misses ? esc(tx(' ・ ミス {0}（+{1}秒）', r.misses, r.misses * LV.MISS_PENALTY)) : '') + '</span></div></div>' +
+      (sk.days >= 2 ? '<p class="em-learnt">' + esc(tx('今日の達人 {0} 日連続', sk.days)) + '</p>' : '') +
+      '<dl class="em-facts">' +
+      '<div><dt>' + tx('実時間') + '</dt><dd>' + tx('{0}秒', r.raw.toFixed(1)) + '</dd></div>' +
+      '<div><dt>' + tx('今日の自己ベスト') + '</dt><dd>' + fmt(tb) + '</dd></div>' +
+      '<div><dt>' + tx('連続') + '</dt><dd>' + tx('{0} 日', sk.days) + '</dd></div>' +
+      '</dl>' +
+      resultNetHTML(r) +
+      dailyBoardHTML() +
+      watchHTML(r) +
+      shareHTML(r) +
+      (r.tip ? '<div class="tips"><div class="tips-head">' + tx('豆知識') + (r.tipFor ? tx(' ・ {0}', esc(typeName(r.tipFor))) : '') + '</div><p>' + esc(r.tip) + '</p></div>' : '') +
+      '<div class="cta"><button type="button" class="btn primary" data-course="daily">' + tx('もう一度') + '<kbd class="hk">Enter</kbd></button>' +
+      '<button type="button" class="btn" data-course="pro">' + esc(tx('{0}をはじめる', REC.courseOf('pro').title)) + '</button>' +
+      '<button type="button" class="btn ghost" data-title="1">' + tx('コース選択へ') + '<kbd class="hk">Esc</kbd></button></div>';
+    renderMeta();
+    loadDailyBoard();
+  }
+
+  // Today's board of 今日の達人, under its result: the first ten, with the
+  // keys each pressed and whether the 手順 came out.
+  function dailyBoardHTML() {
+    var d = S.dailyBoard;
+    if (!d || d.day !== LV.dayKey()) return '';
+    var me = NET ? NET.state().name : null;
+    var q0 = S.result && S.result.daily && S.result.qlog[0];
+    var par = q0 && typeof q0.p === 'number' ? q0.p : dailyPar();
+    if (!d.rows.length) return '<div class="rec-panel daily-board"><div class="rec-head">' + tx('今日の達人のランキング') + '</div><p class="rec-empty">' + tx('まだ今日の記録はない。一番乗りの好機。') + '</p></div>';
+    return '<div class="rec-panel daily-board"><div class="rec-head">' + tx('今日の達人のランキング') + '</div><table class="rec-table board"><thead><tr><th>' + tx('位') + '</th><th>' + tx('名前') + '</th><th>' + tx('タイム') + '</th><th>' + tx('キー') + '</th></tr></thead><tbody>' +
+      d.rows.slice(0, 10).map(function (r) {
+        var keys = typeof r.keys === 'number' ? (par != null ? tx('{0} / 最短 {1}', r.keys, par) : String(r.keys)) : '—';
+        return '<tr class="' + (me && r.name === me ? 'is-me' : '') + '"><td class="c-n">' + r.rank + '</td><td>' + esc(r.name) + (r.peek ? ' <small class="r-own">' + tx('手順を見た') + '</small>' : '') +
+          (r.log ? ' <a href="#" class="r-watch" data-watch-run="' + esc(r.id || '') + '">' + tx('見る') + '</a>' : '') + '</td><td class="r-time">' + tx('{0}秒', r.time.toFixed(1)) + '</td><td class="c-n">' + esc(keys) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  // Read once the run is on the board (or right away when it cannot be).
+  function loadDailyBoard() {
+    var r = S.result;
+    if (!NET || !r || !r.daily || (!/^https?:$/.test(location.protocol) && !/^http:\/\/(localhost|127\.0\.0\.1)|-staging\./.test(NET.API))) return;
+    if (r.board && r.board.state === 'sending') return;
+    var day = LV.dayKey(), key = (r.board ? r.board.state : '') + '|' + r.runId;
+    if (S.dailyBoard && S.dailyBoard.key === key) return;
+    S.dailyBoard = { day: day, key: key, rows: (S.dailyBoard && S.dailyBoard.day === day ? S.dailyBoard.rows : []) };
+    NET.board('daily', 'today').then(function (rows) {
+      S.dailyBoard = { day: day, key: key, rows: rows };
+      if (S.screen === 'result' && S.result === r) renderResult();
+    }).catch(function () { /* offline: no board */ });
+  }
+
+  // The fewest keys 今日の達人 takes on the player's bindings, tried on a
+  // house of its own (the one the question will be asked on), then put back.
+  function dailyPar() {
+    var day = LV.dayKey(), key = day + '|' + (S.conf ? S.confText : '') + '|' + S.cols + 'x' + S.rows;
+    if (S.dailyParAt && S.dailyParAt.key === key) return S.dailyParAt.n;
+    var n = null;
+    if (!S.run && !S.replay) {
+      var snap = snapshot();
+      try {
+        S.sim = true;
+        buildHouse();
+        var type = LV.dailyPick(day);
+        S.run = { course: LV.DAILY, day: day, qs: [type], learnt: {}, i: 0, phase: 'play', qlog: [], keys: 0, misses: 0, penalty: 0, stage: 0, seed: day + ':' + LV.DAILY.id, klog: null };
+        loadQuestion();
+        n = S.run.qlog[0].p;
+      } catch (e) { n = null; }
+      restore(snap);
+      S.sim = false;
+    }
+    S.dailyParAt = { key: key, n: n };
+    return n;
+  }
+
   // The 稽古's result: the longest run from memory, how each type went, and
   // what to drill next. No お手本, no rank, no ranking: it is practice.
   function renderDrillResult(r, el) {
@@ -4774,6 +5436,11 @@
   var SITE = 'https://t29mato.github.io/games/tmux-dojo/';
   function shareText(r) {
     var c = REC.courseOf(r.course);
+    if (r.daily) {
+      var dq = r.qlog[0] || {}, dd = LV.dayKey(r.at).split('-');
+      return tx('tmux 道場 今日の達人 {0} {1} {2}秒 ・ 押したキー {3} / 最短 {4}{5}', EN ? dayLabel(LV.dayKey(r.at)) : +dd[1] + '/' + +dd[2], typeName(dq.t), r.time.toFixed(1), r.keys, typeof dq.p === 'number' ? dq.p : '—', dq.g ? tx('（手順を見た）') : tx('（手順なし）')) + '\n' +
+        (watchable(r) ? watchURL(r.runId) : SITE + (EN ? '?lang=en' : ''));
+    }
     var sq = (r.qlog || []).map(function (q) {
       return q.m || q.o ? '🟥' : q.s != null && q.s <= REC.limitOf(q, c) / 2 ? '🟩' : '🟨';
     });
@@ -4900,8 +5567,10 @@
 
   // ランキング: each player's best for the course, today / this week / ever.
   function renderBoard(body, id) {
-    var span = S.boardSpan || BOARD_SPAN;
-    var seg = '<div class="seg rec-span" role="group" aria-label="' + tx('期間') + '">' +
+    // 今日の達人 asks another question every day: only today's board compares.
+    var daily = !!REC.courseOf(id).daily;
+    var span = daily ? 'today' : S.boardSpan || BOARD_SPAN;
+    var seg = daily ? '' : '<div class="seg rec-span" role="group" aria-label="' + tx('期間') + '">' +
       [['today', '今日'], ['week', '今週'], ['all', '全期間']].map(function (x) {
         return '<button type="button" data-span="' + x[0] + '" aria-pressed="' + (x[0] === span ? 'true' : 'false') + '">' + tx(x[1]) + '</button>';
       }).join('') + '</div>';
@@ -4932,7 +5601,7 @@
     NET.board(id, span).then(function (rows) {
       S.boardCache = S.boardCache || {};
       S.boardCache[key] = { rows: rows, at: Date.now() };
-      if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (S.boardSpan || BOARD_SPAN) === span) renderRecords();
+      if (S.screen === 'records' && S.recTab === 'board' && S.recCourse === id && (daily || (S.boardSpan || BOARD_SPAN) === span)) renderRecords();
     }).catch(function () {
       var bb = $('#records-body .board-body');
       if (bb && !cached) bb.innerHTML = '<p class="rec-empty">' + tx('ランキングにつながらなかった。通信できるときにもう一度。') + '</p>';
@@ -5216,6 +5885,8 @@
     var c = REC.courseOf(id);
     $$('#records-screen [data-rec-course]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recCourse === id ? 'true' : 'false'); });
     var tab = S.recTab || 'growth';
+    // 今日の達人 has a board and nothing else.
+    if (c.daily && tab === 'growth') tab = S.recTab = 'board';
     $$('#records-screen .rec-tab [data-rec-tab]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.recTab === tab || (tab === 'conf' || tab === 'watch') && b.dataset.recTab === 'board' ? 'true' : 'false'); });
     // The course row keeps its space on the 引き継ぎ tab: nothing below jumps.
     $('#records-screen .rec-seg').classList.toggle('off', tab === 'sync');
@@ -5372,6 +6043,8 @@
       b.setAttribute('aria-label', EN ? '日本語にする' : 'Switch to English');
       b.addEventListener('click', function () { I18N.set(EN ? 'ja' : 'en'); });
     });
+    // A course's name from levels.js (達人 has its own English name).
+    $$('[data-course-title]').forEach(function (el) { el.textContent = REC.courseOf(el.dataset.courseTitle).title; });
     var saved = store.load();
     applyTheme(saved.theme === 'dark' || saved.theme === 'light' ? saved.theme : null);
     applySound(saved.sound !== false);
@@ -5406,6 +6079,7 @@
     $('#btn-records').addEventListener('click', function () { S.recTab = 'growth'; openRecords(null, 'title'); });
     $('#btn-board').addEventListener('click', openBoard);
     $('#btn-keiko').addEventListener('click', function () { startRun('keiko'); });
+    $('#today').addEventListener('click', function (e) { if (e.target.closest('[data-daily]')) startRun('daily'); });
     $('#course-list').addEventListener('click', function (e) {
       var b = e.target.closest('[data-course]');
       if (b) startRun(b.dataset.course);
@@ -5475,6 +6149,8 @@
     });
     $('#result-screen').addEventListener('click', function (e) {
       if (e.target.closest('[data-share]')) { copyShare(); return; }
+      var wr = e.target.closest('[data-watch-run]');
+      if (wr) { e.preventDefault(); if (wr.dataset.watchRun) openWatchLink(wr.dataset.watchRun); return; }
       var r = e.target.closest('[data-records]');
       if (r) { S.recTab = 'growth'; openRecords(r.dataset.records || null, 'result'); return; }
       var bd = e.target.closest('[data-board]');
@@ -5608,6 +6284,7 @@
           windows: S.session ? S.session.windows.map(function (w) { return { index: w.index, name: w.name, active: w.id === S.session.active, panes: T.panesOf(w).length, zoomed: w.zoomed }; }) : [],
           activeWindow: win ? win.name : null,
           activeIndex: win ? win.index : null,
+          layout: win ? win.layoutName : null,
           activePane: ap ? ap.id : null,
           panes: win ? T.panesOf(win).map(function (p) { return p.id; }) : [],
           copyMode: ap ? ap.mode === 'copy' : false,

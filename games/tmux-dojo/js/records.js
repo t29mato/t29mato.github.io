@@ -11,6 +11,7 @@
   function recordKey(id) { return 'tmux:' + id; }
   function courseOf(id) {
     if (id === LV.KEIKO.id) return LV.KEIKO;
+    if (id === LV.DAILY.id) return LV.DAILY;
     return LV.COURSES.filter(function (c) { return c.id === id; })[0] || null;
   }
 
@@ -118,7 +119,7 @@
   // runs, which are pruned; a title once reached stays.
   function noteTitle(all, r) {
     var c = courseOf(r.course);
-    if (!c || c.practice || r.drill || !r.rank || LV.rankIndex(r.rank) >= LV.RANKS.length) return;
+    if (!c || c.practice || c.daily || r.drill || !r.rank || LV.rankIndex(r.rank) >= LV.RANKS.length) return;
     var day = LV.dayKey(new Date(r.at));
     var mine = (all.titles = all.titles || {})[c.id] || (all.titles[c.id] = {});
     for (var i = LV.rankIndex(r.rank); i < LV.RANKS.length; i++) {
@@ -432,7 +433,7 @@
   // question, after penalties, over rankMul), its level and the next one.
   function skill(all) {
     all = all || load();
-    var runs = (all.runs || []).filter(function (r) { var c = courseOf(r.course); return c && !c.practice && !r.legacy && r.n; }).slice(-5);
+    var runs = (all.runs || []).filter(function (r) { var c = courseOf(r.course); return c && !c.practice && !c.daily && !r.legacy && r.n; }).slice(-5);
     if (!runs.length) return null;
     var pace = runs.reduce(function (s, r) { return s + r.time / r.n / (courseOf(r.course).rankMul || 1); }, 0) / runs.length;
     var lv = LV.levelFor(pace);
@@ -452,11 +453,12 @@
 
   // Days in a row with a course played (Japan time), up to today. A streak
   // is still alive today until midnight even if today is not played yet.
-  function streak(all, now) {
+  // `only`: that course's days (今日の達人 keeps its own).
+  function streak(all, now, only) {
     var days = {};
     ((all || load()).runs || []).forEach(function (r) {
       var c = courseOf(r.course);
-      if (c && !c.practice) days[LV.dayKey(new Date(r.at))] = 1;
+      if (c && !c.practice && (only ? c.id === only : !c.daily)) days[LV.dayKey(new Date(r.at))] = 1;
     });
     var t = (now || new Date()).getTime(), n = 0;
     var today = !!days[LV.dayKey(new Date(t))];
@@ -496,7 +498,7 @@
       r.rec = !b || r.time < b.time;
       if (r.rec) all.arena[key] = { time: r.time, misses: r.misses, date: r.at.slice(0, 10), runId: r.id, ver: r.ver };
     });
-    LV.COURSES.forEach(function (c) { all.runs = prune(all.runs, c.id); });
+    LV.COURSES.concat([LV.DAILY]).forEach(function (c) { all.runs = prune(all.runs, c.id); });
     write(all);
     return added;
   }
